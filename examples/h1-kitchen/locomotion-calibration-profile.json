@@ -4,8 +4,8 @@
   "status": "research",
   "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:60df896c6492f9c6aa9488c79e4a9ef9db79a2798473ae899bf9211e68733bec",
-    "containerDigest": "sha256:60df896c6492f9c6aa9488c79e4a9ef9db79a2798473ae899bf9211e68733bec",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:021b46661a99db82497dc9a88d0b4b33bce66fa2bda03bb65d3c502b359cf712",
+    "containerDigest": "sha256:021b46661a99db82497dc9a88d0b4b33bce66fa2bda03bb65d3c502b359cf712",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
   },
   "stage": "stand",
