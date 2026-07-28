@@ -118,3 +118,24 @@ integer. The result marker had not been written and the Pod was cleaned with
 the Job, so neither policy quality nor the checkpoint can be recovered or
 inferred. This attempt is permanently recorded as
 `failed / quality unknown / checkpoint not_recovered`.
+
+After fixing report assembly, `stand-v1` completed a second real-A800 run,
+`worldspec-h1-calibration-qxpdh`. Final mean episode length was 124.23 steps,
+1.42 times the 87.34 baseline, but it missed the configured 350-step and
+2-times gates. All five deterministic stand runs terminated near step 99 with
+`fall_height`, with about 1.027 metres of planar drift. The result is therefore
+fixed as `completed / quality failed / deterministic stand 0/5`. The report
+proves that an internal research checkpoint was generated, but the old
+launcher invoked `kubectl cp` only after the Pod completed and the cluster
+rejected copying from the exited container. The checkpoint is recorded as
+`generated_not_retrieved`. This is valid negative policy-quality evidence, not
+a usable policy or permission to start the 100-million-step run.
+
+The current `stand-v2` preserves the immutable `stand-v1` Profile, raises the
+bounded budget to 4,194,304 requested steps and 4,096 environments, strengthens
+survival, upright, base-height, and pose shaping, and declares 124.23 as its
+baseline. Artifact handoff now uses a two-stage handshake: after writing the
+report and checkpoint, the Pod enters `artifact_ready`; the launcher copies
+the artifact while the Pod remains alive and writes an acknowledgement; only
+then may the entrypoint exit. `stand-v2` remains a Research Profile until its
+own A800 report exists.

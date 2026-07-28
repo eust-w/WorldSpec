@@ -31,8 +31,8 @@ def test_stand_calibration_is_digest_bound_and_bounded() -> None:
     effective = make_calibration_training_profile(base, calibration)
 
     assert calibration["baseTrainingProfileDigest"] == digest_json(base)
-    assert effective["training"]["numTimesteps"] == 1_048_576
-    assert effective["training"]["numEnvs"] == 2048
+    assert effective["training"]["numTimesteps"] == 4_194_304
+    assert effective["training"]["numEnvs"] == 4096
     assert effective["runtime"]["containerDigest"] == calibration["runtime"]["containerDigest"]
     assert effective["training"]["commandDistribution"] == {
         "linearVelocityX": [0.0, 0.0],
@@ -40,7 +40,7 @@ def test_stand_calibration_is_digest_bound_and_bounded() -> None:
         "angularVelocityYaw": [0.0, 0.0],
         "zeroCommandProbability": 1.0,
     }
-    assert effective["trainingEnvironment"]["reward"]["survival"] == 1.0
+    assert effective["trainingEnvironment"]["reward"]["survival"] == 5.0
     assert "trainingEnvironment" not in base
 
 

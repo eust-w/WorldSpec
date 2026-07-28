@@ -26,7 +26,7 @@
   "properties": {
     "id": { "$ref": "common.schema.json#/$defs/id" },
     "attemptVersion": { "const": "0.1.0" },
-    "status": { "const": "failed" },
+    "status": { "enum": ["failed", "quality_failed"] },
     "executionEvidence": { "const": "executed" },
     "runtimeAcceptance": { "const": "research_calibration" },
     "policyStatus": { "const": "non_publishable" },
@@ -58,9 +58,11 @@
       "type": "object",
       "required": ["stage", "classification", "exceptionType", "message"],
       "properties": {
-        "stage": { "const": "stand_calibration" },
-        "classification": { "const": "report_assembly_error" },
-        "exceptionType": { "const": "TypeError" },
+        "stage": { "enum": ["stand_calibration", "quality_gate"] },
+        "classification": {
+          "enum": ["report_assembly_error", "policy_quality_failure"]
+        },
+        "exceptionType": { "enum": ["TypeError", "none"] },
         "message": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false
@@ -74,10 +76,28 @@
         "reason"
       ],
       "properties": {
-        "trainingQuality": { "const": "unknown" },
-        "checkpoint": { "const": "not_recovered" },
-        "qualityGate": { "const": "not_assessed" },
-        "reason": { "type": "string", "minLength": 1 }
+        "trainingQuality": { "enum": ["unknown", "failed"] },
+        "checkpoint": {
+          "enum": ["not_recovered", "generated_not_retrieved"]
+        },
+        "qualityGate": { "enum": ["not_assessed", "failed"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "finalMeanEpisodeLength": {
+          "type": "number",
+          "minimum": 0
+        },
+        "episodeLengthImprovementRatio": {
+          "type": "number",
+          "minimum": 0
+        },
+        "deterministicStandPasses": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "requiredDeterministicStandPasses": {
+          "type": "integer",
+          "minimum": 1
+        }
       },
       "additionalProperties": false
     },
@@ -86,5 +106,55 @@
     "finishedAt": { "type": "string", "format": "date-time" },
     "recordedAt": { "type": "string", "format": "date-time" }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "failed" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "failure": {
+            "properties": {
+              "stage": { "const": "stand_calibration" },
+              "classification": { "const": "report_assembly_error" },
+              "exceptionType": { "const": "TypeError" }
+            }
+          },
+          "outcome": {
+            "properties": {
+              "trainingQuality": { "const": "unknown" },
+              "checkpoint": { "const": "not_recovered" },
+              "qualityGate": { "const": "not_assessed" }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "failure": {
+            "properties": {
+              "stage": { "const": "quality_gate" },
+              "classification": { "const": "policy_quality_failure" },
+              "exceptionType": { "const": "none" }
+            }
+          },
+          "outcome": {
+            "required": [
+              "finalMeanEpisodeLength",
+              "episodeLengthImprovementRatio",
+              "deterministicStandPasses",
+              "requiredDeterministicStandPasses"
+            ],
+            "properties": {
+              "trainingQuality": { "const": "failed" },
+              "checkpoint": { "const": "generated_not_retrieved" },
+              "qualityGate": { "const": "failed" }
+            }
+          }
+        }
+      }
+    }
+  ],
   "additionalProperties": false
 }

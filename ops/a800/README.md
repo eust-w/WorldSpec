@@ -124,10 +124,19 @@ KUBECONFIG=/Users/d-robotics/.config/droboticflow/kubeconfigs/poc.config \
   ./scripts/run_a800_h1_locomotion_calibration.sh
 ```
 
-This job uses 1,048,576 requested timesteps and 2,048 environments with an
-exact zero command. It adds versioned survival, upright, base-height, pose,
-torque, and action-rate shaping while retaining the strict deterministic
-validation gates. The result and checkpoint remain
+The preserved `stand-v1` Profile used 1,048,576 requested timesteps and 2,048
+environments with an exact zero command. It completed on an A800, improved
+mean episode length from 87.34 to 124.23, but failed the episode-length,
+improvement, and 5/5 deterministic stand gates. Its generated checkpoint was
+not recovered because the first launcher attempted `kubectl cp` after Pod
+completion.
+
+The current `stand-v2` job uses 4,194,304 requested timesteps and 4,096
+environments, retains the exact zero command, and strengthens the versioned
+survival, upright, base-height, pose, torque, and action-rate shaping. The
+launcher copies the checkpoint at the `artifact_ready` stage while the Pod is
+still running, acknowledges the copy, and fails closed if the handoff does
+not complete. The result and checkpoint remain
 `research_calibration / non_publishable / internal_only`; passing the gate
 permits the next curriculum experiment but does not establish canonical
 training or L3. The launcher copies the checkpoint only after checking its

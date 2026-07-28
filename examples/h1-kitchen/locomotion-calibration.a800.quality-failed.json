@@ -1,0 +1,38 @@
+{
+  "id": "calibrationattempt://worldspec/h1-stand/a800-50406b5cf372-qxpdh",
+  "attemptVersion": "0.1.0",
+  "status": "quality_failed",
+  "executionEvidence": "executed",
+  "runtimeAcceptance": "research_calibration",
+  "policyStatus": "non_publishable",
+  "canonicalTrainingStatus": "not_executed",
+  "job": "worldspec-h1-calibration-qxpdh",
+  "probeDefinitionCommit": "50406b5cf3721317c0c60fd0bcbc01c9c5df2cf9",
+  "imageSourceCommit": "677b181a1c6b8f9ff477579194a4a0bf0f9d65f4",
+  "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d",
+  "gpu": {
+    "name": "NVIDIA A800-SXM4-80GB",
+    "memoryMiB": 81920,
+    "jaxBackend": "gpu"
+  },
+  "failure": {
+    "stage": "quality_gate",
+    "classification": "policy_quality_failure",
+    "exceptionType": "none",
+    "message": "stand-v1 improved mean episode length but failed all configured quality gates."
+  },
+  "outcome": {
+    "trainingQuality": "failed",
+    "checkpoint": "generated_not_retrieved",
+    "qualityGate": "failed",
+    "reason": "The report marker proves checkpoint generation, but the launcher attempted kubectl cp after Pod completion and the cluster rejected exec into the succeeded container.",
+    "finalMeanEpisodeLength": 124.2265625,
+    "episodeLengthImprovementRatio": 1.4222719141323792,
+    "deterministicStandPasses": 0,
+    "requiredDeterministicStandPasses": 5
+  },
+  "logDigest": "sha256:1f5cd7952ad5fb2ba24fff3c307f2f524b005a23a68429d1f4e2fd43bddb2dc2",
+  "startedAt": "2026-07-28T18:04:37Z",
+  "finishedAt": "2026-07-28T18:10:24Z",
+  "recordedAt": "2026-07-28T18:12:00Z"
+}

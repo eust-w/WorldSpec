@@ -97,3 +97,18 @@ Digest 锁定镜像与当前 Profile 的 A800 one-step 已通过；此前 smoke 
 本地 Checkpoint 打包，但在报告组装阶段因把 `(42,)` 形状直接转为整数而触发
 `TypeError`。由于结果标记尚未写出、Pod 随作业清理，策略质量和 Checkpoint 均不能
 恢复或推断；该次运行固定记录为 `failed / quality unknown / checkpoint not_recovered`。
+
+修复报告组装后，`stand-v1` 在真实 A800 上完成了第二次运行
+`worldspec-h1-calibration-qxpdh`。最终平均 Episode 长度为 124.23 步，相对 87.34
+基线提高 1.42 倍，但未达到 350 步和 2 倍的配置门槛；五次确定性站立均在约第 99
+步因 `fall_height` 终止，平面漂移约 1.027 米，因此结果固定为
+`completed / quality failed / deterministic stand 0/5`。报告证明内部研究
+Checkpoint 已生成，但旧 Launcher 在 Pod 完成后才调用 `kubectl cp`，集群拒绝对已
+退出容器执行复制，故该 Checkpoint 标记为 `generated_not_retrieved`。这是一条有效的
+负质量证据，不能作为可用策略或 1 亿步训练的放行依据。
+
+当前 `stand-v2` 保留 `stand-v1` Profile 作为不可变历史输入，并将受限预算增加到
+4,194,304 请求步和 4,096 并行环境，强化存活、直立、基座高度和姿态塑形，同时把
+124.23 设置为明确基线。产物交接改为两阶段握手：Pod 写出报告和 Checkpoint 后进入
+`artifact_ready`，Launcher 在 Pod 仍存活时复制产物并写入确认文件，入口收到确认后
+才退出。`stand-v2` 在新的 A800 报告产生前仍只是 Research Profile。

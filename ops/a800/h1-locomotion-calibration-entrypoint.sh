@@ -253,4 +253,17 @@ report_path.write_text(
 print("WORLDSPEC_A800_CALIBRATION_RESULT=" + json.dumps(report, separators=(",", ":")))
 PY
 
+stage artifact_ready
+artifact_ack="${RESULT_DIR}/artifact-copied"
+for ((attempt = 0; attempt < 300; attempt++)); do
+  if [[ -f "${artifact_ack}" ]]; then
+    break
+  fi
+  sleep 1
+done
+if [[ ! -f "${artifact_ack}" ]]; then
+  echo "ERROR: launcher did not acknowledge checkpoint retrieval" >&2
+  exit 1
+fi
+
 stage completed

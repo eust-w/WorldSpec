@@ -4,7 +4,6 @@ from pathlib import Path
 
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 A800 = ROOT / "ops" / "a800"
 
@@ -240,3 +239,12 @@ def test_locomotion_calibration_is_isolated_and_research_only() -> None:
     assert '"canonicalTrainingStatus": "not_executed"' in entrypoint
     assert "container digest does not match the executing image" in entrypoint
     assert "WORLDSPEC_A800_CALIBRATION_RESULT=" in entrypoint
+    assert "stage artifact_ready" in entrypoint
+    assert "launcher did not acknowledge checkpoint retrieval" in entrypoint
+
+    launcher = (
+        ROOT / "scripts" / "run_a800_h1_locomotion_calibration.sh"
+    ).read_text(encoding="utf-8")
+    assert 'current_stage}" == "artifact_ready"' in launcher
+    assert "/scratch/results/artifact-copied" in launcher
+    assert "calibration checkpoint was not retrieved before Pod exit" in launcher

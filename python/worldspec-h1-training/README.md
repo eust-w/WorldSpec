@@ -32,7 +32,18 @@ capacity overflow, but only about 87.34 mean evaluation steps. It remains
 
 The package now also defines a separate stand-calibration route with
 versioned reward, termination, runtime, quality-gate, and internal-only
-checkpoint contracts. Until its A800 report exists, this route is implemented
-source rather than execution evidence. Canonical 100-million-step training,
+checkpoint contracts. `stand-v1` completed on a real A800 and improved mean
+episode length from 87.34 to 124.23, but failed every configured quality gate:
+deterministic standing was 0/5 and each run terminated at about step 99 for
+`fall_height`. The generated research checkpoint was not recovered because
+the first launcher attempted to copy it after the Pod had exited. That attempt
+is negative policy-quality evidence, not a usable-policy result.
+
+The current `stand-v2` Profile increases the bounded budget to 4,194,304
+requested steps and 4,096 environments, strengthens posture shaping, and uses
+the completed `stand-v1` result as its declared baseline. The launcher now
+copies and verifies the checkpoint while the Pod remains alive, then
+acknowledges the entrypoint before completion. `stand-v2` is still research
+until its own A800 report exists. Canonical 100-million-step training,
 publishable policy quality, and five-run H1 kitchen L3 evidence remain
 unexecuted.

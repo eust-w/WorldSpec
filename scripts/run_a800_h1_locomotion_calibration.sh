@@ -105,6 +105,7 @@ prepull_pod=""
 job_name=""
 pod_name=""
 local_result_dir=""
+artifact_copied=false
 
 cleanup() {
   local exit_code=$?
@@ -206,6 +207,18 @@ while ((SECONDS < deadline)); do
         "${pod_name}" "${phase}" "${current_stage}"
       last_stage="${current_stage}"
     fi
+    if [[ "${current_stage}" == "artifact_ready" ]] &&
+      [[ "${artifact_copied}" != "true" ]]; then
+      "${kubectl_cmd[@]}" cp \
+        "${pod_name}:/scratch/results/artifacts/calibration-checkpoint.zip" \
+        "${local_result_dir}/calibration-checkpoint.zip" \
+        -c calibration
+      "${kubectl_cmd[@]}" exec "${pod_name}" -c calibration -- \
+        touch /scratch/results/artifact-copied
+      artifact_copied=true
+      printf 'checkpoint_retrieved=%s\n' \
+        "${local_result_dir}/calibration-checkpoint.zip"
+    fi
     if [[ "${phase}" == "Succeeded" ]] || [[ "${phase}" == "Failed" ]]; then
       break
     fi
@@ -235,10 +248,11 @@ if [[ "${phase}" != "Succeeded" ]]; then
   exit 1
 fi
 
-"${kubectl_cmd[@]}" cp \
-  "${pod_name}:/scratch/results/artifacts/calibration-checkpoint.zip" \
-  "${local_result_dir}/calibration-checkpoint.zip" \
-  -c calibration
+if [[ "${artifact_copied}" != "true" ]] ||
+  [[ ! -s "${local_result_dir}/calibration-checkpoint.zip" ]]; then
+  echo "ERROR: calibration checkpoint was not retrieved before Pod exit" >&2
+  exit 1
+fi
 
 python3 - "${local_result_dir}/job.log" \
   "${local_result_dir}/calibration-report.json" \

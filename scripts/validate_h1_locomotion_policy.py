@@ -23,7 +23,7 @@ DEFAULT_LOCK = ROOT / "third_party" / "h1-kitchen.lock.json"
 DEFAULT_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-adapter-profile.json"
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from compose_h1_robotiq import (  # noqa: E402
+from compose_h1_robotiq import (
     CompositionError,
     canonical_bytes,
     digest_json,
@@ -32,8 +32,8 @@ from compose_h1_robotiq import (  # noqa: E402
     repository_path,
     verify_cache,
 )
-from fetch_h1_kitchen_sources import digest_file, read_lock, safe_relative  # noqa: E402
-from validate_h1_composition import safe_file, validate_inventory  # noqa: E402
+from fetch_h1_kitchen_sources import digest_file, read_lock, safe_relative
+from validate_h1_composition import safe_file, validate_inventory
 
 
 class PolicyValidationError(RuntimeError):
