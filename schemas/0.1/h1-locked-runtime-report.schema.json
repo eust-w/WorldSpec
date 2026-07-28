@@ -102,7 +102,22 @@
     "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "profileDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "staticPreflight": {
-      "$ref": "h1-runtime-spike-report.schema.json#/properties/staticPreflight"
+      "type": "object",
+      "required": [
+        "status",
+        "executionEvidence",
+        "bundleDigest",
+        "frameworkDecision",
+        "runtimeArtifactStatus"
+      ],
+      "properties": {
+        "status": { "const": "pass" },
+        "executionEvidence": { "const": "static_validation" },
+        "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "frameworkDecision": { "const": "accepted" },
+        "runtimeArtifactStatus": { "const": "locked" }
+      },
+      "additionalProperties": false
     },
     "runtimePreflight": {
       "$ref": "h1-runtime-spike-report.schema.json#/properties/runtimePreflight"

@@ -7,7 +7,7 @@
   "runtimeAcceptance": "locked",
   "probeDefinition": {
     "repository": "https://github.com/eust-w/WorldSpec.git",
-    "commit": "17079d30e395f7bbbe69fb3758618c7b6df8b5ee"
+    "commit": "0c1f14220b598bf31ea6c473fb362d2290141598"
   },
   "imageSource": {
     "repository": "https://github.com/eust-w/WorldSpec.git",
@@ -15,9 +15,9 @@
   },
   "probeInput": {
     "repository": "https://github.com/eust-w/WorldSpec.git",
-    "commit": "e8b8e9219ccec382d5b20005738d38b9790de230",
+    "commit": "0c1f14220b598bf31ea6c473fb362d2290141598",
     "materialization": "verified_git_archive",
-    "archiveDigest": "sha256:b8781abbfd2be6519a29004a0548594b4fbcb9d1c298d79b79653ef20fe5aa03"
+    "archiveDigest": "sha256:ed343b756313279f1b748783fd60e8060bd03335f45301a2588572447a7a2a87"
   },
   "container": {
     "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:576c564be62a0319be0862fa2f8ca7bd344ed100a46f5c34c4d4d5ae1774058f",
@@ -54,13 +54,13 @@
     "worldspec-worker": "0.1.0"
   },
   "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
-  "profileDigest": "sha256:b873bcf694b2d358d4bae4a40dc0016cb3e5e05de99a0fe7b8434522b162843f",
+  "profileDigest": "sha256:95a118984d6e447f34df5637036dab898db1db56906358cb109d9249f49a6990",
   "staticPreflight": {
     "status": "pass",
     "executionEvidence": "static_validation",
     "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
     "frameworkDecision": "accepted",
-    "runtimeArtifactStatus": "planned"
+    "runtimeArtifactStatus": "locked"
   },
   "runtimePreflight": {
     "status": "pass",
@@ -91,5 +91,5 @@
     "qvelFinite": true,
     "rewardFinite": true
   },
-  "generatedAt": "2026-07-28T14:49:37.570006Z"
+  "generatedAt": "2026-07-28T14:57:39.641815Z"
 }
