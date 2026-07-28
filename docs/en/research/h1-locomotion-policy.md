@@ -144,5 +144,21 @@ to 256 so that `256 × 16` is divisible by 4,096.
 Artifact handoff now uses a two-stage handshake: after writing the
 report and checkpoint, the Pod enters `artifact_ready`; the launcher copies
 the artifact while the Pod remains alive and writes an acknowledgement; only
-then may the entrypoint exit. `stand-v2.1` remains a Research Profile until its
-own A800 report exists.
+then may the entrypoint exit. Because this cluster returned `unexpected EOF`
+twice for a single `kubectl cp` stream at about 4.7–4.8 MB, the final
+implementation uses independent 512-KiB chunks, per-chunk retries, atomic
+placement, and final size plus SHA-256 verification against the report.
+
+`stand-v2.1` has now completed on a real A800 and passed every calibration
+gate: final mean episode length was 500, a 4.02-times improvement over
+`stand-v1`; all five deterministic four-second stand checks passed; maximum
+planar drift was about 0.0217 metres; minimum base height was about 0.988
+metres; and the log contained no capacity overflow. The internal checkpoint
+was completely retrieved in 12 chunks at 6,280,684 bytes with digest
+`sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c`.
+See the normative
+[`locomotion-calibration.a800.passed.json`](../../../examples/h1-kitchen/locomotion-calibration.a800.passed.json)
+report. This evidence remains explicitly
+`research_calibration / non_publishable / internal_only`: it permits the next
+walking-curriculum experiment, but it is neither canonical 100-million-step
+training nor the kitchen-task L3 witness.

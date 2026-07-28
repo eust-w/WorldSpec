@@ -1,0 +1,298 @@
+{
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "calibrationProfileDigest": "sha256:2b31dacf92b9f42d4f22a0beb72991e8292ec2bd54a1af4da2cc145d9638a01a",
+  "canonicalTrainingStatus": "not_executed",
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "effectiveTrainingProfileDigest": "sha256:d604f7325a0d80d2c8b5b9bddf2716eb4ba0a483742f6ebe2c6e974dd2974830",
+  "executionEvidence": "executed",
+  "generatedAt": "2026-07-28T18:47:18.027880Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "calibration-report://worldspec/h1-stand/a800-2c6785e24282",
+  "imageSource": {
+    "commit": "677b181a1c6b8f9ff477579194a4a0bf0f9d65f4",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "overflowFree": true
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "policyStatus": "non_publishable",
+  "probeDefinition": {
+    "commit": "2c6785e242824fe9a4280513d7b2d4c5be3e0b31",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:e1b58796c422f93428fbf22681020663ac05c9316e6903bd7069d10a4afdcc1b",
+    "commit": "2c6785e242824fe9a4280513d7b2d4c5be3e0b31",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "qualityAssessment": {
+    "baselineMeanEpisodeLength": 124.2265625,
+    "deterministicStandGate": true,
+    "deterministicStandPasses": 5,
+    "episodeLengthImprovementRatio": 4.0249040940821335,
+    "finalMeanEpisodeLength": 500.0,
+    "improvementGate": true,
+    "meanEpisodeLengthGate": true,
+    "requiredDeterministicStandPasses": 5,
+    "status": "passed",
+    "tests": [
+      {
+        "completedSteps": 200,
+        "doneSeen": false,
+        "maximumPlanarDrift": 0.021689768564981435,
+        "minimumBaseHeight": 0.9881758689880371,
+        "minimumUprightCosine": 0.9998486042022705,
+        "requiredSteps": 200,
+        "result": "pass",
+        "run": 0,
+        "terminalReasons": []
+      },
+      {
+        "completedSteps": 200,
+        "doneSeen": false,
+        "maximumPlanarDrift": 0.021689148287779084,
+        "minimumBaseHeight": 0.9881758689880371,
+        "minimumUprightCosine": 0.9998486042022705,
+        "requiredSteps": 200,
+        "result": "pass",
+        "run": 1,
+        "terminalReasons": []
+      },
+      {
+        "completedSteps": 200,
+        "doneSeen": false,
+        "maximumPlanarDrift": 0.021689813581893546,
+        "minimumBaseHeight": 0.9881758689880371,
+        "minimumUprightCosine": 0.9998486042022705,
+        "requiredSteps": 200,
+        "result": "pass",
+        "run": 2,
+        "terminalReasons": []
+      },
+      {
+        "completedSteps": 200,
+        "doneSeen": false,
+        "maximumPlanarDrift": 0.021689877747325267,
+        "minimumBaseHeight": 0.9881758689880371,
+        "minimumUprightCosine": 0.9998486042022705,
+        "requiredSteps": 200,
+        "result": "pass",
+        "run": 3,
+        "terminalReasons": []
+      },
+      {
+        "completedSteps": 200,
+        "doneSeen": false,
+        "maximumPlanarDrift": 0.021689685801281243,
+        "minimumBaseHeight": 0.9881758689880371,
+        "minimumUprightCosine": 0.9998486042022705,
+        "requiredSteps": 200,
+        "result": "pass",
+        "run": 4,
+        "terminalReasons": []
+      }
+    ]
+  },
+  "reportVersion": "0.1.0",
+  "researchCheckpoint": {
+    "digest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "distribution": "internal_only",
+    "path": "calibration-checkpoint.zip",
+    "sizeBytes": 6280684
+  },
+  "runtimeAcceptance": "research_calibration",
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "ccdContactsPerEnvironment": 8,
+    "effectiveNaccdmax": 32768,
+    "effectiveNaconmax": 65536,
+    "njmax": 128
+  },
+  "runtimePreflight": {
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scope": "h1_locomotion_research_calibration",
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "completed",
+  "target": {
+    "actionSize": 10,
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "observationSize": 42,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "training": {
+    "elapsedSeconds": 421.61680742073804,
+    "finalProgress": {
+      "elapsedSeconds": 390.19467256963253,
+      "metrics": {
+        "eval/avg_episode_length": 500.0,
+        "eval/episode_cost/action_rate": 40.10990905761719,
+        "eval/episode_cost/action_rate_std": 1.1019233465194702,
+        "eval/episode_cost/angular_velocity_xy": 13.239612579345703,
+        "eval/episode_cost/angular_velocity_xy_std": 0.7039362788200378,
+        "eval/episode_cost/pose": 2.414295196533203,
+        "eval/episode_cost/pose_std": 0.19406352937221527,
+        "eval/episode_cost/torque": 1.8597259521484375,
+        "eval/episode_cost/torque_std": 0.030611243098974228,
+        "eval/episode_cost/upright": 0.03743842616677284,
+        "eval/episode_cost/upright_std": 0.005605011712759733,
+        "eval/episode_cost/vertical_velocity": 1.442840814590454,
+        "eval/episode_cost/vertical_velocity_std": 0.07095605880022049,
+        "eval/episode_reward": 178.3373565673828,
+        "eval/episode_reward/base_height": 440.8915100097656,
+        "eval/episode_reward/base_height_std": 1.4774351119995117,
+        "eval/episode_reward/pose": 488.2637023925781,
+        "eval/episode_reward/pose_std": 0.9356465935707092,
+        "eval/episode_reward/survival": 500.0,
+        "eval/episode_reward/survival_std": 0.0,
+        "eval/episode_reward/tracking_linear": 496.99371337890625,
+        "eval/episode_reward/tracking_linear_std": 0.19045019149780273,
+        "eval/episode_reward/tracking_yaw": 477.6298522949219,
+        "eval/episode_reward/tracking_yaw_std": 1.4937410354614258,
+        "eval/episode_reward/upright": 499.25244140625,
+        "eval/episode_reward/upright_std": 0.11174818873405457,
+        "eval/episode_reward_std": 0.09884367138147354,
+        "eval/episode_state/base_height": 515.04736328125,
+        "eval/episode_state/base_height_std": 0.33403709530830383,
+        "eval/episode_state/upright_cosine": 499.9815979003906,
+        "eval/episode_state/upright_cosine_std": 0.002846009563654661,
+        "eval/episode_termination/fall_height": 0.0,
+        "eval/episode_termination/fall_height_std": 0.0,
+        "eval/episode_termination/fall_upright": 0.0,
+        "eval/episode_termination/fall_upright_std": 0.0,
+        "eval/episode_termination/joint_limit": 0.0,
+        "eval/episode_termination/joint_limit_std": 0.0,
+        "eval/episode_termination/nonfinite": 0.0,
+        "eval/episode_termination/nonfinite_std": 0.0,
+        "eval/epoch_eval_time": 10.572632551193237,
+        "eval/sps": 6053.36463649036,
+        "eval/std_episode_length": 0.0,
+        "eval/walltime": 82.37216305732727,
+        "training/entropy_loss": -0.005191189702600241,
+        "training/kl_mean": 0.028002534061670303,
+        "training/learning_rate": 0.00029999998514540493,
+        "training/policy_dist_max_loc": 1.2999298572540283,
+        "training/policy_dist_max_std": 0.5771962404251099,
+        "training/policy_dist_mean_loc": -0.10716269910335541,
+        "training/policy_dist_mean_std": 0.3120686113834381,
+        "training/policy_dist_min_loc": -1.3677688837051392,
+        "training/policy_dist_min_std": 0.17647065222263336,
+        "training/policy_loss": -0.018414342775940895,
+        "training/sps": 45282.26699064493,
+        "training/total_loss": -0.02353646047413349,
+        "training/v_loss": 6.907249189680442e-05,
+        "training/walltime": 111.19124484062195
+      },
+      "step": 4505600
+    },
+    "firstProgress": {
+      "elapsedSeconds": 214.23313880572096,
+      "metrics": {
+        "eval/avg_episode_length": 96.2421875,
+        "eval/episode_cost/action_rate": 25.65065574645996,
+        "eval/episode_cost/action_rate_std": 5.259474277496338,
+        "eval/episode_cost/angular_velocity_xy": 164.66799926757812,
+        "eval/episode_cost/angular_velocity_xy_std": 43.202510833740234,
+        "eval/episode_cost/pose": 19.306320190429688,
+        "eval/episode_cost/pose_std": 7.408252716064453,
+        "eval/episode_cost/torque": 1.4685386419296265,
+        "eval/episode_cost/torque_std": 0.3456961214542389,
+        "eval/episode_cost/upright": 13.001531600952148,
+        "eval/episode_cost/upright_std": 3.1722190380096436,
+        "eval/episode_cost/vertical_velocity": 5.768342018127441,
+        "eval/episode_cost/vertical_velocity_std": 2.4243998527526855,
+        "eval/episode_reward": 22.10752296447754,
+        "eval/episode_reward/base_height": 79.66958618164062,
+        "eval/episode_reward/base_height_std": 18.12663459777832,
+        "eval/episode_reward/pose": 43.07481384277344,
+        "eval/episode_reward/pose_std": 8.58918285369873,
+        "eval/episode_reward/survival": 96.2421875,
+        "eval/episode_reward/survival_std": 19.019620895385742,
+        "eval/episode_reward/tracking_linear": 45.85744857788086,
+        "eval/episode_reward/tracking_linear_std": 15.027205467224121,
+        "eval/episode_reward/tracking_yaw": 37.26228332519531,
+        "eval/episode_reward/tracking_yaw_std": 10.848817825317383,
+        "eval/episode_reward/upright": 44.09809494018555,
+        "eval/episode_reward/upright_std": 17.405017852783203,
+        "eval/episode_reward_std": 5.393294811248779,
+        "eval/episode_state/base_height": 92.06904602050781,
+        "eval/episode_state/base_height_std": 19.10708999633789,
+        "eval/episode_state/upright_cosine": 88.55081176757812,
+        "eval/episode_state/upright_cosine_std": 19.03662872314453,
+        "eval/episode_termination/fall_height": 0.953125,
+        "eval/episode_termination/fall_height_std": 0.21137107908725739,
+        "eval/episode_termination/fall_upright": 0.03125,
+        "eval/episode_termination/fall_upright_std": 0.17399263381958008,
+        "eval/episode_termination/joint_limit": 0.046875,
+        "eval/episode_termination/joint_limit_std": 0.21137107908725739,
+        "eval/episode_termination/nonfinite": 0.0,
+        "eval/episode_termination/nonfinite_std": 0.0,
+        "eval/epoch_eval_time": 18.387099981307983,
+        "eval/sps": 3480.7011472750637,
+        "eval/std_episode_length": 19.019620895385742,
+        "eval/walltime": 18.387099981307983
+      },
+      "step": 0
+    },
+    "maximumReportedStep": 4505600,
+    "progressRecordCount": 6
+  }
+}

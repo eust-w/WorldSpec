@@ -47,7 +47,16 @@ That exact invalid Profile is preserved; semantic validation now rejects the
 configuration before submission. The current `stand-v2.1` changes only the
 batch size to 256, making `256 × 16` divisible by 4,096. The launcher now
 copies and verifies the checkpoint while the Pod remains alive, then
-acknowledges the entrypoint before completion. `stand-v2.1` is still research
-until its own A800 report exists. Canonical 100-million-step training,
-publishable policy quality, and five-run H1 kitchen L3 evidence remain
-unexecuted.
+acknowledges the entrypoint before completion.
+
+`stand-v2.1` has now completed on a real A800. Its final mean episode length
+was 500, the improvement ratio over `stand-v1` was 4.02, and all five
+four-second deterministic stand checks passed. Maximum planar drift was about
+0.0217 metres; minimum base height was about 0.988 metres; the report recorded
+zero capacity overflows. The internal-only checkpoint was copied in 12
+independent chunks and verified at 6,280,684 bytes with digest
+`sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c`.
+The committed report remains `research_calibration / non_publishable`. It
+permits the next walking-curriculum experiment, but canonical 100-million-step
+training, publishable policy quality, and five-run H1 kitchen L3 evidence
+remain unexecuted.

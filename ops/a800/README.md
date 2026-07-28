@@ -140,8 +140,14 @@ local semantic preflight for the constraint. It retains the exact zero command
 and strengthened versioned survival, upright, base-height, pose, torque, and
 action-rate shaping. The launcher copies the checkpoint at the
 `artifact_ready` stage while the Pod is still running, acknowledges the copy,
-and fails closed if the handoff does not complete. The result and checkpoint remain
+and fails closed if the handoff does not complete.
+
+`stand-v2.1` completed on a real A800 with final mean episode length 500,
+4.02-times improvement over `stand-v1`, and 5/5 deterministic four-second
+stand passes. Its internal checkpoint was transferred in 12 verified 512-KiB
+chunks; the final size was 6,280,684 bytes and its SHA-256 matched the report.
+The result and checkpoint remain
 `research_calibration / non_publishable / internal_only`; passing the gate
 permits the next curriculum experiment but does not establish canonical
-training or L3. The launcher copies the checkpoint only after checking its
+training or L3. The launcher acknowledges the Pod only after checking the
 reported digest and fails closed on collision-capacity overflows.

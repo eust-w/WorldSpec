@@ -117,4 +117,16 @@ Checkpoint 已生成，但旧 Launcher 在 Pod 完成后才调用 `kubectl cp`�
 
 产物交接改为两阶段握手：Pod 写出报告和 Checkpoint 后进入
 `artifact_ready`，Launcher 在 Pod 仍存活时复制产物并写入确认文件，入口收到确认后
-才退出。`stand-v2.1` 在新的 A800 报告产生前仍只是 Research Profile。
+才退出。由于该集群的单流 `kubectl cp` 两次在约 4.7–4.8 MB 处返回
+`unexpected EOF`，最终实现改为 512 KiB 独立分块、逐块重试、原子落盘并按报告
+校验总大小与 SHA-256。
+
+`stand-v2.1` 已在真实 A800 上完成并通过全部校准门：最终平均 Episode 为 500 步，
+相对 `stand-v1` 提升 4.02 倍；五次 4 秒确定性站立全部通过，最大平面漂移约
+0.0217 米，最低基座高度约 0.988 米，日志中无容量溢出。内部 Checkpoint 通过 12 个
+分块完整回传，大小为 6,280,684 字节，Digest 为
+`sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c`。
+规范报告见
+[`locomotion-calibration.a800.passed.json`](../../../examples/h1-kitchen/locomotion-calibration.a800.passed.json)。
+该证据仍明确为 `research_calibration / non_publishable / internal_only`：它只放行
+下一步行走课程实验，不等于规范 1 亿步训练完成，更不等于厨房任务 L3。
