@@ -58,3 +58,9 @@ The probe records the image source commit separately from the later probe
 definition commit. It runs as UID/GID 10001 with a read-only root filesystem,
 no ServiceAccount token, no Secret mounts, and one A800. Passing this probe
 establishes a locked runtime, not PPO convergence or L3 task success.
+
+Because CCR read access is private, the launcher first creates a tokenless,
+CPU-only pre-pull Job in `droboticflow`. Kubelet uses the existing
+`imagePullSecret` there to cache the exact image Digest on the selected A800
+node. The pre-pull Pod does not mount the Secret, and it is deleted before the
+credential-free runtime probe starts in `worldspec-a800-poc`.

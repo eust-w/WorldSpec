@@ -1,0 +1,58 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: worldspec-h1-image-prepull-
+  namespace: droboticflow
+  labels:
+    app.kubernetes.io/name: worldspec-h1-image-prepull
+    app.kubernetes.io/part-of: worldspec
+    app.kubernetes.io/managed-by: worldspec
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 1800
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worldspec-h1-image-prepull
+        app.kubernetes.io/part-of: worldspec
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      imagePullSecrets:
+        - name: droboticflow-registry
+      nodeSelector:
+        node.kubernetes.io/cce-instance-type: ehc.lgn5.c128m1024.8a800.8re.4d
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prepull
+          image: __RUNTIME_IMAGE__
+          imagePullPolicy: Always
+          command:
+            - /bin/bash
+            - -lc
+            - >-
+              python -c
+              'import importlib.metadata as m;
+              assert m.version("worldspec-h1-training") == "0.1.0";
+              assert m.version("worldspec-worker") == "0.1.0"'
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "1"
+              memory: 2Gi
+              ephemeral-storage: 1Gi
+            limits:
+              cpu: "1"
+              memory: 2Gi
+              ephemeral-storage: 1Gi

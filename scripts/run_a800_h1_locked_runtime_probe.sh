@@ -4,8 +4,10 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 KUBECONFIG_PATH="${KUBECONFIG:-/Users/d-robotics/.config/droboticflow/kubeconfigs/poc.config}"
 K8S_NAMESPACE="${K8S_NAMESPACE:-worldspec-a800-poc}"
+BUILD_NAMESPACE="${WORLD_SPEC_BUILD_NAMESPACE:-droboticflow}"
 NAMESPACE_MANIFEST="${ROOT_DIR}/ops/a800/namespace.yaml"
 JOB_TEMPLATE="${ROOT_DIR}/ops/a800/h1-locked-runtime-probe-job.yaml"
+PREPULL_TEMPLATE="${ROOT_DIR}/ops/a800/h1-training-image-prepull-job.yaml"
 ENTRYPOINT="${ROOT_DIR}/ops/a800/h1-locked-runtime-probe-entrypoint.sh"
 RUNTIME_IMAGE="${WORLD_SPEC_H1_RUNTIME_IMAGE:-ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:576c564be62a0319be0862fa2f8ca7bd344ed100a46f5c34c4d4d5ae1774058f}"
 IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-e8b8e9219ccec382d5b20005738d38b9790de230}"
@@ -17,6 +19,7 @@ for required in \
   "${KUBECONFIG_PATH}" \
   "${NAMESPACE_MANIFEST}" \
   "${JOB_TEMPLATE}" \
+  "${PREPULL_TEMPLATE}" \
   "${ENTRYPOINT}"; do
   if [[ ! -r "${required}" ]]; then
     printf 'ERROR: required path is not readable: %s\n' "${required}" >&2
@@ -59,6 +62,9 @@ if [[ "${remote_revision}" != "${PROBE_REVISION}" ]]; then
 fi
 
 kubectl_cmd=(kubectl --kubeconfig "${KUBECONFIG_PATH}" -n "${K8S_NAMESPACE}")
+build_kubectl_cmd=(
+  kubectl --kubeconfig "${KUBECONFIG_PATH}" -n "${BUILD_NAMESPACE}"
+)
 kubectl --kubeconfig "${KUBECONFIG_PATH}" apply -f "${NAMESPACE_MANIFEST}" >/dev/null
 if [[ -n "$("${kubectl_cmd[@]}" get jobs \
   -l app.kubernetes.io/name=worldspec-h1-locked-runtime-probe -o name)" ]]; then
@@ -71,7 +77,10 @@ short_revision="${PROBE_REVISION:0:12}"
 script_configmap="worldspec-h1-locked-script-${short_revision}-${run_suffix}"
 source_configmap="worldspec-h1-locked-source-${short_revision}-${run_suffix}"
 temporary_manifest="$(mktemp "${TMPDIR:-/tmp}/worldspec-h1-locked.XXXXXX.yaml")"
+prepull_manifest="$(mktemp "${TMPDIR:-/tmp}/worldspec-h1-prepull.XXXXXX.yaml")"
 source_archive="$(mktemp "${TMPDIR:-/tmp}/worldspec-source.XXXXXX.tar.gz")"
+prepull_job=""
+prepull_pod=""
 job_name=""
 pod_name=""
 local_result_dir=""
@@ -79,6 +88,10 @@ local_result_dir=""
 cleanup() {
   local exit_code=$?
   set +e
+  if [[ -n "${prepull_job}" ]]; then
+    "${build_kubectl_cmd[@]}" delete job "${prepull_job}" \
+      --ignore-not-found --wait=true --timeout=180s >/dev/null 2>&1
+  fi
   if [[ -n "${job_name}" ]]; then
     "${kubectl_cmd[@]}" delete job "${job_name}" \
       --ignore-not-found --wait=true --timeout=180s >/dev/null 2>&1
@@ -87,10 +100,38 @@ cleanup() {
     --ignore-not-found >/dev/null 2>&1
   "${kubectl_cmd[@]}" delete configmap "${source_configmap}" \
     --ignore-not-found >/dev/null 2>&1
-  rm -f "${temporary_manifest}" "${source_archive}"
+  rm -f "${temporary_manifest}" "${prepull_manifest}" "${source_archive}"
   exit "${exit_code}"
 }
 trap cleanup EXIT INT TERM
+
+if [[ -n "$("${build_kubectl_cmd[@]}" get jobs \
+  -l app.kubernetes.io/name=worldspec-h1-image-prepull -o name)" ]]; then
+  echo "ERROR: a WorldSpec H1 image pre-pull Job already exists" >&2
+  exit 2
+fi
+sed -e "s|__RUNTIME_IMAGE__|${RUNTIME_IMAGE}|g" \
+  "${PREPULL_TEMPLATE}" >"${prepull_manifest}"
+prepull_resource="$("${build_kubectl_cmd[@]}" create \
+  -f "${prepull_manifest}" -o name)"
+prepull_job="${prepull_resource#job.batch/}"
+printf 'prepull_namespace=%s\nprepull_job=%s\n' \
+  "${BUILD_NAMESPACE}" "${prepull_job}"
+if ! "${build_kubectl_cmd[@]}" wait \
+  --for=condition=complete "job/${prepull_job}" --timeout=1800s >/dev/null; then
+  prepull_pod="$("${build_kubectl_cmd[@]}" get pods \
+    -l "job-name=${prepull_job}" \
+    -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)"
+  if [[ -n "${prepull_pod}" ]]; then
+    "${build_kubectl_cmd[@]}" describe pod "${prepull_pod}" >&2 || true
+    "${build_kubectl_cmd[@]}" logs "${prepull_pod}" >&2 || true
+  fi
+  echo "ERROR: digest-pinned image pre-pull failed" >&2
+  exit 1
+fi
+"${build_kubectl_cmd[@]}" delete job "${prepull_job}" \
+  --wait=true --timeout=180s >/dev/null
+prepull_job=""
 
 git -C "${ROOT_DIR}" archive --format=tar "${IMAGE_SOURCE_REVISION}" |
   gzip -n -9 >"${source_archive}"

@@ -137,3 +137,16 @@ def test_locked_runtime_probe_uses_digest_without_credentials_or_installs() -> N
     assert "uv sync" not in entrypoint
     assert "pip install" not in entrypoint
     assert "serviceAccountTokenMounted" in entrypoint
+
+
+def test_private_image_is_prepulled_without_mounting_registry_secret() -> None:
+    (job,) = _documents("h1-training-image-prepull-job.yaml")
+    assert job["metadata"]["namespace"] == "droboticflow"
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["imagePullSecrets"] == [{"name": "droboticflow-registry"}]
+    (container,) = pod["containers"]
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["imagePullPolicy"] == "Always"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert "volumes" not in pod
