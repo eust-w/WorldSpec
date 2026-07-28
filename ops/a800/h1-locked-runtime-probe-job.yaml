@@ -46,6 +46,8 @@ spec:
               value: __PROBE_DEFINITION_REVISION__
             - name: WORLD_SPEC_IMAGE_SOURCE_REVISION
               value: __IMAGE_SOURCE_REVISION__
+            - name: WORLD_SPEC_PROBE_INPUT_REVISION
+              value: __PROBE_INPUT_REVISION__
             - name: WORLD_SPEC_RUNTIME_IMAGE
               value: __RUNTIME_IMAGE__
             - name: WORLD_SPEC_PACKAGE_LOCK_DIGEST

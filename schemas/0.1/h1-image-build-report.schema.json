@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-image-build-report.schema.json",
+  "title": "WorldSpec H1 Training Image Build Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "executionEvidence",
+    "sourceCommit",
+    "contextDigest",
+    "packageLockDigest",
+    "baseImage",
+    "destinationTag",
+    "image",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "status": { "const": "passed" },
+    "executionEvidence": { "const": "executed" },
+    "sourceCommit": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "contextDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "baseImage": {
+      "type": "string",
+      "pattern": "^[^\\s@]+@sha256:[a-f0-9]{64}$"
+    },
+    "destinationTag": {
+      "type": "string",
+      "pattern": "^[^\\s@]+:[A-Za-z0-9._-]+$"
+    },
+    "image": {
+      "type": "string",
+      "pattern": "^[^\\s@]+@sha256:[a-f0-9]{64}$"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

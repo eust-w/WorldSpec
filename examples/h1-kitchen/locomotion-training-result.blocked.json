@@ -1,7 +1,7 @@
 {
   "id": "trainingresult://worldspec/h1-menagerie-right-robotiq/blocked",
   "resultVersion": "0.1.0",
-  "trainingProfileDigest": "sha256:b873bcf694b2d358d4bae4a40dc0016cb3e5e05de99a0fe7b8434522b162843f",
+  "trainingProfileDigest": "sha256:95a118984d6e447f34df5637036dab898db1db56906358cb109d9249f49a6990",
   "targetBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
   "status": "blocked",
   "executionEvidence": "not_executed",
@@ -9,10 +9,10 @@
   "tests": [],
   "diagnostics": [
     {
-      "code": "TRAINING_RUNTIME_NOT_LOCKED",
+      "code": "TRAINING_NOT_EXECUTED",
       "severity": "error",
-      "message": "MuJoCo Playground v0.2.0, MJX/Warp, and Brax JAX PPO are source-locked, but the Linux GPU OCI image and package lock are not locked and no training has executed."
+      "message": "The digest-pinned Linux GPU OCI runtime passed an A800 MJX/Warp one-step probe, but PPO training has not executed and no policy checkpoint exists."
     }
   ],
-  "generatedAt": "2026-07-28T00:00:00Z"
+  "generatedAt": "2026-07-28T14:50:50Z"
 }

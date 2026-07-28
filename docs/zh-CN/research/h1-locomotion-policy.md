@@ -67,5 +67,6 @@ H1 在同样控制下也会跌倒。
 
 当前项目已解除“路线未决”和“GPU 运行时完全未执行”阻塞：隔离、无凭据的 A800
 兼容性 Spike 已通过 JAX GPU、MJX/Warp 加载以及派生 H1+右侧 Robotiq 模型的一次
-有限状态 reset/step。该证据仍是 `executed_not_locked`；训练 OCI 未锁定、PPO
-未执行、新策略不存在。在真实训练与行为验证完成前，不能进入厨房 5/5 L3 状态机。
+有限状态 reset/step。随后 Digest 锁定的训练 OCI 也在 A800 上以非 root、只读根
+文件系统和无运行时 Secret 的方式通过同一 one-step 门禁，运行时已为 `locked`；
+PPO 未执行、新策略不存在。在真实训练与行为验证完成前，不能进入厨房 5/5 L3 状态机。

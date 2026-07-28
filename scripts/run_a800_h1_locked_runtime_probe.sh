@@ -133,7 +133,7 @@ fi
   --wait=true --timeout=180s >/dev/null
 prepull_job=""
 
-git -C "${ROOT_DIR}" archive --format=tar "${IMAGE_SOURCE_REVISION}" |
+git -C "${ROOT_DIR}" archive --format=tar "${PROBE_REVISION}" |
   gzip -n -9 >"${source_archive}"
 source_archive_digest="$(
   python3 - "${source_archive}" <<'PY'
@@ -153,6 +153,7 @@ sed \
   -e "s|__RUNTIME_IMAGE__|${RUNTIME_IMAGE}|g" \
   -e "s|__PROBE_DEFINITION_REVISION__|${PROBE_REVISION}|g" \
   -e "s|__IMAGE_SOURCE_REVISION__|${IMAGE_SOURCE_REVISION}|g" \
+  -e "s|__PROBE_INPUT_REVISION__|${PROBE_REVISION}|g" \
   -e "s|__PACKAGE_LOCK_DIGEST__|${PACKAGE_LOCK_DIGEST}|g" \
   -e "s|__SOURCE_ARCHIVE_DIGEST__|${source_archive_digest}|g" \
   -e "s|__SCRIPT_CONFIGMAP__|${script_configmap}|g" \
@@ -236,6 +237,8 @@ if report.get("probeDefinition", {}).get("commit") != sys.argv[3]:
     raise SystemExit("probe definition revision mismatch")
 if report.get("imageSource", {}).get("commit") != sys.argv[4]:
     raise SystemExit("image source revision mismatch")
+if report.get("probeInput", {}).get("commit") != sys.argv[3]:
+    raise SystemExit("probe input revision mismatch")
 if report.get("container", {}).get("image") != sys.argv[5]:
     raise SystemExit("runtime image mismatch")
 report_path.write_text(

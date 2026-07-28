@@ -51,11 +51,12 @@ or output contract is missing.
   package-lock bindings;
 - an explicit output contract for the locked external
   `worldspec_h1_training` package;
-- a `blocked / not_executed` result while the Linux GPU runtime is unlocked.
+- a `blocked / not_executed` result while the locked runtime has not run PPO.
 
-This does not mean PPO training has run or that a new policy exists. The current
-profile runtime remains `planned`; real A800/H100 training and five consecutive
-evaluations remain acceptance blockers.
+This does not mean PPO training has run or that a new policy exists. The
+digest-pinned OCI passed an A800 one-step probe and the current profile runtime
+is `locked`; real PPO training and five consecutive evaluations remain
+acceptance blockers.
 
 ## Consequences
 

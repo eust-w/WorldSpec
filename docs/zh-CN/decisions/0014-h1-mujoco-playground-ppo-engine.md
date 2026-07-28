@@ -61,10 +61,10 @@ Brax JAX PPO 的规范输出是 Orbax/JAX Checkpoint，不伪装成 TorchScript�
 
 ## 当前证据状态
 
-训练框架选择和来源锁定为 `Accepted Design`。目标运行时仍为 `planned`：
+训练框架选择和来源锁定为 `Accepted Design`。目标运行时已为 `locked`：
 
-- 未锁定 Linux x86_64 OCI 镜像；
-- 未在 A800/H100 上执行 MJX/Warp 预检；
+- Linux x86_64 OCI 镜像已由 Digest 锁定；
+- A800 上 MJX/Warp one-step 预检已通过；
 - 未执行 PPO；
 - 未生成新策略；
 - 未完成目标 Bundle 五次连续评估。

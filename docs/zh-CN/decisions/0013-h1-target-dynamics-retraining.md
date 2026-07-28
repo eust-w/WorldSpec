@@ -44,10 +44,11 @@ Trace。训练 Worker 必须 fail-closed；缺少锁定运行时、GPU、原生�
 - 版本化 LocomotionTrainingProfile 与 TrainingResult Schema；
 - 目标 Bundle、右手单夹爪、原生加载报告、OCI 与 Package Lock 的绑定门禁；
 - 外部锁定训练包 `worldspec_h1_training` 的明确输出契约；
-- 未锁定 Linux GPU 运行时的 `blocked / not_executed` 结果。
+- 已锁定但尚未执行 PPO 的 `blocked / not_executed` 结果。
 
-这不表示 PPO 训练已经运行，也不表示产生了新策略。当前 Profile 的运行时状态仍为
-`planned`，真实 A800/H100 训练与五次连续评估仍是验收阻塞项。
+这不表示 PPO 训练已经运行，也不表示产生了新策略。Digest 锁定 OCI 已通过 A800
+one-step 探针，当前 Profile 的运行时状态为 `locked`；真实 PPO 训练与五次连续评估
+仍是验收阻塞项。
 
 ## 后果
 

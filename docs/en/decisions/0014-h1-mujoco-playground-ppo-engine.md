@@ -67,10 +67,10 @@ that require their own validation evidence.
 ## Current evidence status
 
 The framework decision and source lock are `Accepted Design`; the target runtime
-remains `planned`:
+is now `locked`:
 
-- no Linux x86_64 OCI image is locked;
-- no MJX/Warp preflight has run on A800/H100;
+- the Linux x86_64 OCI image is digest-pinned;
+- the A800 MJX/Warp one-step preflight passed;
 - PPO has not run;
 - no new policy exists;
 - the target bundle has not passed five consecutive evaluations.

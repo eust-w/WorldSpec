@@ -26,6 +26,7 @@ for required in \
   WORLD_SPEC_REPOSITORY \
   WORLD_SPEC_PROBE_DEFINITION_REVISION \
   WORLD_SPEC_IMAGE_SOURCE_REVISION \
+  WORLD_SPEC_PROBE_INPUT_REVISION \
   WORLD_SPEC_RUNTIME_IMAGE \
   WORLD_SPEC_PACKAGE_LOCK_DIGEST \
   WORLD_SPEC_SOURCE_ARCHIVE_DIGEST; do
@@ -193,6 +194,10 @@ report = {
     "imageSource": {
         "repository": os.environ["WORLD_SPEC_REPOSITORY"],
         "commit": os.environ["WORLD_SPEC_IMAGE_SOURCE_REVISION"],
+    },
+    "probeInput": {
+        "repository": os.environ["WORLD_SPEC_REPOSITORY"],
+        "commit": os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"],
         "materialization": "verified_git_archive",
         "archiveDigest": os.environ["WORLD_SPEC_SOURCE_ARCHIVE_DIGEST"],
     },
