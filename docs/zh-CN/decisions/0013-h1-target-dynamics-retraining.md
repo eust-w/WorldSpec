@@ -47,11 +47,12 @@ Trace。训练 Worker 必须 fail-closed；缺少锁定运行时、GPU、原生�
 - 规范训练仍为 `blocked / not_executed`，并另存不可发布的研究级 PPO smoke 结果。
 
 Digest 锁定 OCI 与一次 32,768 请求步、256 环境的 PPO smoke 已真实运行并通过
-数值与容量门禁，但都绑定容量语义修订前的 Profile。smoke 明确为
+数值与容量门禁，但该次 smoke 绑定容量语义修订前的 Profile。smoke 明确为
 `research_smoke / non_publishable`，没有 Checkpoint，也不表示产生了可用新策略。
 容量语义修订后的新 Digest 锁定镜像已由提交 `101aff7` 构建，当前 Profile 的
-A800 one-step 与 8,192 环境规模预检均已通过；新 smoke、规范 1 亿步训练与五次
-连续评估仍是验收阻塞项。
+A800 one-step 与 8,192 环境规模预检均已通过；修订后的研究级 PPO smoke 也已
+通过数值、推理与容量门禁，但平均评估 Episode 仅约 87.34 步，仍未保存 Checkpoint。
+规范 1 亿步训练、策略质量验收与五次连续评估仍是验收阻塞项。
 
 ## 后果
 

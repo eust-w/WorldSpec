@@ -70,16 +70,18 @@ H1 在同样控制下也会跌倒。
 有限状态 reset/step。随后 Digest 锁定的训练 OCI 也在 A800 上以非 root、只读根
 文件系统和无运行时 Secret 的方式通过同一 one-step 门禁，运行时已为 `locked`。
 
-此外，一次 32,768 请求步、256 并行环境的 A800 PPO 研究级 smoke 已真实执行：
-Brax 最终报告 33,280 步，训练吞吐约为 2,596.7 steps/s，训练与派生策略推理均为
-有限值；在按环境扩展 `naconmax` 后，CCD 与接触容量溢出计数均为零。该证据固定为
-`research_smoke / non_publishable`：没有保存 Checkpoint，平均评估 Episode 约为
-87.75 步，不能证明策略质量。规范 1 亿步训练、新的可发布策略和厨房 5/5 L3 行为
-仍未执行；在这些行为验证完成前，不能进入 L3 状态机。
+此外，旧容量 Profile 的一次 32,768 请求步、256 并行环境 A800 PPO 研究级 smoke
+已真实执行。Brax 最终报告 33,280 步，训练吞吐约为 2,596.7 steps/s，训练与派生
+策略推理均为有限值；该证据固定为 `research_smoke / non_publishable`，没有保存
+Checkpoint，不能证明策略质量。
 
 后续对 MuJoCo 3.6 MJX-Warp 容量语义的复核确认：`naconmax` 与 `naccdmax` 是所有
 并行世界共享容量，`njmax` 才是每个世界容量。当前 Profile 因此改为每环境
 16 个活动接触、8 个 CCD 接触和每世界 `njmax=128`。提交 `101aff7` 的新
 Digest 锁定镜像与当前 Profile 的 A800 one-step 已通过；此前 smoke 仍只作为
-历史证据。8,192 环境规模预检也已通过，批量状态数值有限且容量零溢出；新
-smoke 仍需真实执行。
+历史证据。8,192 环境规模预检也已通过，批量状态数值有限且容量零溢出。
+容量修订后的第二次 32,768 请求步、256 环境 smoke 随后在 A800 完成：最终报告
+33,280 步、约 2,672.75 steps/s，训练和推理数值有限，CCD 与其他容量溢出均为零。
+但平均评估 Episode 仅约 87.34 步；该结果仍为 `research_smoke / non_publishable`，
+没有 Checkpoint，也不表示策略可用。规范 1 亿步训练、可发布策略和厨房 5/5 L3
+行为仍未执行；在这些行为验证完成前，不能进入 L3 状态机。

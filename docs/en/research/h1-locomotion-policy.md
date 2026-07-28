@@ -77,15 +77,11 @@ H1+right-Robotiq model. A digest-pinned training OCI then passed the same gate
 as non-root with a read-only root filesystem and no runtime Secret, so the
 runtime is now `locked`.
 
-One 32,768-requested-step, 256-environment A800 PPO research smoke also ran.
-Brax reported 33,280 final steps, about 2,596.7 training steps/s, finite
-training values, and finite trained-policy inference. After scaling `naconmax`
-per environment, both CCD and contact-capacity overflow counts were zero. This
-evidence is fixed as `research_smoke / non_publishable`: it saved no checkpoint,
-and its mean evaluation episode length of about 87.75 steps does not establish
-policy quality. The canonical 100-million-step run, a new publishable policy,
-and the kitchen 5/5 L3 behavior remain unexecuted. The pipeline cannot enter
-the L3 state machine before those behavior validations pass.
+One 32,768-requested-step, 256-environment A800 PPO research smoke also ran for
+the prior capacity Profile. Brax reported 33,280 final steps, about 2,596.7
+training steps/s, finite training values, and finite trained-policy inference.
+This evidence is fixed as `research_smoke / non_publishable`: it saved no
+checkpoint and does not establish policy quality.
 
 A subsequent review of the MuJoCo 3.6 MJX-Warp capacity semantics confirmed
 that `naconmax` and `naccdmax` are shared across all vectorized worlds, while
@@ -94,4 +90,12 @@ and eight CCD contacts per environment with per-world `njmax=128`. A new
 digest-pinned image built from commit `101aff7` and the current Profile's A800
 one-step have passed; the prior smoke remains historical evidence only. The
 8,192-environment scale probe also passed with finite batched state and zero
-capacity overflows; a new smoke still requires execution.
+capacity overflows. A second, capacity-corrected 32,768-requested-step,
+256-environment A800 smoke then completed with 33,280 reported final steps,
+about 2,672.75 training steps/s, finite training and inference values, and zero
+CCD or other capacity overflows. Its mean evaluation episode length was only
+about 87.34 steps. It therefore remains `research_smoke / non_publishable`,
+saved no checkpoint, and does not establish a usable policy. The canonical
+100-million-step run, a publishable policy, and the kitchen 5/5 L3 behavior
+remain unexecuted; the pipeline cannot enter the L3 state machine before those
+behavior validations pass.

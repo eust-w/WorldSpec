@@ -108,3 +108,10 @@ The 256-environment smoke therefore uses `4096/2048`, while the
 headroom over the locked upstream H1 reference (`8` contacts per environment
 and `njmax=51`) for the added right Robotiq model and remain subject to the
 canonical-scale capacity probe.
+
+The first capacity-corrected A800 smoke completed in 232.44 seconds. Brax
+reported 33,280 final steps and 2,672.75 final training steps/s; trained-policy
+inference was finite, and CCD/other capacity-overflow counts were zero. The
+mean evaluation episode length was only 87.34 steps, so the run is runtime
+evidence with poor policy-quality evidence, not a training benchmark or a
+usable-policy result.

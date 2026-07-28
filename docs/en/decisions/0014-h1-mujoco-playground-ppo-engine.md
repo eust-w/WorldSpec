@@ -82,9 +82,12 @@ The current Profile now follows MJX-Warp shared-contact and per-world
 constraint-capacity semantics. A new digest-pinned image has been built from
 commit `101aff7`, and the current Profile's A800 one-step has passed. The
 8,192-environment scale probe also passed with finite values and zero capacity
-overflows, while a new smoke remains pending. Current evidence proves runtime
-and capacity allocation, not a usable policy, canonical training, or L3
-acceptance.
+overflows. A capacity-corrected research smoke completed 33,280 reported steps
+with finite training/inference values and zero capacity overflows, but its mean
+evaluation episode length was only about 87.34 steps and it saved no
+checkpoint. Current evidence proves runtime, capacity allocation, and one
+non-zero PPO update execute; it does not prove a usable policy, canonical
+training, or L3 acceptance.
 
 ## Consequences
 
