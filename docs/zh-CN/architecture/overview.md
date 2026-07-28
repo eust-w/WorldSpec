@@ -33,4 +33,4 @@ WorldSpec Core 不等于 MJCF、USD、glTF 等字段的并集。目标专有数�
 
 ## 实现方向
 
-Rust Core 的确定性 Validator、CLI、CAS/API、OBJ Doctor、结构化机器人接入、MuJoCo/Three.js 参考编译切片，以及 TRELLIS.2/Nerfstudio 隔离 Worker 已实现。真实 GPU 生成运行、TypeScript/WASM 绑定、完整 Compiler/Doctor 和 L2/L3 认证仍未完成。语言选择不进入 Schema 语义。
+Rust Core 的确定性 Validator、CLI、CAS/API、OBJ Doctor、结构化机器人接入、MuJoCo/Three.js 参考编译和本地 L2 认证，以及 TRELLIS.2/Nerfstudio 隔离 Worker 已实现。真实 GPU 生成、Linux x86_64 参考 Profile L2、TypeScript/WASM 绑定、完整 Compiler/Doctor 和 H1 L3 仍未完成。语言选择不进入 Schema 语义。

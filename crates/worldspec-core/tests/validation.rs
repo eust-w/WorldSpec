@@ -1,8 +1,8 @@
 use serde_json::Value;
 use std::{fs, path::PathBuf};
 use worldspec_core::{
-    validate_build_manifest, validate_certificate, validate_file, validate_runtime_record,
-    validate_world_definition,
+    validate_build_manifest, validate_certificate, validate_conformance_report, validate_file,
+    validate_runtime_record, validate_world_definition,
 };
 
 fn root() -> PathBuf {
@@ -180,6 +180,25 @@ fn invalidated_certificate_cannot_remain_valid() {
         found
             .iter()
             .any(|diagnostic| diagnostic.code == "CERT_INVALIDATION_CONFLICT")
+    );
+}
+
+#[test]
+fn not_executed_conformance_cannot_report_runtime_passes() {
+    let mut report = read("examples/minimal-cube/conformance-report.json");
+    report["tests"][0]["result"] = Value::String("pass".to_owned());
+    report["summary"] = serde_json::json!({
+        "passed": 1,
+        "failed": 0,
+        "unknown": 0,
+        "notRun": 0,
+        "overall": "pass"
+    });
+    let found = validate_conformance_report(&report);
+    assert!(
+        found
+            .iter()
+            .any(|diagnostic| diagnostic.code == "CONFORMANCE_EXECUTION_EVIDENCE_CONFLICT")
     );
 }
 

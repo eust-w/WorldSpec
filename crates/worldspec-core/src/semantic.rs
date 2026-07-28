@@ -869,6 +869,80 @@ pub fn validate_certificate(document: &Value) -> Vec<Diagnostic> {
     diagnostics
 }
 
+/// Validate result accounting and execution-evidence semantics for a ConformanceReport.
+pub fn validate_conformance_report(document: &Value) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let tests = array(document, "tests");
+    let mut passed = 0_u64;
+    let mut failed = 0_u64;
+    let mut unknown = 0_u64;
+    let mut not_run = 0_u64;
+    for test in tests {
+        match string(test, "result") {
+            Some("pass") => passed += 1,
+            Some("fail") => failed += 1,
+            Some("unknown") => unknown += 1,
+            Some("not_run") => not_run += 1,
+            _ => {}
+        }
+    }
+    let expected = [
+        ("passed", passed),
+        ("failed", failed),
+        ("unknown", unknown),
+        ("notRun", not_run),
+    ];
+    for (field, actual) in expected {
+        let declared = document
+            .pointer(&format!("/summary/{field}"))
+            .and_then(Value::as_u64)
+            .unwrap_or_default();
+        if declared != actual {
+            diagnostics.push(
+                Diagnostic::error(
+                    "CONFORMANCE_SUMMARY_MISMATCH",
+                    format!("summary.{field} is {declared}, but tests require {actual}"),
+                )
+                .at_path(format!("/summary/{field}")),
+            );
+        }
+    }
+    let declared_overall = document
+        .pointer("/summary/overall")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let expected_overall = if failed > 0 {
+        "fail"
+    } else if unknown > 0 || not_run > 0 {
+        "incomplete"
+    } else {
+        "pass"
+    };
+    if declared_overall != expected_overall {
+        diagnostics.push(
+            Diagnostic::error(
+                "CONFORMANCE_OVERALL_MISMATCH",
+                format!(
+                    "summary.overall is {declared_overall}, but test results require {expected_overall}"
+                ),
+            )
+            .at_path("/summary/overall"),
+        );
+    }
+    if string(document, "executionEvidence") == Some("not_executed")
+        && (passed > 0 || declared_overall == "pass")
+    {
+        diagnostics.push(
+            Diagnostic::error(
+                "CONFORMANCE_EXECUTION_EVIDENCE_CONFLICT",
+                "not_executed evidence cannot contain passing runtime tests",
+            )
+            .at_path("/executionEvidence"),
+        );
+    }
+    diagnostics
+}
+
 /// Validate semantic coverage rules for a schema-valid LossReport.
 pub fn validate_loss_report(report: &Value, target_profile: Option<&Value>) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();

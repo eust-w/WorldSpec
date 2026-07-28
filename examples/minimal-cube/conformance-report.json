@@ -2,6 +2,14 @@
   "id": "conformance://examples/minimal-cube-mujoco",
   "reportVersion": "0.1.0",
   "buildManifestDigest": "sha256:0707070707070707070707070707070707070707070707070707070707070707",
+  "targetProfileDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "target": "mujoco",
+  "executionEvidence": "not_executed",
+  "runner": {
+    "name": "documentation-placeholder",
+    "version": "0.0.0",
+    "digest": "sha256:0909090909090909090909090909090909090909090909090909090909090909"
+  },
   "environment": {
     "os": "linux",
     "architecture": "x86_64",
@@ -9,6 +17,16 @@
     "runtimeVersion": "not-executed",
     "hardware": "not-applicable"
   },
+  "testedArtifacts": [
+    {
+      "id": "artifact://examples/minimal-cube-scene",
+      "digest": "sha256:0303030303030303030303030303030303030303030303030303030303030303",
+      "mediaType": "application/mjcf+xml",
+      "path": "scene.xml",
+      "sizeBytes": 0,
+      "role": "target_scene"
+    }
+  ],
   "tests": [
     {
       "id": "test://worldspec/native-load",
@@ -32,5 +50,6 @@
     "unknown": 0,
     "notRun": 1,
     "overall": "incomplete"
-  }
+  },
+  "generatedAt": "2026-07-28T00:00:00Z"
 }

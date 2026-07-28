@@ -34,16 +34,16 @@ pub enum LossStatus {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LossEntry {
+    pub id: String,
     pub source_ref: String,
     pub capability: String,
     pub status: LossStatus,
-    pub reason: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub target_ref: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub quantitative_error: Option<Value>,
+    pub target_binding: Option<String>,
+    pub rationale: String,
+    pub consequence: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub assumptions: Vec<String>,
+    pub diagnostics: Vec<Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -51,10 +51,10 @@ pub struct LossEntry {
 pub struct LossReport {
     pub id: String,
     pub report_version: String,
-    pub source_digest: String,
-    pub target_profile_digest: String,
-    pub entries: Vec<LossEntry>,
+    pub build_id: String,
     pub coverage: Value,
+    pub entries: Vec<LossEntry>,
+    pub summary: Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -64,6 +64,8 @@ pub struct SourceBundle {
     pub bundle_version: String,
     pub items: Vec<Value>,
     pub rights_ref: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rights_digest: Option<String>,
     pub bundle_digest: String,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub native_payloads: Vec<Value>,
@@ -132,7 +134,10 @@ pub struct BuildIntent {
 
 #[cfg(test)]
 mod tests {
-    use super::{BuildIntent, BuildManifest, Certificate, TargetProfile, WorldDefinition};
+    use super::{
+        BuildIntent, BuildManifest, Certificate, ConformanceReport, LossReport, SourceBundle,
+        TargetProfile, WorldDefinition,
+    };
 
     fn parse<T: serde::de::DeserializeOwned>(text: &str) {
         serde_json::from_str::<T>(text).unwrap();
@@ -152,6 +157,15 @@ mod tests {
         ));
         parse::<Certificate>(include_str!(
             "../../../examples/minimal-cube/certificate.json"
+        ));
+        parse::<ConformanceReport>(include_str!(
+            "../../../examples/minimal-cube/conformance-report.json"
+        ));
+        parse::<LossReport>(include_str!(
+            "../../../examples/minimal-cube/loss-report.json"
+        ));
+        parse::<SourceBundle>(include_str!(
+            "../../../examples/minimal-cube/source-bundle.json"
         ));
     }
 }
@@ -200,4 +214,21 @@ pub struct Certificate {
     pub signature_status: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signature: Option<Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ConformanceReport {
+    pub id: String,
+    pub report_version: String,
+    pub build_manifest_digest: String,
+    pub target_profile_digest: String,
+    pub target: String,
+    pub execution_evidence: String,
+    pub runner: Value,
+    pub environment: Value,
+    pub tested_artifacts: Vec<ArtifactRef>,
+    pub tests: Vec<Value>,
+    pub summary: Value,
+    pub generated_at: String,
 }

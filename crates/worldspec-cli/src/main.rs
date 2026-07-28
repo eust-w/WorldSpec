@@ -9,7 +9,10 @@ use std::{
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 use worldspec_cas::{Cas, JobStatus};
-use worldspec_cert::sign_certificate_with_seed;
+use worldspec_cert::{
+    CertificationAssessment, assess_l2_bindings, sign_certificate_with_seed,
+    verify_bundle_artifacts,
+};
 use worldspec_compiler::{
     ResourceMap, compile_mujoco_with_resources, compile_threejs_with_resources,
     write_compile_summary,
@@ -98,9 +101,34 @@ enum Command {
     },
     /// Validate and optionally Ed25519-sign a certificate document.
     Certify {
-        input: PathBuf,
+        /// Existing Certificate to validate/sign. Omit to issue L2 from bound evidence.
+        input: Option<PathBuf>,
         #[arg(long)]
         output: PathBuf,
+        /// Explicit issuer name when creating a new Certificate.
+        #[arg(long)]
+        issuer: Option<String>,
+        /// Canonical WorldDefinition bound by a valid L2 certificate.
+        #[arg(long)]
+        world: Option<PathBuf>,
+        /// TargetProfile used by the certified build.
+        #[arg(long)]
+        target_profile: Option<PathBuf>,
+        /// BuildManifest emitted by the compiler.
+        #[arg(long)]
+        build_manifest: Option<PathBuf>,
+        /// Complete LossReport emitted by the compiler.
+        #[arg(long)]
+        loss_report: Option<PathBuf>,
+        /// Executed ConformanceReport for this exact build.
+        #[arg(long)]
+        conformance_report: Option<PathBuf>,
+        /// Directory containing all BuildManifest artifacts.
+        #[arg(long)]
+        bundle_dir: Option<PathBuf>,
+        /// Optional machine-readable assessment, written on pass or failure.
+        #[arg(long)]
+        assessment_output: Option<PathBuf>,
         /// File containing a 32-byte Ed25519 seed as 64 lowercase hex digits.
         #[arg(long)]
         signing_key: Option<PathBuf>,
@@ -1105,6 +1133,146 @@ fn decode_seed(path: &Path) -> Result<[u8; 32], String> {
     Ok(seed)
 }
 
+fn require_path(value: Option<PathBuf>, flag: &str) -> Result<PathBuf, String> {
+    value.ok_or_else(|| format!("{flag} is required for a valid L2 certificate"))
+}
+
+fn issue_l2_candidate(
+    world_path: &Path,
+    target_profile_path: &Path,
+    build_manifest_path: &Path,
+    loss_report_path: &Path,
+    conformance_report_path: &Path,
+    issuer: &str,
+) -> Result<Value, String> {
+    let world = read_json(world_path)?;
+    let target = read_json(target_profile_path)?;
+    let manifest = read_json(build_manifest_path)?;
+    let loss = read_json(loss_report_path)?;
+    let conformance = read_json(conformance_report_path)?;
+    let world_digest = canonical_sha256(&world).map_err(|error| error.to_string())?;
+    let target_digest = canonical_sha256(&target).map_err(|error| error.to_string())?;
+    let manifest_digest = canonical_sha256(&manifest).map_err(|error| error.to_string())?;
+    let loss_digest = canonical_sha256(&loss).map_err(|error| error.to_string())?;
+    let conformance_digest = canonical_sha256(&conformance).map_err(|error| error.to_string())?;
+    let identity = manifest_digest.trim_start_matches("sha256:");
+    let evidence_statuses = world
+        .pointer("/evidenceGraph/claims")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|claim| claim.get("status").and_then(Value::as_str))
+        .map(str::to_owned)
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .map(Value::String)
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "id": format!("certificate://local/l2/{identity}"),
+        "certificateVersion": "0.1.0",
+        "level": "L2",
+        "assetDigest": world_digest,
+        "targetProfileDigest": target_digest,
+        "buildManifestDigest": manifest_digest,
+        "lossReportDigest": loss_digest,
+        "conformanceReportDigest": conformance_digest,
+        "evidenceStatuses": evidence_statuses,
+        "issuedAt": jiff::Timestamp::now().to_string(),
+        "issuer": issuer,
+        "valid": true,
+        "invalidatedBy": [],
+        "signatureStatus": "unsigned"
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
+fn assess_certificate_for_issue(
+    certificate: &Value,
+    world_path: Option<PathBuf>,
+    target_profile_path: Option<PathBuf>,
+    build_manifest_path: Option<PathBuf>,
+    loss_report_path: Option<PathBuf>,
+    conformance_report_path: Option<PathBuf>,
+    bundle_dir: Option<PathBuf>,
+    assessment_output: Option<&Path>,
+    schema_dir: &Path,
+) -> Result<(), String> {
+    if certificate.get("valid").and_then(Value::as_bool) != Some(true) {
+        return Ok(());
+    }
+    match certificate.get("level").and_then(Value::as_str) {
+        Some("L2") => {}
+        Some("L3") => {
+            return Err(
+                "valid L3 issuance is disabled until TaskProfile behavior evidence is implemented"
+                    .to_owned(),
+            );
+        }
+        _ => return Ok(()),
+    }
+    let world = read_json(&require_path(world_path, "--world")?)?;
+    let target_profile = read_json(&require_path(target_profile_path, "--target-profile")?)?;
+    let build_manifest = read_json(&require_path(build_manifest_path, "--build-manifest")?)?;
+    let loss_report = read_json(&require_path(loss_report_path, "--loss-report")?)?;
+    let conformance_report = read_json(&require_path(
+        conformance_report_path,
+        "--conformance-report",
+    )?)?;
+    let bundle_dir = require_path(bundle_dir, "--bundle-dir")?;
+    validate_document(schema_dir, "world-definition.schema.json", &world, None)?;
+    validate_document(
+        schema_dir,
+        "target-profile.schema.json",
+        &target_profile,
+        None,
+    )?;
+    validate_document(
+        schema_dir,
+        "build-manifest.schema.json",
+        &build_manifest,
+        None,
+    )?;
+    validate_document(
+        schema_dir,
+        "loss-report.schema.json",
+        &loss_report,
+        Some(&target_profile),
+    )?;
+    validate_document(
+        schema_dir,
+        "conformance-report.schema.json",
+        &conformance_report,
+        None,
+    )?;
+    let bundle_assessment = verify_bundle_artifacts(&build_manifest, bundle_dir);
+    let binding_assessment = assess_l2_bindings(
+        certificate,
+        &world,
+        &target_profile,
+        &build_manifest,
+        &loss_report,
+        &conformance_report,
+    )
+    .map_err(|error| error.to_string())?;
+    let mut diagnostics = bundle_assessment.diagnostics;
+    diagnostics.extend(binding_assessment.diagnostics);
+    let assessment = CertificationAssessment {
+        eligible: diagnostics.is_empty(),
+        diagnostics,
+    };
+    if let Some(path) = assessment_output {
+        write_json(
+            path,
+            &serde_json::to_value(&assessment).map_err(|error| error.to_string())?,
+        )?;
+    }
+    if assessment.eligible {
+        Ok(())
+    } else {
+        Err(serde_json::to_string_pretty(&assessment).map_err(|error| error.to_string())?)
+    }
+}
+
 fn terminal(status: &JobStatus) -> bool {
     matches!(
         status,
@@ -1443,11 +1611,44 @@ fn run() -> Result<bool, String> {
         Command::Certify {
             input,
             output,
+            issuer,
+            world,
+            target_profile,
+            build_manifest,
+            loss_report,
+            conformance_report,
+            bundle_dir,
+            assessment_output,
             signing_key,
             public_key_id,
             schema_dir,
         } => {
-            let mut certificate = read_json(&input)?;
+            let mut certificate = if let Some(input) = input {
+                read_json(&input)?
+            } else {
+                let issuer = issuer.as_deref().ok_or_else(|| {
+                    "--issuer is required when issuing a new L2 certificate".to_owned()
+                })?;
+                issue_l2_candidate(
+                    &require_path(world.clone(), "--world")?,
+                    &require_path(target_profile.clone(), "--target-profile")?,
+                    &require_path(build_manifest.clone(), "--build-manifest")?,
+                    &require_path(loss_report.clone(), "--loss-report")?,
+                    &require_path(conformance_report.clone(), "--conformance-report")?,
+                    issuer,
+                )?
+            };
+            assess_certificate_for_issue(
+                &certificate,
+                world,
+                target_profile,
+                build_manifest,
+                loss_report,
+                conformance_report,
+                bundle_dir,
+                assessment_output.as_deref(),
+                &schema_dir,
+            )?;
             if let Some(path) = signing_key {
                 let key_id = public_key_id.ok_or_else(|| {
                     "--public-key-id is required when --signing-key is used".to_owned()

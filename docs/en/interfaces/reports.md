@@ -24,10 +24,12 @@ Locks digests for WorldDefinition, EvidenceGraph, TargetProfile, BuildIntent, Co
 
 ## ConformanceReport
 
-Records test ID/version, environment, input, result, metrics, tolerances, and evidence artifacts. `not_run` and `unknown` never count as pass.
+Records test ID/version, runner digest, TargetProfile digest, target, actual environment, tested artifacts, result, metrics, tolerances, and evidence artifacts. `executionEvidence` is explicitly `executed` or `not_executed`; the latter cannot carry passing runtime tests. `not_run` and `unknown` never count as pass.
+
+Test entries deterministically derive summary counts and `overall`; callers cannot self-declare them. L2 requires actual OS, architecture, and runtime version to exactly match the TargetProfile.
 
 ## Certificate
 
-Summarizes L0–L3, applicable Profile, referenced digests, issuer, and validity without copying test detail. A change to any input, tool, Profile, or test rule invalidates it.
+Summarizes L0–L3, applicable Profile, referenced digests, issuer, and validity without copying test detail. Before L2 issuance, WorldDefinition, TargetProfile, BuildManifest, LossReport, ConformanceReport, and every Bundle artifact digest/size are verified. A change to any input, tool, Profile, or test rule invalidates it.
 
 Reports are machine-readable, immutable, and distinguish design claims from real execution evidence.

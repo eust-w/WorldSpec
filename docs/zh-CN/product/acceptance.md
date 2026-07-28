@@ -32,4 +32,4 @@ last-verified: 2026-07-28
 - 双语文档、Schema、示例、报告格式和版本策略通过仓库基线检查。
 - 性能、显存、成本、加载率和行为偏差用真实结果报告，不设未经测量的通过数字。
 
-当前仓库已完成文档/Schema 基线、Rust Validator、平台骨架、OBJ Doctor 和参考编译切片，但未完成全格式编译器、生成器及 L2/L3 运行认证，因此不满足产品 v0.1 验收。
+当前仓库已完成文档/Schema 基线、Rust Validator、平台骨架、OBJ Doctor、参考编译切片，以及当前 macOS arm64 本地 Profile 的 MuJoCo/Three.js L2。Linux x86_64 参考 Profile、真实 GPU 生成、全格式原生运行和 H1 厨房 L3 尚未完成，因此仍不满足产品 v0.1 整体验收。

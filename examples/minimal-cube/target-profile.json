@@ -2,7 +2,7 @@
   "id": "profile://worldspec/mujoco-rigid-conformance",
   "profileVersion": "0.1.0",
   "target": "mujoco",
-  "runtimeVersion": "reference-unlocked",
+  "runtimeVersion": "3.6.0",
   "platform": {
     "os": "linux",
     "architecture": "x86_64"

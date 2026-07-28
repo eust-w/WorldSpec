@@ -7,14 +7,33 @@
     "id",
     "reportVersion",
     "buildManifestDigest",
+    "targetProfileDigest",
+    "target",
+    "executionEvidence",
+    "runner",
     "environment",
+    "testedArtifacts",
     "tests",
-    "summary"
+    "summary",
+    "generatedAt"
   ],
   "properties": {
     "id": { "$ref": "common.schema.json#/$defs/id" },
     "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
     "buildManifestDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "targetProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "target": { "enum": ["mujoco", "threejs"] },
+    "executionEvidence": { "enum": ["executed", "not_executed"] },
+    "runner": {
+      "type": "object",
+      "required": ["name", "version", "digest"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
     "environment": {
       "type": "object",
       "required": ["os", "architecture", "runtime", "runtimeVersion"],
@@ -26,6 +45,11 @@
         "hardware": { "type": "string" }
       },
       "additionalProperties": false
+    },
+    "testedArtifacts": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/artifactRef" },
+      "minItems": 1
     },
     "tests": {
       "type": "array",
@@ -62,7 +86,8 @@
         "overall": { "enum": ["pass", "fail", "incomplete"] }
       },
       "additionalProperties": false
-    }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
   },
   "additionalProperties": false
 }

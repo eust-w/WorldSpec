@@ -34,4 +34,4 @@ A level is bound to asset digest, TargetProfile, BuildIntent, compiler version, 
 - Bilingual documentation, schemas, examples, report formats, and version policies pass repository checks.
 - Performance, memory, cost, load rate, and behavioral deviation are reported from real measurements; unmeasured pass numbers are prohibited.
 
-This repository currently completes the documentation/schema baseline, Rust Validator, platform skeleton, OBJ Doctor, and reference compiler slice, but not full-format compilers, generators, or L2/L3 runtime certification. It does not satisfy product v0.1 acceptance.
+This repository currently completes the documentation/schema baseline, Rust Validator, platform skeleton, OBJ Doctor, reference compiler slices, and MuJoCo/Three.js L2 for current macOS arm64 local Profiles. Linux x86_64 reference Profiles, real GPU generation, full-format native execution, and the H1 kitchen L3 remain incomplete, so product v0.1 is not accepted.

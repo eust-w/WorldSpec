@@ -12,13 +12,14 @@ mod semantic;
 pub use canonical::{CanonicalError, canonical_json, canonical_sha256};
 pub use diagnostic::{Diagnostic, Severity, ValidationReport};
 pub use model::{
-    ArtifactRef, BuildIntent, BuildManifest, Certificate, EvidenceGraph, LossEntry, LossReport,
-    LossStatus, SourceBundle, TargetProfile, WorldDefinition,
+    ArtifactRef, BuildIntent, BuildManifest, Certificate, ConformanceReport, EvidenceGraph,
+    LossEntry, LossReport, LossStatus, SourceBundle, TargetProfile, WorldDefinition,
 };
 pub use schema::{SchemaCatalog, SchemaCatalogError};
 pub use semantic::{
-    validate_build_manifest, validate_certificate, validate_loss_report, validate_lowering_plan,
-    validate_runtime_record, validate_world_definition,
+    validate_build_manifest, validate_certificate, validate_conformance_report,
+    validate_loss_report, validate_lowering_plan, validate_runtime_record,
+    validate_world_definition,
 };
 
 use serde_json::Value;
@@ -56,6 +57,9 @@ pub fn validate_file(
             }
             "certificate.schema.json" => {
                 diagnostics.extend(validate_certificate(instance));
+            }
+            "conformance-report.schema.json" => {
+                diagnostics.extend(validate_conformance_report(instance));
             }
             _ => {}
         }
