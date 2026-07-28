@@ -58,6 +58,8 @@ spec:
               value: /scratch/uv/python
             - name: UV_PROJECT_ENVIRONMENT
               value: /scratch/runtime
+            - name: TMPDIR
+              value: /scratch/tmp
             - name: JAX_DEFAULT_MATMUL_PRECISION
               value: highest
             - name: JAX_PLATFORMS

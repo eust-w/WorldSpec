@@ -10,18 +10,20 @@ readonly BOOTSTRAP_DIR=/scratch/bootstrap
 readonly SOURCE_ARCHIVE=/opt/worldspec-source/worldspec.tar.gz
 readonly UV_VERSION=0.8.22
 readonly PYTHON_VERSION=3.12.11
+CURRENT_STAGE=initialization
 
 stage() {
+  CURRENT_STAGE="$1"
   printf 'WORLDSPEC_A800_SPIKE_STAGE=%s\n' "$1"
 }
 
 fail() {
   local exit_code=$?
-  printf 'WORLDSPEC_A800_SPIKE_FAILED=%s\n' "${1:-unknown}"
+  printf 'WORLDSPEC_A800_SPIKE_FAILED=%s\n' "${CURRENT_STAGE}"
   exit "${exit_code}"
 }
 
-trap 'fail "${BASH_LINENO[0]:-unknown}"' ERR
+trap fail ERR
 
 for required in \
   WORLD_SPEC_REPOSITORY \
@@ -39,6 +41,7 @@ mkdir -p \
   "${XDG_CACHE_HOME}" \
   "${UV_CACHE_DIR}" \
   "${UV_PYTHON_INSTALL_DIR}" \
+  "${TMPDIR}" \
   "${RESULT_DIR}"
 
 stage gpu_inventory

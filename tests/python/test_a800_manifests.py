@@ -51,6 +51,8 @@ def test_runtime_spike_job_is_tokenless_digest_ready_and_ephemeral() -> None:
     assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
     assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    environment = {item["name"]: item["value"] for item in container["env"]}
+    assert environment["TMPDIR"] == "/scratch/tmp"
 
     volume_kinds = {
         next(key for key in volume if key != "name")
