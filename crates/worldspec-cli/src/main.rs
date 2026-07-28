@@ -12,7 +12,8 @@ use worldspec_cert::sign_certificate_with_seed;
 use worldspec_compiler::{compile_mujoco, compile_threejs, write_compile_summary};
 use worldspec_core::{ValidationReport, canonical_json, canonical_sha256, validate_file};
 use worldspec_forge::{
-    DiagnosticSeverity, ForgeDiagnostic, diagnose_obj, repair_obj_remove_degenerate, scan_source,
+    DiagnosticSeverity, ForgeDiagnostic, diagnose_glb, diagnose_obj, diagnose_robot_xml,
+    repair_obj_remove_degenerate, scan_source,
 };
 
 const DEFAULT_SOURCE_LIMIT_BYTES: u64 = 8_589_934_592;
@@ -231,7 +232,7 @@ fn format_for(path: &Path) -> Result<&'static str, String> {
         .unwrap_or_default()
         .to_ascii_lowercase();
     match extension.as_str() {
-        "glb" | "gltf" => Ok("glb"),
+        "glb" => Ok("glb"),
         "obj" => Ok("obj"),
         "urdf" => Ok("urdf"),
         "mjcf" => Ok("mjcf"),
@@ -281,7 +282,8 @@ fn ingest(
         .and_then(Value::as_str)
         .ok_or_else(|| "RightsSpec.id is required".to_owned())?;
     let rights_bytes = canonical_json(&rights).map_err(|error| error.to_string())?;
-    cas.put_bytes(&rights_bytes, Some("application/vnd.worldspec.rights+json"))
+    let rights_digest = cas
+        .put_bytes(&rights_bytes, Some("application/vnd.worldspec.rights+json"))
         .map_err(|error| error.to_string())?;
 
     let mut items = Vec::new();
@@ -323,17 +325,27 @@ fn ingest(
             "logicalPath": format!("source/{name}")
         }));
     }
-    let mut source_bundle = json!({
-        "id": local_id("sourcebundle", "ingest"),
+    let bundle_identity = canonical_sha256(&json!({
         "bundleVersion": "0.1.0",
         "items": items,
         "rightsRef": rights_ref,
+        "rightsDigest": rights_digest,
+        "nativePayloads": []
+    }))
+    .map_err(|error| error.to_string())?;
+    let identity_suffix = bundle_identity.trim_start_matches("sha256:");
+    let mut source_bundle = json!({
+        "id": format!("sourcebundle://local/{identity_suffix}"),
+        "bundleVersion": "0.1.0",
+        "items": items,
+        "rightsRef": rights_ref,
+        "rightsDigest": rights_digest,
         "nativePayloads": []
     });
     let bundle_digest = canonical_sha256(&source_bundle).map_err(|error| error.to_string())?;
     source_bundle["bundleDigest"] = Value::String(bundle_digest);
     let draft = json!({
-        "id": local_id("assetdraft", "ingest"),
+        "id": format!("assetdraft://local/{}", source_bundle["bundleDigest"].as_str().unwrap_or(identity_suffix).trim_start_matches("sha256:")),
         "specVersion": "0.1.0",
         "sourceBundle": source_bundle,
         "status": "needs_review",
@@ -431,7 +443,8 @@ fn diagnose_asset(
     schema_dir: &Path,
     output: &Path,
 ) -> Result<bool, String> {
-    if format_for(input).ok() == Some("obj") {
+    let format = format_for(input).ok();
+    if format == Some("obj") {
         let bytes =
             fs::read(input).map_err(|error| format!("cannot read {}: {error}", input.display()))?;
         let scan = scan_source("obj", &bytes, DEFAULT_SOURCE_LIMIT_BYTES);
@@ -450,6 +463,35 @@ fn diagnose_asset(
                 "sourceScan": scan,
                 "doctor": doctor,
                 "valid": valid
+            }),
+        )?;
+        return Ok(valid);
+    }
+    if matches!(format, Some("urdf" | "mjcf")) {
+        let format = format.expect("matched robot format");
+        let bytes =
+            fs::read(input).map_err(|error| format!("cannot read {}: {error}", input.display()))?;
+        let report = diagnose_robot_xml(format, &bytes);
+        let valid = report.safe;
+        write_json(
+            output,
+            &json!({
+                "kind": "robot-xml-doctor-report",
+                "doctor": report
+            }),
+        )?;
+        return Ok(valid);
+    }
+    if format == Some("glb") {
+        let bytes =
+            fs::read(input).map_err(|error| format!("cannot read {}: {error}", input.display()))?;
+        let report = diagnose_glb(&bytes);
+        let valid = report.valid;
+        write_json(
+            output,
+            &json!({
+                "kind": "glb-doctor-report",
+                "doctor": report
             }),
         )?;
         return Ok(valid);

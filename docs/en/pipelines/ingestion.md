@@ -32,3 +32,9 @@ quarantine -> fingerprint -> parse -> normalize draft
 Units, up/forward axes, handedness, and quaternion order are explicit. Inferred values are Claims, never source declarations. Source files are read-only; every repair creates a new blob and Derivation.
 
 “Input accepted” and “input fully understood” are reported separately.
+
+## Current implementation evidence
+
+The Rust Forge implements pre-parser source scanning: size limits, a ZIP/archive isolation gate, XML external-entity rejection, and remote/path-traversal reference rejection. ROS `package://` is retained only as a controlled package-local reference. The OBJ Doctor implements vertex, face, bounds, degenerate-face, and malformed-line diagnostics plus an immutable “remove degenerate faces” repair. Source and repaired resources are stored separately in CAS, with a Derivation binding both digests.
+
+This is an OBJ reference slice, not completed semantic ingestion for GLB, robot, CAD, or OpenUSD inputs. Archived formats such as USDZ are currently rejected by the isolation gate until the bounded expansion worker exists.

@@ -12,7 +12,7 @@ The Chinese document is the normative source; this page is its official translat
 
 ## v0.1: baseline product
 
-Core/schema, Existing Asset, Image/Video Draft, Doctor, MuJoCo/Three.js Compiler, local CAS, and L0–L3 reports. This repository currently completes the documentation/schema baseline and the first Rust Validator.
+Core/schema, Existing Asset, Image/Video Draft, Doctor, MuJoCo/Three.js Compiler, local CAS, and L0–L3 reports. This repository currently completes the documentation/schema baseline, Rust Validator, platform skeleton, OBJ Doctor, and reference compiler slice.
 
 ## Future candidates
 

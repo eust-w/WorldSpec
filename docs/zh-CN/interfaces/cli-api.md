@@ -8,19 +8,19 @@ last-verified: 2026-07-28
 
 # CLI 与异步 API
 
-v0.1 产品入口是 CLI/API。当前已经实现本地 CAS、SQLite WAL 作业索引、loopback API，以及下表中的命令入口。创建 Job 不等于执行后端：GPU 生成、Doctor 网格修复、MuJoCo/Three.js 编译和 L2/L3 认证仍需对应 Worker/Backend。
+v0.1 产品入口是 CLI/API。当前已经实现本地 CAS、SQLite WAL 作业索引、loopback API，以及下表中的命令入口。OBJ Doctor 与合成立方体范围的 MuJoCo/Three.js 参考编译器可本地执行。创建生成 Job 仍不等于执行 GPU 后端；完整格式修复、真实资产编译和 L2/L3 认证仍需对应 Worker/Backend。
 
 | 命令 | 输入 | 主要输出 | 当前状态 |
 |---|---|---|---|
 | `ingest` | 本地源、RightsSpec | CAS SourceBundle、AssetDraft | Implemented Envelope |
 | `generate` | 源资产与 GenerationProfile | 可恢复 JobSpec | Queue Implemented；Worker Future |
 | `validate` | JSON 与 Schema 名称 | 结构与语义诊断 | Implemented |
-| `compile` | WorldDefinition 与 TargetProfile | 可恢复 JobSpec | Queue Implemented；Backend Future |
+| `compile` | WorldDefinition、TargetProfile 与 BuildIntent | 本地参考 Bundle | 合成立方体参考切片已实现 |
 | `certify` | Certificate、可选 Ed25519 Seed | 校验后的 signed/unsigned Certificate | Implemented Envelope |
 | `inspect` | JSON、可选 Schema | Canonical SHA-256 与诊断 | Implemented |
 | `resolve` | CAS Digest | 原始不可变 Blob | Implemented |
-| `doctor diagnose` | JSON/AssetDraft | Validator 诊断 | Implemented Baseline |
-| `doctor repair` | AssetDraft 与 Profile | 可恢复 JobSpec | Queue Implemented；Worker Future |
+| `doctor diagnose` | JSON/AssetDraft 或 OBJ | Validator/OBJ 诊断 | 已实现 |
+| `doctor repair` | OBJ | 新 OBJ、CAS Blob 与 Derivation | 退化面修复已实现 |
 | `bundle` | Build 输入与 Profile | 可恢复 JobSpec | Queue Implemented；Assembler Future |
 | `job get/cancel/wait` | Job ID | 作业状态 | Implemented |
 

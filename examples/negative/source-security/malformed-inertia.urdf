@@ -1,0 +1,8 @@
+<robot name="invalid_inertia">
+  <link name="base">
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="-1" iyy="0" izz="0" ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </link>
+</robot>

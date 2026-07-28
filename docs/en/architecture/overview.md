@@ -35,4 +35,4 @@ WorldSpec Core is not the union of MJCF, USD, glTF, and other fields. Versioned 
 
 ## Implementation direction
 
-The first deterministic Rust Core validator and CLI are implemented. Python generation/scientific bindings, TypeScript/WASM, Compiler, and Doctor remain unimplemented. Language choice is not part of schema semantics.
+The deterministic Rust Core validator, CLI, CAS/API, OBJ Doctor, and synthetic-cube MuJoCo/Three.js reference compiler slice are implemented. Python GPU generation backends, TypeScript/WASM bindings, full Compiler/Doctor coverage, and L2/L3 certification remain unimplemented. Language choice is not part of schema semantics.

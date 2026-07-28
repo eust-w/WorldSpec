@@ -30,3 +30,9 @@ quarantine -> fingerprint -> parse -> normalize draft
 单位、Up/Forward、手性和四元数顺序必须显式记录。推断值是 Claim，不得伪装为源声明。源文件保持只读，任何修复产生新 Blob 与 Derivation。
 
 “支持输入”与“完全理解输入”必须分开报告。
+
+## 当前实现证据
+
+Rust Forge 已实现解析器之前的源扫描：大小上限、ZIP/归档隔离门、XML 外部实体拒绝、远程/路径穿越引用拒绝；ROS `package://` 仅作为受控包内引用保留。OBJ Doctor 已实现顶点、面、包围盒、退化面和畸形行诊断，以及“移除退化面”的不可变修复。修复前后资源分别进入 CAS，并生成带源/输出 Digest 的 Derivation。
+
+这只是 OBJ 参考切片，不代表 GLB、机器人、CAD 或 OpenUSD 已完成语义接入。USDZ 等归档当前会被隔离门拒绝，直到受限展开 Worker 完成。

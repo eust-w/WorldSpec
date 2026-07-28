@@ -34,4 +34,4 @@ A level is bound to asset digest, TargetProfile, BuildIntent, compiler version, 
 - Bilingual documentation, schemas, examples, report formats, and version policies pass repository checks.
 - Performance, memory, cost, load rate, and behavioral deviation are reported from real measurements; unmeasured pass numbers are prohibited.
 
-This repository currently completes the documentation/schema baseline and the first Rust Validator, but not the compilers, generators, or L2/L3 runtime certification. It does not satisfy product v0.1 acceptance.
+This repository currently completes the documentation/schema baseline, Rust Validator, platform skeleton, OBJ Doctor, and reference compiler slice, but not full-format compilers, generators, or L2/L3 runtime certification. It does not satisfy product v0.1 acceptance.

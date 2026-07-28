@@ -31,6 +31,7 @@
       "minItems": 1
     },
     "rightsRef": { "$ref": "common.schema.json#/$defs/id" },
+    "rightsDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "nativePayloads": {
       "type": "array",

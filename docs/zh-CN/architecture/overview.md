@@ -33,4 +33,4 @@ WorldSpec Core 不等于 MJCF、USD、glTF 等字段的并集。目标专有数�
 
 ## 实现方向
 
-Rust Core 的首个确定性 Validator 与 CLI 已实现。Python 生成/科学计算绑定、TypeScript/WASM、Compiler 和 Doctor 仍未实现。语言选择不进入 Schema 语义。
+Rust Core 的确定性 Validator、CLI、CAS/API、OBJ Doctor，以及合成立方体范围的 MuJoCo/Three.js 参考编译切片已实现。Python GPU 生成后端、TypeScript/WASM 绑定、完整 Compiler/Doctor 和 L2/L3 认证仍未实现。语言选择不进入 Schema 语义。

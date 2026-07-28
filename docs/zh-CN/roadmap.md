@@ -10,7 +10,7 @@ last-verified: 2026-07-28
 
 ## v0.1：基线产品
 
-Core/Schema、Existing Asset、Image/Video Draft、Doctor、MuJoCo/Three.js Compiler、本地 CAS 与 L0–L3 报告。当前仓库已完成文档/Schema 基线和首个 Rust Validator。
+Core/Schema、Existing Asset、Image/Video Draft、Doctor、MuJoCo/Three.js Compiler、本地 CAS 与 L0–L3 报告。当前仓库已完成文档/Schema 基线、Rust Validator、平台骨架、OBJ Doctor 与参考编译切片。
 
 ## 后续候选
 

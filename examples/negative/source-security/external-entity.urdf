@@ -1,0 +1,12 @@
+<!DOCTYPE robot [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+]>
+<robot name="unsafe">
+  <link name="base">
+    <visual>
+      <geometry>
+        <mesh filename="../../private/mesh.obj"/>
+      </geometry>
+    </visual>
+  </link>
+</robot>

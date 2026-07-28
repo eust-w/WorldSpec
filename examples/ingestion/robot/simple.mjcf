@@ -1,0 +1,19 @@
+<mujoco model="simple_arm">
+  <worldbody>
+    <body name="base" pos="0 0 0.1">
+      <inertial mass="1.0" diaginertia="0.1 0.1 0.1"/>
+      <geom name="base_geom" type="box" size="0.1 0.1 0.1"/>
+      <body name="arm" pos="0 0 0.2">
+        <joint name="shoulder" type="hinge" axis="0 0 1" range="-90 90"/>
+        <geom name="arm_geom" type="capsule" size="0.04 0.2"/>
+      </body>
+    </body>
+    <camera name="overview" pos="1 1 1"/>
+  </worldbody>
+  <actuator>
+    <motor name="shoulder_motor" joint="shoulder"/>
+  </actuator>
+  <sensor>
+    <jointpos name="shoulder_position" joint="shoulder"/>
+  </sensor>
+</mujoco>
