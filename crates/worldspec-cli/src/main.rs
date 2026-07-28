@@ -11,6 +11,11 @@ use worldspec_cas::{Cas, JobStatus};
 use worldspec_cert::sign_certificate_with_seed;
 use worldspec_compiler::{compile_mujoco, compile_threejs, write_compile_summary};
 use worldspec_core::{ValidationReport, canonical_json, canonical_sha256, validate_file};
+use worldspec_forge::{
+    DiagnosticSeverity, ForgeDiagnostic, diagnose_obj, repair_obj_remove_degenerate, scan_source,
+};
+
+const DEFAULT_SOURCE_LIMIT_BYTES: u64 = 8_589_934_592;
 
 #[derive(Parser, Debug)]
 #[command(name = "worldspec", version, about = "WorldSpec 0.1 local CLI")]
@@ -31,6 +36,8 @@ enum Command {
         output: PathBuf,
         #[arg(long, default_value = ".worldspec")]
         cas_root: PathBuf,
+        #[arg(long, default_value = "schemas/0.1")]
+        schema_dir: PathBuf,
     },
     /// Queue a generation job using an explicit GenerationProfile.
     Generate(JobSubmitArgs),
@@ -131,7 +138,15 @@ enum DoctorCommand {
         #[arg(long)]
         output: PathBuf,
     },
-    Repair(JobSubmitArgs),
+    Repair {
+        input: PathBuf,
+        #[arg(long)]
+        output: PathBuf,
+        #[arg(long)]
+        derivation: PathBuf,
+        #[arg(long, default_value = ".worldspec")]
+        cas_root: PathBuf,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -256,9 +271,11 @@ fn ingest(
     rights_path: PathBuf,
     output: PathBuf,
     cas_root: PathBuf,
+    schema_dir: PathBuf,
 ) -> Result<bool, String> {
     let cas = Cas::open(cas_root).map_err(|error| error.to_string())?;
     let rights = read_json(&rights_path)?;
+    validate_document(&schema_dir, "rights.schema.json", &rights, None)?;
     let rights_ref = rights
         .get("id")
         .and_then(Value::as_str)
@@ -268,10 +285,29 @@ fn ingest(
         .map_err(|error| error.to_string())?;
 
     let mut items = Vec::new();
+    let mut diagnostics = Vec::new();
     for input in inputs {
         let format = format_for(&input)?;
+        let size = fs::metadata(&input)
+            .map_err(|error| format!("cannot inspect {}: {error}", input.display()))?
+            .len();
+        if size > DEFAULT_SOURCE_LIMIT_BYTES {
+            return Err(format!(
+                "{} is {size} bytes; source limit is {DEFAULT_SOURCE_LIMIT_BYTES}",
+                input.display()
+            ));
+        }
         let bytes = fs::read(&input)
             .map_err(|error| format!("cannot read {}: {error}", input.display()))?;
+        let scan = scan_source(format, &bytes, DEFAULT_SOURCE_LIMIT_BYTES);
+        diagnostics.extend(scan.diagnostics.iter().map(forge_diagnostic_json));
+        if !scan.safe {
+            return Err(format!(
+                "source security scan rejected {}: {}",
+                input.display(),
+                serde_json::to_string(&scan.diagnostics).map_err(|error| error.to_string())?
+            ));
+        }
         let digest = cas
             .put_bytes(&bytes, Some(media_type(format)))
             .map_err(|error| error.to_string())?;
@@ -301,7 +337,7 @@ fn ingest(
         "specVersion": "0.1.0",
         "sourceBundle": source_bundle,
         "status": "needs_review",
-        "diagnostics": [],
+        "diagnostics": diagnostics,
         "unresolved": [{
             "code": "INGESTION_ADAPTER_REQUIRED",
             "question": "Run the format-specific ingestion adapter to create a candidate WorldDefinition.",
@@ -324,7 +360,13 @@ fn submit_job(operation: &str, args: JobSubmitArgs) -> Result<bool, String> {
         .put_bytes(&input_bytes, Some("application/octet-stream"))
         .map_err(|error| error.to_string())?;
     let profile = read_json(&args.profile)?;
-    let profile_digest = canonical_sha256(&profile).map_err(|error| error.to_string())?;
+    let profile_bytes = canonical_json(&profile).map_err(|error| error.to_string())?;
+    let profile_digest = cas
+        .put_bytes(
+            &profile_bytes,
+            Some("application/vnd.worldspec.profile+json"),
+        )
+        .map_err(|error| error.to_string())?;
     let id = local_id("job", operation);
     let mut spec = json!({
         "id": id,
@@ -358,6 +400,104 @@ fn submit_job(operation: &str, args: JobSubmitArgs) -> Result<bool, String> {
     .map_err(|error| error.to_string())?;
     write_json(&args.output, &spec)?;
     println!("{}", spec["id"].as_str().unwrap_or_default());
+    Ok(true)
+}
+
+fn forge_diagnostic_json(diagnostic: &ForgeDiagnostic) -> Value {
+    let mut details = serde_json::Map::new();
+    if let Some(line) = diagnostic.line {
+        details.insert("line".to_owned(), json!(line));
+    }
+    let severity = match diagnostic.severity {
+        DiagnosticSeverity::Info => "info",
+        DiagnosticSeverity::Warning => "warning",
+        DiagnosticSeverity::Error => "error",
+        DiagnosticSeverity::Fatal => "fatal",
+    };
+    let mut value = json!({
+        "code": diagnostic.code,
+        "severity": severity,
+        "message": diagnostic.message
+    });
+    if !details.is_empty() {
+        value["details"] = Value::Object(details);
+    }
+    value
+}
+
+fn diagnose_asset(
+    input: &Path,
+    schema: &str,
+    schema_dir: &Path,
+    output: &Path,
+) -> Result<bool, String> {
+    if format_for(input).ok() == Some("obj") {
+        let bytes =
+            fs::read(input).map_err(|error| format!("cannot read {}: {error}", input.display()))?;
+        let scan = scan_source("obj", &bytes, DEFAULT_SOURCE_LIMIT_BYTES);
+        let doctor = diagnose_obj(&bytes);
+        let valid = scan.safe
+            && !doctor.diagnostics.iter().any(|item| {
+                matches!(
+                    item.severity,
+                    DiagnosticSeverity::Error | DiagnosticSeverity::Fatal
+                )
+            });
+        write_json(
+            output,
+            &json!({
+                "kind": "obj-doctor-report",
+                "sourceScan": scan,
+                "doctor": doctor,
+                "valid": valid
+            }),
+        )?;
+        return Ok(valid);
+    }
+    let document = read_json(input)?;
+    let report =
+        validate_file(schema_dir, schema, &document, None).map_err(|error| error.to_string())?;
+    write_json(
+        output,
+        &serde_json::to_value(&report).map_err(|error| error.to_string())?,
+    )?;
+    Ok(report.valid)
+}
+
+fn repair_obj(
+    input: &Path,
+    output: &Path,
+    derivation_path: &Path,
+    cas_root: &Path,
+) -> Result<bool, String> {
+    if format_for(input)? != "obj" {
+        return Err("v0.1 local repair currently supports OBJ only".to_owned());
+    }
+    let source =
+        fs::read(input).map_err(|error| format!("cannot read {}: {error}", input.display()))?;
+    let scan = scan_source("obj", &source, DEFAULT_SOURCE_LIMIT_BYTES);
+    if !scan.safe {
+        return Err(format!("source security scan rejected {}", input.display()));
+    }
+    let result = repair_obj_remove_degenerate(&source)?;
+    let cas = Cas::open(cas_root).map_err(|error| error.to_string())?;
+    let stored_source = cas
+        .put_bytes(&source, Some("model/obj"))
+        .map_err(|error| error.to_string())?;
+    let stored_repaired = cas
+        .put_bytes(&result.payload, Some("model/obj"))
+        .map_err(|error| error.to_string())?;
+    if stored_source != result.source_digest || stored_repaired != result.repaired_digest {
+        return Err("CAS digest disagrees with Doctor derivation".to_owned());
+    }
+    if let Some(parent) = output.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
+    }
+    fs::write(output, &result.payload)
+        .map_err(|error| format!("cannot write {}: {error}", output.display()))?;
+    write_json(derivation_path, &result.derivation)?;
+    println!("{}", result.repaired_digest);
     Ok(true)
 }
 
@@ -600,7 +740,8 @@ fn run() -> Result<bool, String> {
             rights,
             output,
             cas_root,
-        } => ingest(inputs, rights, output, cas_root),
+            schema_dir,
+        } => ingest(inputs, rights, output, cas_root, schema_dir),
         Command::Generate(args) => submit_job("generate", args),
         Command::Inspect {
             input,
@@ -639,17 +780,13 @@ fn run() -> Result<bool, String> {
                 schema,
                 schema_dir,
                 output,
-            } => {
-                let document = read_json(&input)?;
-                let report = validate_file(schema_dir, &schema, &document, None)
-                    .map_err(|error| error.to_string())?;
-                write_json(
-                    &output,
-                    &serde_json::to_value(&report).map_err(|error| error.to_string())?,
-                )?;
-                Ok(report.valid)
-            }
-            DoctorCommand::Repair(args) => submit_job("repair", args),
+            } => diagnose_asset(&input, &schema, &schema_dir, &output),
+            DoctorCommand::Repair {
+                input,
+                output,
+                derivation,
+                cas_root,
+            } => repair_obj(&input, &output, &derivation, &cas_root),
         },
         Command::Validate {
             input,

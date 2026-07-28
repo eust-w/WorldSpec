@@ -1848,6 +1848,7 @@ dependencies = [
  "worldspec-cert",
  "worldspec-compiler",
  "worldspec-core",
+ "worldspec-forge",
 ]
 
 [[package]]
@@ -1865,6 +1866,15 @@ name = "worldspec-core"
 version = "0.1.0"
 dependencies = [
  "jsonschema",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
+name = "worldspec-forge"
+version = "0.1.0"
+dependencies = [
  "serde",
  "serde_json",
  "sha2",

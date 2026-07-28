@@ -17,3 +17,4 @@ worldspec-cas = { path = "../worldspec-cas" }
 worldspec-cert = { path = "../worldspec-cert" }
 worldspec-compiler = { path = "../worldspec-compiler" }
 worldspec-core = { path = "../worldspec-core" }
+worldspec-forge = { path = "../worldspec-forge" }
