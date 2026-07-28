@@ -1,0 +1,193 @@
+{
+  "canonicalProfileDigest": "sha256:520b60932d62c76e6556652096716b6c58f0639b0aece54253014a8384bcaffc",
+  "canonicalTrainingStatus": "not_executed",
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:576c564be62a0319be0862fa2f8ca7bd344ed100a46f5c34c4d4d5ae1774058f",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "executionEvidence": "executed",
+  "generatedAt": "2026-07-28T15:33:54.183226Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "smoke-report://worldspec/h1-ppo/a800-be79e6230cec",
+  "imageSource": {
+    "commit": "e8b8e9219ccec382d5b20005738d38b9790de230",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "overflowFree": true
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "policyStatus": "non_publishable",
+  "probeDefinition": {
+    "commit": "be79e6230cec83175c0991432436412eb7133aad",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:ece931ff9b1c344dcbb6d5661565b3739042d2f43b0cc8434c79d2aa9ce540fe",
+    "commit": "be79e6230cec83175c0991432436412eb7133aad",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "reportVersion": "0.1.0",
+  "runtimeAcceptance": "research_smoke",
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "effectiveNaconmax": 4096,
+    "naccdmax": 128,
+    "njmax": 4096
+  },
+  "runtimePreflight": {
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scope": "h1_ppo_training_smoke",
+  "smokeOverrides": {
+    "batchSize": 32,
+    "episodeLength": 200,
+    "numEnvs": 256,
+    "numEvals": 2,
+    "numMinibatches": 8,
+    "numTimesteps": 32768,
+    "numUpdatesPerBatch": 1,
+    "unrollLength": 10
+  },
+  "smokeProfileDigest": "sha256:ba4c18691e00ad88cfcba96e197007728f67fc577d3cdccf2bdad7ffdac31647",
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "passed",
+  "target": {
+    "actionSize": 10,
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "observationSize": 42,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "trainedInference": {
+    "actionFinite": true,
+    "actionL2Norm": 0.18017145991325378,
+    "observationFinite": true,
+    "qposFinite": true,
+    "qvelFinite": true,
+    "reward": 0.0034160460345447063,
+    "rewardFinite": true
+  },
+  "training": {
+    "elapsedSeconds": 231.329677302856,
+    "finalProgress": {
+      "elapsedSeconds": 227.07639259519055,
+      "metrics": {
+        "eval/avg_episode_length": 87.75,
+        "eval/episode_cost/action_rate": 9.480076789855957,
+        "eval/episode_cost/action_rate_std": 1.5142663717269897,
+        "eval/episode_cost/torque": 1.3720635175704956,
+        "eval/episode_cost/torque_std": 0.269422709941864,
+        "eval/episode_cost/upright": 8.482810020446777,
+        "eval/episode_cost/upright_std": 3.52740216255188,
+        "eval/episode_cost/vertical_velocity": 3.842773199081421,
+        "eval/episode_cost/vertical_velocity_std": 1.8230746984481812,
+        "eval/episode_reward": 0.62518310546875,
+        "eval/episode_reward/tracking_linear": 21.693126678466797,
+        "eval/episode_reward/tracking_linear_std": 16.821231842041016,
+        "eval/episode_reward/tracking_yaw": 27.622554779052734,
+        "eval/episode_reward/tracking_yaw_std": 9.491451263427734,
+        "eval/episode_reward_std": 0.496501088142395,
+        "eval/epoch_eval_time": 9.747946739196777,
+        "eval/sps": 656.5485195221075,
+        "eval/std_episode_length": 14.764822959899902,
+        "eval/walltime": 19.478517055511475,
+        "training/entropy_loss": -0.061138544231653214,
+        "training/kl_mean": 0.05366025120019913,
+        "training/learning_rate": 0.00030000004335306585,
+        "training/policy_dist_max_loc": 1.5093127489089966,
+        "training/policy_dist_max_std": 2.059328079223633,
+        "training/policy_dist_mean_loc": 0.009414452128112316,
+        "training/policy_dist_mean_std": 0.7184385657310486,
+        "training/policy_dist_min_loc": -1.1930118799209595,
+        "training/policy_dist_min_std": 0.38258716464042664,
+        "training/policy_loss": 0.02179398573935032,
+        "training/sps": 2596.660684651554,
+        "training/total_loss": -0.035891156643629074,
+        "training/v_loss": 0.003453402314335108,
+        "training/walltime": 12.816460847854614
+      },
+      "step": 33280
+    },
+    "firstProgress": {
+      "elapsedSeconds": 204.16753084491938,
+      "metrics": {
+        "eval/avg_episode_length": 86.75,
+        "eval/episode_cost/action_rate": 9.291624069213867,
+        "eval/episode_cost/action_rate_std": 1.7002689838409424,
+        "eval/episode_cost/torque": 1.3078877925872803,
+        "eval/episode_cost/torque_std": 0.25873029232025146,
+        "eval/episode_cost/upright": 8.536785125732422,
+        "eval/episode_cost/upright_std": 3.679870843887329,
+        "eval/episode_cost/vertical_velocity": 3.5297207832336426,
+        "eval/episode_cost/vertical_velocity_std": 1.2467536926269531,
+        "eval/episode_reward": 0.6844909191131592,
+        "eval/episode_reward/tracking_linear": 23.61260986328125,
+        "eval/episode_reward/tracking_linear_std": 16.1632022857666,
+        "eval/episode_reward/tracking_yaw": 29.866024017333984,
+        "eval/episode_reward/tracking_yaw_std": 9.241257667541504,
+        "eval/episode_reward_std": 0.49583443999290466,
+        "eval/epoch_eval_time": 9.730570316314697,
+        "eval/sps": 657.7209548827248,
+        "eval/std_episode_length": 15.455581665039062,
+        "eval/walltime": 9.730570316314697
+      },
+      "step": 0
+    },
+    "maximumReportedStep": 33280,
+    "progressRecordCount": 2
+  }
+}

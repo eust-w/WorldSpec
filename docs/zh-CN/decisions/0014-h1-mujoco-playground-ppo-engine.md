@@ -65,11 +65,12 @@ Brax JAX PPO 的规范输出是 Orbax/JAX Checkpoint，不伪装成 TorchScript�
 
 - Linux x86_64 OCI 镜像已由 Digest 锁定；
 - A800 上 MJX/Warp one-step 预检已通过；
-- 未执行 PPO；
-- 未生成新策略；
+- 一次 32,768 请求步、256 环境的 A800 PPO 研究级 smoke 已执行且容量零溢出；
+- smoke 为 `non_publishable`，未保存 Checkpoint，也未生成可发布策略；
+- 规范 1 亿步 PPO 未执行；
 - 未完成目标 Bundle 五次连续评估。
 
-因此本 ADR 不构成 GPU 运行、策略可用或 L3 通过证据。
+因此本 ADR 只构成受限 GPU smoke 证据，不构成策略可用、正式训练或 L3 通过证据。
 
 ## 后果
 

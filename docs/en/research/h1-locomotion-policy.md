@@ -75,6 +75,14 @@ cleared: an isolated tokenless A800 compatibility spike passed JAX GPU
 selection, MJX/Warp loading, and one finite reset/step on the derived
 H1+right-Robotiq model. A digest-pinned training OCI then passed the same gate
 as non-root with a read-only root filesystem and no runtime Secret, so the
-runtime is now `locked`. PPO has not run and no new policy exists. It cannot
-enter the kitchen 5/5 L3 state machine before real training and behavior
-validation.
+runtime is now `locked`.
+
+One 32,768-requested-step, 256-environment A800 PPO research smoke also ran.
+Brax reported 33,280 final steps, about 2,596.7 training steps/s, finite
+training values, and finite trained-policy inference. After scaling `naconmax`
+per environment, both CCD and contact-capacity overflow counts were zero. This
+evidence is fixed as `research_smoke / non_publishable`: it saved no checkpoint,
+and its mean evaluation episode length of about 87.75 steps does not establish
+policy quality. The canonical 100-million-step run, a new publishable policy,
+and the kitchen 5/5 L3 behavior remain unexecuted. The pipeline cannot enter
+the L3 state machine before those behavior validations pass.

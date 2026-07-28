@@ -71,11 +71,15 @@ is now `locked`:
 
 - the Linux x86_64 OCI image is digest-pinned;
 - the A800 MJX/Warp one-step preflight passed;
-- PPO has not run;
-- no new policy exists;
+- one 32,768-requested-step, 256-environment A800 PPO research smoke ran with
+  zero capacity overflows;
+- the smoke is `non_publishable`, saved no checkpoint, and produced no
+  publishable policy;
+- the canonical 100-million-step PPO run has not executed;
 - the target bundle has not passed five consecutive evaluations.
 
-This ADR is not evidence of a GPU run, a usable policy, or L3 acceptance.
+This ADR is evidence only of a bounded GPU smoke, not of a usable policy,
+canonical training, or L3 acceptance.
 
 ## Consequences
 

@@ -51,12 +51,15 @@ or output contract is missing.
   package-lock bindings;
 - an explicit output contract for the locked external
   `worldspec_h1_training` package;
-- a `blocked / not_executed` result while the locked runtime has not run PPO.
+- the canonical run remains `blocked / not_executed`, with a separate
+  non-publishable PPO research-smoke result.
 
-This does not mean PPO training has run or that a new policy exists. The
-digest-pinned OCI passed an A800 one-step probe and the current profile runtime
-is `locked`; real PPO training and five consecutive evaluations remain
-acceptance blockers.
+The digest-pinned OCI passed an A800 one-step probe and the current profile
+runtime is `locked`. One 32,768-requested-step, 256-environment PPO smoke
+executed and passed numeric and capacity gates, but it is explicitly
+`research_smoke / non_publishable`, produced no checkpoint, and does not
+establish a usable new policy. The canonical 100-million-step run and five
+consecutive evaluations remain acceptance blockers.
 
 ## Consequences
 
