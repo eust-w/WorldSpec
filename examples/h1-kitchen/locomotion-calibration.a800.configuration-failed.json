@@ -1,0 +1,34 @@
+{
+  "id": "calibrationattempt://worldspec/h1-stand/a800-6d0b8a624494-rnlg2",
+  "attemptVersion": "0.1.0",
+  "status": "configuration_failed",
+  "executionEvidence": "executed",
+  "runtimeAcceptance": "research_calibration",
+  "policyStatus": "non_publishable",
+  "canonicalTrainingStatus": "not_executed",
+  "job": "worldspec-h1-calibration-rnlg2",
+  "probeDefinitionCommit": "6d0b8a624494188a74ce137738cf954e57d8cfe8",
+  "imageSourceCommit": "677b181a1c6b8f9ff477579194a4a0bf0f9d65f4",
+  "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d",
+  "gpu": {
+    "name": "NVIDIA A800-SXM4-80GB",
+    "memoryMiB": 81920,
+    "jaxBackend": "gpu"
+  },
+  "failure": {
+    "stage": "stand_calibration",
+    "classification": "training_configuration_error",
+    "exceptionType": "AssertionError",
+    "message": "Brax rejected stand-v2 because batchSize times numMinibatches was not divisible by numEnvs."
+  },
+  "outcome": {
+    "trainingQuality": "not_assessed",
+    "checkpoint": "not_generated",
+    "qualityGate": "not_assessed",
+    "reason": "The job reached the real A800 runtime and model preparation, then failed before PPO compilation or updates. No policy-quality conclusion is permitted."
+  },
+  "logDigest": "sha256:25c047a742a3ec7ad50fd61f7ad4315fbebb637343e86ac128552832e0297db3",
+  "startedAt": "2026-07-28T18:17:15Z",
+  "finishedAt": "2026-07-28T18:17:32Z",
+  "recordedAt": "2026-07-28T18:20:00Z"
+}

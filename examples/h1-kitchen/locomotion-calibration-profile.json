@@ -1,5 +1,5 @@
 {
-  "id": "calibrationprofile://worldspec/h1-menagerie-right-robotiq/stand-v2",
+  "id": "calibrationprofile://worldspec/h1-menagerie-right-robotiq/stand-v2.1",
   "profileVersion": "0.1.0",
   "status": "research",
   "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
@@ -17,7 +17,7 @@
     "unrollLength": 20,
     "numMinibatches": 16,
     "numUpdatesPerBatch": 4,
-    "batchSize": 128
+    "batchSize": 256
   },
   "environment": {
     "commandDistribution": {

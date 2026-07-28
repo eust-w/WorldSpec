@@ -26,7 +26,9 @@
   "properties": {
     "id": { "$ref": "common.schema.json#/$defs/id" },
     "attemptVersion": { "const": "0.1.0" },
-    "status": { "enum": ["failed", "quality_failed"] },
+    "status": {
+      "enum": ["failed", "configuration_failed", "quality_failed"]
+    },
     "executionEvidence": { "const": "executed" },
     "runtimeAcceptance": { "const": "research_calibration" },
     "policyStatus": { "const": "non_publishable" },
@@ -60,9 +62,13 @@
       "properties": {
         "stage": { "enum": ["stand_calibration", "quality_gate"] },
         "classification": {
-          "enum": ["report_assembly_error", "policy_quality_failure"]
+          "enum": [
+            "report_assembly_error",
+            "training_configuration_error",
+            "policy_quality_failure"
+          ]
         },
-        "exceptionType": { "enum": ["TypeError", "none"] },
+        "exceptionType": { "enum": ["TypeError", "AssertionError", "none"] },
         "message": { "type": "string", "minLength": 1 }
       },
       "additionalProperties": false
@@ -76,9 +82,15 @@
         "reason"
       ],
       "properties": {
-        "trainingQuality": { "enum": ["unknown", "failed"] },
+        "trainingQuality": {
+          "enum": ["unknown", "not_assessed", "failed"]
+        },
         "checkpoint": {
-          "enum": ["not_recovered", "generated_not_retrieved"]
+          "enum": [
+            "not_generated",
+            "not_recovered",
+            "generated_not_retrieved"
+          ]
         },
         "qualityGate": { "enum": ["not_assessed", "failed"] },
         "reason": { "type": "string", "minLength": 1 },
@@ -129,8 +141,38 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "configuration_failed" } },
+        "required": ["status"]
       },
-      "else": {
+      "then": {
+        "properties": {
+          "failure": {
+            "properties": {
+              "stage": { "const": "stand_calibration" },
+              "classification": { "const": "training_configuration_error" },
+              "exceptionType": { "const": "AssertionError" }
+            }
+          },
+          "outcome": {
+            "properties": {
+              "trainingQuality": { "const": "not_assessed" },
+              "checkpoint": { "const": "not_generated" },
+              "qualityGate": { "const": "not_assessed" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "quality_failed" } },
+        "required": ["status"]
+      },
+      "then": {
         "properties": {
           "failure": {
             "properties": {

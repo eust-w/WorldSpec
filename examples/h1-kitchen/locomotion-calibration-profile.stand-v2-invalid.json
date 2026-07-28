@@ -1,0 +1,70 @@
+{
+  "id": "calibrationprofile://worldspec/h1-menagerie-right-robotiq/stand-v2",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d",
+    "containerDigest": "sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+  },
+  "stage": "stand",
+  "trainingOverrides": {
+    "numTimesteps": 4194304,
+    "numEnvs": 4096,
+    "numEvals": 6,
+    "episodeLength": 500,
+    "unrollLength": 20,
+    "numMinibatches": 16,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 128
+  },
+  "environment": {
+    "commandDistribution": {
+      "linearVelocityX": [0.0, 0.0],
+      "linearVelocityY": [0.0, 0.0],
+      "angularVelocityYaw": [0.0, 0.0],
+      "zeroCommandProbability": 1.0
+    },
+    "termination": {
+      "minimumBaseHeight": 0.5,
+      "minimumUprightCosine": 0.25,
+      "jointLimitToleranceRadians": 0.02
+    },
+    "reward": {
+      "survival": 5.0,
+      "trackingLinear": 3.0,
+      "trackingYaw": 0.5,
+      "upright": 4.0,
+      "baseHeight": 4.0,
+      "pose": 2.0,
+      "verticalVelocityCost": 1.0,
+      "angularVelocityXYCost": 0.5,
+      "torqueCost": 0.000002,
+      "actionRateCost": 0.05
+    },
+    "targets": {
+      "baseHeight": 0.98
+    },
+    "sigmas": {
+      "tracking": 0.2,
+      "upright": 0.05,
+      "baseHeight": 0.02,
+      "pose": 0.2
+    },
+    "commandResampleSteps": 500
+  },
+  "qualityGates": {
+    "baselineMeanEpisodeLength": 124.2265625,
+    "minimumFinalMeanEpisodeLength": 350.0,
+    "minimumImprovementRatio": 1.5,
+    "deterministicEvaluationDurationSeconds": 4.0,
+    "requiredDeterministicPasses": 5,
+    "maximumPlanarDrift": 0.2
+  },
+  "artifactPolicy": {
+    "checkpoint": "research_only",
+    "distribution": "internal_only"
+  },
+  "evidenceStatus": "derived"
+}

@@ -72,6 +72,24 @@ def validate_calibration_profile(
             "CALIBRATION_BUDGET_INVALID",
             "Research calibration must remain within the 100K-5M and 256-8192 bounds.",
         )
+    batch_size = overrides.get("batchSize")
+    minibatches = overrides.get("numMinibatches")
+    if (
+        not isinstance(batch_size, int)
+        or batch_size < 1
+        or not isinstance(minibatches, int)
+        or minibatches < 1
+        or (batch_size * minibatches) % environments != 0
+    ):
+        raise TrainingError(
+            "CALIBRATION_BATCH_TOPOLOGY_INVALID",
+            "batchSize times numMinibatches must be divisible by numEnvs.",
+            {
+                "batchSize": batch_size,
+                "numMinibatches": minibatches,
+                "numEnvs": environments,
+            },
+        )
     command = calibration_profile.get("environment", {}).get("commandDistribution", {})
     if (
         command.get("linearVelocityX") != [0.0, 0.0]

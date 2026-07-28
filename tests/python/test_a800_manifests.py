@@ -248,3 +248,7 @@ def test_locomotion_calibration_is_isolated_and_research_only() -> None:
     assert 'current_stage}" == "artifact_ready"' in launcher
     assert "/scratch/results/artifact-copied" in launcher
     assert "calibration checkpoint was not retrieved before Pod exit" in launcher
+    assert (
+        "calibration batchSize times numMinibatches must be divisible by numEnvs"
+        in launcher
+    )

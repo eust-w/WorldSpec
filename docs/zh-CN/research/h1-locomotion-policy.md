@@ -107,8 +107,14 @@ Checkpoint 已生成，但旧 Launcher 在 Pod 完成后才调用 `kubectl cp`�
 退出容器执行复制，故该 Checkpoint 标记为 `generated_not_retrieved`。这是一条有效的
 负质量证据，不能作为可用策略或 1 亿步训练的放行依据。
 
-当前 `stand-v2` 保留 `stand-v1` Profile 作为不可变历史输入，并将受限预算增加到
+初始 `stand-v2` 保留 `stand-v1` Profile 作为不可变历史输入，并将受限预算增加到
 4,194,304 请求步和 4,096 并行环境，强化存活、直立、基座高度和姿态塑形，同时把
-124.23 设置为明确基线。产物交接改为两阶段握手：Pod 写出报告和 Checkpoint 后进入
+124.23 设置为明确基线。其首次真实 A800 作业在 PPO 前被 Brax 拒绝：
+`batchSize × numMinibatches = 128 × 16 = 2048` 不能被 4,096 环境整除。这是配置失败，
+不包含任何策略质量证据；该无效 Profile 与日志 Digest 均被保留。Core 现已增加提交前
+语义校验，新的 `stand-v2.1` 仅将 `batchSize` 改为 256，使
+`256 × 16` 可被 4,096 整除。
+
+产物交接改为两阶段握手：Pod 写出报告和 Checkpoint 后进入
 `artifact_ready`，Launcher 在 Pod 仍存活时复制产物并写入确认文件，入口收到确认后
-才退出。`stand-v2` 在新的 A800 报告产生前仍只是 Research Profile。
+才退出。`stand-v2.1` 在新的 A800 报告产生前仍只是 Research Profile。

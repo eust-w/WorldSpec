@@ -17,6 +17,12 @@ from worldspec_h1_training.trainer import _flat_observation_size
 ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 CALIBRATION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-calibration-profile.json"
+INVALID_BATCH_PROFILE = (
+    ROOT
+    / "examples"
+    / "h1-kitchen"
+    / "locomotion-calibration-profile.stand-v2-invalid.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -33,6 +39,7 @@ def test_stand_calibration_is_digest_bound_and_bounded() -> None:
     assert calibration["baseTrainingProfileDigest"] == digest_json(base)
     assert effective["training"]["numTimesteps"] == 4_194_304
     assert effective["training"]["numEnvs"] == 4096
+    assert effective["training"]["batchSize"] == 256
     assert effective["runtime"]["containerDigest"] == calibration["runtime"]["containerDigest"]
     assert effective["training"]["commandDistribution"] == {
         "linearVelocityX": [0.0, 0.0],
@@ -88,6 +95,17 @@ def test_calibration_rejects_a_different_package_lock() -> None:
     with pytest.raises(
         TrainingError,
         match="package lock bound by the base Profile",
+    ):
+        validate_calibration_profile(base, calibration)
+
+
+def test_calibration_rejects_an_invalid_batch_topology() -> None:
+    base, _ = _profiles()
+    calibration = json.loads(INVALID_BATCH_PROFILE.read_text(encoding="utf-8"))
+
+    with pytest.raises(
+        TrainingError,
+        match="batchSize times numMinibatches must be divisible by numEnvs",
     ):
         validate_calibration_profile(base, calibration)
 

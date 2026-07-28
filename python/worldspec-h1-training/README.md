@@ -39,11 +39,15 @@ deterministic standing was 0/5 and each run terminated at about step 99 for
 the first launcher attempted to copy it after the Pod had exited. That attempt
 is negative policy-quality evidence, not a usable-policy result.
 
-The current `stand-v2` Profile increases the bounded budget to 4,194,304
-requested steps and 4,096 environments, strengthens posture shaping, and uses
-the completed `stand-v1` result as its declared baseline. The launcher now
+The initial `stand-v2` Profile increased the bounded budget to 4,194,304
+requested steps and 4,096 environments, strengthened posture shaping, and used
+the completed `stand-v1` result as its declared baseline. Its first A800
+attempt failed before PPO because `128 × 16` was not divisible by 4,096.
+That exact invalid Profile is preserved; semantic validation now rejects the
+configuration before submission. The current `stand-v2.1` changes only the
+batch size to 256, making `256 × 16` divisible by 4,096. The launcher now
 copies and verifies the checkpoint while the Pod remains alive, then
-acknowledges the entrypoint before completion. `stand-v2` is still research
+acknowledges the entrypoint before completion. `stand-v2.1` is still research
 until its own A800 report exists. Canonical 100-million-step training,
 publishable policy quality, and five-run H1 kitchen L3 evidence remain
 unexecuted.

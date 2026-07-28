@@ -131,11 +131,18 @@ rejected copying from the exited container. The checkpoint is recorded as
 `generated_not_retrieved`. This is valid negative policy-quality evidence, not
 a usable policy or permission to start the 100-million-step run.
 
-The current `stand-v2` preserves the immutable `stand-v1` Profile, raises the
-bounded budget to 4,194,304 requested steps and 4,096 environments, strengthens
-survival, upright, base-height, and pose shaping, and declares 124.23 as its
-baseline. Artifact handoff now uses a two-stage handshake: after writing the
+The initial `stand-v2` preserved the immutable `stand-v1` Profile, raised the
+bounded budget to 4,194,304 requested steps and 4,096 environments, strengthened
+survival, upright, base-height, and pose shaping, and declared 124.23 as its
+baseline. Its first real-A800 job was rejected by Brax before PPO:
+`batchSize × numMinibatches = 128 × 16 = 2048` was not divisible by 4,096
+environments. This is a configuration failure and contains no policy-quality
+evidence; the invalid Profile and log digest are preserved. Core now checks
+the constraint before submission, and `stand-v2.1` changes only `batchSize`
+to 256 so that `256 × 16` is divisible by 4,096.
+
+Artifact handoff now uses a two-stage handshake: after writing the
 report and checkpoint, the Pod enters `artifact_ready`; the launcher copies
 the artifact while the Pod remains alive and writes an acknowledgement; only
-then may the entrypoint exit. `stand-v2` remains a Research Profile until its
+then may the entrypoint exit. `stand-v2.1` remains a Research Profile until its
 own A800 report exists.

@@ -79,6 +79,13 @@ if runtime["packageLockDigest"] != sys.argv[3]:
     raise SystemExit(
         "calibration Profile packageLockDigest does not match launcher runtime"
     )
+training = profile["trainingOverrides"]
+if (
+    training["batchSize"] * training["numMinibatches"]
+) % training["numEnvs"] != 0:
+    raise SystemExit(
+        "calibration batchSize times numMinibatches must be divisible by numEnvs"
+    )
 PY
 
 kubectl_cmd=(kubectl --kubeconfig "${KUBECONFIG_PATH}" -n "${K8S_NAMESPACE}")

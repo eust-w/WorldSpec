@@ -131,12 +131,16 @@ improvement, and 5/5 deterministic stand gates. Its generated checkpoint was
 not recovered because the first launcher attempted `kubectl cp` after Pod
 completion.
 
-The current `stand-v2` job uses 4,194,304 requested timesteps and 4,096
-environments, retains the exact zero command, and strengthens the versioned
-survival, upright, base-height, pose, torque, and action-rate shaping. The
-launcher copies the checkpoint at the `artifact_ready` stage while the Pod is
-still running, acknowledges the copy, and fails closed if the handoff does
-not complete. The result and checkpoint remain
+The initial `stand-v2` job used 4,194,304 requested timesteps and 4,096
+environments but failed before PPO because `batchSize=128` and
+`numMinibatches=16` did not satisfy Brax's divisibility requirement for 4,096
+environments. That Profile and real A800 configuration-failure evidence are
+preserved. The current `stand-v2.1` changes `batchSize` to 256 and adds a
+local semantic preflight for the constraint. It retains the exact zero command
+and strengthened versioned survival, upright, base-height, pose, torque, and
+action-rate shaping. The launcher copies the checkpoint at the
+`artifact_ready` stage while the Pod is still running, acknowledges the copy,
+and fails closed if the handoff does not complete. The result and checkpoint remain
 `research_calibration / non_publishable / internal_only`; passing the gate
 permits the next curriculum experiment but does not establish canonical
 training or L3. The launcher copies the checkpoint only after checking its
