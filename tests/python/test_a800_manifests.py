@@ -86,6 +86,11 @@ def test_h1_image_builder_contains_registry_secret_to_build_namespace() -> None:
     assert any(argument.startswith("--destination=__") for argument in container["args"])
     assert container["securityContext"]["allowPrivilegeEscalation"] is False
     assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["securityContext"]["capabilities"]["add"] == [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "FOWNER",
+    ]
 
     secret_volumes = [
         volume["secret"]["secretName"]
