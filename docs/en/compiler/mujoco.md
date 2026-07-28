@@ -20,7 +20,7 @@ loss-report.json
 worldspec.lock.json
 ```
 
-The minimal cube and an OBJ copied into the Bundle have been loaded through local MuJoCo 3.6.0 `MjModel.from_xml_path` and short-stepped. A visual-only mesh has collision disabled and reports `unsupported`; a representation without resolvable resources or dimensions produces a diagnostic box and an `approximated` loss. Neither is task-certifiable.
+The minimal cube, an OBJ copied into the Bundle, and two-link/one-joint structures extracted from minimal URDF and MJCF sources have been loaded through local MuJoCo 3.6.0 `MjModel.from_xml_path` and short-stepped. Compiler hierarchy follows the Frame Placement Graph, not the Entity Ownership Tree. A visual-only mesh has collision disabled and reports `unsupported`; a representation without resolvable resources or dimensions produces a diagnostic box and an `approximated` loss; unresolved physics evidence separately reports `resolved-physics-evidence: unsupported`. None of these results is task-certifiable.
 
 GLB-to-MuJoCo mesh conversion, textures, complete inertia, materials, cameras, lights, actuators, sensors, and Native Payload round-trip remain unimplemented. Tendon, equality, plugin, and other unsupported features must be reported rather than silently dropped.
 

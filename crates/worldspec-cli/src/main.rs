@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand, ValueEnum};
 use serde_json::{Value, json};
 use std::{
+    collections::{BTreeMap, BTreeSet},
     fs,
     path::{Path, PathBuf},
     process::ExitCode,
@@ -15,8 +16,8 @@ use worldspec_compiler::{
 };
 use worldspec_core::{ValidationReport, canonical_json, canonical_sha256, validate_file};
 use worldspec_forge::{
-    DiagnosticSeverity, ForgeDiagnostic, diagnose_glb, diagnose_obj, diagnose_robot_xml,
-    repair_obj_remove_degenerate, scan_source,
+    DiagnosticSeverity, ForgeDiagnostic, RobotKinematicModel, diagnose_glb, diagnose_obj,
+    diagnose_robot_xml, repair_obj_remove_degenerate, scan_source,
 };
 
 const DEFAULT_SOURCE_LIMIT_BYTES: u64 = 8_589_934_592;
@@ -404,6 +405,319 @@ fn visual_world_candidate(
     })
 }
 
+fn id_segments(names: impl Iterator<Item = String>) -> BTreeMap<String, String> {
+    let mut result = BTreeMap::new();
+    let mut used = BTreeSet::new();
+    for (index, name) in names.enumerate() {
+        let base = name
+            .chars()
+            .map(|character| {
+                if character.is_ascii_alphanumeric() || matches!(character, '-' | '_') {
+                    character.to_ascii_lowercase()
+                } else {
+                    '-'
+                }
+            })
+            .collect::<String>()
+            .trim_matches('-')
+            .to_owned();
+        let base = if base.is_empty() {
+            format!("item-{index}")
+        } else {
+            base
+        };
+        let mut candidate = base.clone();
+        let mut suffix = 2;
+        while !used.insert(candidate.clone()) {
+            candidate = format!("{base}-{suffix}");
+            suffix += 1;
+        }
+        result.insert(name, candidate);
+    }
+    result
+}
+
+fn robot_world_candidate(
+    format: &str,
+    resource_digest: &str,
+    rights_status: &str,
+    kinematics: &RobotKinematicModel,
+) -> Result<Value, String> {
+    if kinematics.links.is_empty() {
+        return Err("robot kinematics contains no link or body".to_owned());
+    }
+    let unsupported = kinematics
+        .joints
+        .iter()
+        .filter(|joint| {
+            !matches!(
+                (format, joint.joint_type.as_str()),
+                ("urdf", "fixed" | "revolute" | "continuous" | "prismatic")
+                    | ("mjcf", "fixed" | "hinge" | "slide" | "ball")
+            )
+        })
+        .map(|joint| format!("{}:{}", joint.name, joint.joint_type))
+        .collect::<Vec<_>>();
+    if !unsupported.is_empty() {
+        return Err(format!(
+            "unsupported canonical joint types: {}",
+            unsupported.join(", ")
+        ));
+    }
+
+    let suffix = resource_digest.trim_start_matches("sha256:");
+    let segments = id_segments(
+        kinematics
+            .links
+            .iter()
+            .map(|link| link.name.clone())
+            .chain(kinematics.joints.iter().map(|joint| joint.name.clone())),
+    );
+    let world_entity = format!("entity://ingest/{suffix}/world");
+    let robot_entity = format!("entity://ingest/{suffix}/robot");
+    let world_frame = format!("frame://ingest/{suffix}/world");
+    let evidence = format!("evidence://ingest/{suffix}/source");
+    let clock = format!("clock://ingest/{suffix}/simulation");
+    let link_entity = |name: &str| {
+        format!(
+            "entity://ingest/{suffix}/robot/link/{}",
+            segments.get(name).expect("validated robot link segment")
+        )
+    };
+    let link_frame = |name: &str| {
+        format!(
+            "frame://ingest/{suffix}/robot/link/{}",
+            segments.get(name).expect("validated robot link segment")
+        )
+    };
+
+    let mut entities = vec![
+        json!({
+            "id": world_entity,
+            "kind": "spatial",
+            "displayName": "World",
+            "rootFrame": world_frame
+        }),
+        json!({
+            "id": robot_entity,
+            "kind": "logical",
+            "displayName": if kinematics.name.is_empty() {"Imported robot"} else {kinematics.name.as_str()},
+            "ownerEntity": world_entity,
+            "tags": ["imported", "robot", format]
+        }),
+    ];
+    let mut frames = vec![json!({
+        "id": world_frame,
+        "ownerEntity": world_entity,
+        "role": "world"
+    })];
+    let mut components = Vec::new();
+    for link in &kinematics.links {
+        let entity = link_entity(&link.name);
+        let frame = link_frame(&link.name);
+        entities.push(json!({
+            "id": entity,
+            "kind": "spatial",
+            "displayName": link.name,
+            "ownerEntity": robot_entity,
+            "rootFrame": frame,
+            "tags": ["imported", "robot-link"]
+        }));
+        frames.push(json!({
+            "id": frame,
+            "ownerEntity": entity,
+            "role": "canonical_root"
+        }));
+        components.push(json!({
+            "id": format!("component://ingest/{suffix}/robot/link/{}/kinematics", segments[&link.name]),
+            "type": "worldspec://component/kinematics.link",
+            "schemaVersion": "0.1.0",
+            "ownerEntity": entity,
+            "anchorFrame": frame,
+            "properties": {
+                "sourceFormat": format,
+                "sourceName": link.name
+            }
+        }));
+    }
+
+    let joint_by_child = kinematics
+        .joints
+        .iter()
+        .map(|joint| (joint.child.as_str(), joint))
+        .collect::<BTreeMap<_, _>>();
+    let mut relations = Vec::new();
+    let mut state_channels = Vec::new();
+    let mut initial_state = Vec::new();
+    for link in &kinematics.links {
+        let child_frame = link_frame(&link.name);
+        if let Some(joint) = joint_by_child.get(link.name.as_str()) {
+            let parent_frame = if joint.parent == "world" {
+                world_frame.clone()
+            } else {
+                link_frame(&joint.parent)
+            };
+            let relation_type = match joint.joint_type.as_str() {
+                "fixed" => "frame.fixed",
+                "revolute" | "continuous" | "hinge" => "frame.joint.revolute",
+                "prismatic" | "slide" => "frame.joint.prismatic",
+                "ball" => "frame.joint.ball",
+                _ => unreachable!("unsupported joint types were rejected"),
+            };
+            let relation_id = format!(
+                "relation://ingest/{suffix}/robot/joint/{}",
+                segments[&joint.name]
+            );
+            let mut relation = json!({
+                "id": relation_id,
+                "type": format!("worldspec://relation/{relation_type}"),
+                "schemaVersion": "0.1.0",
+                "endpoints": {
+                    "parent": parent_frame,
+                    "child": child_frame
+                },
+                "parentFrame": parent_frame,
+                "childFrame": child_frame,
+                "transform": {
+                    "translation": joint.translation,
+                    "rotationWxyz": joint.rotation_wxyz
+                }
+            });
+            if relation_type != "frame.fixed" {
+                let channel_id = format!(
+                    "state://ingest/{suffix}/robot/joint/{}/position",
+                    segments[&joint.name]
+                );
+                let mut parameters = json!({"axis": joint.axis});
+                if let Some(lower) = joint.lower {
+                    parameters["lower"] = Value::from(lower);
+                }
+                if let Some(upper) = joint.upper {
+                    parameters["upper"] = Value::from(upper);
+                }
+                if joint.joint_type == "continuous" {
+                    parameters["continuous"] = Value::Bool(true);
+                }
+                relation["parameters"] = parameters;
+                relation["stateChannels"] = json!([channel_id]);
+                state_channels.push(json!({
+                    "id": channel_id,
+                    "subjectRef": relation_id,
+                    "property": "joint.position",
+                    "valueType": "number",
+                    "unit": if relation_type == "frame.joint.prismatic" {"meter"} else {"radian"},
+                    "clockDomain": clock,
+                    "interpolation": "linear",
+                    "sourceKind": "simulated"
+                }));
+                initial_state.push(json!({
+                    "channelRef": channel_id,
+                    "value": 0.0
+                }));
+            }
+            relations.push(relation);
+        } else {
+            let parent_frame = link
+                .parent_hint
+                .as_deref()
+                .map(link_frame)
+                .unwrap_or_else(|| world_frame.clone());
+            relations.push(json!({
+                "id": format!("relation://ingest/{suffix}/robot/fixed/{}", segments[&link.name]),
+                "type": "worldspec://relation/frame.fixed",
+                "schemaVersion": "0.1.0",
+                "endpoints": {
+                    "parent": parent_frame,
+                    "child": child_frame
+                },
+                "parentFrame": parent_frame,
+                "childFrame": child_frame,
+                "transform": {
+                    "translation": link.translation,
+                    "rotationWxyz": link.rotation_wxyz
+                }
+            }));
+        }
+    }
+
+    let component_ids = components
+        .iter()
+        .filter_map(|component| component.get("id").cloned())
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "id": format!("world://ingest/{suffix}"),
+        "specVersion": "0.1.0",
+        "conventions": {
+            "lengthUnit": "meter",
+            "massUnit": "kilogram",
+            "timeUnit": "second",
+            "angleUnit": "radian",
+            "handedness": "right",
+            "upAxis": "+Z",
+            "forwardAxis": "+X",
+            "quaternionOrder": "wxyz"
+        },
+        "rootEntity": world_entity,
+        "rootFrame": world_frame,
+        "entities": entities,
+        "frames": frames,
+        "components": components,
+        "relations": relations,
+        "representations": [],
+        "models": [{
+            "id": format!("model://ingest/{suffix}/robot/kinematics"),
+            "subjectRef": robot_entity,
+            "family": "robot_kinematics",
+            "purpose": ["robot_structure_import"],
+            "assumptions": ["source_kinematic_tree", "source_units_are_si"],
+            "validityDomain": {
+                "purpose": ["robot_structure_import"],
+                "unsupported": ["resolved_visuals", "resolved_collisions", "complete_dynamics", "native_transmissions"]
+            },
+            "activates": {
+                "components": component_ids,
+                "representations": []
+            }
+        }],
+        "evidenceGraph": {
+            "sources": [{
+                "id": evidence,
+                "kind": "source_asset",
+                "digest": resource_digest,
+                "rightsStatus": rights_status,
+                "notes": "Imported immutable robot description; canonical kinematics are mapped while unresolved and unknown native data remain in the source payload."
+            }],
+            "claims": [],
+            "derivations": []
+        },
+        "clockDomains": [{
+            "id": clock,
+            "kind": "simulation",
+            "unit": "second",
+            "synchronizationPolicy": "authoritative"
+        }],
+        "stateChannels": state_channels,
+        "initialState": initial_state,
+        "nativePayloads": [{
+            "id": format!("native://ingest/{suffix}/{format}"),
+            "sourceFormat": format,
+            "sourceVersion": "source",
+            "digest": resource_digest,
+            "namespace": "worldspec.ingestion.robot-source",
+            "rightsStatus": rights_status,
+            "targetScope": [format]
+        }],
+        "metadata": {
+            "ingestion": {
+                "format": format,
+                "unitStatus": "source_standard",
+                "physicsStatus": "unresolved",
+                "robotStructureStatus": "imported_partial"
+            }
+        }
+    }))
+}
+
 fn ingest(
     inputs: Vec<PathBuf>,
     rights_path: PathBuf,
@@ -486,21 +800,53 @@ fn ingest(
     });
     let bundle_digest = canonical_sha256(&source_bundle).map_err(|error| error.to_string())?;
     source_bundle["bundleDigest"] = Value::String(bundle_digest);
-    let candidate = source_bundle["items"]
+    let candidate_item = source_bundle["items"]
         .as_array()
         .filter(|items| items.len() == 1)
-        .and_then(|items| items.first())
-        .and_then(|item| {
-            let format = item.get("format")?.as_str()?;
-            matches!(format, "obj" | "glb").then(|| {
-                visual_world_candidate(
+        .and_then(|items| items.first());
+    let mut candidate_kind = None;
+    let candidate = if let Some(item) = candidate_item {
+        let format = item["format"].as_str().unwrap_or_default();
+        let digest = item["digest"].as_str().unwrap_or_default();
+        match format {
+            "obj" | "glb" => {
+                candidate_kind = Some("visual");
+                Some(visual_world_candidate(
                     format,
-                    item["digest"].as_str().unwrap_or_default(),
+                    digest,
                     rights_status,
                     item["logicalPath"].as_str().unwrap_or("Imported asset"),
-                )
-            })
-        });
+                ))
+            }
+            "urdf" | "mjcf" => {
+                let bytes = cas.get_bytes(digest).map_err(|error| error.to_string())?;
+                let report = diagnose_robot_xml(format, &bytes);
+                diagnostics.extend(report.diagnostics.iter().map(forge_diagnostic_json));
+                if report.safe {
+                    match robot_world_candidate(format, digest, rights_status, &report.kinematics) {
+                        Ok(candidate) => {
+                            candidate_kind = Some("robot");
+                            Some(candidate)
+                        }
+                        Err(message) => {
+                            diagnostics.push(forge_diagnostic_json(&ForgeDiagnostic {
+                                code: "ROBOT_CANONICAL_MAPPING_BLOCKED".to_owned(),
+                                severity: DiagnosticSeverity::Error,
+                                message,
+                                line: None,
+                            }));
+                            None
+                        }
+                    }
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    } else {
+        None
+    };
     if let Some(candidate) = candidate.as_ref() {
         validate_document(&schema_dir, "world-definition.schema.json", candidate, None)?;
     }
@@ -510,12 +856,36 @@ fn ingest(
         "sourceBundle": source_bundle,
         "status": "needs_review",
         "diagnostics": diagnostics,
-        "unresolved": [{
-            "code": if candidate.is_some() {"UNIT_CONFIRMATION_REQUIRED"} else {"INGESTION_ADAPTER_REQUIRED"},
-            "question": if candidate.is_some() {"Confirm source units and canonical scale before L1 validation."} else {"Run the format-specific ingestion adapter to create a candidate WorldDefinition."},
-            "impact": "blocking"
-        }]
+        "unresolved": []
     });
+    if candidate.is_none() {
+        draft["unresolved"]
+            .as_array_mut()
+            .expect("unresolved is an array")
+            .push(json!({
+                "code": "INGESTION_ADAPTER_REQUIRED",
+                "question": "Run or complete the format-specific ingestion adapter to create a candidate WorldDefinition.",
+                "impact": "blocking"
+            }));
+    } else if candidate_kind == Some("visual") {
+        draft["unresolved"]
+            .as_array_mut()
+            .expect("unresolved is an array")
+            .push(json!({
+                "code": "UNIT_CONFIRMATION_REQUIRED",
+                "question": "Confirm source units and canonical scale before L1 validation.",
+                "impact": "blocking"
+            }));
+    } else if candidate_kind == Some("robot") {
+        draft["unresolved"]
+            .as_array_mut()
+            .expect("unresolved is an array")
+            .push(json!({
+                "code": "ROBOT_RESOURCE_RESOLUTION_REQUIRED",
+                "question": "Resolve package-local visual, collision, actuator, and sensor resources before target-load certification.",
+                "impact": "blocking"
+            }));
+    }
     if let Some(candidate) = candidate {
         draft["candidateWorldDefinition"] = candidate;
         draft["unresolved"]
@@ -800,13 +1170,22 @@ fn compile_local(
         .map_err(|error| format!("cannot create {}: {error}", output_dir.display()))?;
     let cas = Cas::open(cas_root).map_err(|error| error.to_string())?;
     let mut resources = ResourceMap::new();
-    for digest in world
+    let resource_digests = world
         .get("representations")
         .and_then(Value::as_array)
         .into_iter()
         .flatten()
         .filter_map(|item| item.get("resourceDigest").and_then(Value::as_str))
-    {
+        .chain(
+            world
+                .get("nativePayloads")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(|item| item.get("digest").and_then(Value::as_str)),
+        )
+        .collect::<BTreeSet<_>>();
+    for digest in resource_digests {
         if cas.verify(digest).map_err(|error| error.to_string())? {
             resources.insert(
                 digest.to_owned(),

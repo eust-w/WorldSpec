@@ -35,4 +35,6 @@ quarantine -> fingerprint -> parse -> normalize draft
 
 Rust Forge 已实现解析器之前的源扫描：大小上限、ZIP/归档隔离门、XML 外部实体拒绝、远程/路径穿越引用拒绝；ROS `package://` 仅作为受控包内引用保留。OBJ Doctor 已实现顶点、面、包围盒、退化面和畸形行诊断，以及“移除退化面”的不可变修复。修复前后资源分别进入 CAS，并生成带源/输出 Digest 的 Derivation。
 
-这只是 OBJ 参考切片，不代表 GLB、机器人、CAD 或 OpenUSD 已完成语义接入。USDZ 等归档当前会被隔离门拒绝，直到受限展开 Worker 完成。
+GLB Doctor 已实现 v2 容器、声明长度、JSON Chunk 和节点/网格/材质表诊断。URDF/MJCF Doctor 已实现 Link/Body、单父 Joint 树、轴、限位与局部位姿提取，拒绝重复名称、多父 Link、缺失端点、非正质量和非正定惯量。安全的单文件机器人描述会生成 Schema-valid `candidateWorldDefinition`：所有权树仍由逻辑 Robot 管理，运动学严格来自 Frame Placement Graph；源 XML 同时作为 Native Payload 保留。
+
+机器人候选只证明“源结构可规范映射”。Mesh/package 解析、执行器、传感器、传动、质量惯量和碰撞仍标为阻塞项；编译器产生的诊断 box 和 MuJoCo 默认动力学不得用于 L2。CAD、OpenUSD 与归档格式仍未完成语义接入；USDZ 等归档当前会被隔离门拒绝，直到受限展开 Worker 完成。

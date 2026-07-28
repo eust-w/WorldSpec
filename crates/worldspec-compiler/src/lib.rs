@@ -170,6 +170,31 @@ fn relation_for_entity<'a>(world: &'a Value, root_frame: &str) -> Option<&'a Val
         .find(|relation| field(relation, "childFrame") == root_frame)
 }
 
+fn spatial_children(world: &Value) -> HashMap<&str, Vec<&Value>> {
+    let frame_owner = values(world, "frames")
+        .iter()
+        .filter_map(|frame| Some((field(frame, "id"), frame.get("ownerEntity")?.as_str()?)))
+        .collect::<HashMap<_, _>>();
+    let root_entity = field(world, "rootEntity");
+    let mut children = HashMap::<&str, Vec<&Value>>::new();
+    for entity in values(world, "entities") {
+        let entity_id = field(entity, "id");
+        if entity_id == root_entity || field(entity, "kind") != "spatial" {
+            continue;
+        }
+        let parent_entity = relation_for_entity(world, field(entity, "rootFrame"))
+            .and_then(|relation| relation.get("parentFrame"))
+            .and_then(Value::as_str)
+            .and_then(|frame| frame_owner.get(frame).copied())
+            .unwrap_or(root_entity);
+        children.entry(parent_entity).or_default().push(entity);
+    }
+    for items in children.values_mut() {
+        items.sort_by_key(|entity| field(entity, "id"));
+    }
+    children
+}
+
 fn representation_for_entity<'a>(
     world: &'a Value,
     entity_id: &str,
@@ -212,6 +237,21 @@ fn append_unresolved_ingestion_losses(world: &Value, target: &str, losses: &mut 
             "targetBinding": target,
             "rationale": "The imported source unit has not been confirmed.",
             "consequence": "The bundle may be inspected, but cannot receive L2 certification."
+        }));
+    }
+    if world
+        .pointer("/metadata/ingestion/physicsStatus")
+        .and_then(Value::as_str)
+        == Some("unresolved")
+    {
+        losses.push(json!({
+            "id": format!("loss://{target}/ingestion/physics-evidence"),
+            "sourceRef": field(world, "id"),
+            "capability": "capability://worldspec/resolved-physics-evidence",
+            "status": "unsupported",
+            "targetBinding": target,
+            "rationale": "Collision, mass, center-of-mass, or inertia evidence remains unresolved.",
+            "consequence": "The bundle may be structurally inspected, but cannot receive L2 physical certification."
         }));
     }
 }
@@ -313,6 +353,87 @@ fn write_artifact(
     })
 }
 
+fn native_extension(format: &str) -> &str {
+    match format {
+        "obj" => "obj",
+        "glb" => "glb",
+        "urdf" => "urdf",
+        "mjcf" => "xml",
+        "step" => "step",
+        "iges" => "iges",
+        "openusd" => "usd",
+        _ => "bin",
+    }
+}
+
+fn materialize_native_payloads(
+    world: &Value,
+    output: &Path,
+    resources: &ResourceMap,
+    target: &str,
+    losses: &mut Vec<Value>,
+) -> Result<Vec<CompiledArtifact>, CompilerError> {
+    let mut artifacts = Vec::new();
+    let mut emitted = BTreeMap::<String, String>::new();
+    for payload in values(world, "nativePayloads") {
+        let id = field(payload, "id");
+        let digest = field(payload, "digest");
+        let format = field(payload, "sourceFormat");
+        let Some(bytes) = resources.get(digest) else {
+            losses.push(json!({
+                "id": format!("loss://{target}/{}/native-payload-missing", safe_name(id)),
+                "sourceRef": id,
+                "capability": "capability://worldspec/native-payload-preservation",
+                "status": "unsupported",
+                "targetBinding": format!("bundle://{target}/native"),
+                "rationale": "The Native Payload digest was declared but its bytes were unavailable to this build.",
+                "consequence": "The build cannot claim source round-trip preservation."
+            }));
+            continue;
+        };
+        let path = emitted.entry(digest.to_owned()).or_insert_with(|| {
+            format!(
+                "native/{}.{}",
+                digest.trim_start_matches("sha256:"),
+                native_extension(format)
+            )
+        });
+        if !artifacts
+            .iter()
+            .any(|artifact: &CompiledArtifact| artifact.path == *path)
+        {
+            artifacts.push(write_artifact(
+                output,
+                path,
+                "application/octet-stream",
+                "native_payload",
+                bytes,
+            )?);
+        }
+        losses.push(json!({
+            "id": format!("loss://{target}/{}/native-payload-preserved", safe_name(id)),
+            "sourceRef": id,
+            "capability": "capability://worldspec/native-payload-preservation",
+            "status": "exact",
+            "targetBinding": format!("bundle://{target}/{path}"),
+            "rationale": "The immutable source payload is copied byte-for-byte into the bundle.",
+            "consequence": "Preservation does not imply that the target runtime executes unknown native semantics."
+        }));
+        if target == "mujoco" && format == "mjcf" {
+            losses.push(json!({
+                "id": format!("loss://{target}/{}/native-runtime-reintegration", safe_name(id)),
+                "sourceRef": id,
+                "capability": "capability://worldspec/native-runtime-round-trip",
+                "status": "unsupported",
+                "targetBinding": target,
+                "rationale": "The reference compiler preserves the original payload but does not merge unknown native constructs back into its generated entrypoint.",
+                "consequence": "Target-native extensions are inspectable as sidecars but are not active at runtime."
+            }));
+        }
+    }
+    Ok(artifacts)
+}
+
 fn transform(relation: Option<&Value>) -> (Vec<f64>, Vec<f64>) {
     let translation = number_list(
         relation.and_then(|item| item.pointer("/transform/translation")),
@@ -359,20 +480,20 @@ fn append_mujoco_body(
         );
         let lower = relation
             .and_then(|item| item.pointer("/parameters/lower"))
-            .and_then(Value::as_f64)
-            .unwrap_or(0.0);
+            .and_then(Value::as_f64);
         let upper = relation
             .and_then(|item| item.pointer("/parameters/upper"))
-            .and_then(Value::as_f64)
-            .unwrap_or(1.0);
+            .and_then(Value::as_f64);
+        let range = lower
+            .zip(upper)
+            .map(|(lower, upper)| format!(" range=\"{lower} {upper}\""))
+            .unwrap_or_default();
         xml.push_str(&format!(
-            "{indent}  <joint name=\"{}\" type=\"slide\" axis=\"{} {} {}\" range=\"{} {}\"/>\n",
+            "{indent}  <joint name=\"{}\" type=\"slide\" axis=\"{} {} {}\"{range}/>\n",
             xml_escape(&safe_name(field(relation.unwrap(), "id"))),
             axis[0],
             axis[1],
-            axis[2],
-            lower,
-            upper
+            axis[2]
         ));
     } else if relation_type.ends_with("joint.revolute") {
         let axis = number_list(
@@ -381,20 +502,20 @@ fn append_mujoco_body(
         );
         let lower = relation
             .and_then(|item| item.pointer("/parameters/lower"))
-            .and_then(Value::as_f64)
-            .unwrap_or(-std::f64::consts::PI);
+            .and_then(Value::as_f64);
         let upper = relation
             .and_then(|item| item.pointer("/parameters/upper"))
-            .and_then(Value::as_f64)
-            .unwrap_or(std::f64::consts::PI);
+            .and_then(Value::as_f64);
+        let range = lower
+            .zip(upper)
+            .map(|(lower, upper)| format!(" range=\"{lower} {upper}\""))
+            .unwrap_or_default();
         xml.push_str(&format!(
-            "{indent}  <joint name=\"{}\" type=\"hinge\" axis=\"{} {} {}\" range=\"{} {}\"/>\n",
+            "{indent}  <joint name=\"{}\" type=\"hinge\" axis=\"{} {} {}\"{range}/>\n",
             xml_escape(&safe_name(field(relation.unwrap(), "id"))),
             axis[0],
             axis[1],
-            axis[2],
-            lower,
-            upper
+            axis[2]
         ));
     } else if relation_type.ends_with("joint.ball") {
         xml.push_str(&format!(
@@ -502,20 +623,19 @@ pub fn compile_mujoco_with_resources(
         .iter()
         .map(|entity| (field(entity, "id"), entity))
         .collect::<HashMap<_, _>>();
-    let mut children = HashMap::<&str, Vec<&Value>>::new();
-    for entity in entities {
-        if let Some(owner) = entity.get("ownerEntity").and_then(Value::as_str) {
-            children.entry(owner).or_default().push(entity);
-        }
-    }
-    for items in children.values_mut() {
-        items.sort_by_key(|entity| field(entity, "id"));
-    }
+    let children = spatial_children(world);
 
     let mut losses = Vec::new();
     append_unresolved_ingestion_losses(world, "mujoco", &mut losses);
     let (mesh_bindings, mut artifacts) =
         materialize_mujoco_meshes(world, output, resources, &mut losses)?;
+    artifacts.extend(materialize_native_payloads(
+        world,
+        output,
+        resources,
+        "mujoco",
+        &mut losses,
+    )?);
     let mut xml = String::from(
         "<mujoco model=\"worldspec\">\n  <compiler angle=\"radian\" coordinate=\"local\"/>\n  <option timestep=\"0.002\"/>\n",
     );
@@ -659,9 +779,16 @@ fn build_glb(world: &Value, losses: &mut Vec<Value>) -> Result<Vec<u8>, Compiler
         let Some(&node_index) = entity_node.get(id) else {
             continue;
         };
-        let owner = entity.get("ownerEntity").and_then(Value::as_str);
-        let parent_index = owner
-            .and_then(|owner| entity_node.get(owner).copied())
+        let parent_entity = relation_for_entity(world, field(entity, "rootFrame"))
+            .and_then(|relation| relation.get("parentFrame"))
+            .and_then(Value::as_str)
+            .and_then(|parent_frame| {
+                values(world, "frames").iter().find_map(|frame| {
+                    (field(frame, "id") == parent_frame).then(|| field(frame, "ownerEntity"))
+                })
+            });
+        let parent_index = parent_entity
+            .and_then(|parent| entity_node.get(parent).copied())
             .unwrap_or(0);
         let children = nodes[parent_index]
             .as_object_mut()
@@ -747,6 +874,8 @@ pub fn compile_threejs_with_resources(
     fs::create_dir_all(output)?;
     let mut losses = Vec::new();
     append_unresolved_ingestion_losses(world, "threejs", &mut losses);
+    let mut native_artifacts =
+        materialize_native_payloads(world, output, resources, "threejs", &mut losses)?;
     let source_glb = values(world, "representations")
         .iter()
         .filter(|item| {
@@ -788,6 +917,7 @@ pub fn compile_threejs_with_resources(
         "scene",
         &glb,
     )?];
+    artifacts.append(&mut native_artifacts);
     let manifest = json!({
         "specVersion": "0.1.0",
         "worldDigest": canonical_sha256(world)
@@ -835,7 +965,7 @@ pub fn write_compile_summary(
 mod tests {
     use super::{
         ResourceMap, compile_mujoco, compile_mujoco_with_resources, compile_threejs,
-        compile_threejs_with_resources,
+        compile_threejs_with_resources, spatial_children,
     };
     use serde_json::{Value, json};
     use sha2::{Digest, Sha256};
@@ -876,6 +1006,45 @@ mod tests {
     }
 
     #[test]
+    fn spatial_hierarchy_uses_frame_graph_not_ownership_tree() {
+        let world = json!({
+            "rootEntity": "entity://test/world",
+            "entities": [
+                {"id": "entity://test/world", "kind": "spatial", "rootFrame": "frame://test/world"},
+                {"id": "entity://test/robot", "kind": "logical", "ownerEntity": "entity://test/world"},
+                {"id": "entity://test/base", "kind": "spatial", "ownerEntity": "entity://test/robot", "rootFrame": "frame://test/base"},
+                {"id": "entity://test/arm", "kind": "spatial", "ownerEntity": "entity://test/robot", "rootFrame": "frame://test/arm"}
+            ],
+            "frames": [
+                {"id": "frame://test/world", "ownerEntity": "entity://test/world"},
+                {"id": "frame://test/base", "ownerEntity": "entity://test/base"},
+                {"id": "frame://test/arm", "ownerEntity": "entity://test/arm"}
+            ],
+            "relations": [
+                {
+                    "id": "relation://test/base",
+                    "type": "worldspec://relation/frame.fixed",
+                    "parentFrame": "frame://test/world",
+                    "childFrame": "frame://test/base"
+                },
+                {
+                    "id": "relation://test/arm",
+                    "type": "worldspec://relation/frame.joint.revolute",
+                    "parentFrame": "frame://test/base",
+                    "childFrame": "frame://test/arm"
+                }
+            ]
+        });
+        let children = spatial_children(&world);
+        assert_eq!(
+            children["entity://test/world"][0]["id"],
+            "entity://test/base"
+        );
+        assert_eq!(children["entity://test/base"][0]["id"], "entity://test/arm");
+        assert!(!children.contains_key("entity://test/robot"));
+    }
+
+    #[test]
     fn materializes_resolved_obj_for_mujoco() {
         let output = temporary("obj-resource");
         let mut world = world();
@@ -901,6 +1070,16 @@ mod tests {
         let resources = ResourceMap::from([(digest, bytes)]);
         let summary = compile_mujoco_with_resources(&world, &output, &resources).unwrap();
         assert!(summary.artifacts.iter().any(|item| item.role == "mesh"));
+        assert!(
+            summary
+                .artifacts
+                .iter()
+                .any(|item| item.role == "native_payload")
+        );
+        assert!(summary.losses.iter().any(|item| {
+            item["capability"] == "capability://worldspec/native-payload-preservation"
+                && item["status"] == "exact"
+        }));
         let xml = std::fs::read_to_string(output.join("model.xml")).unwrap();
         assert!(xml.contains("<mesh name="));
         assert!(xml.contains("contype=\"0\" conaffinity=\"0\""));
@@ -933,8 +1112,18 @@ mod tests {
             "rightsStatus": "cleared"
         }]);
         let resources = ResourceMap::from([(digest, source.clone())]);
-        compile_threejs_with_resources(&imported, &output, &resources).unwrap();
+        let summary = compile_threejs_with_resources(&imported, &output, &resources).unwrap();
         assert_eq!(source, std::fs::read(output.join("scene.glb")).unwrap());
+        assert!(
+            summary
+                .artifacts
+                .iter()
+                .any(|item| item.role == "native_payload")
+        );
+        assert!(summary.losses.iter().any(|item| {
+            item["capability"] == "capability://worldspec/native-payload-preservation"
+                && item["status"] == "exact"
+        }));
         std::fs::remove_dir_all(source_output).unwrap();
         std::fs::remove_dir_all(output).unwrap();
     }

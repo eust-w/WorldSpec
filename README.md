@@ -2,7 +2,7 @@
 
 WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真器编译中间层。目标是把现有资产或图像/视频生成结果整理为可追溯、可验证、损失透明的 SimReady 资产。
 
-> 当前仓库状态：包含 v0.1 文档、29 个 JSON Schema、示例、Rust Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、可选 Ed25519 证书签名、CLI 与 loopback 异步 API。已实现合成立方体范围的 MuJoCo/Three.js 参考编译切片、真实 MuJoCo 加载/步进测试、真实浏览器预览测试，以及 OBJ 的前置安全扫描、诊断和不可变修复。完整格式接入、GPU Worker、真实 Mesh/材质编译和 L2/L3 行为认证仍未完成，产品 v0.1 尚未整体验收。
+> 当前仓库状态：包含 v0.1 文档、29 个 JSON Schema、示例、Rust Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、可选 Ed25519 证书签名、CLI 与 loopback 异步 API。已实现合成立方体范围的 MuJoCo/Three.js 参考编译切片、真实 MuJoCo 加载/步进测试、真实浏览器预览测试、OBJ 的安全扫描/诊断/不可变修复，以及最小 URDF/MJCF 运动学接入和 MuJoCo 结构加载。完整资源解析、CAD/OpenUSD Worker、GPU 生成、L2/L3 行为认证仍未完成，产品 v0.1 尚未整体验收。
 
 ## 快速入口
 
@@ -31,6 +31,8 @@ v0.1 计划认证 MuJoCo 与 Three.js。OpenUSD 仅作为输入和原生载荷�
 
 ```bash
 python3 scripts/validate_baseline.py
+python3 scripts/validate_compilers.py
+python3 scripts/validate_robot_ingestion.py
 git diff --check
 ```
 

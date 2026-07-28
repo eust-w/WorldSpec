@@ -18,7 +18,7 @@ loss-report.json
 worldspec.lock.json
 ```
 
-本实现已用本机 MuJoCo 3.6.0 `MjModel.from_xml_path` 原生加载并短步进验证最小立方体与真实复制进 Bundle 的 OBJ。只有 visual Mesh 时会禁用其碰撞并报告 `unsupported`；没有可解析资源或尺寸时会生成诊断 box 并记为 `approximated`。两者都不得用于任务认证。
+本实现已用本机 MuJoCo 3.6.0 `MjModel.from_xml_path` 原生加载并短步进验证最小立方体、真实复制进 Bundle 的 OBJ，以及由最小 URDF/MJCF 提取的两 Link/一 Joint 结构。编译层级使用 Frame Placement Graph，不使用 Entity Ownership Tree。只有 visual Mesh 时会禁用其碰撞并报告 `unsupported`；没有可解析资源或尺寸时会生成诊断 box 并记为 `approximated`；物理证据未解析时另行报告 `resolved-physics-evidence: unsupported`。这些结果都不得用于任务认证。
 
 仍未实现的目标范围包括 GLB 到 MuJoCo Mesh 转换、纹理、完整惯量、材质、相机、光源、执行器、传感器以及 Native Payload round-trip。tendon、equality、plugin 等能力在实现前必须报告 `unsupported`，不能静默丢失。
 
