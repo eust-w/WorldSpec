@@ -1,7 +1,7 @@
 {
   "id": "trainingresult://worldspec/h1-menagerie-right-robotiq/blocked",
   "resultVersion": "0.1.0",
-  "trainingProfileDigest": "sha256:95a118984d6e447f34df5637036dab898db1db56906358cb109d9249f49a6990",
+  "trainingProfileDigest": "sha256:f779e9c84aa2cd23b6a886d4aa7c85f95d9f518b3ca012df85565bacabc56b1f",
   "targetBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
   "status": "blocked",
   "executionEvidence": "not_executed",

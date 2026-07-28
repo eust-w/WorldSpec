@@ -231,6 +231,17 @@ matches = [
 if len(matches) != 1:
     raise SystemExit(f"expected one result marker, found {len(matches)}")
 report = json.loads(matches[0])
+log_lines = log_path.read_text(encoding="utf-8").splitlines()
+ccd_overflow_count = sum("CCD overflow" in line for line in log_lines)
+capacity_overflow_count = sum(
+    "overflow" in line.lower() and "CCD overflow" not in line
+    for line in log_lines
+)
+report["logDiagnostics"] = {
+    "ccdOverflowCount": ccd_overflow_count,
+    "capacityOverflowCount": capacity_overflow_count,
+    "overflowFree": ccd_overflow_count == 0 and capacity_overflow_count == 0,
+}
 if (
     report.get("status") != "passed"
     or report.get("runtimeAcceptance") != "research_smoke"
@@ -238,6 +249,11 @@ if (
     or report.get("canonicalTrainingStatus") != "not_executed"
 ):
     raise SystemExit("PPO smoke evidence classification is invalid")
+if not report["logDiagnostics"]["overflowFree"]:
+    raise SystemExit(
+        "PPO smoke emitted capacity overflow diagnostics: "
+        + json.dumps(report["logDiagnostics"], sort_keys=True)
+    )
 if report.get("probeDefinition", {}).get("commit") != sys.argv[3]:
     raise SystemExit("probe definition revision mismatch")
 if report.get("imageSource", {}).get("commit") != sys.argv[4]:

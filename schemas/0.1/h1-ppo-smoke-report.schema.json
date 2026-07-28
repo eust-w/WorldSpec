@@ -23,6 +23,8 @@
     "canonicalProfileDigest",
     "smokeProfileDigest",
     "smokeOverrides",
+    "runtimeCapacity",
+    "logDiagnostics",
     "staticPreflight",
     "runtimePreflight",
     "target",
@@ -92,6 +94,26 @@
         "numMinibatches": { "const": 8 },
         "numUpdatesPerBatch": { "const": 1 },
         "batchSize": { "const": 32 }
+      },
+      "additionalProperties": false
+    },
+    "runtimeCapacity": {
+      "type": "object",
+      "required": ["naconmax", "naccdmax", "njmax"],
+      "properties": {
+        "naconmax": { "const": 128 },
+        "naccdmax": { "const": 128 },
+        "njmax": { "const": 4096 }
+      },
+      "additionalProperties": false
+    },
+    "logDiagnostics": {
+      "type": "object",
+      "required": ["ccdOverflowCount", "capacityOverflowCount", "overflowFree"],
+      "properties": {
+        "ccdOverflowCount": { "const": 0 },
+        "capacityOverflowCount": { "const": 0 },
+        "overflowFree": { "const": true }
       },
       "additionalProperties": false
     },

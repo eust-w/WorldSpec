@@ -154,6 +154,7 @@ def run_ppo_smoke(
         "canonicalProfileDigest": canonical_digest,
         "smokeProfileDigest": smoke_digest,
         "smokeOverrides": SMOKE_OVERRIDES,
+        "runtimeCapacity": profile["runtime"]["mjxCapacity"],
         "staticPreflight": static,
         "runtimePreflight": runtime,
         "target": {

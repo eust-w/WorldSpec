@@ -30,3 +30,14 @@ def test_smoke_contract_cannot_be_confused_with_publishable_training() -> None:
     assert SMOKE_OVERRIDES["numTimesteps"] == 32768
     assert SMOKE_OVERRIDES["numEnvs"] == 256
     assert SMOKE_OVERRIDES["numEvals"] == 2
+
+
+def test_smoke_uses_explicit_per_environment_mjx_capacity() -> None:
+    canonical = json.loads(PROFILE.read_text(encoding="utf-8"))
+    smoke = make_smoke_profile(canonical)
+
+    assert smoke["runtime"]["mjxCapacity"] == {
+        "naconmax": 128,
+        "naccdmax": 128,
+        "njmax": 4096,
+    }

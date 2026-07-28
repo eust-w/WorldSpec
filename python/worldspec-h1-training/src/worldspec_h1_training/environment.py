@@ -37,14 +37,16 @@ def make_environment(profile: dict[str, Any], training_model: Path):
     control = profile["control"]
     training = profile["training"]
     validation = profile["validation"]
+    capacity = profile["runtime"]["mjxCapacity"]
     config = config_dict.create(
         ctrl_dt=training["simulationTimestepSeconds"] * control["controlDecimation"],
         sim_dt=training["simulationTimestepSeconds"],
         episode_length=training["episodeLength"],
         action_repeat=1,
         impl=profile["framework"]["physicsImplementation"],
-        naconmax=8 * training["numEnvs"],
-        njmax=4096,
+        naconmax=capacity["naconmax"],
+        naccdmax=capacity["naccdmax"],
+        njmax=capacity["njmax"],
     )
 
     class WorldSpecLoadedH1Velocity(mjx_env.MjxEnv):
@@ -181,6 +183,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 ctrl=jp.zeros(self.mjx_model.nu),
                 impl=self.mjx_model.impl.value,
                 naconmax=config.naconmax,
+                naccdmax=config.naccdmax,
                 njmax=config.njmax,
             )
             data = mjx.forward(self.mjx_model, data)

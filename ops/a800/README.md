@@ -77,4 +77,8 @@ non-zero Brax PPO update and one trained-policy inference step execute with
 finite values on the exact target model. Its report is permanently classified
 as `runtimeAcceptance=research_smoke`, `policyStatus=non_publishable`, and
 `canonicalTrainingStatus=not_executed`. It does not write a policy checkpoint,
-does not satisfy the 100M profile, and cannot satisfy L3.
+does not satisfy the 100M profile, and cannot satisfy L3. The launcher also
+fails closed when MuJoCo/MJX logs any collision-capacity overflow; the explicit
+per-environment `naconmax`, `naccdmax`, and `njmax` values are part of the
+canonical training Profile rather than being derived from the number of
+vectorized environments.

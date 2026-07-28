@@ -145,7 +145,8 @@
         "algorithm",
         "status",
         "targetPlatform",
-        "minimumGpuCount"
+        "minimumGpuCount",
+        "mjxCapacity"
       ],
       "properties": {
         "engine": { "const": "mujoco_mjx" },
@@ -156,7 +157,17 @@
         "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
         "backendPackage": { "const": "worldspec_h1_training" },
         "backendVersion": { "$ref": "common.schema.json#/$defs/semver" },
-        "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" }
+        "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "mjxCapacity": {
+          "type": "object",
+          "required": ["naconmax", "naccdmax", "njmax"],
+          "properties": {
+            "naconmax": { "type": "integer", "minimum": 64 },
+            "naccdmax": { "type": "integer", "minimum": 64 },
+            "njmax": { "type": "integer", "minimum": 512 }
+          },
+          "additionalProperties": false
+        }
       },
       "allOf": [
         {

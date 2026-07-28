@@ -42,3 +42,11 @@ def test_profile_digest_is_canonical() -> None:
     assert digest_json(value) == digest_json(alternate)
     assert digest_json(value).startswith("sha256:")
     assert len(digest_json(value)) == len("sha256:") + hashlib.sha256().digest_size * 2
+
+
+def test_mjx_capacity_is_fail_closed() -> None:
+    value = copy.deepcopy(profile())
+    value["runtime"]["mjxCapacity"]["naccdmax"] = 32
+    with pytest.raises(TrainingError) as captured:
+        validate_profile(value)
+    assert captured.value.code == "TRAINING_RUNTIME_PROFILE_INVALID"

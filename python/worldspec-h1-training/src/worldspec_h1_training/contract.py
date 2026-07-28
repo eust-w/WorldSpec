@@ -84,6 +84,11 @@ def validate_profile(profile: dict[str, Any]) -> None:
         "engine": "mujoco_mjx",
         "algorithm": "ppo",
         "targetPlatform": "linux_x86_64_nvidia",
+        "mjxCapacity": {
+            "naconmax": 128,
+            "naccdmax": 128,
+            "njmax": 4096,
+        },
     }
     actual_runtime = {key: runtime.get(key) for key in expected_runtime}
     if actual_runtime != expected_runtime:
