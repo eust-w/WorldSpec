@@ -43,3 +43,6 @@ base-image file ownership and modes and to enter the Dockerfile-declared user
 while executing build layers.
 The Secret is never copied into `worldspec-a800-poc`, the repository, or the
 local report. The build context and Job are removed after evidence capture.
+The Dockerfile must never recursively change `/workspace`: that path is the
+shared build-context PVC in Kaniko. Runtime input and output directories are
+provided as dedicated volumes by runtime Jobs instead.

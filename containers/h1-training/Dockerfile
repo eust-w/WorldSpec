@@ -44,8 +44,8 @@ RUN uv pip install \
     /opt/worldspec-worker \
     && /opt/worldspec-h1-training/.venv/bin/python -c \
       'import importlib.metadata as m; assert m.version("jsonschema") == "4.26.0"' \
-    && mkdir -p /home/worldspec /workspace/input /workspace/output \
-    && chown -R 10001:10001 /home/worldspec /workspace
+    && mkdir -p /home/worldspec \
+    && chown -R 10001:10001 /home/worldspec
 
 ENV HOME=/home/worldspec \
     PATH="/opt/worldspec-h1-training/.venv/bin:${PATH}"

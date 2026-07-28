@@ -113,3 +113,4 @@ def test_h1_training_image_builds_as_root_but_runs_as_non_root() -> None:
     install = dockerfile.index("RUN python -m pip install")
     runtime_user = dockerfile.rindex("USER 10001:10001")
     assert build_user < install < runtime_user
+    assert "chown -R 10001:10001 /home/worldspec /workspace" not in dockerfile

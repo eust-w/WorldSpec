@@ -86,19 +86,27 @@ if [[ -n "$("${kubectl_cmd[@]}" get jobs -l app.kubernetes.io/name=worldspec-h1-
   exit 2
 fi
 
-context_json="$(
-  python3 - "${CONTEXT_DIR}" <<'PY'
-import json
-import sys
-
-print(json.dumps(sys.argv[1]))
-PY
-)"
 temporary_manifest="$(mktemp "${TMPDIR:-/tmp}/worldspec-h1-build.XXXXXX.yaml")"
 job_name=""
 pod_name=""
 local_result_dir=""
 context_uploaded=false
+
+cleanup_context() {
+  local attempt
+  for attempt in 1 2 3; do
+    "${kubectl_cmd[@]}" exec "${api_pod}" -- \
+      rm -rf -- "${CONTEXT_DIR}" >/dev/null 2>&1 || true
+    if "${kubectl_cmd[@]}" exec "${api_pod}" -- \
+      test ! -e "${CONTEXT_DIR}" >/dev/null 2>&1; then
+      context_uploaded=false
+      return 0
+    fi
+  done
+  printf 'WARNING: temporary build context was not removed: %s\n' \
+    "${CONTEXT_DIR}" >&2
+  return 1
+}
 
 cleanup() {
   local exit_code=$?
@@ -108,19 +116,19 @@ cleanup() {
       --ignore-not-found --wait=true --timeout=180s >/dev/null 2>&1
   fi
   if [[ "${context_uploaded}" == "true" ]]; then
-    "${kubectl_cmd[@]}" exec "${api_pod}" -- sh -lc \
-      "rm -rf ${context_json}" >/dev/null 2>&1
+    cleanup_context || true
   fi
   rm -f "${temporary_manifest}"
   exit "${exit_code}"
 }
 trap cleanup EXIT INT TERM
 
-"${kubectl_cmd[@]}" exec "${api_pod}" -- sh -lc \
-  "rm -rf ${context_json} && mkdir -p ${context_json}"
+"${kubectl_cmd[@]}" exec "${api_pod}" -- rm -rf -- "${CONTEXT_DIR}"
+"${kubectl_cmd[@]}" exec "${api_pod}" -- mkdir -p -- "${CONTEXT_DIR}"
 context_uploaded=true
 git -C "${ROOT_DIR}" archive --format=tar "${REVISION}" |
-  "${kubectl_cmd[@]}" exec -i "${api_pod}" -- tar -xf - -C "${CONTEXT_DIR}"
+  "${kubectl_cmd[@]}" exec -i "${api_pod}" -- \
+    tar --no-same-owner -xf - -C "${CONTEXT_DIR}"
 
 sed \
   -e "s|__CONTEXT_DIR__|${CONTEXT_DIR}|g" \
