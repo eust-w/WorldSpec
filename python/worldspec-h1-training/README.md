@@ -23,10 +23,16 @@ The base installation contains only contract and model-preparation code. The
 and dependency versions. A successful import or CPU test is not GPU execution
 evidence.
 
-Current status: source and API implementation exist. A tokenless isolated
-compatibility spike executed on an NVIDIA A800-SXM4-80GB and passed the locked
-MuJoCo/MJX/Warp runtime preflight plus one finite reset/step on the derived
-H1+right-Robotiq model. The evidence is
-`examples/h1-kitchen/runtime-spike.a800.passed.json` and is intentionally
-classified as `executed_not_locked`. No final OCI digest is locked, PPO has not
-run, and no policy or five-run success evidence exists.
+Current status: a tokenless compatibility spike, a digest-pinned locked
+runtime probe, the exact 8,192-environment allocation probe, and two bounded
+PPO research smokes executed on an NVIDIA A800-SXM4-80GB. The
+capacity-corrected smoke reported finite training and inference with no
+capacity overflow, but only about 87.34 mean evaluation steps. It remains
+`research_smoke / non_publishable` and saved no checkpoint.
+
+The package now also defines a separate stand-calibration route with
+versioned reward, termination, runtime, quality-gate, and internal-only
+checkpoint contracts. Until its A800 report exists, this route is implemented
+source rather than execution evidence. Canonical 100-million-step training,
+publishable policy quality, and five-run H1 kitchen L3 evidence remain
+unexecuted.

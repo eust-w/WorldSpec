@@ -99,3 +99,14 @@ saved no checkpoint, and does not establish a usable policy. The canonical
 100-million-step run, a publishable policy, and the kitchen 5/5 L3 behavior
 remain unexecuted; the pipeline cannot enter the L3 state machine before those
 behavior validations pass.
+
+Before spending the canonical 100-million-step budget, the implementation now
+defines a separate `stand-v1` research calibration gate. It uses 1,048,576
+requested steps, 2,048 environments, and an exact zero-velocity command, with
+versioned survival, upright, base-height, pose, torque, and action-change
+shaping. The calibration keeps five strict deterministic stand checks and
+separates relaxed training termination from final validation thresholds. Its
+checkpoint is fixed as `research_only / internal_only`; even a passing gate
+only permits the next curriculum experiment and does not establish canonical
+training or L3. This route currently has implementation and a Profile but no
+A800 execution report.

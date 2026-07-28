@@ -18,10 +18,7 @@ def test_smoke_profile_is_bounded_and_does_not_mutate_canonical_profile() -> Non
 
     assert digest_json(canonical) == original_digest
     assert smoke["training"]["hyperparameterStatus"] == "research_smoke_override"
-    assert {
-        key: smoke["training"][key]
-        for key in SMOKE_OVERRIDES
-    } == SMOKE_OVERRIDES
+    assert {key: smoke["training"][key] for key in SMOKE_OVERRIDES} == SMOKE_OVERRIDES
     assert smoke["training"]["numTimesteps"] < canonical["training"]["numTimesteps"]
     assert smoke["training"]["numEnvs"] < canonical["training"]["numEnvs"]
 

@@ -207,3 +207,36 @@ def test_ppo_smoke_is_isolated_and_cannot_claim_canonical_training() -> None:
     assert '"canonicalTrainingStatus": "not_executed"' in entrypoint
     assert "train_and_evaluate" not in entrypoint
     assert "WORLDSPEC_A800_PPO_SMOKE_RESULT=" in entrypoint
+
+
+def test_locomotion_calibration_is_isolated_and_research_only() -> None:
+    (job,) = _documents("h1-locomotion-calibration-job.yaml")
+    assert job["metadata"]["namespace"] == "worldspec-a800-poc"
+    assert job["metadata"]["labels"]["app.kubernetes.io/name"] == (
+        "worldspec-h1-locomotion-calibration"
+    )
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["securityContext"]["runAsUser"] == 10001
+    assert pod["securityContext"]["runAsGroup"] == 10001
+    (container,) = pod["containers"]
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["requests"]["cpu"] == "8"
+    assert container["resources"]["requests"]["memory"] == "32Gi"
+    assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all(
+        "persistentVolumeClaim" not in volume
+        for volume in pod["volumes"]
+    )
+
+    entrypoint = (
+        A800 / "h1-locomotion-calibration-entrypoint.sh"
+    ).read_text(encoding="utf-8")
+    assert '"runtimeAcceptance": "research_calibration"' in entrypoint
+    assert '"policyStatus": "non_publishable"' in entrypoint
+    assert '"canonicalTrainingStatus": "not_executed"' in entrypoint
+    assert "container digest does not match the executing image" in entrypoint
+    assert "WORLDSPEC_A800_CALIBRATION_RESULT=" in entrypoint

@@ -37,6 +37,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
     control = profile["control"]
     training = profile["training"]
     validation = profile["validation"]
+    training_environment = profile.get("trainingEnvironment")
     capacity = profile["runtime"]["mjxCapacity"]
     config = config_dict.create(
         ctrl_dt=training["simulationTimestepSeconds"] * control["controlDecimation"],
@@ -144,8 +145,24 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 ]
             )
             self._zero_command_probability = float(command["zeroCommandProbability"])
-            self._minimum_height = float(validation["minimumBaseHeight"])
-            self._minimum_upright = float(validation["minimumUprightCosine"])
+            self._calibration_enabled = isinstance(training_environment, dict)
+            if self._calibration_enabled:
+                termination = training_environment["termination"]
+                self._minimum_height = float(termination["minimumBaseHeight"])
+                self._minimum_upright = float(termination["minimumUprightCosine"])
+                self._joint_limit_tolerance = float(termination["jointLimitToleranceRadians"])
+                self._reward_config = training_environment["reward"]
+                self._reward_targets = training_environment["targets"]
+                self._reward_sigmas = training_environment["sigmas"]
+                self._command_resample_steps = int(training_environment["commandResampleSteps"])
+            else:
+                self._minimum_height = float(validation["minimumBaseHeight"])
+                self._minimum_upright = float(validation["minimumUprightCosine"])
+                self._joint_limit_tolerance = 0.0
+                self._reward_config = {}
+                self._reward_targets = {}
+                self._reward_sigmas = {}
+                self._command_resample_steps = 500
 
         def _sensor(self, data, name: str):
             return data.sensordata[self._sensor_slices[name]]
@@ -192,14 +209,32 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 "command": self.sample_command(command_rng),
                 "last_action": jp.zeros(self.action_size),
                 "step": jp.zeros((), dtype=jp.int32),
+                "termination": {
+                    "joint_limit": jp.zeros((), dtype=bool),
+                    "fall_height": jp.zeros((), dtype=bool),
+                    "fall_upright": jp.zeros((), dtype=bool),
+                    "nonfinite": jp.zeros((), dtype=bool),
+                },
             }
             metrics = {
                 "reward/tracking_linear": jp.zeros(()),
                 "reward/tracking_yaw": jp.zeros(()),
+                "reward/survival": jp.zeros(()),
+                "reward/upright": jp.zeros(()),
+                "reward/base_height": jp.zeros(()),
+                "reward/pose": jp.zeros(()),
                 "cost/upright": jp.zeros(()),
                 "cost/vertical_velocity": jp.zeros(()),
+                "cost/angular_velocity_xy": jp.zeros(()),
+                "cost/pose": jp.zeros(()),
                 "cost/torque": jp.zeros(()),
                 "cost/action_rate": jp.zeros(()),
+                "termination/joint_limit": jp.zeros(()),
+                "termination/fall_height": jp.zeros(()),
+                "termination/fall_upright": jp.zeros(()),
+                "termination/nonfinite": jp.zeros(()),
+                "state/base_height": jp.zeros(()),
+                "state/upright_cosine": jp.zeros(()),
             }
             observation = {"state": self._observation(data, info["last_action"], info["command"])}
             return mjx_env.State(
@@ -233,44 +268,84 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             upvector = self._sensor(data, "upvector")
             linear_error = jp.sum(jp.square(command[:2] - local_velocity[:2]))
             yaw_error = jp.square(command[2] - gyro[2])
-            tracking_linear = jp.exp(-linear_error / 0.25)
-            tracking_yaw = jp.exp(-yaw_error / 0.25)
+            tracking_sigma = (
+                float(self._reward_sigmas["tracking"]) if self._calibration_enabled else 0.25
+            )
+            tracking_linear = jp.exp(-linear_error / tracking_sigma)
+            tracking_yaw = jp.exp(-yaw_error / tracking_sigma)
             upright_cost = jp.sum(jp.square(upvector[:2]))
             vertical_cost = jp.square(local_velocity[2])
-            torque_cost = jp.sum(jp.square(policy_torque)) * 2e-6
-            action_rate_cost = jp.sum(jp.square(action - state.info["last_action"])) * 0.02
-            reward = jp.clip(
-                (
-                    1.5 * tracking_linear
-                    + 0.8 * tracking_yaw
-                    - 5.0 * upright_cost
-                    - 2.0 * vertical_cost
-                    - torque_cost
-                    - action_rate_cost
-                )
-                * self.dt,
-                0.0,
-            )
             policy_q = data.qpos[self._policy_qpos]
             held_q = data.qpos[self._held_qpos]
-            joint_violation = jp.any(
-                policy_q < jp.asarray(self._mj_model.jnt_range)[self._policy_joint_ids, 0]
-            )
+            pose_cost = jp.sum(jp.square(policy_q - self._default_angles))
+            angular_velocity_xy_cost = jp.sum(jp.square(gyro[:2]))
+            raw_torque_cost = jp.sum(jp.square(policy_torque))
+            raw_action_rate_cost = jp.sum(jp.square(action - state.info["last_action"]))
+            if self._calibration_enabled:
+                base_height = data.xpos[self._pelvis_body, 2]
+                survival_reward = jp.ones(())
+                upright_reward = jp.exp(-upright_cost / float(self._reward_sigmas["upright"]))
+                height_error = jp.square(base_height - float(self._reward_targets["baseHeight"]))
+                base_height_reward = jp.exp(
+                    -height_error / float(self._reward_sigmas["baseHeight"])
+                )
+                pose_reward = jp.exp(-pose_cost / float(self._reward_sigmas["pose"]))
+                reward = jp.clip(
+                    (
+                        float(self._reward_config["survival"]) * survival_reward
+                        + float(self._reward_config["trackingLinear"]) * tracking_linear
+                        + float(self._reward_config["trackingYaw"]) * tracking_yaw
+                        + float(self._reward_config["upright"]) * upright_reward
+                        + float(self._reward_config["baseHeight"]) * base_height_reward
+                        + float(self._reward_config["pose"]) * pose_reward
+                        - float(self._reward_config["verticalVelocityCost"]) * vertical_cost
+                        - float(self._reward_config["angularVelocityXYCost"])
+                        * angular_velocity_xy_cost
+                        - float(self._reward_config["torqueCost"]) * raw_torque_cost
+                        - float(self._reward_config["actionRateCost"]) * raw_action_rate_cost
+                    )
+                    * self.dt,
+                    0.0,
+                )
+                torque_cost = raw_torque_cost * float(self._reward_config["torqueCost"])
+                action_rate_cost = raw_action_rate_cost * float(
+                    self._reward_config["actionRateCost"]
+                )
+            else:
+                survival_reward = jp.zeros(())
+                upright_reward = jp.zeros(())
+                base_height_reward = jp.zeros(())
+                pose_reward = jp.zeros(())
+                torque_cost = raw_torque_cost * 2e-6
+                action_rate_cost = raw_action_rate_cost * 0.02
+                reward = jp.clip(
+                    (
+                        1.5 * tracking_linear
+                        + 0.8 * tracking_yaw
+                        - 5.0 * upright_cost
+                        - 2.0 * vertical_cost
+                        - torque_cost
+                        - action_rate_cost
+                    )
+                    * self.dt,
+                    0.0,
+                )
+            joint_ranges = jp.asarray(self._mj_model.jnt_range)
+            tolerance = self._joint_limit_tolerance
+            joint_violation = jp.any(policy_q < joint_ranges[self._policy_joint_ids, 0] - tolerance)
             joint_violation |= jp.any(
-                policy_q > jp.asarray(self._mj_model.jnt_range)[self._policy_joint_ids, 1]
+                policy_q > joint_ranges[self._policy_joint_ids, 1] + tolerance
             )
-            joint_violation |= jp.any(
-                held_q < jp.asarray(self._mj_model.jnt_range)[self._held_joint_ids, 0]
-            )
-            joint_violation |= jp.any(
-                held_q > jp.asarray(self._mj_model.jnt_range)[self._held_joint_ids, 1]
-            )
-            fallen = data.xpos[self._pelvis_body, 2] < self._minimum_height
-            fallen |= upvector[2] < self._minimum_upright
+            joint_violation |= jp.any(held_q < joint_ranges[self._held_joint_ids, 0] - tolerance)
+            joint_violation |= jp.any(held_q > joint_ranges[self._held_joint_ids, 1] + tolerance)
+            base_height = data.xpos[self._pelvis_body, 2]
+            fall_height = base_height < self._minimum_height
+            fall_upright = upvector[2] < self._minimum_upright
             finite = jp.all(jp.isfinite(data.qpos)) & jp.all(jp.isfinite(data.qvel))
-            done = (joint_violation | fallen | ~finite).astype(reward.dtype)
+            nonfinite = ~finite
+            done = (joint_violation | fall_height | fall_upright | nonfinite).astype(reward.dtype)
             step = state.info["step"] + 1
-            resample = step >= 500
+            resample = step >= self._command_resample_steps
             next_command = jp.where(resample, self.sample_command(command_rng), command)
             next_step = jp.where(resample | done.astype(bool), 0, step)
             info = _preserving_update(
@@ -280,6 +355,12 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     "command": next_command,
                     "last_action": action,
                     "step": next_step,
+                    "termination": {
+                        "joint_limit": joint_violation,
+                        "fall_height": fall_height,
+                        "fall_upright": fall_upright,
+                        "nonfinite": nonfinite,
+                    },
                 },
             )
             metrics = _preserving_update(
@@ -287,10 +368,22 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 {
                     "reward/tracking_linear": tracking_linear,
                     "reward/tracking_yaw": tracking_yaw,
+                    "reward/survival": survival_reward,
+                    "reward/upright": upright_reward,
+                    "reward/base_height": base_height_reward,
+                    "reward/pose": pose_reward,
                     "cost/upright": upright_cost,
                     "cost/vertical_velocity": vertical_cost,
+                    "cost/angular_velocity_xy": angular_velocity_xy_cost,
+                    "cost/pose": pose_cost,
                     "cost/torque": torque_cost,
                     "cost/action_rate": action_rate_cost,
+                    "termination/joint_limit": joint_violation.astype(reward.dtype),
+                    "termination/fall_height": fall_height.astype(reward.dtype),
+                    "termination/fall_upright": fall_upright.astype(reward.dtype),
+                    "termination/nonfinite": nonfinite.astype(reward.dtype),
+                    "state/base_height": base_height,
+                    "state/upright_cosine": upvector[2],
                 },
             )
             observation = {"state": self._observation(data, action, next_command)}

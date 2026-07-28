@@ -115,3 +115,20 @@ inference was finite, and CCD/other capacity-overflow counts were zero. The
 mean evaluation episode length was only 87.34 steps, so the run is runtime
 evidence with poor policy-quality evidence, not a training benchmark or a
 usable-policy result.
+
+Before committing the 100-million-step budget, run the bounded stand
+calibration:
+
+```bash
+KUBECONFIG=/Users/d-robotics/.config/droboticflow/kubeconfigs/poc.config \
+  ./scripts/run_a800_h1_locomotion_calibration.sh
+```
+
+This job uses 1,048,576 requested timesteps and 2,048 environments with an
+exact zero command. It adds versioned survival, upright, base-height, pose,
+torque, and action-rate shaping while retaining the strict deterministic
+validation gates. The result and checkpoint remain
+`research_calibration / non_publishable / internal_only`; passing the gate
+permits the next curriculum experiment but does not establish canonical
+training or L3. The launcher copies the checkpoint only after checking its
+reported digest and fails closed on collision-capacity overflows.

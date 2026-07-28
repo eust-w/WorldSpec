@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-calibration-profile.schema.json",
+  "title": "WorldSpec H1 Locomotion Calibration Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "baseTrainingProfileDigest",
+    "runtime",
+    "stage",
+    "trainingOverrides",
+    "environment",
+    "qualityGates",
+    "artifactPolicy",
+    "evidenceStatus"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "baseTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        }
+      },
+      "additionalProperties": false
+    },
+    "stage": { "const": "stand" },
+    "trainingOverrides": {
+      "type": "object",
+      "required": [
+        "numTimesteps",
+        "numEnvs",
+        "numEvals",
+        "episodeLength",
+        "unrollLength",
+        "numMinibatches",
+        "numUpdatesPerBatch",
+        "batchSize"
+      ],
+      "properties": {
+        "numTimesteps": {
+          "type": "integer",
+          "minimum": 100000,
+          "maximum": 5000000
+        },
+        "numEnvs": {
+          "type": "integer",
+          "minimum": 256,
+          "maximum": 8192
+        },
+        "numEvals": { "type": "integer", "minimum": 2, "maximum": 20 },
+        "episodeLength": {
+          "type": "integer",
+          "minimum": 200,
+          "maximum": 1000
+        },
+        "unrollLength": { "type": "integer", "minimum": 1 },
+        "numMinibatches": { "type": "integer", "minimum": 1 },
+        "numUpdatesPerBatch": { "type": "integer", "minimum": 1 },
+        "batchSize": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "commandDistribution",
+        "termination",
+        "reward",
+        "targets",
+        "sigmas",
+        "commandResampleSteps"
+      ],
+      "properties": {
+        "commandDistribution": {
+          "type": "object",
+          "required": [
+            "linearVelocityX",
+            "linearVelocityY",
+            "angularVelocityYaw",
+            "zeroCommandProbability"
+          ],
+          "properties": {
+            "linearVelocityX": { "$ref": "#/$defs/range2" },
+            "linearVelocityY": { "$ref": "#/$defs/range2" },
+            "angularVelocityYaw": { "$ref": "#/$defs/range2" },
+            "zeroCommandProbability": { "const": 1.0 }
+          },
+          "additionalProperties": false
+        },
+        "termination": {
+          "type": "object",
+          "required": [
+            "minimumBaseHeight",
+            "minimumUprightCosine",
+            "jointLimitToleranceRadians"
+          ],
+          "properties": {
+            "minimumBaseHeight": {
+              "type": "number",
+              "minimum": 0.4,
+              "maximum": 0.65
+            },
+            "minimumUprightCosine": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 0.5
+            },
+            "jointLimitToleranceRadians": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 0.05
+            }
+          },
+          "additionalProperties": false
+        },
+        "reward": {
+          "type": "object",
+          "required": [
+            "survival",
+            "trackingLinear",
+            "trackingYaw",
+            "upright",
+            "baseHeight",
+            "pose",
+            "verticalVelocityCost",
+            "angularVelocityXYCost",
+            "torqueCost",
+            "actionRateCost"
+          ],
+          "properties": {
+            "survival": { "$ref": "#/$defs/nonNegative" },
+            "trackingLinear": { "$ref": "#/$defs/nonNegative" },
+            "trackingYaw": { "$ref": "#/$defs/nonNegative" },
+            "upright": { "$ref": "#/$defs/nonNegative" },
+            "baseHeight": { "$ref": "#/$defs/nonNegative" },
+            "pose": { "$ref": "#/$defs/nonNegative" },
+            "verticalVelocityCost": { "$ref": "#/$defs/nonNegative" },
+            "angularVelocityXYCost": { "$ref": "#/$defs/nonNegative" },
+            "torqueCost": { "$ref": "#/$defs/nonNegative" },
+            "actionRateCost": { "$ref": "#/$defs/nonNegative" }
+          },
+          "additionalProperties": false
+        },
+        "targets": {
+          "type": "object",
+          "required": ["baseHeight"],
+          "properties": {
+            "baseHeight": {
+              "type": "number",
+              "minimum": 0.8,
+              "maximum": 1.2
+            }
+          },
+          "additionalProperties": false
+        },
+        "sigmas": {
+          "type": "object",
+          "required": ["tracking", "upright", "baseHeight", "pose"],
+          "properties": {
+            "tracking": { "type": "number", "exclusiveMinimum": 0 },
+            "upright": { "type": "number", "exclusiveMinimum": 0 },
+            "baseHeight": { "type": "number", "exclusiveMinimum": 0 },
+            "pose": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "commandResampleSteps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      },
+      "additionalProperties": false
+    },
+    "qualityGates": {
+      "type": "object",
+      "required": [
+        "baselineMeanEpisodeLength",
+        "minimumFinalMeanEpisodeLength",
+        "minimumImprovementRatio",
+        "deterministicEvaluationDurationSeconds",
+        "requiredDeterministicPasses",
+        "maximumPlanarDrift"
+      ],
+      "properties": {
+        "baselineMeanEpisodeLength": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "minimumFinalMeanEpisodeLength": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "minimumImprovementRatio": {
+          "type": "number",
+          "minimum": 1
+        },
+        "deterministicEvaluationDurationSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "requiredDeterministicPasses": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10
+        },
+        "maximumPlanarDrift": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifactPolicy": {
+      "type": "object",
+      "required": ["checkpoint", "distribution"],
+      "properties": {
+        "checkpoint": { "const": "research_only" },
+        "distribution": { "const": "internal_only" }
+      },
+      "additionalProperties": false
+    },
+    "evidenceStatus": { "const": "derived" }
+  },
+  "$defs": {
+    "range2": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "nonNegative": {
+      "type": "number",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false
+}

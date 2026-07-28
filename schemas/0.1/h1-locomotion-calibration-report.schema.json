@@ -1,0 +1,164 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-calibration-report.schema.json",
+  "title": "WorldSpec H1 Locomotion Calibration Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "policyStatus",
+    "canonicalTrainingStatus",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "baseTrainingProfileDigest",
+    "calibrationProfileDigest",
+    "effectiveTrainingProfileDigest",
+    "runtimeCapacity",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "training",
+    "qualityAssessment",
+    "researchCheckpoint",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": { "const": "h1_locomotion_research_calibration" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "research_calibration" },
+    "policyStatus": { "const": "non_publishable" },
+    "canonicalTrainingStatus": { "const": "not_executed" },
+    "probeDefinition": { "$ref": "#/$defs/revision" },
+    "imageSource": { "$ref": "#/$defs/revision" },
+    "probeInput": {
+      "allOf": [
+        { "$ref": "#/$defs/revision" },
+        {
+          "type": "object",
+          "required": ["materialization", "archiveDigest"],
+          "properties": {
+            "materialization": { "const": "verified_git_archive" },
+            "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "container": { "type": "object" },
+    "platform": { "type": "object" },
+    "gpu": { "type": "object" },
+    "packages": { "type": "object" },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "baseTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "calibrationProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "effectiveTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "runtimeCapacity": { "type": "object" },
+    "staticPreflight": { "type": "object" },
+    "runtimePreflight": { "type": "object" },
+    "target": { "type": "object" },
+    "training": {
+      "type": "object",
+      "required": [
+        "progressRecordCount",
+        "maximumReportedStep",
+        "elapsedSeconds",
+        "firstProgress",
+        "finalProgress"
+      ]
+    },
+    "qualityAssessment": {
+      "type": "object",
+      "required": [
+        "status",
+        "baselineMeanEpisodeLength",
+        "finalMeanEpisodeLength",
+        "episodeLengthImprovementRatio",
+        "meanEpisodeLengthGate",
+        "improvementGate",
+        "deterministicStandPasses",
+        "requiredDeterministicStandPasses",
+        "deterministicStandGate",
+        "tests"
+      ],
+      "properties": {
+        "status": { "enum": ["passed", "failed"] },
+        "baselineMeanEpisodeLength": { "type": "number" },
+        "finalMeanEpisodeLength": { "type": "number" },
+        "episodeLengthImprovementRatio": { "type": "number" },
+        "meanEpisodeLengthGate": { "type": "boolean" },
+        "improvementGate": { "type": "boolean" },
+        "deterministicStandPasses": { "type": "integer", "minimum": 0 },
+        "requiredDeterministicStandPasses": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deterministicStandGate": { "type": "boolean" },
+        "tests": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "researchCheckpoint": {
+      "type": "object",
+      "required": ["path", "digest", "sizeBytes", "distribution"],
+      "properties": {
+        "path": { "const": "calibration-checkpoint.zip" },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 },
+        "distribution": { "const": "internal_only" }
+      },
+      "additionalProperties": false
+    },
+    "logDiagnostics": {
+      "type": "object",
+      "required": [
+        "ccdOverflowCount",
+        "capacityOverflowCount",
+        "overflowFree"
+      ],
+      "properties": {
+        "ccdOverflowCount": { "type": "integer", "minimum": 0 },
+        "capacityOverflowCount": { "type": "integer", "minimum": 0 },
+        "overflowFree": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "revision": {
+      "type": "object",
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
