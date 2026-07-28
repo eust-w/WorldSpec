@@ -20,5 +20,7 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0008 Licensing and contributions](0008-licensing-and-contributions.md)
 - [ADR-0009 v0.1 execution and real-kitchen acceptance baseline](0009-v0.1-execution-baseline.md)
 - [ADR-0010 Content-addressed generation model bundles](0010-generation-model-bundles.md)
+- [ADR-0011 H1 kitchen reference sources](0011-h1-reference-sources.md)
+- [ADR-0012 Traceable H1/Robotiq composition](0012-h1-robotiq-composition.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

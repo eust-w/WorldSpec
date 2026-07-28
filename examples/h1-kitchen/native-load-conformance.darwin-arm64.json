@@ -1,0 +1,50 @@
+{
+  "id": "conformance://worldspec/h1-composition/native-load",
+  "reportVersion": "0.1.0",
+  "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+  "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+  "compositionProfileDigest": "sha256:f1296bdcc67e718cf7235cb1eb9cfec02a5b434c4fef191b4bc63b2698673732",
+  "executionEvidence": "executed",
+  "environment": {
+    "os": "darwin",
+    "architecture": "arm64",
+    "python": "3.12.9",
+    "runtime": "mujoco",
+    "runtimeVersion": "3.6.0"
+  },
+  "tests": [
+    {
+      "id": "test://worldspec/h1-composition/artifact-integrity",
+      "result": "pass",
+      "metrics": {
+        "artifactCount": 74
+      },
+      "diagnostics": []
+    },
+    {
+      "id": "test://worldspec/h1-composition/native-load",
+      "result": "pass",
+      "metrics": {
+        "steps": 20,
+        "simulationTimeSeconds": 0.04000000000000002,
+        "initialFinite": true,
+        "afterFinite": true,
+        "bodies": 36,
+        "joints": 28,
+        "actuators": 20,
+        "meshes": 29,
+        "sites": 2,
+        "missingNames": []
+      },
+      "diagnostics": []
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 0,
+    "unknown": 0,
+    "notRun": 0,
+    "overall": "pass"
+  },
+  "generatedAt": "2026-07-28T11:53:14.326616Z"
+}

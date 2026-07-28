@@ -18,5 +18,7 @@ last-verified: 2026-07-28
 - [ADR-0008 许可与贡献](0008-licensing-and-contributions.md)
 - [ADR-0009 v0.1 执行与真实厨房验收基线](0009-v0.1-execution-baseline.md)
 - [ADR-0010 生成模型包内容寻址](0010-generation-model-bundles.md)
+- [ADR-0011 H1 厨房参考来源](0011-h1-reference-sources.md)
+- [ADR-0012 H1 与 Robotiq 的可追溯组合](0012-h1-robotiq-composition.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

@@ -35,5 +35,6 @@ last-verified: 2026-07-28
 | D-023 | 物理、视觉壳与物理不变性分别出证，三者联合验收 | Accepted | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 | D-024 | 生成模型包使用逐文件 Digest 的内容寻址只读缓存 | Accepted | [ADR-0010](decisions/0010-generation-model-bundles.md) |
 | D-025 | H1/Robotiq 使用锁定 Menagerie 源，步态使用锁定 Unitree RL Gym；不复制 dirty BiGym 载荷 | Accepted Design | [ADR-0011](decisions/0011-h1-reference-sources.md) |
+| D-026 | H1/Robotiq 通过独立 Profile、完整命名空间和不可变原生载荷组合；右手单夹爪仅为实验候选 | Accepted Design | [ADR-0012](decisions/0012-h1-robotiq-composition.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

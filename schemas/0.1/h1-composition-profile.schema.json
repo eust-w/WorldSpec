@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-composition-profile.schema.json",
+  "title": "WorldSpec H1 Composition Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "sourceLockDigest",
+    "baseRobot",
+    "grippers",
+    "composition",
+    "validationStatus"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "sourceLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "baseRobot": {
+      "type": "object",
+      "required": ["componentId", "sourceModelPath"],
+      "properties": {
+        "componentId": { "$ref": "common.schema.json#/$defs/id" },
+        "sourceModelPath": {
+          "type": "string",
+          "minLength": 1,
+          "not": { "pattern": "(^/|(^|/)\\.\\.(/|$))" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "grippers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "componentId",
+          "side",
+          "namespace",
+          "sourceModelPath",
+          "parentBody",
+          "mount",
+          "tcp",
+          "evidenceStatus",
+          "validationStatus",
+          "rationale"
+        ],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "componentId": { "$ref": "common.schema.json#/$defs/id" },
+          "side": { "enum": ["left", "right"] },
+          "namespace": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*_$"
+          },
+          "sourceModelPath": {
+            "type": "string",
+            "minLength": 1,
+            "not": { "pattern": "(^/|(^|/)\\.\\.(/|$))" }
+          },
+          "parentBody": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          },
+          "mount": { "$ref": "common.schema.json#/$defs/transform" },
+          "tcp": {
+            "type": "object",
+            "required": ["sourceSite"],
+            "properties": {
+              "sourceSite": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "evidenceStatus": { "$ref": "common.schema.json#/$defs/evidenceStatus" },
+          "validationStatus": {
+            "enum": [
+              "unvalidated",
+              "native_load_passed",
+              "kinematic_validated",
+              "dynamic_validated"
+            ]
+          },
+          "rationale": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1,
+      "maxItems": 2
+    },
+    "composition": {
+      "type": "object",
+      "required": ["modelName", "optionMergePolicy", "preserveNativePayloads"],
+      "properties": {
+        "modelName": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_. -]*$"
+        },
+        "optionMergePolicy": { "const": "strict_known_attributes" },
+        "preserveNativePayloads": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "validationStatus": {
+      "enum": [
+        "unvalidated",
+        "native_load_passed",
+        "kinematic_validated",
+        "dynamic_validated"
+      ]
+    },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

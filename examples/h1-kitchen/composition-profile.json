@@ -1,0 +1,35 @@
+{
+  "id": "compositionprofile://worldspec/h1-kitchen-right-gripper-candidate",
+  "profileVersion": "0.1.0",
+  "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+  "baseRobot": {
+    "componentId": "component://third-party/unitree-h1",
+    "sourceModelPath": "unitree_h1/h1.xml"
+  },
+  "grippers": [
+    {
+      "id": "effector://h1/right-robotiq-2f85",
+      "componentId": "component://third-party/robotiq-2f85",
+      "side": "right",
+      "namespace": "right_gripper_",
+      "sourceModelPath": "robotiq_2f85/2f85.xml",
+      "parentBody": "right_elbow_link",
+      "mount": {
+        "translation": [0.28, 0.0, -0.015],
+        "rotationWxyz": [0.7071067811865476, 0.0, 0.7071067811865476, 0.0]
+      },
+      "tcp": {
+        "sourceSite": "pinch"
+      },
+      "evidenceStatus": "estimated",
+      "validationStatus": "unvalidated",
+      "rationale": "The mount origin follows the distal end of the H1 elbow collision capsule. The rotation maps the gripper local +Z approach axis to the H1 forearm local +X axis. This is a composition hypothesis, not manufacturer-declared interface geometry."
+    }
+  ],
+  "composition": {
+    "modelName": "WorldSpec H1 kitchen right-gripper candidate",
+    "optionMergePolicy": "strict_known_attributes",
+    "preserveNativePayloads": true
+  },
+  "validationStatus": "unvalidated"
+}

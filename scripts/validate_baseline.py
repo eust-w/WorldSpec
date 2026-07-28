@@ -13,7 +13,6 @@ from typing import Any
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource
 
-
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_DIR = ROOT / "schemas" / "0.1"
 EXAMPLES = ROOT / "examples"
@@ -208,6 +207,8 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
         "minimal-cube/runtime-record.json": "runtime-record.schema.json",
         "minimal-cube/job-spec.json": "job.schema.json",
         "minimal-cube/job-result.json": "job.schema.json",
+        "h1-kitchen/composition-profile.json": "h1-composition-profile.schema.json",
+        "h1-kitchen/native-load-conformance.darwin-arm64.json": "h1-composition-conformance.schema.json",
     }
     for relative, schema_name in positive.items():
         path = EXAMPLES / relative
@@ -317,7 +318,7 @@ def main() -> int:
     print(
         "PASS: "
         f"{len(schemas)} schemas; "
-        "25 positive fixtures; "
+        "27 positive fixtures; "
         "4 negative fixtures; "
         "bilingual mirrors and local links"
     )
