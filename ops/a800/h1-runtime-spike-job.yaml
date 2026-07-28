@@ -46,6 +46,8 @@ spec:
               value: __WORLD_SPEC_REVISION__
             - name: WORLD_SPEC_BASE_IMAGE
               value: __BASE_IMAGE__
+            - name: WORLD_SPEC_SOURCE_ARCHIVE_DIGEST
+              value: __SOURCE_ARCHIVE_DIGEST__
             - name: HOME
               value: /scratch/home
             - name: XDG_CACHE_HOME
@@ -84,6 +86,9 @@ spec:
             - name: spike-script
               mountPath: /opt/worldspec-spike
               readOnly: true
+            - name: worldspec-source
+              mountPath: /opt/worldspec-source
+              readOnly: true
       volumes:
         - name: scratch
           emptyDir:
@@ -96,3 +101,7 @@ spec:
           configMap:
             name: __SCRIPT_CONFIGMAP__
             defaultMode: 0555
+        - name: worldspec-source
+          configMap:
+            name: __SOURCE_CONFIGMAP__
+            defaultMode: 0444

@@ -5,7 +5,9 @@ WorldSpec H1 MuJoCo/MJX runtime.
 
 The first job is intentionally a compatibility spike, not PPO training. It:
 
-1. checks out an exact published WorldSpec commit;
+1. creates a deterministic Git archive from the exact published WorldSpec
+   commit, verifies its SHA-256 inside the Pod, and never mounts repository
+   credentials;
 2. installs the frozen runtime dependency graph in an ephemeral filesystem;
 3. reconstructs the digest-bound H1 plus right Robotiq bundle;
 4. loads the derived model through MuJoCo and MJX/Warp on one A800;

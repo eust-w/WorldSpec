@@ -68,7 +68,9 @@ fi
 short_revision="${REVISION:0:12}"
 run_suffix="$(date -u +%Y%m%d%H%M%S)"
 configmap_name="worldspec-h1-spike-${short_revision}-${run_suffix}"
+source_configmap_name="worldspec-h1-source-${short_revision}-${run_suffix}"
 temporary_manifest="$(mktemp "${TMPDIR:-/tmp}/worldspec-h1-spike.XXXXXX.yaml")"
+source_archive="$(mktemp "${TMPDIR:-/tmp}/worldspec-source.XXXXXX.tar.gz")"
 job_name=""
 pod_name=""
 local_result_dir=""
@@ -82,18 +84,39 @@ cleanup() {
   fi
   "${kubectl_cmd[@]}" delete configmap "${configmap_name}" \
     --ignore-not-found >/dev/null 2>&1
-  rm -f "${temporary_manifest}"
+  "${kubectl_cmd[@]}" delete configmap "${source_configmap_name}" \
+    --ignore-not-found >/dev/null 2>&1
+  rm -f "${temporary_manifest}" "${source_archive}"
   exit "${exit_code}"
 }
 trap cleanup EXIT INT TERM
 
+if [[ -n "$(git -C "${ROOT_DIR}" status --porcelain)" ]]; then
+  echo "ERROR: source archive requires a clean worktree" >&2
+  exit 2
+fi
+git -C "${ROOT_DIR}" archive --format=tar "${REVISION}" | gzip -n -9 >"${source_archive}"
+source_archive_digest="$(
+  python3 - "${source_archive}" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+print(f"sha256:{hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest()}")
+PY
+)"
+
 "${kubectl_cmd[@]}" create configmap "${configmap_name}" \
   --from-file="run.sh=${ENTRYPOINT}" >/dev/null
+"${kubectl_cmd[@]}" create configmap "${source_configmap_name}" \
+  --from-file="worldspec.tar.gz=${source_archive}" >/dev/null
 
 sed \
   -e "s|__BASE_IMAGE__|${BASE_IMAGE}|g" \
   -e "s|__WORLD_SPEC_REVISION__|${REVISION}|g" \
   -e "s|__SCRIPT_CONFIGMAP__|${configmap_name}|g" \
+  -e "s|__SOURCE_CONFIGMAP__|${source_configmap_name}|g" \
+  -e "s|__SOURCE_ARCHIVE_DIGEST__|${source_archive_digest}|g" \
   "${JOB_TEMPLATE}" >"${temporary_manifest}"
 
 job_resource="$("${kubectl_cmd[@]}" create -f "${temporary_manifest}" -o name)"
@@ -103,6 +126,7 @@ mkdir -p "${local_result_dir}"
 
 printf 'context=%s\nnamespace=%s\njob=%s\nrevision=%s\nresult_dir=%s\n' \
   "${context}" "${K8S_NAMESPACE}" "${job_name}" "${REVISION}" "${local_result_dir}"
+printf 'source_archive_digest=%s\n' "${source_archive_digest}"
 
 deadline=$((SECONDS + TIMEOUT_SECONDS))
 last_stage=""

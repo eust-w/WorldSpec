@@ -7,6 +7,7 @@ readonly BUNDLE_DIR=/scratch/h1-bundle
 readonly MODEL_DIR=/scratch/h1-training-model
 readonly RESULT_DIR=/scratch/results
 readonly BOOTSTRAP_DIR=/scratch/bootstrap
+readonly SOURCE_ARCHIVE=/opt/worldspec-source/worldspec.tar.gz
 readonly UV_VERSION=0.8.22
 readonly PYTHON_VERSION=3.12.11
 
@@ -22,7 +23,11 @@ fail() {
 
 trap 'fail "${BASH_LINENO[0]:-unknown}"' ERR
 
-for required in WORLD_SPEC_REPOSITORY WORLD_SPEC_REVISION WORLD_SPEC_BASE_IMAGE; do
+for required in \
+  WORLD_SPEC_REPOSITORY \
+  WORLD_SPEC_REVISION \
+  WORLD_SPEC_BASE_IMAGE \
+  WORLD_SPEC_SOURCE_ARCHIVE_DIGEST; do
   if [[ -z "${!required:-}" ]]; then
     printf 'ERROR: %s is required\n' "${required}" >&2
     exit 2
@@ -42,11 +47,19 @@ nvidia-smi --query-gpu=name,uuid,driver_version,memory.total \
   tee "${RESULT_DIR}/gpu.csv"
 
 stage source_checkout
-git clone --filter=blob:none --no-tags --no-checkout \
-  "${WORLD_SPEC_REPOSITORY}" "${SOURCE_DIR}"
-git -C "${SOURCE_DIR}" checkout --detach "${WORLD_SPEC_REVISION}"
-test "$(git -C "${SOURCE_DIR}" rev-parse HEAD)" = "${WORLD_SPEC_REVISION}"
-test -z "$(git -C "${SOURCE_DIR}" status --porcelain)"
+python3 - "${SOURCE_ARCHIVE}" "${WORLD_SPEC_SOURCE_ARCHIVE_DIGEST}" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+archive = pathlib.Path(sys.argv[1])
+expected = sys.argv[2]
+actual = f"sha256:{hashlib.sha256(archive.read_bytes()).hexdigest()}"
+if actual != expected:
+    raise SystemExit(f"source archive digest mismatch: expected={expected} actual={actual}")
+PY
+mkdir -p "${SOURCE_DIR}"
+tar -xzf "${SOURCE_ARCHIVE}" -C "${SOURCE_DIR}"
 
 stage uv_bootstrap
 python3 -m pip install --no-cache-dir --target "${BOOTSTRAP_DIR}" "uv==${UV_VERSION}"
@@ -150,7 +163,8 @@ report = {
     "source": {
         "repository": os.environ["WORLD_SPEC_REPOSITORY"],
         "commit": os.environ["WORLD_SPEC_REVISION"],
-        "cleanCheckout": True,
+        "materialization": "verified_git_archive",
+        "archiveDigest": os.environ["WORLD_SPEC_SOURCE_ARCHIVE_DIGEST"],
     },
     "baseImage": os.environ["WORLD_SPEC_BASE_IMAGE"],
     "platform": {

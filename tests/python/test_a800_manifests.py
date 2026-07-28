@@ -57,6 +57,7 @@ def test_runtime_spike_job_is_tokenless_digest_ready_and_ephemeral() -> None:
         for volume in pod["volumes"]
     }
     assert volume_kinds == {"emptyDir", "configMap"}
+    assert sum("configMap" in volume for volume in pod["volumes"]) == 2
     assert all("secret" not in volume for volume in pod["volumes"])
     assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
 
@@ -66,5 +67,6 @@ def test_runtime_spike_reports_execution_without_claiming_locked_oci() -> None:
 
     assert '"executionEvidence": "executed"' in entrypoint
     assert '"runtimeAcceptance": "executed_not_locked"' in entrypoint
+    assert '"materialization": "verified_git_archive"' in entrypoint
     assert 'jaxBackend"] != "gpu"' in entrypoint
     assert "WORLDSPEC_A800_SPIKE_RESULT=" in entrypoint
