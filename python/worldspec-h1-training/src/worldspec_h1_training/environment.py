@@ -12,6 +12,17 @@ from typing import Any
 from .errors import TrainingError
 
 
+def _preserving_update(
+    current: dict[str, Any],
+    updates: dict[str, Any],
+) -> dict[str, Any]:
+    """Update owned keys without deleting Brax wrapper state."""
+
+    result = dict(current)
+    result.update(updates)
+    return result
+
+
 def make_environment(profile: dict[str, Any], training_model: Path):
     """Create an MJX environment bound to the derived composition model."""
 
@@ -259,20 +270,26 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             resample = step >= 500
             next_command = jp.where(resample, self.sample_command(command_rng), command)
             next_step = jp.where(resample | done.astype(bool), 0, step)
-            info = {
-                "rng": rng,
-                "command": next_command,
-                "last_action": action,
-                "step": next_step,
-            }
-            metrics = {
-                "reward/tracking_linear": tracking_linear,
-                "reward/tracking_yaw": tracking_yaw,
-                "cost/upright": upright_cost,
-                "cost/vertical_velocity": vertical_cost,
-                "cost/torque": torque_cost,
-                "cost/action_rate": action_rate_cost,
-            }
+            info = _preserving_update(
+                state.info,
+                {
+                    "rng": rng,
+                    "command": next_command,
+                    "last_action": action,
+                    "step": next_step,
+                },
+            )
+            metrics = _preserving_update(
+                state.metrics,
+                {
+                    "reward/tracking_linear": tracking_linear,
+                    "reward/tracking_yaw": tracking_yaw,
+                    "cost/upright": upright_cost,
+                    "cost/vertical_velocity": vertical_cost,
+                    "cost/torque": torque_cost,
+                    "cost/action_rate": action_rate_cost,
+                },
+            )
             observation = {"state": self._observation(data, action, next_command)}
             return state.replace(
                 data=data,
