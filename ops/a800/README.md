@@ -64,3 +64,17 @@ CPU-only pre-pull Job in `droboticflow`. Kubelet uses the existing
 `imagePullSecret` there to cache the exact image Digest on the selected A800
 node. The pre-pull Pod does not mount the Secret, and it is deleted before the
 credential-free runtime probe starts in `worldspec-a800-poc`.
+
+Run a bounded, non-publishable PPO compile/update smoke after the locked probe:
+
+```bash
+KUBECONFIG=/Users/d-robotics/.config/droboticflow/kubeconfigs/poc.config \
+  ./scripts/run_a800_h1_ppo_smoke.sh
+```
+
+The smoke uses 32,768 timesteps and 256 environments. It proves only that a
+non-zero Brax PPO update and one trained-policy inference step execute with
+finite values on the exact target model. Its report is permanently classified
+as `runtimeAcceptance=research_smoke`, `policyStatus=non_publishable`, and
+`canonicalTrainingStatus=not_executed`. It does not write a policy checkpoint,
+does not satisfy the 100M profile, and cannot satisfy L3.

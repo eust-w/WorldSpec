@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-ppo-smoke-report.schema.json",
+  "title": "WorldSpec H1 A800 PPO Research Smoke Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "policyStatus",
+    "canonicalTrainingStatus",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "canonicalProfileDigest",
+    "smokeProfileDigest",
+    "smokeOverrides",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "training",
+    "trainedInference",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "status": { "const": "passed" },
+    "scope": { "const": "h1_ppo_training_smoke" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "research_smoke" },
+    "policyStatus": { "const": "non_publishable" },
+    "canonicalTrainingStatus": { "const": "not_executed" },
+    "probeDefinition": {
+      "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit"
+    },
+    "imageSource": {
+      "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit"
+    },
+    "probeInput": {
+      "allOf": [
+        { "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit" },
+        {
+          "type": "object",
+          "required": ["materialization", "archiveDigest"],
+          "properties": {
+            "materialization": { "const": "verified_git_archive" },
+            "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "container": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/container"
+    },
+    "platform": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/platform"
+    },
+    "gpu": { "$ref": "h1-runtime-spike-report.schema.json#/properties/gpu" },
+    "packages": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/packages"
+    },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "canonicalProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "smokeProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "smokeOverrides": {
+      "type": "object",
+      "required": [
+        "numTimesteps",
+        "numEnvs",
+        "numEvals",
+        "episodeLength",
+        "unrollLength",
+        "numMinibatches",
+        "numUpdatesPerBatch",
+        "batchSize"
+      ],
+      "properties": {
+        "numTimesteps": { "const": 32768 },
+        "numEnvs": { "const": 256 },
+        "numEvals": { "const": 2 },
+        "episodeLength": { "const": 200 },
+        "unrollLength": { "const": 10 },
+        "numMinibatches": { "const": 8 },
+        "numUpdatesPerBatch": { "const": 1 },
+        "batchSize": { "const": 32 }
+      },
+      "additionalProperties": false
+    },
+    "staticPreflight": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/staticPreflight"
+    },
+    "runtimePreflight": {
+      "$ref": "h1-runtime-spike-report.schema.json#/properties/runtimePreflight"
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "sourceBundleDigest",
+        "derivedModelDigest",
+        "observationSize",
+        "actionSize"
+      ],
+      "properties": {
+        "sourceBundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "derivedModelDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "observationSize": { "type": "integer", "minimum": 1 },
+        "actionSize": { "const": 10 }
+      },
+      "additionalProperties": false
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "progressRecordCount",
+        "maximumReportedStep",
+        "elapsedSeconds",
+        "firstProgress",
+        "finalProgress"
+      ],
+      "properties": {
+        "progressRecordCount": { "type": "integer", "minimum": 2 },
+        "maximumReportedStep": { "type": "integer", "minimum": 1 },
+        "elapsedSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "firstProgress": { "$ref": "#/$defs/progressRecord" },
+        "finalProgress": { "$ref": "#/$defs/progressRecord" }
+      },
+      "additionalProperties": false
+    },
+    "trainedInference": {
+      "type": "object",
+      "required": [
+        "actionFinite",
+        "observationFinite",
+        "qposFinite",
+        "qvelFinite",
+        "rewardFinite",
+        "actionL2Norm",
+        "reward"
+      ],
+      "properties": {
+        "actionFinite": { "const": true },
+        "observationFinite": { "const": true },
+        "qposFinite": { "const": true },
+        "qvelFinite": { "const": true },
+        "rewardFinite": { "const": true },
+        "actionL2Norm": { "type": "number", "minimum": 0 },
+        "reward": { "type": "number" }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "progressRecord": {
+      "type": "object",
+      "required": ["step", "elapsedSeconds", "metrics"],
+      "properties": {
+        "step": { "type": "integer", "minimum": 0 },
+        "elapsedSeconds": { "type": "number", "minimum": 0 },
+        "metrics": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "type": "number" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

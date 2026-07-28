@@ -150,3 +150,25 @@ def test_private_image_is_prepulled_without_mounting_registry_secret() -> None:
     assert container["imagePullPolicy"] == "Always"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
     assert "volumes" not in pod
+
+
+def test_ppo_smoke_is_isolated_and_cannot_claim_canonical_training() -> None:
+    (job,) = _documents("h1-ppo-smoke-job.yaml")
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["securityContext"]["runAsUser"] == 10001
+    assert pod["securityContext"]["runAsGroup"] == 10001
+    (container,) = pod["containers"]
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
+
+    entrypoint = (A800 / "h1-ppo-smoke-entrypoint.sh").read_text(encoding="utf-8")
+    assert '"runtimeAcceptance": "research_smoke"' in entrypoint
+    assert '"policyStatus": "non_publishable"' in entrypoint
+    assert '"canonicalTrainingStatus": "not_executed"' in entrypoint
+    assert "train_and_evaluate" not in entrypoint
+    assert "WORLDSPEC_A800_PPO_SMOKE_RESULT=" in entrypoint
