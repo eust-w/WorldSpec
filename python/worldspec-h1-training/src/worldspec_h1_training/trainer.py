@@ -20,6 +20,30 @@ def _host_float(value: Any) -> float:
     return float(array.reshape(()))
 
 
+def _flat_observation_size(value: Any) -> int:
+    """Return the flattened size for scalar or shaped observation metadata."""
+
+    if isinstance(value, int):
+        return value
+    size = 1
+    try:
+        for dimension in value:
+            size *= int(dimension)
+    except (TypeError, ValueError) as error:
+        raise TrainingError(
+            "TRAINING_OBSERVATION_SIZE_INVALID",
+            "Observation metadata must be an integer or a finite shape.",
+            {"value": repr(value)},
+        ) from error
+    if size <= 0:
+        raise TrainingError(
+            "TRAINING_OBSERVATION_SIZE_INVALID",
+            "Observation shape dimensions must have a positive product.",
+            {"value": repr(value)},
+        )
+    return size
+
+
 def _deterministic_zip(source: Path, destination: Path) -> None:
     files = sorted(
         (path for path in source.rglob("*") if path.is_file()),
@@ -240,7 +264,7 @@ def train_and_evaluate(
         "physicsImplementation": profile["framework"]["physicsImplementation"],
         "trainer": profile["framework"]["trainer"],
         "targetEnvironmentAdapter": profile["framework"]["targetEnvironmentAdapter"],
-        "observationSize": int(env.observation_size["state"]),
+        "observationSize": _flat_observation_size(env.observation_size["state"]),
         "actionSize": int(env.action_size),
         "modelDerivation": model_derivation,
         "evidenceStatus": "executed",

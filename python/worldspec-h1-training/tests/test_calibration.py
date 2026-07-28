@@ -12,6 +12,7 @@ from worldspec_h1_training.calibration import (
 )
 from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
+from worldspec_h1_training.trainer import _flat_observation_size
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
@@ -89,3 +90,15 @@ def test_calibration_rejects_a_different_package_lock() -> None:
         match="package lock bound by the base Profile",
     ):
         validate_calibration_profile(base, calibration)
+
+
+def test_observation_shape_is_flattened_for_report_metadata() -> None:
+    assert _flat_observation_size(42) == 42
+    assert _flat_observation_size((42,)) == 42
+    assert _flat_observation_size((3, 14)) == 42
+
+    with pytest.raises(
+        TrainingError,
+        match="positive product",
+    ):
+        _flat_observation_size((0, 42))

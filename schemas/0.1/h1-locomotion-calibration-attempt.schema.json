@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-calibration-attempt.schema.json",
+  "title": "WorldSpec H1 Locomotion Calibration Attempt 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "attemptVersion",
+    "status",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "policyStatus",
+    "canonicalTrainingStatus",
+    "job",
+    "probeDefinitionCommit",
+    "imageSourceCommit",
+    "containerImage",
+    "gpu",
+    "failure",
+    "outcome",
+    "logDigest",
+    "startedAt",
+    "finishedAt",
+    "recordedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "attemptVersion": { "const": "0.1.0" },
+    "status": { "const": "failed" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "research_calibration" },
+    "policyStatus": { "const": "non_publishable" },
+    "canonicalTrainingStatus": { "const": "not_executed" },
+    "job": { "type": "string", "minLength": 1 },
+    "probeDefinitionCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "imageSourceCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "containerImage": {
+      "type": "string",
+      "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+    },
+    "gpu": {
+      "type": "object",
+      "required": ["name", "memoryMiB", "jaxBackend"],
+      "properties": {
+        "name": { "const": "NVIDIA A800-SXM4-80GB" },
+        "memoryMiB": { "type": "integer", "minimum": 81920 },
+        "jaxBackend": { "const": "gpu" }
+      },
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "required": ["stage", "classification", "exceptionType", "message"],
+      "properties": {
+        "stage": { "const": "stand_calibration" },
+        "classification": { "const": "report_assembly_error" },
+        "exceptionType": { "const": "TypeError" },
+        "message": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "outcome": {
+      "type": "object",
+      "required": [
+        "trainingQuality",
+        "checkpoint",
+        "qualityGate",
+        "reason"
+      ],
+      "properties": {
+        "trainingQuality": { "const": "unknown" },
+        "checkpoint": { "const": "not_recovered" },
+        "qualityGate": { "const": "not_assessed" },
+        "reason": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "logDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "finishedAt": { "type": "string", "format": "date-time" },
+    "recordedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

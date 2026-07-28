@@ -110,3 +110,11 @@ checkpoint is fixed as `research_only / internal_only`; even a passing gate
 only permits the next curriculum experiment and does not establish canonical
 training or L3. This route currently has implementation and a Profile but no
 A800 execution report.
+
+The first A800 calibration attempt, `worldspec-h1-calibration-vzndt`, reached
+PPO, deterministic evaluation, and local checkpoint packaging, but report
+assembly raised `TypeError` by converting shape `(42,)` directly to an
+integer. The result marker had not been written and the Pod was cleaned with
+the Job, so neither policy quality nor the checkpoint can be recovered or
+inferred. This attempt is permanently recorded as
+`failed / quality unknown / checkpoint not_recovered`.

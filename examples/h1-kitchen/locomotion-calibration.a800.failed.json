@@ -1,0 +1,34 @@
+{
+  "id": "calibrationattempt://worldspec/h1-stand/a800-c70e0b70fe03-vzndt",
+  "attemptVersion": "0.1.0",
+  "status": "failed",
+  "executionEvidence": "executed",
+  "runtimeAcceptance": "research_calibration",
+  "policyStatus": "non_publishable",
+  "canonicalTrainingStatus": "not_executed",
+  "job": "worldspec-h1-calibration-vzndt",
+  "probeDefinitionCommit": "c70e0b70fe031ebdd31d59a609f537cd00c7c620",
+  "imageSourceCommit": "8d4a674bd67f8af3414e31b47690f81e39bd5380",
+  "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:021b46661a99db82497dc9a88d0b4b33bce66fa2bda03bb65d3c502b359cf712",
+  "gpu": {
+    "name": "NVIDIA A800-SXM4-80GB",
+    "memoryMiB": 81920,
+    "jaxBackend": "gpu"
+  },
+  "failure": {
+    "stage": "stand_calibration",
+    "classification": "report_assembly_error",
+    "exceptionType": "TypeError",
+    "message": "Observation size metadata was the shape (42,), but report assembly attempted int(tuple)."
+  },
+  "outcome": {
+    "trainingQuality": "unknown",
+    "checkpoint": "not_recovered",
+    "qualityGate": "not_assessed",
+    "reason": "The exception occurred after PPO and local checkpoint packaging, but before the report marker and artifact copy; no quality or checkpoint claim can be recovered from the retained log."
+  },
+  "logDigest": "sha256:0eb5a805e29d4e5181f520b0c7de8df81700e80b6396787c7d5696fb2e7935e0",
+  "startedAt": "2026-07-28T17:35:20Z",
+  "finishedAt": "2026-07-28T17:41:19Z",
+  "recordedAt": "2026-07-28T17:42:10Z"
+}

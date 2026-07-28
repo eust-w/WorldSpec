@@ -13,7 +13,7 @@ from .environment import make_environment
 from .errors import TrainingError
 from .model import prepare_training_model
 from .preflight import runtime_preflight, static_preflight
-from .trainer import _deterministic_zip, _host_float
+from .trainer import _deterministic_zip, _flat_observation_size, _host_float
 
 
 def validate_calibration_profile(
@@ -323,7 +323,7 @@ def run_calibration(
         "target": {
             "sourceBundleDigest": derivation["sourceBundleDigest"],
             "derivedModelDigest": derivation["derivedModelDigest"],
-            "observationSize": int(environment.observation_size["state"]),
+            "observationSize": _flat_observation_size(environment.observation_size["state"]),
             "actionSize": int(environment.action_size),
         },
         "training": {

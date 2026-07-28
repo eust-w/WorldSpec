@@ -92,3 +92,8 @@ Digest 锁定镜像与当前 Profile 的 A800 one-step 已通过；此前 smoke 
 训练期较宽松终止条件与最终验证阈值分开。其 Checkpoint 固定为
 `research_only / internal_only`；即使门禁通过，也只允许进入下一课程实验，不等于
 规范训练或 L3。当前这部分仅有实现与 Profile，尚无 A800 执行报告。
+
+首次 A800 校准尝试 `worldspec-h1-calibration-vzndt` 已真实进入 PPO、确定性评估和
+本地 Checkpoint 打包，但在报告组装阶段因把 `(42,)` 形状直接转为整数而触发
+`TypeError`。由于结果标记尚未写出、Pod 随作业清理，策略质量和 Checkpoint 均不能
+恢复或推断；该次运行固定记录为 `failed / quality unknown / checkpoint not_recovered`。
