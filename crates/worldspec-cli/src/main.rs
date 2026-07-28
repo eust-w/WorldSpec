@@ -9,6 +9,7 @@ use std::{
 };
 use worldspec_cas::{Cas, JobStatus};
 use worldspec_cert::sign_certificate_with_seed;
+use worldspec_compiler::{compile_mujoco, compile_threejs, write_compile_summary};
 use worldspec_core::{ValidationReport, canonical_json, canonical_sha256, validate_file};
 
 #[derive(Parser, Debug)]
@@ -66,8 +67,19 @@ enum Command {
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
         output: OutputFormat,
     },
-    /// Queue a compile job using a TargetProfile.
-    Compile(JobSubmitArgs),
+    /// Compile a WorldDefinition into a local MuJoCo or Three.js bundle.
+    Compile {
+        #[arg(long)]
+        input: PathBuf,
+        #[arg(long)]
+        target_profile: PathBuf,
+        #[arg(long)]
+        build_intent: PathBuf,
+        #[arg(long)]
+        output_dir: PathBuf,
+        #[arg(long, default_value = "schemas/0.1")]
+        schema_dir: PathBuf,
+    },
     /// Validate and optionally Ed25519-sign a certificate document.
     Certify {
         input: PathBuf,
@@ -371,6 +383,215 @@ fn terminal(status: &JobStatus) -> bool {
     )
 }
 
+fn validate_document(
+    schema_dir: &Path,
+    schema: &str,
+    document: &Value,
+    target: Option<&Value>,
+) -> Result<(), String> {
+    let report =
+        validate_file(schema_dir, schema, document, target).map_err(|error| error.to_string())?;
+    if report.valid {
+        Ok(())
+    } else {
+        Err(serde_json::to_string_pretty(&report).map_err(|error| error.to_string())?)
+    }
+}
+
+fn artifact_ref(
+    index: usize,
+    target: &str,
+    artifact: &worldspec_compiler::CompiledArtifact,
+) -> Value {
+    json!({
+        "id": format!("artifact://local/{target}/{index}"),
+        "digest": artifact.digest,
+        "mediaType": artifact.media_type,
+        "path": artifact.path,
+        "sizeBytes": artifact.size_bytes,
+        "role": artifact.role
+    })
+}
+
+fn compile_local(
+    input: PathBuf,
+    target_profile_path: PathBuf,
+    build_intent_path: PathBuf,
+    output_dir: PathBuf,
+    schema_dir: PathBuf,
+) -> Result<bool, String> {
+    let world = read_json(&input)?;
+    let target_profile = read_json(&target_profile_path)?;
+    let build_intent = read_json(&build_intent_path)?;
+    validate_document(&schema_dir, "world-definition.schema.json", &world, None)?;
+    validate_document(
+        &schema_dir,
+        "target-profile.schema.json",
+        &target_profile,
+        None,
+    )?;
+    validate_document(&schema_dir, "build-intent.schema.json", &build_intent, None)?;
+
+    let target = target_profile
+        .get("target")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "TargetProfile.target is required".to_owned())?;
+    fs::create_dir_all(&output_dir)
+        .map_err(|error| format!("cannot create {}: {error}", output_dir.display()))?;
+    let mut summary = match target {
+        "mujoco" => compile_mujoco(&world, &output_dir),
+        "threejs" => compile_threejs(&world, &output_dir),
+        other => return Err(format!("unsupported certified target: {other}")),
+    }
+    .map_err(|error| error.to_string())?;
+
+    let world_id = world
+        .get("id")
+        .and_then(Value::as_str)
+        .unwrap_or("world://unknown");
+    let existing_capabilities = summary
+        .losses
+        .iter()
+        .filter_map(|entry| entry.get("capability").and_then(Value::as_str))
+        .map(str::to_owned)
+        .collect::<std::collections::HashSet<_>>();
+    for capability in target_profile
+        .get("capabilities")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let support = capability
+            .get("support")
+            .and_then(Value::as_str)
+            .unwrap_or("unsupported");
+        let id = capability
+            .get("id")
+            .and_then(Value::as_str)
+            .unwrap_or_default();
+        if support == "exact" || existing_capabilities.contains(id) {
+            continue;
+        }
+        summary.losses.push(json!({
+            "id": format!("loss://{target}/target-profile/{}", id.replace("://", "_").replace('/', "_")),
+            "sourceRef": world_id,
+            "capability": id,
+            "status": support,
+            "targetBinding": target,
+            "rationale": capability.get("notes").and_then(Value::as_str).unwrap_or("The TargetProfile declares non-exact support."),
+            "consequence": "Consumers must evaluate this declared degradation before using the bundle."
+        }));
+    }
+    write_compile_summary(&summary, &output_dir).map_err(|error| error.to_string())?;
+
+    let world_digest = canonical_sha256(&world).map_err(|error| error.to_string())?;
+    let evidence_digest =
+        canonical_sha256(&world["evidenceGraph"]).map_err(|error| error.to_string())?;
+    let target_digest = canonical_sha256(&target_profile).map_err(|error| error.to_string())?;
+    let intent_digest = canonical_sha256(&build_intent).map_err(|error| error.to_string())?;
+    let build_identity = canonical_sha256(&json!({
+        "worldDefinitionDigest": world_digest,
+        "targetProfileDigest": target_digest,
+        "buildIntentDigest": intent_digest,
+        "compilerVersion": env!("CARGO_PKG_VERSION")
+    }))
+    .map_err(|error| error.to_string())?;
+    let identity_suffix = build_identity.trim_start_matches("sha256:");
+    let build_id = format!("build://local/{target}/{identity_suffix}");
+    let loss_count = summary.losses.len();
+    let build_allowed = !summary.losses.iter().any(|entry| {
+        matches!(
+            entry.get("status").and_then(Value::as_str),
+            Some("dropped" | "unsupported")
+        )
+    });
+    let loss_report = json!({
+        "id": format!("lossreport://local/{target}/{identity_suffix}"),
+        "reportVersion": "0.1.0",
+        "buildId": build_id,
+        "coverage": {
+            "sourceItemCount": loss_count,
+            "reportedItemCount": loss_count,
+            "complete": true
+        },
+        "entries": summary.losses,
+        "summary": {
+            "highestSeverity": if loss_count == 0 {"none"} else {"warning"},
+            "buildAllowed": build_allowed
+        }
+    });
+    validate_document(
+        &schema_dir,
+        "loss-report.schema.json",
+        &loss_report,
+        Some(&target_profile),
+    )?;
+    write_json(&output_dir.join("loss-report.json"), &loss_report)?;
+    let loss_digest = canonical_sha256(&loss_report).map_err(|error| error.to_string())?;
+
+    let lock = json!({
+        "lockVersion": "0.1.0",
+        "worldDefinitionDigest": world_digest,
+        "evidenceGraphDigest": evidence_digest,
+        "targetProfileDigest": target_digest,
+        "buildIntentDigest": intent_digest,
+        "compiler": {
+            "name": "worldspec-compiler",
+            "version": env!("CARGO_PKG_VERSION")
+        }
+    });
+    write_json(&output_dir.join("worldspec.lock.json"), &lock)?;
+    let lock_digest = canonical_sha256(&lock).map_err(|error| error.to_string())?;
+    let compiler_digest = canonical_sha256(&json!({
+        "name": "worldspec-compiler",
+        "version": env!("CARGO_PKG_VERSION")
+    }))
+    .map_err(|error| error.to_string())?;
+    let artifacts = summary
+        .artifacts
+        .iter()
+        .enumerate()
+        .map(|(index, artifact)| artifact_ref(index, target, artifact))
+        .collect::<Vec<_>>();
+    let model_selections = world
+        .get("models")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .map(|model| {
+            json!({
+                "subjectRef": model["subjectRef"],
+                "family": model["family"],
+                "modelRef": model["id"]
+            })
+        })
+        .collect::<Vec<_>>();
+    let manifest = json!({
+        "id": build_id,
+        "manifestVersion": "0.1.0",
+        "worldDefinitionDigest": world_digest,
+        "evidenceGraphDigest": evidence_digest,
+        "targetProfileDigest": target_digest,
+        "buildIntentDigest": intent_digest,
+        "compiler": {
+            "name": "worldspec-compiler",
+            "version": env!("CARGO_PKG_VERSION"),
+            "digest": compiler_digest
+        },
+        "modelSelections": model_selections,
+        "artifacts": artifacts,
+        "lossReportDigest": loss_digest,
+        "lockDigest": lock_digest
+    });
+    validate_document(&schema_dir, "build-manifest.schema.json", &manifest, None)?;
+    write_json(&output_dir.join("build-manifest.json"), &manifest)?;
+    println!(
+        "{}",
+        canonical_sha256(&manifest).map_err(|error| error.to_string())?
+    );
+    Ok(true)
+}
+
 fn run() -> Result<bool, String> {
     let cli = Cli::parse();
     match cli.command {
@@ -444,7 +665,13 @@ fn run() -> Result<bool, String> {
             print_report(&report, output)?;
             Ok(report.valid)
         }
-        Command::Compile(args) => submit_job("compile", args),
+        Command::Compile {
+            input,
+            target_profile,
+            build_intent,
+            output_dir,
+            schema_dir,
+        } => compile_local(input, target_profile, build_intent, output_dir, schema_dir),
         Command::Certify {
             input,
             output,

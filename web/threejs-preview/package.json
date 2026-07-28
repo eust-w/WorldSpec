@@ -1,0 +1,16 @@
+{
+  "name": "@worldspec/threejs-preview",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "serve": "node server.mjs",
+    "test": "NO_PROXY=127.0.0.1,localhost playwright test"
+  },
+  "dependencies": {
+    "three": "0.185.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.0"
+  }
+}

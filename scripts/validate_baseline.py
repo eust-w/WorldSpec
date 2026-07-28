@@ -188,6 +188,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
         "articulated-drawer/world.json": "world-definition.schema.json",
         "minimal-cube/asset-draft.json": "asset-draft.schema.json",
         "minimal-cube/target-profile.json": "target-profile.schema.json",
+        "minimal-cube/target-profile-threejs.json": "target-profile.schema.json",
         "minimal-cube/build-intent.json": "build-intent.schema.json",
         "minimal-cube/loss-report.json": "loss-report.schema.json",
         "minimal-cube/build-manifest.json": "build-manifest.schema.json",
@@ -315,7 +316,7 @@ def main() -> int:
     print(
         "PASS: "
         f"{len(schemas)} schemas; "
-        "23 positive fixtures; "
+        "24 positive fixtures; "
         "4 negative fixtures; "
         "bilingual mirrors and local links"
     )

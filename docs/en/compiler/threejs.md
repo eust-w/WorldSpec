@@ -10,21 +10,19 @@ last-verified: 2026-07-28
 
 The Chinese document is the normative source; this page is its official translation.
 
-Outputs:
+The current reference implementation outputs:
 
 ```text
-scene.glb (or multiple content-addressed GLBs)
+scene.glb
 scene-manifest.json
-textures/
-preview/
+compile-summary.json
 build-manifest.json
 loss-report.json
-conformance-report.json
-certificate.json
+worldspec.lock.json
 ```
 
-The compiler converts canonical +Z Up, +X Forward, right-handed Frames into target scene conventions and records the transform in the manifest. Scale comes only from Representation mapping, never physical Frames.
+An explicit root transform maps canonical +Z Up, +X Forward, right-handed coordinates to glTF/Three.js +Y Up, -Z Forward, and the manifest records that mapping. Stable WorldSpec IDs are retained in glTF node extras. Scale applies only to representations/nodes, never physical Frames.
 
-Materials prefer glTF PBR. Unsupported shaders, procedural materials, or neural representations are marked baked, emulated, or unsupported. Cameras, lights, hierarchy, instances, and animation bindings keep stable WorldSpec ID mapping.
+The current implementation fully emits only the diagnostic box and a glTF metallic-roughness material. Unresolved meshes, shaders, procedural materials, and neural representations must enter the LossReport. A real Chromium page using Three.js 0.185.1 has verified GLB loading, stable IDs, bounds, camera setup, and screenshot generation.
 
-The Three.js bundle is for preview, inspection, and debugging. L2 validates resources, frames/cameras, materials, and visibility. Dynamics, contact, or sensor physics are not certified unless a separate physics backend and matching Profile are bound.
+The Three.js bundle is for preview, inspection, and debugging. Full L2 still requires recording the browser result in a ConformanceReport and issuing a certificate; the current browser smoke test is not an issued L2. Dynamics, contact, or sensor physics are not certified unless a separate physics backend and matching Profile are bound.

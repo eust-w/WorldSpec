@@ -3,6 +3,7 @@ members = [
     "crates/worldspec-cas",
     "crates/worldspec-cert",
     "crates/worldspec-cli",
+    "crates/worldspec-compiler",
     "crates/worldspec-core",
     "crates/worldspec-server",
 ]

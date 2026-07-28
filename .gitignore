@@ -4,5 +4,8 @@ __pycache__/
 .worldspec/
 .pytest_cache/
 .ruff_cache/
+node_modules/
+playwright-report/
+test-results/
 .DS_Store
 /target/

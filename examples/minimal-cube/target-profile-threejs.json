@@ -1,0 +1,27 @@
+{
+  "id": "profile://worldspec/threejs-visual-conformance",
+  "profileVersion": "0.1.0",
+  "target": "threejs",
+  "runtimeVersion": "0.185.1",
+  "platform": {
+    "os": "linux",
+    "architecture": "x86_64",
+    "gpu": "webgl2"
+  },
+  "capabilities": [
+    {
+      "id": "capability://worldspec/scene-graph",
+      "support": "converted",
+      "notes": "WorldSpec frames and stable IDs are serialized to glTF nodes plus a Scene Manifest."
+    },
+    {
+      "id": "capability://worldspec/pbr-material",
+      "support": "converted",
+      "notes": "Canonical PBR fields are lowered to glTF metallic-roughness material fields."
+    }
+  ],
+  "certificationTests": [
+    "test://worldspec/browser-load",
+    "test://worldspec/coordinate-mapping"
+  ]
+}

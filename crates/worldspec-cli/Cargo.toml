@@ -15,4 +15,5 @@ jiff.workspace = true
 serde_json.workspace = true
 worldspec-cas = { path = "../worldspec-cas" }
 worldspec-cert = { path = "../worldspec-cert" }
+worldspec-compiler = { path = "../worldspec-compiler" }
 worldspec-core = { path = "../worldspec-core" }

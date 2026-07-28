@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WorldSpec Three.js Preview</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: #0d1117;
+        color: #e6edf3;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      canvas {
+        display: block;
+      }
+      #status {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        padding: 8px 10px;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        background: rgb(13 17 23 / 85%);
+        font-size: 12px;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/node_modules/three/build/three.module.js",
+          "three/addons/": "/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="status">loading WorldSpec bundle…</div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
