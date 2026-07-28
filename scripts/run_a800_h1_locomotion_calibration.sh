@@ -9,6 +9,7 @@ NAMESPACE_MANIFEST="${ROOT_DIR}/ops/a800/namespace.yaml"
 JOB_TEMPLATE="${ROOT_DIR}/ops/a800/h1-locomotion-calibration-job.yaml"
 PREPULL_TEMPLATE="${ROOT_DIR}/ops/a800/h1-training-image-prepull-job.yaml"
 ENTRYPOINT="${ROOT_DIR}/ops/a800/h1-locomotion-calibration-entrypoint.sh"
+CHUNK_COPY="${ROOT_DIR}/scripts/copy_kubernetes_file.py"
 CALIBRATION_PROFILE="${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration-profile.json"
 RUNTIME_IMAGE="${WORLD_SPEC_H1_RUNTIME_IMAGE:-ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d}"
 IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-677b181a1c6b8f9ff477579194a4a0bf0f9d65f4}"
@@ -22,6 +23,7 @@ for required in \
   "${JOB_TEMPLATE}" \
   "${PREPULL_TEMPLATE}" \
   "${ENTRYPOINT}" \
+  "${CHUNK_COPY}" \
   "${CALIBRATION_PROFILE}"; do
   if [[ ! -r "${required}" ]]; then
     printf 'ERROR: required path is not readable: %s\n' "${required}" >&2
@@ -216,11 +218,33 @@ while ((SECONDS < deadline)); do
     fi
     if [[ "${current_stage}" == "artifact_ready" ]] &&
       [[ "${artifact_copied}" != "true" ]]; then
-      "${kubectl_cmd[@]}" cp \
-        --retries=8 \
-        "${pod_name}:/scratch/results/artifacts/calibration-checkpoint.zip" \
-        "${local_result_dir}/calibration-checkpoint.zip" \
-        -c calibration
+      checkpoint_metadata="$(
+        python3 -c '
+import json
+import sys
+
+prefix = "WORLDSPEC_A800_CALIBRATION_RESULT="
+matches = [
+    line[len(prefix):]
+    for line in sys.stdin.read().splitlines()
+    if line.startswith(prefix)
+]
+if len(matches) != 1:
+    raise SystemExit(f"expected one result marker, found {len(matches)}")
+checkpoint = json.loads(matches[0])["researchCheckpoint"]
+print(checkpoint["sizeBytes"], checkpoint["digest"])
+' <<<"${pod_log}"
+      )"
+      read -r checkpoint_size checkpoint_digest <<<"${checkpoint_metadata}"
+      python3 "${CHUNK_COPY}" \
+        --kubeconfig "${KUBECONFIG_PATH}" \
+        --namespace "${K8S_NAMESPACE}" \
+        --pod "${pod_name}" \
+        --container calibration \
+        --remote-path /scratch/results/artifacts/calibration-checkpoint.zip \
+        --destination "${local_result_dir}/calibration-checkpoint.zip" \
+        --expected-size "${checkpoint_size}" \
+        --expected-digest "${checkpoint_digest}"
       "${kubectl_cmd[@]}" exec "${pod_name}" -c calibration -- \
         touch /scratch/results/artifact-copied
       artifact_copied=true
