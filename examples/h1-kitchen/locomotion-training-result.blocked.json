@@ -11,8 +11,8 @@
     {
       "code": "TRAINING_NOT_EXECUTED",
       "severity": "error",
-      "message": "A digest-pinned OCI now exists for the revised MJX capacity model, but the locked runtime probe, 8,192-environment scale probe, canonical PPO training, and policy checkpoint have not yet passed for this exact profile."
+      "message": "The digest-pinned OCI and locked one-step runtime probe pass for the revised MJX capacity model, but the 8,192-environment scale probe, revised PPO smoke, canonical PPO training, and policy checkpoint have not yet passed for this exact profile."
     }
   ],
-  "generatedAt": "2026-07-28T16:29:00Z"
+  "generatedAt": "2026-07-28T16:37:00Z"
 }

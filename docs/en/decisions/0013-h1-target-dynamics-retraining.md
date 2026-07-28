@@ -60,9 +60,9 @@ before its capacity-semantics correction. The smoke is explicitly
 `research_smoke / non_publishable`, produced no checkpoint, and does not
 establish a usable new policy. A new digest-pinned image for the corrected
 capacity semantics has been built from commit `101aff7`, but the current
-Profile still requires a new one-step, an 8,192-environment scale probe, and a
-new smoke. The canonical 100-million-step run and five consecutive evaluations
-remain acceptance blockers.
+Profile's A800 one-step has now passed. The 8,192-environment scale probe and a
+new smoke remain pending. The canonical 100-million-step run and five
+consecutive evaluations remain acceptance blockers.
 
 ## Consequences
 

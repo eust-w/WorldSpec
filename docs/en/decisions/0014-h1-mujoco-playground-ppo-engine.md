@@ -80,10 +80,10 @@ target runtime before the capacity-semantics correction includes:
 
 The current Profile now follows MJX-Warp shared-contact and per-world
 constraint-capacity semantics. A new digest-pinned image has been built from
-commit `101aff7`, but a new one-step, an 8,192-environment scale probe, and a
-new smoke remain pending for the current Profile. This ADR is evidence only of
-a historical bounded GPU smoke, not of validated current runtime behavior, a
-usable policy, canonical training, or L3 acceptance.
+commit `101aff7`, and the current Profile's A800 one-step has passed. The
+8,192-environment scale probe and a new smoke remain pending. Current evidence
+proves only finite single-environment execution, not scale capacity, a usable
+policy, canonical training, or L3 acceptance.
 
 ## Consequences
 

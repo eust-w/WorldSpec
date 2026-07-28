@@ -1,5 +1,5 @@
 {
-  "id": "runtime-report://worldspec/h1-mjx-warp/a800-locked-4e38f889a254",
+  "id": "runtime-report://worldspec/h1-mjx-warp/a800-locked-101aff7c8ffb",
   "reportVersion": "0.1.0",
   "status": "passed",
   "scope": "h1_locked_oci_runtime_probe",
@@ -7,20 +7,20 @@
   "runtimeAcceptance": "locked",
   "probeDefinition": {
     "repository": "https://github.com/eust-w/WorldSpec.git",
-    "commit": "34a8a32aee7ba4e1723596431b1b8e3df1d36927"
+    "commit": "8f02d89209231d69ededea2482650ce7f5d633af"
   },
   "imageSource": {
     "repository": "https://github.com/eust-w/WorldSpec.git",
-    "commit": "4e38f889a2543301a4182a20f7b3665a5ebe6559"
+    "commit": "101aff7c8ffbdf142149f98a32a3777787622a92"
   },
   "probeInput": {
     "repository": "https://github.com/eust-w/WorldSpec.git",
-    "commit": "34a8a32aee7ba4e1723596431b1b8e3df1d36927",
+    "commit": "8f02d89209231d69ededea2482650ce7f5d633af",
     "materialization": "verified_git_archive",
-    "archiveDigest": "sha256:05ded33abd201115f08cf1351ac6cb40063f4d619219d5c0c072323fcc52c5e3"
+    "archiveDigest": "sha256:c5b81175df34f88f32ec13c309420155db1dcc92da5964a20e431507d5ca10ab"
   },
   "container": {
-    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:70c1bf800cd6fd98782d7a2be373942bfedd6885947bdb13e00562901706de6a",
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:60df896c6492f9c6aa9488c79e4a9ef9db79a2798473ae899bf9211e68733bec",
     "runAsUser": 10001,
     "runAsGroup": 10001,
     "readOnlyRootFilesystem": true,
@@ -54,7 +54,7 @@
     "worldspec-worker": "0.1.0"
   },
   "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
-  "profileDigest": "sha256:ad1b7ad9b67cd793e0c47202aced10abefe8e597e3245f2977cc05909b2fe0de",
+  "profileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
   "staticPreflight": {
     "status": "pass",
     "executionEvidence": "static_validation",
@@ -91,5 +91,5 @@
     "qvelFinite": true,
     "rewardFinite": true
   },
-  "generatedAt": "2026-07-28T15:57:36.130023Z"
+  "generatedAt": "2026-07-28T16:36:23.244639Z"
 }
