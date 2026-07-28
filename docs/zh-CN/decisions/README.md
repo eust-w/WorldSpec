@@ -16,5 +16,7 @@ last-verified: 2026-07-28
 - [ADR-0006 生成适配器与 Corpus](0006-generation-and-corpus.md)
 - [ADR-0007 产品入口与分发](0007-product-surface-and-distribution.md)
 - [ADR-0008 许可与贡献](0008-licensing-and-contributions.md)
+- [ADR-0009 v0.1 执行与真实厨房验收基线](0009-v0.1-execution-baseline.md)
+- [ADR-0010 生成模型包内容寻址](0010-generation-model-bundles.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

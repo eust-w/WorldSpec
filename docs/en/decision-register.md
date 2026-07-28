@@ -35,5 +35,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-021 | Rust Axum + Python OCI workers with file CAS + SQLite WAL | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 | D-022 | H1 + Robotiq 2F-85, short walk then drawer/mug task, fixed-scene 5/5 | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 | D-023 | Separate physical, visual-shell, and physical-invariance evidence with joint acceptance | Accepted | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
+| D-024 | Generation model bundles use a per-file-digest content-addressed read-only cache | Accepted | [ADR-0010](decisions/0010-generation-model-bundles.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

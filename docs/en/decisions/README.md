@@ -18,5 +18,7 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0006 Generation adapters and corpus](0006-generation-and-corpus.md)
 - [ADR-0007 Product surface and distribution](0007-product-surface-and-distribution.md)
 - [ADR-0008 Licensing and contributions](0008-licensing-and-contributions.md)
+- [ADR-0009 v0.1 execution and real-kitchen acceptance baseline](0009-v0.1-execution-baseline.md)
+- [ADR-0010 Content-addressed generation model bundles](0010-generation-model-bundles.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

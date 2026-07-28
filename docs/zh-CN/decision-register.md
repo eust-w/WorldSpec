@@ -33,5 +33,6 @@ last-verified: 2026-07-28
 | D-021 | Rust Axum + Python OCI Worker，文件 CAS + SQLite WAL | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 | D-022 | H1 + Robotiq 2F-85，短距步行后完成抽屉放杯任务，固定场景 5/5 | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 | D-023 | 物理、视觉壳与物理不变性分别出证，三者联合验收 | Accepted | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
+| D-024 | 生成模型包使用逐文件 Digest 的内容寻址只读缓存 | Accepted | [ADR-0010](decisions/0010-generation-model-bundles.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

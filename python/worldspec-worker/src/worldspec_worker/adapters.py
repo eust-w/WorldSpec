@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .cas import FileCas
+from .generation import GENERATION_ADAPTERS
 from .runner import Handler, WorkerFailure
 
 
@@ -251,6 +252,7 @@ def openusd_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any]]:
 ADAPTERS: dict[str, Handler] = {
     "cad": cad_handler,
     "openusd": openusd_handler,
+    **GENERATION_ADAPTERS,
 }
 
 

@@ -8,14 +8,14 @@ last-verified: 2026-07-28
 
 # CLI 与异步 API
 
-v0.1 产品入口是 CLI/API。当前已经实现本地 CAS、SQLite WAL 作业索引、loopback API，以及下表中的命令入口。OBJ Doctor 与合成立方体范围的 MuJoCo/Three.js 参考编译器可本地执行。创建生成 Job 仍不等于执行 GPU 后端；完整格式修复、真实资产编译和 L2/L3 认证仍需对应 Worker/Backend。
+v0.1 产品入口是 CLI/API。当前已经实现本地 CAS、SQLite WAL 作业索引、loopback API，以及下表中的命令入口。OBJ Doctor、结构化机器人接入、MuJoCo/Three.js 参考编译器和隔离生成适配器已实现。创建生成 Job 或通过门控测试仍不等于真实 GPU 已执行；L2/L3 认证仍需对应运行证据。
 
 | 命令 | 输入 | 主要输出 | 当前状态 |
 |---|---|---|---|
-| `ingest` | 本地源、RightsSpec | CAS SourceBundle、AssetDraft | Implemented Envelope |
-| `generate` | 源资产与 GenerationProfile | 可恢复 JobSpec | Queue Implemented；Worker Future |
+| `ingest` | 本地源、RightsSpec | CAS SourceBundle、AssetDraft | Mesh/URDF/MJCF 已实现；CAD/USD 隔离检查骨架 |
+| `generate` | 源资产与 GenerationProfile | 可恢复 JobSpec | Queue + TRELLIS.2/Nerfstudio Worker 已实现；GPU 未验收 |
 | `validate` | JSON 与 Schema 名称 | 结构与语义诊断 | Implemented |
-| `compile` | WorldDefinition、TargetProfile 与 BuildIntent | 本地参考 Bundle | 合成立方体参考切片已实现 |
+| `compile` | WorldDefinition、TargetProfile 与 BuildIntent | 本地参考 Bundle | MuJoCo/Three.js 参考切片已实现 |
 | `certify` | Certificate、可选 Ed25519 Seed | 校验后的 signed/unsigned Certificate | Implemented Envelope |
 | `inspect` | JSON、可选 Schema | Canonical SHA-256 与诊断 | Implemented |
 | `resolve` | CAS Digest | 原始不可变 Blob | Implemented |
