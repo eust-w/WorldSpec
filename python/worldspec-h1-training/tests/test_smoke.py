@@ -37,7 +37,7 @@ def test_smoke_uses_explicit_per_environment_mjx_capacity() -> None:
     smoke = make_smoke_profile(canonical)
 
     assert smoke["runtime"]["mjxCapacity"] == {
-        "naconmax": 512,
+        "activeContactsPerEnvironment": 16,
         "naccdmax": 128,
         "njmax": 4096,
     }

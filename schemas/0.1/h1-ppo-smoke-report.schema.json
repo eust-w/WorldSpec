@@ -99,9 +99,15 @@
     },
     "runtimeCapacity": {
       "type": "object",
-      "required": ["naconmax", "naccdmax", "njmax"],
+      "required": [
+        "activeContactsPerEnvironment",
+        "effectiveNaconmax",
+        "naccdmax",
+        "njmax"
+      ],
       "properties": {
-        "naconmax": { "const": 512 },
+        "activeContactsPerEnvironment": { "const": 16 },
+        "effectiveNaconmax": { "const": 4096 },
         "naccdmax": { "const": 128 },
         "njmax": { "const": 4096 }
       },

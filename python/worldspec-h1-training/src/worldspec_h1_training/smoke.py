@@ -154,7 +154,13 @@ def run_ppo_smoke(
         "canonicalProfileDigest": canonical_digest,
         "smokeProfileDigest": smoke_digest,
         "smokeOverrides": SMOKE_OVERRIDES,
-        "runtimeCapacity": profile["runtime"]["mjxCapacity"],
+        "runtimeCapacity": {
+            **profile["runtime"]["mjxCapacity"],
+            "effectiveNaconmax": (
+                profile["runtime"]["mjxCapacity"]["activeContactsPerEnvironment"]
+                * smoke["training"]["numEnvs"]
+            ),
+        },
         "staticPreflight": static,
         "runtimePreflight": runtime,
         "target": {

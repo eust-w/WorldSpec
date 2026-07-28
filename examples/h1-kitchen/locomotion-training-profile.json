@@ -32,7 +32,7 @@
     "backendVersion": "0.1.0",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "mjxCapacity": {
-      "naconmax": 512,
+      "activeContactsPerEnvironment": 16,
       "naccdmax": 128,
       "njmax": 4096
     }

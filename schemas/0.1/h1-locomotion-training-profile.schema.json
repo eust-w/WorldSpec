@@ -160,9 +160,16 @@
         "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
         "mjxCapacity": {
           "type": "object",
-          "required": ["naconmax", "naccdmax", "njmax"],
+          "required": [
+            "activeContactsPerEnvironment",
+            "naccdmax",
+            "njmax"
+          ],
           "properties": {
-            "naconmax": { "type": "integer", "minimum": 64 },
+            "activeContactsPerEnvironment": {
+              "type": "integer",
+              "minimum": 1
+            },
             "naccdmax": { "type": "integer", "minimum": 64 },
             "njmax": { "type": "integer", "minimum": 512 }
           },

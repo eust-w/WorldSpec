@@ -85,7 +85,7 @@ def validate_profile(profile: dict[str, Any]) -> None:
         "algorithm": "ppo",
         "targetPlatform": "linux_x86_64_nvidia",
         "mjxCapacity": {
-            "naconmax": 512,
+            "activeContactsPerEnvironment": 16,
             "naccdmax": 128,
             "njmax": 4096,
         },
