@@ -5,9 +5,11 @@ from __future__ import annotations
 import hashlib
 import importlib
 import importlib.metadata
+import io
 import json
 import os
 import tempfile
+import zipfile
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -59,6 +61,26 @@ def _profile(job: dict[str, Any], cas: FileCas) -> tuple[dict[str, Any], str]:
             "The H1 worker requires the WorldSpec 0.1 MuJoCo/MJX PPO profile.",
             {"expectedRuntime": expected_runtime, "actualRuntime": actual_runtime},
         )
+    framework = profile.get("framework", {})
+    expected_framework = {
+        "name": "mujoco_playground",
+        "sourceLockDigest": (
+            "sha256:af7152dbf8334361cd06ba5c27367dd0cee14c5500f3218cae7bfa0497cbb3aa"
+        ),
+        "sourceCommit": "124a73fa3303f75a62f8fe04d329b829ed0ebdfb",
+        "physicsImplementation": "warp",
+        "trainer": "brax_jax_ppo",
+        "referenceEnvironment": "H1JoystickGaitTracking",
+        "targetEnvironmentAdapter": "worldspec_h1_loaded_velocity_v1",
+        "decisionStatus": "accepted",
+    }
+    actual_framework = {key: framework.get(key) for key in expected_framework}
+    if actual_framework != expected_framework:
+        raise WorkerFailure(
+            "TRAINING_FRAMEWORK_BINDING_MISMATCH",
+            "The H1 worker requires the accepted MuJoCo Playground source lock.",
+            {"expected": expected_framework, "actual": actual_framework},
+        )
     target = profile.get("target", {})
     if target.get("gripperCount") != 1 or target.get("effector") != (
         "effector://h1/right-robotiq-2f85"
@@ -67,12 +89,42 @@ def _profile(job: dict[str, Any], cas: FileCas) -> tuple[dict[str, Any], str]:
             "TRAINING_TARGET_MISMATCH",
             "The v0.1 reference training route is locked to one right Robotiq 2F-85.",
         )
+    validation = profile.get("validation", {})
+    settle_values = [
+        validation.get("nominalDurationSeconds"),
+        validation.get("settleWindowSeconds"),
+        validation.get("maximumSettleLinearSpeed"),
+        validation.get("maximumSettleAngularSpeed"),
+    ]
+    if (
+        validation.get("requiredConsecutivePasses") != 5
+        or any(type(value) not in (int, float) for value in settle_values)
+        or settle_values[0] <= 0
+        or settle_values[1] <= 0
+        or settle_values[1] > settle_values[0]
+        or settle_values[2] < 0
+        or settle_values[3] < 0
+    ):
+        raise WorkerFailure(
+            "TRAINING_VALIDATION_PROFILE_INVALID",
+            "The v0.1 H1 route requires five runs and explicit stop-and-settle thresholds.",
+        )
+    expected_outputs = {
+        "orbax_checkpoint_archive",
+        "policy_manifest",
+        "training_result",
+        "evaluation_traces",
+        "environment_lock",
+    }
+    if set(profile.get("outputs", [])) != expected_outputs:
+        raise WorkerFailure(
+            "TRAINING_OUTPUT_PROFILE_INVALID",
+            "The H1 profile does not declare the complete native output contract.",
+        )
     return profile, profiles[0]
 
 
-def _conformance(
-    job: dict[str, Any], cas: FileCas, profile: dict[str, Any]
-) -> dict[str, Any]:
+def _conformance(job: dict[str, Any], cas: FileCas, profile: dict[str, Any]) -> dict[str, Any]:
     inputs = job.get("inputs", [])
     if len(inputs) != 1:
         raise WorkerFailure(
@@ -161,19 +213,28 @@ def _verify_runtime(profile: dict[str, Any], job: dict[str, Any]) -> Any:
             "The H1 training job requests fewer GPUs than the profile requires.",
             {"executionEvidence": "not_executed"},
         )
+    if os.environ.get("JAX_DEFAULT_MATMUL_PRECISION") != "highest":
+        raise WorkerFailure(
+            "TRAINING_PRECISION_ENV_MISSING",
+            "JAX_DEFAULT_MATMUL_PRECISION must be highest before worker startup.",
+            {"executionEvidence": "not_executed"},
+        )
     try:
-        torch = importlib.import_module("torch")
+        jax = importlib.import_module("jax")
     except ModuleNotFoundError as error:
         raise WorkerFailure(
             "WORKER_DEPENDENCY_UNAVAILABLE",
-            "torch is absent from the locked H1 training worker.",
+            "jax is absent from the locked H1 training worker.",
             {"executionEvidence": "not_executed"},
         ) from error
-    if not torch.cuda.is_available():
+    if jax.default_backend() != "gpu":
         raise WorkerFailure(
             "WORKER_GPU_UNAVAILABLE",
-            "CUDA is unavailable in the locked H1 training worker.",
-            {"executionEvidence": "not_executed"},
+            "JAX did not select a GPU backend in the locked H1 training worker.",
+            {
+                "backend": jax.default_backend(),
+                "executionEvidence": "not_executed",
+            },
         )
     try:
         backend = importlib.import_module(runtime["backendPackage"])
@@ -200,7 +261,7 @@ def _verify_runtime(profile: dict[str, Any], job: dict[str, Any]) -> Any:
             "worldspec_h1_training must expose run_training(profile, bundle_dir, output_dir).",
             {"executionEvidence": "not_executed"},
         )
-    return torch, backend
+    return jax, backend
 
 
 def _safe_bundle_file(bundle: Path, logical_path: str) -> Path:
@@ -318,6 +379,86 @@ def _artifact(
     }
 
 
+def _json_object(payload: bytes, name: str) -> dict[str, Any]:
+    try:
+        value = json.loads(payload)
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        raise WorkerFailure(
+            "TRAINING_OUTPUT_INVALID",
+            f"{name} must be a valid JSON object.",
+        ) from error
+    if not isinstance(value, dict):
+        raise WorkerFailure(
+            "TRAINING_OUTPUT_INVALID",
+            f"{name} must be a JSON object.",
+        )
+    return value
+
+
+def _validate_checkpoint_archive(payload: bytes) -> None:
+    try:
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            files = [item for item in archive.infolist() if not item.is_dir()]
+            if not files:
+                raise WorkerFailure(
+                    "TRAINING_CHECKPOINT_INVALID",
+                    "The Orbax checkpoint archive contains no files.",
+                )
+            for item in files:
+                path = Path(item.filename)
+                file_type = (item.external_attr >> 16) & 0o170000
+                if (
+                    path.is_absolute()
+                    or ".." in path.parts
+                    or file_type == 0o120000
+                    or item.file_size == 0
+                ):
+                    raise WorkerFailure(
+                        "TRAINING_CHECKPOINT_INVALID",
+                        "The Orbax checkpoint archive contains an unsafe or empty entry.",
+                        {"path": item.filename},
+                    )
+    except zipfile.BadZipFile as error:
+        raise WorkerFailure(
+            "TRAINING_CHECKPOINT_INVALID",
+            "The training checkpoint is not a valid ZIP archive.",
+        ) from error
+
+
+def _validate_evaluation_traces(payload: bytes, required_runs: int) -> None:
+    seen_runs: set[int] = set()
+    for line_number, line in enumerate(payload.splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            record = json.loads(line)
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise WorkerFailure(
+                "TRAINING_TRACE_INVALID",
+                "Evaluation traces must be newline-delimited JSON.",
+                {"line": line_number},
+            ) from error
+        if not isinstance(record, dict) or not isinstance(record.get("run"), int):
+            raise WorkerFailure(
+                "TRAINING_TRACE_INVALID",
+                "Every evaluation trace record must identify its nominal run.",
+                {"line": line_number},
+            )
+        if record.get("finite") is not True or record.get("done") is not False:
+            raise WorkerFailure(
+                "TRAINING_TRACE_FAILED",
+                "A nominal evaluation trace contains a non-finite or terminated state.",
+                {"line": line_number, "run": record.get("run")},
+            )
+        seen_runs.add(record["run"])
+    if seen_runs != set(range(required_runs)):
+        raise WorkerFailure(
+            "TRAINING_TRACE_RUNS_INCOMPLETE",
+            "Evaluation traces do not cover all required consecutive runs.",
+            {"expected": list(range(required_runs)), "actual": sorted(seen_runs)},
+        )
+
+
 def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any]]:
     if job.get("operation") != "train":
         raise WorkerFailure(
@@ -326,14 +467,23 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
         )
     profile, profile_digest = _profile(job, cas)
     _conformance(job, cas, profile)
-    torch, backend = _verify_runtime(profile, job)
+    jax, backend = _verify_runtime(profile, job)
     bundle = _bundle(profile)
 
     with tempfile.TemporaryDirectory(prefix="worldspec-h1-training-") as temporary:
         output = Path(temporary)
         backend.run_training(profile=profile, bundle_dir=bundle, output_dir=output)
         required = {
-            "policy.pt": ("torchscript_policy", "application/octet-stream", "pt"),
+            "policy-checkpoint.zip": (
+                "orbax_checkpoint_archive",
+                "application/zip",
+                "zip",
+            ),
+            "policy-manifest.json": (
+                "policy_manifest",
+                "application/json",
+                "json",
+            ),
             "evaluation-traces.jsonl": (
                 "evaluation_traces",
                 "application/x-ndjson",
@@ -359,27 +509,22 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
                 "TRAINING_OUTPUT_EMPTY",
                 "The training backend produced an empty required artifact.",
             )
-        try:
-            metrics = json.loads(payloads["metrics.json"])
-            environment_lock = json.loads(payloads["environment-lock.json"])
-        except json.JSONDecodeError as error:
-            raise WorkerFailure(
-                "TRAINING_OUTPUT_INVALID",
-                "Training metrics and environment lock must be valid JSON.",
-            ) from error
+        _validate_checkpoint_archive(payloads["policy-checkpoint.zip"])
+        metrics = _json_object(payloads["metrics.json"], "metrics.json")
+        environment_lock = _json_object(payloads["environment-lock.json"], "environment-lock.json")
+        policy_manifest = _json_object(payloads["policy-manifest.json"], "policy-manifest.json")
         tests = metrics.get("tests")
+        required_runs = profile["validation"]["requiredConsecutivePasses"]
         if (
             not isinstance(tests, list)
-            or not tests
-            or any(
-                not isinstance(test, dict) or test.get("result") != "pass"
-                for test in tests
-            )
+            or len(tests) != required_runs
+            or any(not isinstance(test, dict) or test.get("result") != "pass" for test in tests)
         ):
             raise WorkerFailure(
                 "TRAINING_VALIDATION_FAILED",
                 "A policy is publishable only when every declared nominal test passes.",
             )
+        _validate_evaluation_traces(payloads["evaluation-traces.jsonl"], required_runs)
         runtime = profile["runtime"]
         expected_lock = {
             "containerDigest": runtime["containerDigest"],
@@ -393,6 +538,28 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
                 "TRAINING_ENVIRONMENT_LOCK_MISMATCH",
                 "Training output is not bound to the selected runtime lock.",
                 {"expected": expected_lock, "actual": actual_lock},
+            )
+        checkpoint_digest = (
+            f"sha256:{hashlib.sha256(payloads['policy-checkpoint.zip']).hexdigest()}"
+        )
+        expected_policy = {
+            "policyFormat": "orbax_checkpoint_zip",
+            "checkpointDigest": checkpoint_digest,
+            "trainingProfileDigest": profile_digest,
+            "targetBundleDigest": profile["target"]["bundleDigest"],
+            "frameworkSourceLockDigest": profile["framework"]["sourceLockDigest"],
+            "frameworkSourceCommit": profile["framework"]["sourceCommit"],
+            "physicsImplementation": profile["framework"]["physicsImplementation"],
+            "trainer": profile["framework"]["trainer"],
+            "targetEnvironmentAdapter": profile["framework"]["targetEnvironmentAdapter"],
+            "evidenceStatus": "executed",
+        }
+        actual_policy = {key: policy_manifest.get(key) for key in expected_policy}
+        if actual_policy != expected_policy:
+            raise WorkerFailure(
+                "TRAINING_POLICY_MANIFEST_MISMATCH",
+                "The policy manifest is not bound to the checkpoint, target, and runtime source.",
+                {"expected": expected_policy, "actual": actual_policy},
             )
 
         outputs = [
@@ -409,7 +576,7 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
             "executionEvidence": "executed",
             "runtime": {
                 **expected_lock,
-                "device": str(torch.cuda.get_device_name(0)),
+                "device": str(jax.devices()[0]),
             },
             "artifacts": outputs,
             "tests": tests,

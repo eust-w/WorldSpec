@@ -34,6 +34,9 @@ Stand
 → Stop and Settle (manipulation-ready posture)
 ```
 
+[ADR-0014](0014-h1-mujoco-playground-ppo-engine.md) locks the concrete training
+engine, source version, adapter boundary, and native artifact type.
+
 Domain randomization remains disabled until the nominal model passes. A
 publishable policy must bind the target bundle, CompositionProfile, Source Lock,
 OCI digest, Python package lock, training result, and evaluation traces. The

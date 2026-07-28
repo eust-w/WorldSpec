@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "worldspec-h1-training"
+version = "0.1.0"
+description = "Fail-closed MuJoCo/MJX PPO backend for the WorldSpec H1 reference route"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = []
+
+[project.optional-dependencies]
+runtime = [
+  "brax==0.14.2",
+  "flax==0.11.2",
+  "jax[cuda12]==0.6.2",
+  "mujoco==3.6.0",
+  "mujoco-mjx==3.6.0",
+  "orbax-checkpoint==0.11.31",
+  "playground @ git+https://github.com/google-deepmind/mujoco_playground.git@124a73fa3303f75a62f8fe04d329b829ed0ebdfb",
+  "warp-lang==1.11.0",
+]
+dev = [
+  "pytest>=8.3,<9",
+  "ruff>=0.12,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/worldspec_h1_training"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

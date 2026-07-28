@@ -22,6 +22,28 @@
     "sourceLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "compositionProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "executionEvidence": { "enum": ["executed", "not_executed"] },
+    "trainingAdapter": {
+      "type": "object",
+      "required": [
+        "frameworkSourceLockDigest",
+        "targetEnvironmentAdapter",
+        "physicsImplementation",
+        "derivedModelDigest"
+      ],
+      "properties": {
+        "frameworkSourceLockDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "targetEnvironmentAdapter": {
+          "const": "worldspec_h1_loaded_velocity_v1"
+        },
+        "physicsImplementation": { "const": "warp" },
+        "derivedModelDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        }
+      },
+      "additionalProperties": false
+    },
     "environment": {
       "type": "object",
       "required": ["os", "architecture", "python", "runtime", "runtimeVersion"],

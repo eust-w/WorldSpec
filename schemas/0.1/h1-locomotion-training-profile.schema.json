@@ -7,8 +7,10 @@
     "id",
     "profileVersion",
     "route",
+    "framework",
     "target",
     "runtime",
+    "training",
     "control",
     "curriculum",
     "validation",
@@ -20,6 +22,34 @@
     "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
     "route": { "const": "target_dynamics_retraining" },
     "decisionRef": { "$ref": "common.schema.json#/$defs/id" },
+    "framework": {
+      "type": "object",
+      "required": [
+        "name",
+        "sourceLockDigest",
+        "sourceCommit",
+        "physicsImplementation",
+        "trainer",
+        "referenceEnvironment",
+        "targetEnvironmentAdapter",
+        "decisionStatus"
+      ],
+      "properties": {
+        "name": { "const": "mujoco_playground" },
+        "sourceLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sourceCommit": {
+          "const": "124a73fa3303f75a62f8fe04d329b829ed0ebdfb"
+        },
+        "physicsImplementation": { "const": "warp" },
+        "trainer": { "const": "brax_jax_ppo" },
+        "referenceEnvironment": { "const": "H1JoystickGaitTracking" },
+        "targetEnvironmentAdapter": {
+          "const": "worldspec_h1_loaded_velocity_v1"
+        },
+        "decisionStatus": { "const": "accepted" }
+      },
+      "additionalProperties": false
+    },
     "target": {
       "type": "object",
       "required": [
@@ -37,6 +67,74 @@
         "baseRobotComponent": { "$ref": "common.schema.json#/$defs/id" },
         "effector": { "$ref": "common.schema.json#/$defs/id" },
         "gripperCount": { "const": 1 }
+      },
+      "additionalProperties": false
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "hyperparameterStatus",
+        "seed",
+        "numTimesteps",
+        "numEnvs",
+        "numEvals",
+        "episodeLength",
+        "simulationTimestepSeconds",
+        "unrollLength",
+        "numMinibatches",
+        "numUpdatesPerBatch",
+        "batchSize",
+        "learningRate",
+        "discounting",
+        "entropyCost",
+        "matmulPrecision",
+        "commandDistribution"
+      ],
+      "properties": {
+        "hyperparameterStatus": {
+          "const": "imported_baseline_unvalidated"
+        },
+        "seed": { "type": "integer", "minimum": 0 },
+        "numTimesteps": { "type": "integer", "minimum": 1 },
+        "numEnvs": { "type": "integer", "minimum": 1 },
+        "numEvals": { "type": "integer", "minimum": 1 },
+        "episodeLength": { "type": "integer", "minimum": 1 },
+        "simulationTimestepSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "unrollLength": { "type": "integer", "minimum": 1 },
+        "numMinibatches": { "type": "integer", "minimum": 1 },
+        "numUpdatesPerBatch": { "type": "integer", "minimum": 1 },
+        "batchSize": { "type": "integer", "minimum": 1 },
+        "learningRate": { "type": "number", "exclusiveMinimum": 0 },
+        "discounting": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "entropyCost": { "type": "number", "minimum": 0 },
+        "matmulPrecision": { "const": "highest" },
+        "commandDistribution": {
+          "type": "object",
+          "required": [
+            "linearVelocityX",
+            "linearVelocityY",
+            "angularVelocityYaw",
+            "zeroCommandProbability"
+          ],
+          "properties": {
+            "linearVelocityX": { "$ref": "#/$defs/range2" },
+            "linearVelocityY": { "$ref": "#/$defs/range2" },
+            "angularVelocityYaw": { "$ref": "#/$defs/range2" },
+            "zeroCommandProbability": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        }
       },
       "additionalProperties": false
     },
@@ -97,16 +195,35 @@
     "control": {
       "type": "object",
       "required": [
+        "baselineProfileDigest",
         "policyJoints",
         "policyActuators",
+        "policyKps",
+        "policyKds",
+        "defaultAngles",
+        "actionScale",
         "heldJoints",
+        "heldActuators",
+        "heldTargets",
+        "heldKps",
+        "heldKds",
         "gripperActuators",
+        "gripperCommands",
         "controlDecimation"
       ],
       "properties": {
+        "baselineProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
         "policyJoints": { "$ref": "#/$defs/nameArray" },
         "policyActuators": { "$ref": "#/$defs/nameArray" },
+        "policyKps": { "$ref": "#/$defs/numberArray" },
+        "policyKds": { "$ref": "#/$defs/numberArray" },
+        "defaultAngles": { "$ref": "#/$defs/numberArray" },
+        "actionScale": { "type": "number", "exclusiveMinimum": 0 },
         "heldJoints": { "$ref": "#/$defs/nameArray" },
+        "heldActuators": { "$ref": "#/$defs/nameArray" },
+        "heldTargets": { "$ref": "#/$defs/numberArray" },
+        "heldKps": { "$ref": "#/$defs/numberArray" },
+        "heldKds": { "$ref": "#/$defs/numberArray" },
         "gripperActuators": {
           "type": "array",
           "items": {
@@ -116,6 +233,12 @@
           "minItems": 1,
           "maxItems": 1,
           "uniqueItems": true
+        },
+        "gripperCommands": {
+          "type": "array",
+          "items": { "type": "number" },
+          "minItems": 1,
+          "maxItems": 1
         },
         "controlDecimation": { "type": "integer", "minimum": 1 }
       },
@@ -199,6 +322,9 @@
         "minimumUprightCosine",
         "minimumForwardDisplacement",
         "maximumLateralDrift",
+        "settleWindowSeconds",
+        "maximumSettleLinearSpeed",
+        "maximumSettleAngularSpeed",
         "maximumJointLimitViolations",
         "maximumNonFiniteSamples",
         "requiredConsecutivePasses"
@@ -209,6 +335,9 @@
         "minimumUprightCosine": { "type": "number", "minimum": -1, "maximum": 1 },
         "minimumForwardDisplacement": { "type": "number", "minimum": 0 },
         "maximumLateralDrift": { "type": "number", "minimum": 0 },
+        "settleWindowSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "maximumSettleLinearSpeed": { "type": "number", "minimum": 0 },
+        "maximumSettleAngularSpeed": { "type": "number", "minimum": 0 },
         "maximumJointLimitViolations": { "type": "integer", "minimum": 0 },
         "maximumNonFiniteSamples": { "type": "integer", "minimum": 0 },
         "requiredConsecutivePasses": { "type": "integer", "minimum": 1 }
@@ -219,14 +348,15 @@
       "type": "array",
       "items": {
         "enum": [
-          "torchscript_policy",
+          "orbax_checkpoint_archive",
+          "policy_manifest",
           "training_result",
           "evaluation_traces",
           "environment_lock"
         ]
       },
-      "minItems": 4,
-      "maxItems": 4,
+      "minItems": 5,
+      "maxItems": 5,
       "uniqueItems": true
     },
     "evidenceStatus": { "const": "derived" },
@@ -241,6 +371,20 @@
       },
       "minItems": 1,
       "uniqueItems": true
+    },
+    "numberArray": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 1
+    },
+    "range2": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "minItems": 2,
+      "maxItems": 2
     }
   },
   "additionalProperties": false

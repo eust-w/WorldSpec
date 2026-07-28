@@ -1,0 +1,65 @@
+{
+  "id": "sourcelock://worldspec/h1-training-mujoco-playground-v0.2.0",
+  "lockVersion": "0.1.0",
+  "decisionRef": "decision://worldspec/D-028",
+  "purpose": "Reference source lock for the accepted H1 MuJoCo/MJX plus PPO training route",
+  "source": {
+    "repository": "https://github.com/google-deepmind/mujoco_playground.git",
+    "ref": "refs/tags/v0.2.0",
+    "commit": "124a73fa3303f75a62f8fe04d329b829ed0ebdfb",
+    "license": {
+      "spdx": "Apache-2.0",
+      "path": "LICENSE",
+      "digest": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "files": [
+      {
+        "path": "pyproject.toml",
+        "digest": "sha256:0ee1c165945bcc4c53e861b7219d0b00c2477c13b25dcce9e059913e3ca6fe44"
+      },
+      {
+        "path": "uv.lock",
+        "digest": "sha256:de1ef10180515a4e2baf4116726e49395e01ed85d9a7ae03310fcbe132435c7a"
+      },
+      {
+        "path": "learning/train_jax_ppo.py",
+        "digest": "sha256:c082570f0e72bb9761fb409167c16de881172ead076b353cdc9e636eeb38982b"
+      },
+      {
+        "path": "mujoco_playground/_src/mjx_env.py",
+        "digest": "sha256:0f51d368c77e9a7d1e63674f091fb8c983ccd7a0bd82f9e5603d3b126ad37f1b"
+      },
+      {
+        "path": "mujoco_playground/_src/locomotion/__init__.py",
+        "digest": "sha256:c6ed4661fee4cdef7f6179f98629f04cdffbdf8c6f21b962070425946e9f8d69"
+      },
+      {
+        "path": "mujoco_playground/_src/locomotion/h1/base.py",
+        "digest": "sha256:c7b79a739ab3b7d7c21275600e7e37b64098618f27dc8d24583d34d570beeefa"
+      },
+      {
+        "path": "mujoco_playground/_src/locomotion/h1/joystick_gait_tracking.py",
+        "digest": "sha256:16fbea573014f66045c832e998e731dd5c779b4e4065d7bd177e8142cf2a0f20"
+      },
+      {
+        "path": "mujoco_playground/config/locomotion_params.py",
+        "digest": "sha256:130ddebcddeb5a4403639f3f2f3d08630146e66cbdb2e57f6184dcd08f9a01a8"
+      }
+    ]
+  },
+  "selection": {
+    "framework": "mujoco_playground",
+    "physicsRuntime": "mujoco_mjx",
+    "physicsImplementation": "warp",
+    "trainer": "brax_jax_ppo",
+    "referenceEnvironment": "H1JoystickGaitTracking",
+    "targetEnvironmentAdapter": "worldspec_h1_loaded_velocity_v1",
+    "decisionStatus": "accepted",
+    "runtimeArtifactStatus": "planned"
+  },
+  "limitations": [
+    "The upstream H1 environment loads a specialized training XML rather than the WorldSpec H1 plus right Robotiq composition bundle.",
+    "The WorldSpec target environment adapter and derived instrumentation must be validated on Linux NVIDIA hardware before runtimeArtifactStatus can become locked.",
+    "No policy, checkpoint, GPU execution, or five-run locomotion evidence is asserted by this source lock."
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "id": "conformance://worldspec/h1-training-adapter/native-load",
+  "reportVersion": "0.1.0",
+  "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+  "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+  "compositionProfileDigest": "sha256:f1296bdcc67e718cf7235cb1eb9cfec02a5b434c4fef191b4bc63b2698673732",
+  "executionEvidence": "executed",
+  "trainingAdapter": {
+    "frameworkSourceLockDigest": "sha256:af7152dbf8334361cd06ba5c27367dd0cee14c5500f3218cae7bfa0497cbb3aa",
+    "targetEnvironmentAdapter": "worldspec_h1_loaded_velocity_v1",
+    "physicsImplementation": "warp",
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377"
+  },
+  "environment": {
+    "os": "darwin",
+    "architecture": "arm64",
+    "python": "3.12.9",
+    "runtime": "mujoco",
+    "runtimeVersion": "3.6.0"
+  },
+  "tests": [
+    {
+      "id": "test://worldspec/h1-training-adapter/derivation",
+      "result": "pass",
+      "metrics": {
+        "sourceBundleImmutable": true,
+        "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377"
+      },
+      "diagnostics": []
+    },
+    {
+      "id": "test://worldspec/h1-training-adapter/native-load",
+      "result": "pass",
+      "metrics": {
+        "finiteQpos": true,
+        "generalizedCoordinates": 34,
+        "degreesOfFreedom": 33,
+        "actuators": 20,
+        "sensors": 13
+      },
+      "diagnostics": []
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 0,
+    "unknown": 0,
+    "notRun": 0,
+    "overall": "pass"
+  },
+  "generatedAt": "2026-07-28T13:18:05Z"
+}

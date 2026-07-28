@@ -73,12 +73,23 @@
         "properties": {
           "executionEvidence": { "const": "executed" },
           "artifacts": {
-            "minItems": 3,
+            "minItems": 4,
             "allOf": [
               {
                 "contains": {
                   "type": "object",
-                  "properties": { "role": { "const": "torchscript_policy" } },
+                  "properties": {
+                    "role": { "const": "orbax_checkpoint_archive" }
+                  },
+                  "required": ["role"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "role": { "const": "policy_manifest" } },
                   "required": ["role"]
                 },
                 "minContains": 1,
@@ -104,7 +115,7 @@
               }
             ]
           },
-          "tests": { "minItems": 1 }
+          "tests": { "minItems": 5, "maxItems": 5 }
         },
         "required": ["runtime"]
       }

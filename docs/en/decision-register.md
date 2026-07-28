@@ -39,5 +39,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-025 | H1/Robotiq use locked Menagerie sources and locomotion uses locked Unitree RL Gym; dirty BiGym payloads are not copied | Accepted Design | [ADR-0011](decisions/0011-h1-reference-sources.md) |
 | D-026 | H1/Robotiq composition uses a separate profile, complete namespacing, and immutable native payloads; the first L3 case locks one right gripper | Accepted Design | [ADR-0012](decisions/0012-h1-robotiq-composition.md) |
 | D-027 | Select A+R: adapt/retrain Menagerie H1 plus one right Robotiq; reject hybrid-model and kinematic-switch routes | Accepted Design | [ADR-0013](decisions/0013-h1-target-dynamics-retraining.md) |
+| D-028 | Use MuJoCo Playground v0.2.0, MuJoCo/MJX, Warp, and Brax JAX PPO for H1 retraining; adapt the target composition and retain Orbax as the native output | Accepted Design | [ADR-0014](decisions/0014-h1-mujoco-playground-ppo-engine.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

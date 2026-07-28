@@ -2,7 +2,17 @@
   "id": "trainingprofile://worldspec/h1-menagerie-right-robotiq-locomotion",
   "profileVersion": "0.1.0",
   "route": "target_dynamics_retraining",
-  "decisionRef": "decision://worldspec/D-027",
+  "decisionRef": "decision://worldspec/D-028",
+  "framework": {
+    "name": "mujoco_playground",
+    "sourceLockDigest": "sha256:af7152dbf8334361cd06ba5c27367dd0cee14c5500f3218cae7bfa0497cbb3aa",
+    "sourceCommit": "124a73fa3303f75a62f8fe04d329b829ed0ebdfb",
+    "physicsImplementation": "warp",
+    "trainer": "brax_jax_ppo",
+    "referenceEnvironment": "H1JoystickGaitTracking",
+    "targetEnvironmentAdapter": "worldspec_h1_loaded_velocity_v1",
+    "decisionStatus": "accepted"
+  },
   "target": {
     "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
     "compositionProfileDigest": "sha256:f1296bdcc67e718cf7235cb1eb9cfec02a5b434c4fef191b4bc63b2698673732",
@@ -18,12 +28,36 @@
     "targetPlatform": "linux_x86_64_nvidia",
     "minimumGpuCount": 1
   },
+  "training": {
+    "hyperparameterStatus": "imported_baseline_unvalidated",
+    "seed": 1,
+    "numTimesteps": 100000000,
+    "numEnvs": 8192,
+    "numEvals": 10,
+    "episodeLength": 1000,
+    "simulationTimestepSeconds": 0.002,
+    "unrollLength": 20,
+    "numMinibatches": 32,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256,
+    "learningRate": 0.0003,
+    "discounting": 0.97,
+    "entropyCost": 0.01,
+    "matmulPrecision": "highest",
+    "commandDistribution": {
+      "linearVelocityX": [-1.5, 1.5],
+      "linearVelocityY": [-0.5, 0.5],
+      "angularVelocityYaw": [-1.0, 1.0],
+      "zeroCommandProbability": 0.1
+    }
+  },
   "teacherPolicy": {
     "digest": "sha256:44a0fbceb81f3877833ae9a398d039bea1759cb0d3c8188181013885f70589eb",
     "usage": "interface_reference",
     "behaviorOnTarget": "failed"
   },
   "control": {
+    "baselineProfileDigest": "sha256:c19a8de255f84e66fc0bf166889f89ae9b8016b6e50e0840de35d489e8fc0e75",
     "policyJoints": [
       "left_hip_yaw",
       "left_hip_roll",
@@ -48,6 +82,10 @@
       "right_knee",
       "right_ankle"
     ],
+    "policyKps": [150, 150, 150, 200, 40, 150, 150, 150, 200, 40],
+    "policyKds": [2, 2, 2, 4, 2, 2, 2, 2, 4, 2],
+    "defaultAngles": [0, 0, -0.1, 0.3, -0.2, 0, 0, -0.1, 0.3, -0.2],
+    "actionScale": 0.25,
     "heldJoints": [
       "torso",
       "left_shoulder_pitch",
@@ -59,7 +97,22 @@
       "right_shoulder_yaw",
       "right_elbow"
     ],
+    "heldActuators": [
+      "torso",
+      "left_shoulder_pitch",
+      "left_shoulder_roll",
+      "left_shoulder_yaw",
+      "left_elbow",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "heldTargets": [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "heldKps": [100, 40, 40, 18, 18, 40, 40, 18, 18],
+    "heldKds": [5, 2, 2, 1, 1, 2, 2, 1, 1],
     "gripperActuators": ["right_gripper_fingers_actuator"],
+    "gripperCommands": [0],
     "controlDecimation": 10
   },
   "curriculum": {
@@ -93,12 +146,16 @@
     "minimumUprightCosine": 0.5,
     "minimumForwardDisplacement": 0.1,
     "maximumLateralDrift": 0.5,
+    "settleWindowSeconds": 0.5,
+    "maximumSettleLinearSpeed": 0.2,
+    "maximumSettleAngularSpeed": 0.4,
     "maximumJointLimitViolations": 0,
     "maximumNonFiniteSamples": 0,
     "requiredConsecutivePasses": 5
   },
   "outputs": [
-    "torchscript_policy",
+    "orbax_checkpoint_archive",
+    "policy_manifest",
     "training_result",
     "evaluation_traces",
     "environment_lock"

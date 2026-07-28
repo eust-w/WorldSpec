@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-training-source-lock.schema.json",
+  "title": "WorldSpec H1 Training Source Lock 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "lockVersion",
+    "decisionRef",
+    "purpose",
+    "source",
+    "selection",
+    "limitations"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "lockVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "decisionRef": { "$ref": "common.schema.json#/$defs/id" },
+    "purpose": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "required": [
+        "repository",
+        "ref",
+        "commit",
+        "license",
+        "files"
+      ],
+      "properties": {
+        "repository": {
+          "const": "https://github.com/google-deepmind/mujoco_playground.git"
+        },
+        "ref": { "const": "refs/tags/v0.2.0" },
+        "commit": {
+          "const": "124a73fa3303f75a62f8fe04d329b829ed0ebdfb"
+        },
+        "license": {
+          "type": "object",
+          "required": ["spdx", "path", "digest"],
+          "properties": {
+            "spdx": { "const": "Apache-2.0" },
+            "path": { "const": "LICENSE" },
+            "digest": { "$ref": "common.schema.json#/$defs/digest" }
+          },
+          "additionalProperties": false
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "digest"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+              },
+              "digest": { "$ref": "common.schema.json#/$defs/digest" }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 8,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "selection": {
+      "type": "object",
+      "required": [
+        "framework",
+        "physicsRuntime",
+        "physicsImplementation",
+        "trainer",
+        "referenceEnvironment",
+        "targetEnvironmentAdapter",
+        "decisionStatus",
+        "runtimeArtifactStatus"
+      ],
+      "properties": {
+        "framework": { "const": "mujoco_playground" },
+        "physicsRuntime": { "const": "mujoco_mjx" },
+        "physicsImplementation": { "const": "warp" },
+        "trainer": { "const": "brax_jax_ppo" },
+        "referenceEnvironment": { "const": "H1JoystickGaitTracking" },
+        "targetEnvironmentAdapter": {
+          "const": "worldspec_h1_loaded_velocity_v1"
+        },
+        "decisionStatus": { "const": "accepted" },
+        "runtimeArtifactStatus": { "enum": ["planned", "locked"] }
+      },
+      "additionalProperties": false
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

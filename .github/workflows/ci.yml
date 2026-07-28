@@ -1,0 +1,75 @@
+name: WorldSpec CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feature/worldspec-v0.1
+
+permissions:
+  contents: read
+
+jobs:
+  schema-docs-python:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install -r requirements-dev.txt pytest ruff
+      - run: python scripts/validate_baseline.py
+      - run: python -m pytest -q
+      - run: ruff check python/worldspec-worker python/worldspec-h1-training scripts tests
+
+  h1-training-lock:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - working-directory: python/worldspec-h1-training
+        run: uv sync --frozen --extra dev
+      - working-directory: python/worldspec-h1-training
+        run: uv run --frozen --extra dev pytest -q
+
+  rust:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.89.0
+        with:
+          components: clippy,rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - run: cargo test --workspace --all-features
+
+  threejs:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/threejs-preview/package-lock.json
+      - working-directory: web/threejs-preview
+        run: npm ci
+      - working-directory: web/threejs-preview
+        run: npx playwright install --with-deps chromium
+      - working-directory: web/threejs-preview
+        run: npm test
+
+  worker-container-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build --tag worldspec-worker:ci python/worldspec-worker
+      - run: docker run --rm worldspec-worker:ci --help

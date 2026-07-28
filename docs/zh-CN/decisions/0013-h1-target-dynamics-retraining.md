@@ -30,6 +30,9 @@ Stand
 → Stop and Settle（进入操作姿态）
 ```
 
+具体训练引擎、来源版本、适配边界和原生产物类型由
+[ADR-0014](0014-h1-mujoco-playground-ppo-engine.md) 锁定。
+
 标称模型尚未通过前关闭 Domain Randomization。策略发布至少需要绑定目标 Bundle、
 CompositionProfile、Source Lock、OCI Digest、Python Package Lock、训练结果和评估
 Trace。训练 Worker 必须 fail-closed；缺少锁定运行时、GPU、原生加载证据或输出契约

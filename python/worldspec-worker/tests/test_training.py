@@ -1,4 +1,7 @@
+import hashlib
+import io
 import json
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -33,6 +36,18 @@ def profile(runtime_status: str = "planned") -> dict:
     return {
         "profileVersion": "0.1.0",
         "route": "target_dynamics_retraining",
+        "framework": {
+            "name": "mujoco_playground",
+            "sourceLockDigest": (
+                "sha256:af7152dbf8334361cd06ba5c27367dd0cee14c5500f3218cae7bfa0497cbb3aa"
+            ),
+            "sourceCommit": "124a73fa3303f75a62f8fe04d329b829ed0ebdfb",
+            "physicsImplementation": "warp",
+            "trainer": "brax_jax_ppo",
+            "referenceEnvironment": "H1JoystickGaitTracking",
+            "targetEnvironmentAdapter": "worldspec_h1_loaded_velocity_v1",
+            "decisionStatus": "accepted",
+        },
         "target": {
             "sourceLockDigest": SOURCE_LOCK,
             "compositionProfileDigest": COMPOSITION_PROFILE,
@@ -41,6 +56,20 @@ def profile(runtime_status: str = "planned") -> dict:
             "gripperCount": 1,
         },
         "runtime": runtime,
+        "validation": {
+            "requiredConsecutivePasses": 5,
+            "nominalDurationSeconds": 4.0,
+            "settleWindowSeconds": 0.5,
+            "maximumSettleLinearSpeed": 0.2,
+            "maximumSettleAngularSpeed": 0.4,
+        },
+        "outputs": [
+            "orbax_checkpoint_archive",
+            "policy_manifest",
+            "training_result",
+            "evaluation_traces",
+            "environment_lock",
+        ],
     }
 
 
@@ -123,24 +152,46 @@ def test_locked_backend_output_contract_is_digest_addressed(
     locked = profile("locked")
     training_job = job(cas, locked, conformance())
 
-    class FakeCuda:
+    class FakeJax:
         @staticmethod
-        def get_device_name(_index: int) -> str:
-            return "CI fake device - not execution evidence"
-
-    class FakeTorch:
-        cuda = FakeCuda()
+        def devices() -> list[str]:
+            return ["CI fake device - not execution evidence"]
 
     class FakeBackend:
         @staticmethod
-        def run_training(
-            profile: dict, bundle_dir: Path, output_dir: Path
-        ) -> None:
+        def run_training(profile: dict, bundle_dir: Path, output_dir: Path) -> None:
             assert profile["target"]["bundleDigest"] == BUNDLE
             assert bundle_dir.name == "verified-bundle"
-            (output_dir / "policy.pt").write_bytes(b"policy")
+            checkpoint = io.BytesIO()
+            with zipfile.ZipFile(checkpoint, mode="w") as archive:
+                archive.writestr("0/_CHECKPOINT_METADATA", b"checkpoint")
+            checkpoint_payload = checkpoint.getvalue()
+            (output_dir / "policy-checkpoint.zip").write_bytes(checkpoint_payload)
+            checkpoint_digest = f"sha256:{hashlib.sha256(checkpoint_payload).hexdigest()}"
+            profile_digest = training_job["profileDigests"][0]
+            (output_dir / "policy-manifest.json").write_text(
+                json.dumps(
+                    {
+                        "policyFormat": "orbax_checkpoint_zip",
+                        "checkpointDigest": checkpoint_digest,
+                        "trainingProfileDigest": profile_digest,
+                        "targetBundleDigest": BUNDLE,
+                        "frameworkSourceLockDigest": locked["framework"]["sourceLockDigest"],
+                        "frameworkSourceCommit": locked["framework"]["sourceCommit"],
+                        "physicsImplementation": "warp",
+                        "trainer": "brax_jax_ppo",
+                        "targetEnvironmentAdapter": ("worldspec_h1_loaded_velocity_v1"),
+                        "evidenceStatus": "executed",
+                    }
+                ),
+                encoding="utf-8",
+            )
             (output_dir / "evaluation-traces.jsonl").write_text(
-                '{"result":"pass"}\n', encoding="utf-8"
+                "".join(
+                    json.dumps({"run": index, "step": 0, "finite": True, "done": False}) + "\n"
+                    for index in range(5)
+                ),
+                encoding="utf-8",
             )
             (output_dir / "environment-lock.json").write_text(
                 json.dumps(
@@ -158,10 +209,11 @@ def test_locked_backend_output_contract_is_digest_addressed(
                     {
                         "tests": [
                             {
-                                "id": "test://worldspec/h1-training/ci-contract",
+                                "id": (f"test://worldspec/h1-training/ci-contract-{index}"),
                                 "result": "pass",
                                 "metrics": {"mockContractOnly": True},
                             }
+                            for index in range(5)
                         ],
                         "diagnostics": [],
                     }
@@ -172,13 +224,14 @@ def test_locked_backend_output_contract_is_digest_addressed(
     bundle = tmp_path / "verified-bundle"
     bundle.mkdir()
     monkeypatch.setattr(
-        training, "_verify_runtime", lambda _profile, _job: (FakeTorch(), FakeBackend())
+        training, "_verify_runtime", lambda _profile, _job: (FakeJax(), FakeBackend())
     )
     monkeypatch.setattr(training, "_bundle", lambda _profile: bundle)
 
     outputs = h1_training_handler(training_job, cas)
     assert [item["role"] for item in outputs] == [
-        "torchscript_policy",
+        "orbax_checkpoint_archive",
+        "policy_manifest",
         "evaluation_traces",
         "environment_lock",
         "training_result",
@@ -187,4 +240,4 @@ def test_locked_backend_output_contract_is_digest_addressed(
     assert result["status"] == "succeeded"
     assert result["executionEvidence"] == "executed"
     assert result["targetBundleDigest"] == BUNDLE
-    assert len(result["artifacts"]) == 3
+    assert len(result["artifacts"]) == 4

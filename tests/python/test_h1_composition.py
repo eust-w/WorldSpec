@@ -15,6 +15,7 @@ from compose_h1_robotiq import (
     file_inventory,
     namespace_tree,
 )
+from fetch_h1_kitchen_sources import tree_digest
 from validate_h1_locomotion_policy import (
     PolicyValidationError,
     gravity_orientation,
@@ -68,6 +69,20 @@ def test_inventory_excludes_self_referential_manifest(tmp_path: Path) -> None:
     (tmp_path / "composition-manifest.json").write_text("{}", encoding="utf-8")
     inventory = file_inventory(tmp_path)
     assert [item["path"] for item in inventory] == ["model.xml"]
+
+
+def test_tree_digest_accepts_a_repository_reached_through_a_symlink(
+    tmp_path: Path,
+) -> None:
+    repository = tmp_path / "repository"
+    component = repository / "component"
+    component.mkdir(parents=True)
+    (component / "asset.txt").write_text("locked\n", encoding="utf-8")
+    alias = tmp_path / "repository-alias"
+    alias.symlink_to(repository, target_is_directory=True)
+    digest, count = tree_digest(alias, "component")
+    assert digest.startswith("sha256:")
+    assert count == 1
 
 
 def test_locomotion_profile_rejects_implicit_joint_slicing() -> None:

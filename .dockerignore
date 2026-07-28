@@ -1,0 +1,12 @@
+.git
+.github
+.worldspec
+target
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/node_modules
+**/test-results
+third_party/cache
+examples/h1-kitchen/generated

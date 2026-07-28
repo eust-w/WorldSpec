@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import sys
@@ -28,6 +29,21 @@ def read_json(path: Path) -> Any:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception as exc:
         raise Failure(f"JSON_PARSE {path.relative_to(ROOT)}: {exc}") from exc
+
+
+def canonical_digest(value: Any) -> str:
+    payload = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode()
+    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
+
+
+def file_digest(path: Path) -> str:
+    return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}"
 
 
 def schema_registry() -> tuple[dict[str, Any], Registry]:
@@ -180,7 +196,7 @@ def semantic_loss_errors(report: dict[str, Any], target: dict[str, Any] | None =
     return codes
 
 
-def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
+def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
     positive = {
         "minimal-cube/world.json": "world-definition.schema.json",
         "hollow-mug/world.json": "world-definition.schema.json",
@@ -209,10 +225,12 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
         "minimal-cube/job-result.json": "job.schema.json",
         "h1-kitchen/composition-profile.json": "h1-composition-profile.schema.json",
         "h1-kitchen/native-load-conformance.darwin-arm64.json": "h1-composition-conformance.schema.json",
+        "h1-kitchen/training-model-native-load.darwin-arm64.json": "h1-composition-conformance.schema.json",
         "h1-kitchen/locomotion-adapter-profile.json": "h1-locomotion-adapter.schema.json",
         "h1-kitchen/locomotion-conformance.darwin-arm64.failed.json": "h1-locomotion-conformance.schema.json",
         "h1-kitchen/locomotion-training-profile.json": "h1-locomotion-training-profile.schema.json",
         "h1-kitchen/locomotion-training-result.blocked.json": "h1-locomotion-training-result.schema.json",
+        "../third_party/h1-training.lock.json": "h1-training-source-lock.schema.json",
     }
     for relative, schema_name in positive.items():
         path = EXAMPLES / relative
@@ -228,6 +246,16 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
     loss_errors = semantic_loss_errors(positive_loss, positive_target)
     if loss_errors:
         raise Failure(f"POSITIVE_LOSS: {sorted(loss_errors)}")
+    training_profile = read_json(EXAMPLES / "h1-kitchen/locomotion-training-profile.json")
+    training_result = read_json(
+        EXAMPLES / "h1-kitchen/locomotion-training-result.blocked.json"
+    )
+    if training_result["trainingProfileDigest"] != canonical_digest(training_profile):
+        raise Failure("H1_TRAINING_RESULT_PROFILE_DIGEST_MISMATCH")
+    training_lock = ROOT / "third_party/h1-training.lock.json"
+    if training_profile["framework"]["sourceLockDigest"] != file_digest(training_lock):
+        raise Failure("H1_TRAINING_SOURCE_LOCK_DIGEST_MISMATCH")
+    return len(positive)
 
 
 def check_negative_examples(schemas: dict[str, Any], registry: Registry) -> None:
@@ -313,7 +341,7 @@ def main() -> int:
     try:
         schemas, registry = schema_registry()
         check_refs(schemas)
-        check_examples(schemas, registry)
+        positive_count = check_examples(schemas, registry)
         check_negative_examples(schemas, registry)
         check_docs()
     except Failure as exc:
@@ -322,7 +350,7 @@ def main() -> int:
     print(
         "PASS: "
         f"{len(schemas)} schemas; "
-        "31 positive fixtures; "
+        f"{positive_count} positive fixtures; "
         "5 negative fixtures; "
         "bilingual mirrors and local links"
     )

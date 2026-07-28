@@ -50,6 +50,7 @@ def safe_relative(root: Path, relative: str) -> Path:
 
 
 def tree_digest(repository: Path, relative: str) -> tuple[str, int]:
+    repository = repository.resolve()
     tree_root = safe_relative(repository, relative)
     files = sorted(
         (path for path in tree_root.rglob("*") if path.is_file()),
