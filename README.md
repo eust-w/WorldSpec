@@ -2,7 +2,7 @@
 
 WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真器编译中间层。目标是把现有资产或图像/视频生成结果整理为可追溯、可验证、损失透明的 SimReady 资产。
 
-> 当前仓库状态：包含 v0.1 文档、JSON Schema、示例、Rust Core 语义验证器和最小 `worldspec validate` CLI。MuJoCo/Three.js 编译器、资产生成器和 L2/L3 认证运行时尚未实现；文档中的产品 v0.1 仍是未来验收目标。
+> 当前仓库状态：包含 v0.1 文档、29 个 JSON Schema、示例、Rust Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、可选 Ed25519 证书签名、CLI 与 loopback 异步 API。生成/编译命令目前只创建可恢复 Job；MuJoCo/Three.js 后端、GPU Worker 和 L2/L3 行为认证仍未实现，产品 v0.1 仍未整体验收。
 
 ## 快速入口
 
@@ -13,6 +13,7 @@ WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真�
 - [决策登记](docs/zh-CN/decision-register.md)
 - [Validator 实现边界](docs/zh-CN/implementation/validator.md)
 - [JSON Schema 0.1](schemas/0.1/)
+- [OpenAPI v1](openapi/worldspec-v1.yaml)
 - [最小示例](examples/)
 
 ## 基线范围
@@ -44,7 +45,7 @@ cargo run --quiet -p worldspec-cli -- \
 cargo test --workspace
 ```
 
-`worldspec validate` 当前执行 Draft 2020-12 Schema 校验，以及已登记的 WorldDefinition/LossReport 跨对象不变量。
+`worldspec validate` 当前执行 Draft 2020-12 Schema 校验，以及已登记的跨对象不变量。`worldspec-server` 默认只监听 `127.0.0.1:8090`；该 API 还没有账号、多租户或远程网络安全边界。
 
 ## 许可状态
 

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "worldspec-worker"
+version = "0.1.0"
+description = "Isolated WorldSpec OCI worker protocol runner"
+requires-python = ">=3.11"
+dependencies = [
+  "jsonschema>=4.25,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "ruff>=0.12,<1",
+]
+
+[project.scripts]
+worldspec-worker = "worldspec_worker.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/worldspec_worker"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

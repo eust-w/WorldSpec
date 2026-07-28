@@ -2,7 +2,7 @@
 
 WorldSpec is a canonical semantic model, evidence model, and cross-simulator compilation IR for embodied assets. It aims to turn existing assets or image/video generation results into traceable, verifiable, and loss-transparent SimReady assets.
 
-> Repository status: this repository contains the v0.1 documentation, JSON Schemas, examples, a Rust Core semantic validator, and a minimal `worldspec validate` CLI. The MuJoCo/Three.js compilers, asset generators, and L2/L3 certification runtime have not been implemented. Product v0.1 remains a future acceptance target.
+> Repository status: this repository contains v0.1 documentation, 29 JSON Schemas, examples, Rust Core/Validator, canonical digests, a file CAS, SQLite WAL job index, optional Ed25519 certificate signing, CLI, and loopback asynchronous API. Generate/compile commands currently create recoverable jobs only. MuJoCo/Three.js backends, GPU workers, and L2/L3 behavioral certification are not implemented, so product v0.1 is not accepted as a whole.
 
 ## Entry points
 
@@ -13,6 +13,7 @@ WorldSpec is a canonical semantic model, evidence model, and cross-simulator com
 - [Decision register](docs/en/decision-register.md)
 - [Validator implementation boundary](docs/en/implementation/validator.md)
 - [JSON Schema 0.1](schemas/0.1/)
+- [OpenAPI v1](openapi/worldspec-v1.yaml)
 - [Minimal examples](examples/)
 
 ## Baseline scope
@@ -44,7 +45,7 @@ cargo run --quiet -p worldspec-cli -- \
 cargo test --workspace
 ```
 
-`worldspec validate` currently runs Draft 2020-12 schema validation and registered cross-object invariants for WorldDefinition and LossReport.
+`worldspec validate` runs Draft 2020-12 schema validation and registered cross-object invariants. `worldspec-server` listens only on `127.0.0.1:8090` by default; the API does not yet provide accounts, multi-tenancy, or a remote-network security boundary.
 
 ## Licensing status
 

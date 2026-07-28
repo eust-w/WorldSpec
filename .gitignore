@@ -1,4 +1,8 @@
 __pycache__/
 *.py[cod]
+.venv/
+.worldspec/
+.pytest_cache/
+.ruff_cache/
 .DS_Store
 /target/

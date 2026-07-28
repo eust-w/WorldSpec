@@ -1,0 +1,159 @@
+openapi: 3.1.0
+info:
+  title: WorldSpec Local API
+  version: 0.1.0
+  description: >-
+    Single-node, loopback-first asynchronous API. Job creation persists a
+    validated manifest but does not imply that a compatible worker is running.
+servers:
+  - url: http://127.0.0.1:8090
+paths:
+  /healthz:
+    get:
+      operationId: health
+      responses:
+        "200":
+          description: Process is serving requests.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, apiVersion]
+                properties:
+                  status:
+                    const: ok
+                  apiVersion:
+                    const: v1
+  /v1/jobs:
+    post:
+      operationId: createJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ../schemas/0.1/job.schema.json#/$defs/jobSpec
+      responses:
+        "202":
+          description: Job manifest is validated and durably queued.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobRecord"
+        "400":
+          $ref: "#/components/responses/Error"
+  /v1/jobs/{id}:
+    parameters:
+      - $ref: "#/components/parameters/OpaqueId"
+    get:
+      operationId: getJob
+      responses:
+        "200":
+          description: Current durable job state.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobRecord"
+        "404":
+          $ref: "#/components/responses/Error"
+  /v1/jobs/{id}/cancel:
+    parameters:
+      - $ref: "#/components/parameters/OpaqueId"
+    post:
+      operationId: cancelJob
+      responses:
+        "200":
+          description: Cancellation request recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobRecord"
+        "404":
+          $ref: "#/components/responses/Error"
+  /v1/artifacts/{sha256}:
+    parameters:
+      - name: sha256
+        in: path
+        required: true
+        schema:
+          type: string
+          pattern: "^[a-f0-9]{64}$"
+    get:
+      operationId: getArtifact
+      responses:
+        "200":
+          description: Immutable artifact bytes.
+          headers:
+            ETag:
+              schema:
+                type: string
+          content:
+            application/octet-stream: {}
+        "404":
+          $ref: "#/components/responses/Error"
+  /v1/certificates/{id}:
+    parameters:
+      - $ref: "#/components/parameters/OpaqueId"
+    get:
+      operationId: getCertificate
+      responses:
+        "200":
+          description: Immutable certificate JSON.
+          content:
+            application/vnd.worldspec.certificate+json:
+              schema:
+                $ref: ../schemas/0.1/certificate.schema.json
+        "404":
+          $ref: "#/components/responses/Error"
+components:
+  parameters:
+    OpaqueId:
+      name: id
+      in: path
+      required: true
+      description: URL-encoded opaque WorldSpec ID.
+      schema:
+        type: string
+        minLength: 1
+  schemas:
+    JobRecord:
+      type: object
+      required:
+        - id
+        - operation
+        - status
+        - specDigest
+        - createdAtUnixMs
+        - updatedAtUnixMs
+        - cancelRequested
+      properties:
+        id:
+          type: string
+        operation:
+          type: string
+        status:
+          enum: [queued, running, succeeded, failed, cancelled, timed_out]
+        specDigest:
+          type: string
+          pattern: "^sha256:[a-f0-9]{64}$"
+        resultDigest:
+          type: [string, "null"]
+        createdAtUnixMs:
+          type: integer
+        updatedAtUnixMs:
+          type: integer
+        cancelRequested:
+          type: boolean
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+  responses:
+    Error:
+      description: Request failed.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
