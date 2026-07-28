@@ -81,9 +81,10 @@ target runtime before the capacity-semantics correction includes:
 The current Profile now follows MJX-Warp shared-contact and per-world
 constraint-capacity semantics. A new digest-pinned image has been built from
 commit `101aff7`, and the current Profile's A800 one-step has passed. The
-8,192-environment scale probe and a new smoke remain pending. Current evidence
-proves only finite single-environment execution, not scale capacity, a usable
-policy, canonical training, or L3 acceptance.
+8,192-environment scale probe also passed with finite values and zero capacity
+overflows, while a new smoke remains pending. Current evidence proves runtime
+and capacity allocation, not a usable policy, canonical training, or L3
+acceptance.
 
 ## Consequences
 

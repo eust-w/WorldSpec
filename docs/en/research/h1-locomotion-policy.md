@@ -93,4 +93,5 @@ that `naconmax` and `naccdmax` are shared across all vectorized worlds, while
 and eight CCD contacts per environment with per-world `njmax=128`. A new
 digest-pinned image built from commit `101aff7` and the current Profile's A800
 one-step have passed; the prior smoke remains historical evidence only. The
-8,192-environment scale probe and a new smoke still require execution.
+8,192-environment scale probe also passed with finite batched state and zero
+capacity overflows; a new smoke still requires execution.

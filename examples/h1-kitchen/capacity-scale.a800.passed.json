@@ -1,0 +1,136 @@
+{
+  "batchedOneStep": {
+    "doneShape": [
+      8192
+    ],
+    "numEnvs": 8192,
+    "observationFinite": true,
+    "observationShape": [
+      8192,
+      42
+    ],
+    "qposFinite": true,
+    "qposShape": [
+      8192,
+      34
+    ],
+    "qvelFinite": true,
+    "qvelShape": [
+      8192,
+      33
+    ],
+    "resetElapsedSeconds": 189.14271494094282,
+    "rewardFinite": true,
+    "rewardShape": [
+      8192
+    ],
+    "stepElapsedSeconds": 3.1176075218245387
+  },
+  "canonicalTrainingStatus": "not_executed",
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:60df896c6492f9c6aa9488c79e4a9ef9db79a2798473ae899bf9211e68733bec",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "executionEvidence": "executed",
+  "generatedAt": "2026-07-28T16:42:07.681481Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "capacity-report://worldspec/h1-mjx-warp/a800-7f70eadd3342",
+  "imageSource": {
+    "commit": "101aff7c8ffbdf142149f98a32a3777787622a92",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "overflowFree": true
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "probeDefinition": {
+    "commit": "7f70eadd334209912e20765d993902a57e211642",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:dc5459c7fe3e490dbcdeeccca1c1fac136649c518f7f15f49f50b5eefefda7f5",
+    "commit": "7f70eadd334209912e20765d993902a57e211642",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "profileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "reportVersion": "0.1.0",
+  "runtimeAcceptance": "capacity_scale_preflight",
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "ccdContactsPerEnvironment": 8,
+    "effectiveNaccdmax": 65536,
+    "effectiveNaconmax": 131072,
+    "naccdmaxSemantics": "shared_across_all_worlds",
+    "naconmaxSemantics": "shared_across_all_worlds",
+    "njmax": 128,
+    "njmaxSemantics": "per_world",
+    "numEnvs": 8192
+  },
+  "runtimePreflight": {
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scope": "h1_mjx_capacity_scale_probe",
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "passed",
+  "target": {
+    "actuatorCount": 20,
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "singleEnvironmentQposSize": 34,
+    "singleEnvironmentQvelSize": 33,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  }
+}

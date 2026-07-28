@@ -14,7 +14,7 @@ v0.1 产品入口是 CLI/API。当前已经实现本地 CAS、SQLite WAL 作业�
 |---|---|---|---|
 | `ingest` | 本地源、RightsSpec | CAS SourceBundle、AssetDraft | Mesh/URDF/MJCF 已实现；CAD/USD 隔离检查骨架 |
 | `generate` | 源资产与 GenerationProfile | 可恢复 JobSpec | Queue + TRELLIS.2/Nerfstudio Worker 已实现；GPU 未验收 |
-| `train` | 原生加载 Conformance 与 LocomotionTrainingProfile | 可恢复 JobSpec | 容量语义修订后的 Digest 锁定镜像和 A800 one-step 已通过；8,192 环境规模预检与新 smoke 尚待执行 |
+| `train` | 原生加载 Conformance 与 LocomotionTrainingProfile | 可恢复 JobSpec | 容量语义修订后的 Digest 锁定镜像、A800 one-step 和 8,192 环境规模预检已通过；新 smoke 尚待执行 |
 | `validate` | JSON 与 Schema 名称 | 结构与语义诊断 | Implemented |
 | `compile` | WorldDefinition、TargetProfile 与 BuildIntent | 本地参考 Bundle | MuJoCo/Three.js 参考切片已实现 |
 | `certify` | L2 证据；L3 另加 Task/Control/Predicate/InitialState/RuntimeRecord/TaskRunReport | Digest 绑定的 signed/unsigned Certificate | L2 与 L3 证据核验已实现；H1 5/5 未执行 |

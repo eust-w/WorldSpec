@@ -80,6 +80,11 @@ policy, save a checkpoint, establish convergence, or satisfy L3; the report is
 permanently classified as
 `runtimeAcceptance=capacity_scale_preflight` and
 `canonicalTrainingStatus=not_executed`.
+The first executed A800 report reset 8,192 environments in 189.14 seconds and
+completed one batched step in 3.12 seconds with finite
+`8192x42` observations, finite `8192x34` qpos, finite `8192x33` qvel, and zero
+reported CCD or other capacity overflows. These timings describe one cold
+compile/run on the locked node and are not a throughput benchmark.
 
 Run a bounded, non-publishable PPO compile/update smoke after the locked probe:
 
