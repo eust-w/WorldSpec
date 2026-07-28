@@ -109,6 +109,7 @@ import json
 import os
 import platform
 import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import jax
@@ -159,6 +160,10 @@ lock_bytes = (
     source_dir / "python" / "worldspec-h1-training" / "uv.lock"
 ).read_bytes()
 report = {
+    "id": (
+        "runtime-report://worldspec/h1-mjx-warp/a800-spike-"
+        + os.environ["WORLD_SPEC_REVISION"][:12]
+    ),
     "reportVersion": "0.1.0",
     "status": "passed",
     "scope": "h1_mjx_warp_runtime_spike",
@@ -203,6 +208,7 @@ report = {
         "qvelFinite": bool(np.isfinite(qvel).all()),
         "rewardFinite": bool(np.isfinite(np.asarray(state.reward)).all()),
     },
+    "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
 }
 if report["gpu"]["jaxBackend"] != "gpu":
     raise SystemExit("JAX did not select the GPU backend")

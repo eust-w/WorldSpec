@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-runtime-spike-report.schema.json",
+  "title": "WorldSpec H1 A800 Runtime Spike Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "source",
+    "baseImage",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "profileDigest",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "oneStep",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "status": { "const": "passed" },
+    "scope": { "const": "h1_mjx_warp_runtime_spike" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "executed_not_locked" },
+    "source": {
+      "type": "object",
+      "required": [
+        "repository",
+        "commit",
+        "materialization",
+        "archiveDigest"
+      ],
+      "properties": {
+        "repository": { "type": "string", "format": "uri" },
+        "commit": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "materialization": { "const": "verified_git_archive" },
+        "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
+    "baseImage": {
+      "type": "string",
+      "pattern": "^[^\\s@]+@sha256:[a-f0-9]{64}$"
+    },
+    "platform": {
+      "type": "object",
+      "required": ["system", "machine", "python"],
+      "properties": {
+        "system": { "const": "Linux" },
+        "machine": { "enum": ["x86_64", "amd64"] },
+        "python": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "gpu": {
+      "type": "object",
+      "required": [
+        "name",
+        "driverVersion",
+        "memoryMiB",
+        "jaxBackend",
+        "jaxDevices"
+      ],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "driverVersion": { "type": "string", "minLength": 1 },
+        "memoryMiB": { "type": "integer", "minimum": 1 },
+        "jaxBackend": { "const": "gpu" },
+        "jaxDevices": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "packages": {
+      "type": "object",
+      "required": [
+        "brax",
+        "flax",
+        "jax",
+        "jaxlib",
+        "mujoco",
+        "mujoco-mjx",
+        "orbax-checkpoint",
+        "playground",
+        "warp-lang"
+      ],
+      "additionalProperties": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "staticPreflight": {
+      "type": "object",
+      "required": [
+        "status",
+        "executionEvidence",
+        "bundleDigest",
+        "frameworkDecision",
+        "runtimeArtifactStatus"
+      ],
+      "properties": {
+        "status": { "const": "pass" },
+        "executionEvidence": { "const": "static_validation" },
+        "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "frameworkDecision": { "const": "accepted" },
+        "runtimeArtifactStatus": { "const": "planned" }
+      },
+      "additionalProperties": false
+    },
+    "runtimePreflight": {
+      "type": "object",
+      "required": [
+        "status",
+        "executionEvidence",
+        "jaxBackend",
+        "devices",
+        "versions",
+        "physicsImplementation"
+      ],
+      "properties": {
+        "status": { "const": "pass" },
+        "executionEvidence": { "const": "executed" },
+        "jaxBackend": { "const": "gpu" },
+        "devices": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "versions": {
+          "type": "object",
+          "required": [
+            "brax",
+            "jax",
+            "mujoco",
+            "mujoco-mjx",
+            "playground",
+            "warp-lang"
+          ],
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "physicsImplementation": { "const": "warp" }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "sourceBundleDigest",
+        "derivedModelDigest",
+        "qposSize",
+        "qvelSize",
+        "actuatorCount"
+      ],
+      "properties": {
+        "sourceBundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "derivedModelDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "qposSize": { "type": "integer", "minimum": 1 },
+        "qvelSize": { "type": "integer", "minimum": 1 },
+        "actuatorCount": { "type": "integer", "minimum": 20 }
+      },
+      "additionalProperties": false
+    },
+    "oneStep": {
+      "type": "object",
+      "required": [
+        "observationSize",
+        "observationFinite",
+        "qposFinite",
+        "qvelFinite",
+        "rewardFinite"
+      ],
+      "properties": {
+        "observationSize": { "type": "integer", "minimum": 1 },
+        "observationFinite": { "const": true },
+        "qposFinite": { "const": true },
+        "qvelFinite": { "const": true },
+        "rewardFinite": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

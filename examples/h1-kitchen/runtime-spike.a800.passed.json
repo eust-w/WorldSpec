@@ -1,0 +1,77 @@
+{
+  "id": "runtime-report://worldspec/h1-mjx-warp/a800-spike-dc0e200",
+  "reportVersion": "0.1.0",
+  "status": "passed",
+  "scope": "h1_mjx_warp_runtime_spike",
+  "executionEvidence": "executed",
+  "runtimeAcceptance": "executed_not_locked",
+  "source": {
+    "repository": "https://github.com/eust-w/WorldSpec.git",
+    "commit": "dc0e2007ba8a930525342a7f8a71020d3662ad1d",
+    "materialization": "verified_git_archive",
+    "archiveDigest": "sha256:39afeebfd867f04c7a513c753efc7ea40462ea195f6dacabcef8215e9c4704c0"
+  },
+  "baseImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/real2sim-worker@sha256:d37f7e8a483518bdb447cd460b8c6dfb4407e385c1715b32a9d7f193a11dcdee",
+  "platform": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "python": "3.12.11"
+  },
+  "gpu": {
+    "name": "NVIDIA A800-SXM4-80GB",
+    "driverVersion": "570.195.03",
+    "memoryMiB": 81920,
+    "jaxBackend": "gpu",
+    "jaxDevices": ["cuda:0"]
+  },
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0"
+  },
+  "packageLockDigest": "sha256:4864b20ef290097d1bb00ddb15652959800f3898857bedec37fb1eea6ed0349e",
+  "profileDigest": "sha256:b873bcf694b2d358d4bae4a40dc0016cb3e5e05de99a0fe7b8434522b162843f",
+  "staticPreflight": {
+    "status": "pass",
+    "executionEvidence": "static_validation",
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "planned"
+  },
+  "runtimePreflight": {
+    "status": "pass",
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "devices": ["cuda:0"],
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    },
+    "physicsImplementation": "warp"
+  },
+  "target": {
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "qposSize": 34,
+    "qvelSize": 33,
+    "actuatorCount": 20
+  },
+  "oneStep": {
+    "observationSize": 42,
+    "observationFinite": true,
+    "qposFinite": true,
+    "qvelFinite": true,
+    "rewardFinite": true
+  },
+  "generatedAt": "2026-07-28T13:55:37Z"
+}

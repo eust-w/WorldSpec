@@ -23,6 +23,10 @@ The base installation contains only contract and model-preparation code. The
 and dependency versions. A successful import or CPU test is not GPU execution
 evidence.
 
-Current status: source and API implementation exist; no OCI digest is locked,
-no A800/H100 run has been performed, and no policy or five-run success evidence
-exists.
+Current status: source and API implementation exist. A tokenless isolated
+compatibility spike executed on an NVIDIA A800-SXM4-80GB and passed the locked
+MuJoCo/MJX/Warp runtime preflight plus one finite reset/step on the derived
+H1+right-Robotiq model. The evidence is
+`examples/h1-kitchen/runtime-spike.a800.passed.json` and is intentionally
+classified as `executed_not_locked`. No final OCI digest is locked, PPO has not
+run, and no policy or five-run success evidence exists.

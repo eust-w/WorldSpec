@@ -70,6 +70,10 @@ The following routes are rejected:
 - `B`: build a hybrid H1 from Unitree RL Gym lower-body dynamics;
 - `C`: switch models or use kinematic translation during locomotion.
 
-The route-decision blocker is cleared, but the project remains at “training
-runtime unlocked, GPU not executed, no new policy.” It cannot enter the kitchen
-5/5 L3 state machine before real training and behavior validation.
+The route-decision blocker and the complete absence of GPU execution are
+cleared: an isolated tokenless A800 compatibility spike passed JAX GPU
+selection, MJX/Warp loading, and one finite reset/step on the derived
+H1+right-Robotiq model. This evidence remains `executed_not_locked`; the
+training OCI is unlocked, PPO has not run, and no new policy exists. It cannot
+enter the kitchen 5/5 L3 state machine before real training and behavior
+validation.
