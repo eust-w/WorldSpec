@@ -217,6 +217,7 @@ while ((SECONDS < deadline)); do
     if [[ "${current_stage}" == "artifact_ready" ]] &&
       [[ "${artifact_copied}" != "true" ]]; then
       "${kubectl_cmd[@]}" cp \
+        --retries=8 \
         "${pod_name}:/scratch/results/artifacts/calibration-checkpoint.zip" \
         "${local_result_dir}/calibration-checkpoint.zip" \
         -c calibration
