@@ -13,7 +13,8 @@
     "compiler",
     "modelSelections",
     "artifacts",
-    "lossReportDigest"
+    "lossReportDigest",
+    "lockDigest"
   ],
   "properties": {
     "id": { "$ref": "common.schema.json#/$defs/id" },

@@ -30,5 +30,8 @@ last-verified: 2026-07-28
 | D-018 | 跨后端逐帧物理一致 | Superseded | 改为任务/行为容差内一致 |
 | D-019 | World/Task/Benchmark Generation、Registry、Marketplace | Future | [路线图](roadmap.md) |
 | D-020 | 物理推断、碰撞参数和生成成本阈值 | Research | [开放问题](research/open-questions.md) |
+| D-021 | Rust Axum + Python OCI Worker，文件 CAS + SQLite WAL | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
+| D-022 | H1 + Robotiq 2F-85，短距步行后完成抽屉放杯任务，固定场景 5/5 | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
+| D-023 | 物理、视觉壳与物理不变性分别出证，三者联合验收 | Accepted | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

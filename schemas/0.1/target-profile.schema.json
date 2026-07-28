@@ -15,7 +15,7 @@
   "properties": {
     "id": { "$ref": "common.schema.json#/$defs/id" },
     "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
-    "target": { "enum": ["mujoco", "threejs", "openusd_input"] },
+    "target": { "enum": ["mujoco", "threejs"] },
     "runtimeVersion": { "type": "string", "minLength": 1 },
     "platform": {
       "type": "object",

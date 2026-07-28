@@ -3,13 +3,23 @@
 //! This crate validates document structure and selected cross-object invariants.
 //! It does not compile simulator bundles or issue L2/L3 certificates.
 
+mod canonical;
 mod diagnostic;
+mod model;
 mod schema;
 mod semantic;
 
+pub use canonical::{CanonicalError, canonical_json, canonical_sha256};
 pub use diagnostic::{Diagnostic, Severity, ValidationReport};
+pub use model::{
+    ArtifactRef, BuildIntent, BuildManifest, Certificate, EvidenceGraph, LossEntry, LossReport,
+    LossStatus, SourceBundle, TargetProfile, WorldDefinition,
+};
 pub use schema::{SchemaCatalog, SchemaCatalogError};
-pub use semantic::{validate_loss_report, validate_world_definition};
+pub use semantic::{
+    validate_build_manifest, validate_certificate, validate_loss_report, validate_lowering_plan,
+    validate_runtime_record, validate_world_definition,
+};
 
 use serde_json::Value;
 use std::path::Path;
@@ -34,6 +44,18 @@ pub fn validate_file(
             }
             "loss-report.schema.json" => {
                 diagnostics.extend(validate_loss_report(instance, target_profile));
+            }
+            "build-manifest.schema.json" => {
+                diagnostics.extend(validate_build_manifest(instance));
+            }
+            "lowering-plan.schema.json" => {
+                diagnostics.extend(validate_lowering_plan(instance));
+            }
+            "runtime-record.schema.json" => {
+                diagnostics.extend(validate_runtime_record(instance));
+            }
+            "certificate.schema.json" => {
+                diagnostics.extend(validate_certificate(instance));
             }
             _ => {}
         }

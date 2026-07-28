@@ -1,0 +1,15 @@
+{
+  "id": "loweringplan://examples/minimal-cube-mujoco",
+  "planVersion": "0.1.0",
+  "worldDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "targetProfileDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "buildIntentDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "items": [
+    {
+      "sourceRef": "entity://cube",
+      "capability": "capability://worldspec/rigid-body",
+      "action": "exact"
+    }
+  ],
+  "planDigest": "sha256:1515151515151515151515151515151515151515151515151515151515151515"
+}

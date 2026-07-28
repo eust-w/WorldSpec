@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/lowering-plan.schema.json",
+  "title": "WorldSpec LoweringPlan 0.1",
+  "type": "object",
+  "required": ["id", "planVersion", "worldDigest", "targetProfileDigest", "buildIntentDigest", "items"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "planVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "worldDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "targetProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "buildIntentDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sourceRef", "capability", "action"],
+        "properties": {
+          "sourceRef": { "$ref": "common.schema.json#/$defs/id" },
+          "capability": { "$ref": "common.schema.json#/$defs/id" },
+          "action": { "$ref": "common.schema.json#/$defs/lossStatus" },
+          "targetType": { "type": "string" },
+          "reason": { "type": "string", "minLength": 1 },
+          "assumptions": { "type": "array", "items": { "type": "string" } }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "planDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

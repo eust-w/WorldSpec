@@ -1,0 +1,29 @@
+{
+  "id": "predicateprofile://worldspec/stable-default",
+  "profileVersion": "0.1.0",
+  "predicateId": "predicate://worldspec/stable",
+  "evaluatorVersion": "0.1.0",
+  "signature": [
+    {
+      "role": "subject",
+      "type": "type://worldspec/physical-entity"
+    }
+  ],
+  "requirements": ["channel://worldspec/linear-velocity"],
+  "thresholds": {
+    "linearVelocityMax": 0.02,
+    "angularVelocityMax": 0.05
+  },
+  "temporal": {
+    "evaluationPeriodSeconds": 0.02,
+    "holdForSeconds": 0.5,
+    "hysteresis": 0.01
+  },
+  "output": {
+    "truth": "three_valued",
+    "robustness": true,
+    "confidence": true,
+    "evidence": true
+  },
+  "profileDigest": "sha256:1919191919191919191919191919191919191919191919191919191919191919"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "ingestionprofile://worldspec/mesh-strict",
+  "profileVersion": "0.1.0",
+  "formats": ["glb", "obj"],
+  "unitPolicy": "require_declared",
+  "externalReferencePolicy": "cas_only",
+  "nativePayloadPolicy": "preserve",
+  "maxExpandedBytes": 1073741824,
+  "maxFileCount": 10000,
+  "profileDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+}

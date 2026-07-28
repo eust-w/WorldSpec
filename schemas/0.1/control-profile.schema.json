@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/control-profile.schema.json",
+  "title": "WorldSpec ControlProfile 0.1",
+  "type": "object",
+  "required": ["id", "profileVersion", "clockDomain", "updateRateHz", "controllers", "arbitration", "safety"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "clockDomain": { "$ref": "common.schema.json#/$defs/id" },
+    "updateRateHz": { "type": "number", "exclusiveMinimum": 0 },
+    "controllers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "inputs", "outputs", "priority"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "type": { "$ref": "common.schema.json#/$defs/id" },
+          "inputs": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" } },
+          "outputs": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" } },
+          "priority": { "type": "integer" },
+          "parameters": { "type": "object" },
+          "latencySeconds": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "arbitration": { "enum": ["priority", "exclusive_state_machine", "weighted"] },
+    "safety": {
+      "type": "object",
+      "required": ["watchdogSeconds", "onTimeout"],
+      "properties": {
+        "watchdogSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "onTimeout": { "enum": ["hold", "zero", "safe_stop"] },
+        "limitPolicy": { "enum": ["reject", "clamp", "safe_stop"] }
+      },
+      "additionalProperties": false
+    },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

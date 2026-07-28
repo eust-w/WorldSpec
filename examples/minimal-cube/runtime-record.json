@@ -1,0 +1,46 @@
+{
+  "id": "runtime://examples/minimal-cube/episode-1",
+  "recordVersion": "0.1.0",
+  "worldDefinitionDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "epoch": "episode-1",
+  "timeSpec": {
+    "canonicalClock": "clock://simulation",
+    "timestampUnit": "second",
+    "synchronizationPolicy": "exact"
+  },
+  "initialSnapshot": {
+    "worldDefinitionDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "timestamp": 0,
+    "values": {
+      "state://cube/pose": {
+        "translation": [0, 0, 0.5],
+        "rotationWxyz": [1, 0, 0, 0]
+      }
+    }
+  },
+  "stateStreams": [
+    {
+      "channelRef": "state://cube/pose",
+      "clockDomain": "clock://simulation",
+      "epoch": "episode-1",
+      "samples": [
+        {
+          "timestamp": 0,
+          "value": {
+            "translation": [0, 0, 0.5],
+            "rotationWxyz": [1, 0, 0, 0]
+          }
+        },
+        {
+          "timestamp": 0.02,
+          "value": {
+            "translation": [0, 0, 0.5],
+            "rotationWxyz": [1, 0, 0, 0]
+          }
+        }
+      ]
+    }
+  ],
+  "events": [],
+  "recordDigest": "sha256:2323232323232323232323232323232323232323232323232323232323232323"
+}

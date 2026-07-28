@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/runtime-record.schema.json",
+  "title": "WorldSpec RuntimeRecord 0.1",
+  "type": "object",
+  "required": ["id", "recordVersion", "worldDefinitionDigest", "epoch", "timeSpec", "initialSnapshot", "stateStreams", "events", "recordDigest"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "recordVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "worldDefinitionDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "epoch": { "type": "string", "minLength": 1 },
+    "timeSpec": {
+      "type": "object",
+      "required": ["canonicalClock", "timestampUnit"],
+      "properties": {
+        "canonicalClock": { "$ref": "common.schema.json#/$defs/id" },
+        "timestampUnit": { "const": "second" },
+        "synchronizationPolicy": { "enum": ["exact", "nearest", "interpolate", "hold_last"] }
+      },
+      "additionalProperties": false
+    },
+    "initialSnapshot": {
+      "type": "object",
+      "required": ["worldDefinitionDigest", "timestamp", "values"],
+      "properties": {
+        "worldDefinitionDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "timestamp": { "type": "number", "minimum": 0 },
+        "values": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "stateStreams": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["channelRef", "clockDomain", "epoch", "samples"],
+        "properties": {
+          "channelRef": { "$ref": "common.schema.json#/$defs/id" },
+          "clockDomain": { "$ref": "common.schema.json#/$defs/id" },
+          "epoch": { "type": "string", "minLength": 1 },
+          "samples": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["timestamp", "value"],
+              "properties": {
+                "timestamp": { "type": "number", "minimum": 0 },
+                "value": {}
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": { "$ref": "time-state.schema.json#/$defs/event" }
+    },
+    "recordDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

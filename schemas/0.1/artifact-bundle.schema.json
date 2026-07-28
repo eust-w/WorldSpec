@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/artifact-bundle.schema.json",
+  "title": "WorldSpec ArtifactBundle 0.1",
+  "type": "object",
+  "required": ["id", "bundleVersion", "artifacts", "manifestDigest", "bundleDigest", "distributionStatus"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "bundleVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/artifactRef" },
+      "minItems": 1
+    },
+    "manifestDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "rightsDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "distributionStatus": { "enum": ["allowed", "blocked", "review_required"] }
+  },
+  "additionalProperties": false
+}

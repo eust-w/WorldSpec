@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/rights.schema.json",
+  "title": "WorldSpec RightsSpec 0.1",
+  "type": "object",
+  "required": ["id", "specVersion", "status", "allowedUses", "redistribution", "sources"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "specVersion": { "const": "0.1.0" },
+    "status": { "$ref": "common.schema.json#/$defs/rightsStatus" },
+    "allowedUses": {
+      "type": "array",
+      "items": { "enum": ["internal", "research", "commercial", "redistribution", "model_training"] },
+      "uniqueItems": true
+    },
+    "redistribution": { "enum": ["allowed", "prohibited", "review_required", "unknown"] },
+    "licenseExpression": { "type": "string" },
+    "attribution": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["digest", "status"],
+        "properties": {
+          "digest": { "$ref": "common.schema.json#/$defs/digest" },
+          "status": { "$ref": "common.schema.json#/$defs/rightsStatus" },
+          "licenseExpression": { "type": "string" },
+          "sourceUri": { "type": "string", "format": "uri" },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "reviewedBy": { "type": "string" },
+    "reviewedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "redistribution": { "const": "allowed" } } },
+      "then": {
+        "properties": { "status": { "const": "cleared" } },
+        "required": ["licenseExpression", "reviewedBy", "reviewedAt"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

@@ -218,7 +218,8 @@
             "maximum": 5.0,
             "unit": "kg"
           },
-          "uncertaintyPropagation": "propagated"
+          "uncertaintyPropagation": "propagated",
+          "nominalSelectionPolicy": "manual"
         },
         "status": "estimated",
         "evidence": ["evidence://drawer/synthetic-model"]

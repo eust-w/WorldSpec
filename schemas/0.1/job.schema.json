@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/job.schema.json",
+  "title": "WorldSpec Job Protocol 0.1",
+  "$defs": {
+    "jobSpec": {
+      "type": "object",
+      "required": ["id", "protocolVersion", "operation", "inputs", "profileDigests", "limits", "submittedAt"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "protocolVersion": { "const": "0.1.0" },
+        "operation": { "enum": ["ingest", "generate", "diagnose", "repair", "validate", "compile", "certify", "bundle"] },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/artifactRef" },
+          "minItems": 1
+        },
+        "profileDigests": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/digest" },
+          "uniqueItems": true
+        },
+        "limits": {
+          "type": "object",
+          "required": ["timeoutSeconds", "memoryBytes"],
+          "properties": {
+            "timeoutSeconds": { "type": "integer", "minimum": 1 },
+            "memoryBytes": { "type": "integer", "minimum": 1 },
+            "gpuCount": { "type": "integer", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "submittedAt": { "type": "string", "format": "date-time" },
+        "jobDigest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
+    "jobResult": {
+      "type": "object",
+      "required": ["id", "protocolVersion", "jobRef", "status", "outputs", "diagnostics", "startedAt", "finishedAt"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "protocolVersion": { "const": "0.1.0" },
+        "jobRef": { "$ref": "common.schema.json#/$defs/id" },
+        "status": { "enum": ["succeeded", "failed", "cancelled", "timed_out"] },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/artifactRef" }
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+        },
+        "startedAt": { "type": "string", "format": "date-time" },
+        "finishedAt": { "type": "string", "format": "date-time" },
+        "resultDigest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    { "$ref": "#/$defs/jobSpec" },
+    { "$ref": "#/$defs/jobResult" }
+  ]
+}

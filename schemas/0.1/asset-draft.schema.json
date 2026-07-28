@@ -2,53 +2,6 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://worldspec.dev/schemas/0.1/asset-draft.schema.json",
   "title": "WorldSpec AssetDraft 0.1",
-  "$defs": {
-    "sourceItem": {
-      "type": "object",
-      "required": ["id", "digest", "mediaType", "format", "rightsStatus"],
-      "properties": {
-        "id": { "$ref": "common.schema.json#/$defs/id" },
-        "digest": { "$ref": "common.schema.json#/$defs/digest" },
-        "mediaType": { "type": "string", "minLength": 1 },
-        "format": {
-          "enum": [
-            "glb",
-            "obj",
-            "urdf",
-            "mjcf",
-            "step",
-            "iges",
-            "openusd",
-            "image",
-            "image_set",
-            "video"
-          ]
-        },
-        "rightsStatus": {
-          "enum": ["cleared", "restricted", "review_required", "unknown"]
-        }
-      },
-      "additionalProperties": false
-    },
-    "sourceBundle": {
-      "type": "object",
-      "required": ["id", "items", "bundleDigest"],
-      "properties": {
-        "id": { "$ref": "common.schema.json#/$defs/id" },
-        "items": {
-          "type": "array",
-          "items": { "$ref": "#/$defs/sourceItem" },
-          "minItems": 1
-        },
-        "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
-        "nativePayloads": {
-          "type": "array",
-          "items": { "$ref": "common.schema.json#/$defs/nativePayload" }
-        }
-      },
-      "additionalProperties": false
-    }
-  },
   "type": "object",
   "required": [
     "id",
@@ -62,7 +15,7 @@
   "properties": {
     "id": { "$ref": "common.schema.json#/$defs/id" },
     "specVersion": { "const": "0.1.0" },
-    "sourceBundle": { "$ref": "#/$defs/sourceBundle" },
+    "sourceBundle": { "$ref": "source-bundle.schema.json" },
     "status": { "enum": ["draft", "needs_review", "ready_for_validation", "rejected"] },
     "candidateWorldDefinition": {
       "oneOf": [

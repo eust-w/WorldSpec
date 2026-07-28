@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/predicate-profile.schema.json",
+  "title": "WorldSpec PredicateProfile 0.1",
+  "type": "object",
+  "required": ["id", "profileVersion", "predicateId", "evaluatorVersion", "signature", "requirements", "thresholds", "temporal", "output"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "predicateId": { "$ref": "common.schema.json#/$defs/id" },
+    "evaluatorVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "signature": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["role", "type"],
+        "properties": {
+          "role": { "type": "string", "minLength": 1 },
+          "type": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "requirements": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "thresholds": { "type": "object" },
+    "temporal": {
+      "type": "object",
+      "required": ["evaluationPeriodSeconds", "holdForSeconds", "hysteresis"],
+      "properties": {
+        "evaluationPeriodSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "holdForSeconds": { "type": "number", "minimum": 0 },
+        "hysteresis": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "output": {
+      "type": "object",
+      "required": ["truth", "robustness", "confidence", "evidence"],
+      "properties": {
+        "truth": { "const": "three_valued" },
+        "robustness": { "type": "boolean" },
+        "confidence": { "type": "boolean" },
+        "evidence": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

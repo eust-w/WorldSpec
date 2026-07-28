@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/backend-calibration.schema.json",
+  "title": "WorldSpec BackendCalibration 0.1",
+  "type": "object",
+  "required": ["id", "calibrationVersion", "targetProfileDigest", "backend", "runtimeVersion", "hardware", "tests", "calibrationDigest"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "calibrationVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "targetProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "backend": { "enum": ["mujoco", "threejs"] },
+    "runtimeVersion": { "type": "string", "minLength": 1 },
+    "hardware": {
+      "type": "object",
+      "required": ["os", "architecture"],
+      "properties": {
+        "os": { "type": "string" },
+        "architecture": { "type": "string" },
+        "gpu": { "type": "string" },
+        "driver": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "status": { "enum": ["passed", "failed", "skipped"] },
+          "measurement": { "type": "object" },
+          "tolerance": { "type": "object" }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "calibrationDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

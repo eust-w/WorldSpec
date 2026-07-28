@@ -5,6 +5,21 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 const FRAME_RELATION_PREFIX: &str = "worldspec://relation/frame.";
 const QUATERNION_TOLERANCE: f64 = 1.0e-6;
 
+fn evidence_authority(status: &str) -> u8 {
+    match status {
+        "measured" => 8,
+        "manufacturer_declared" => 7,
+        "imported" => 6,
+        "reconstructed" => 5,
+        "derived" => 4,
+        "estimated" => 3,
+        "generated" => 2,
+        "default" => 1,
+        "unknown" => 0,
+        _ => 0,
+    }
+}
+
 fn array<'a>(document: &'a Value, key: &str) -> &'a [Value] {
     document
         .get(key)
@@ -531,6 +546,62 @@ pub fn validate_world_definition(document: &Value) -> Vec<Diagnostic> {
             format!("/evidenceGraph/claims/{index}/target/objectRef"),
             Some(id),
         );
+        if let Some(derived_by) = string(claim, "derivedBy")
+            && let Some(derivation) = derivations_by_id(document).get(derived_by)
+        {
+            let output_authority = string(claim, "status")
+                .map(evidence_authority)
+                .unwrap_or_default();
+            let claim_by_id = claims
+                .iter()
+                .filter_map(|item| Some((string(item, "id")?, item)))
+                .collect::<HashMap<_, _>>();
+            let maximum_input_authority = derivation
+                .get("inputs")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .filter_map(|claim_ref| claim_by_id.get(claim_ref))
+                .filter_map(|input| string(input, "status"))
+                .map(evidence_authority)
+                .max()
+                .unwrap_or_default();
+            if output_authority > maximum_input_authority {
+                diagnostics.push(
+                    Diagnostic::error(
+                        "WS_INV_035_DERIVED_AUTHORITY_UPGRADE",
+                        "derived claim authority exceeds every input claim",
+                    )
+                    .at_path(format!("/evidenceGraph/claims/{index}/status"))
+                    .for_object(id),
+                );
+            }
+        }
+        if claim.pointer("/assertion/interval").is_some()
+            || claim.pointer("/assertion/distribution").is_some()
+        {
+            if claim.pointer("/assertion/nominalSelectionPolicy").is_none() {
+                diagnostics.push(
+                    Diagnostic::error(
+                        "WS_INV_037_NOMINAL_SELECTION_POLICY_MISSING",
+                        "interval or distribution requires an explicit nominal selection policy",
+                    )
+                    .at_path(format!("/evidenceGraph/claims/{index}/assertion"))
+                    .for_object(id),
+                );
+            }
+            if claim.pointer("/assertion/uncertaintyPropagation").is_none() {
+                diagnostics.push(
+                    Diagnostic::error(
+                        "WS_INV_038_UNCERTAINTY_PROPAGATION_MISSING",
+                        "uncertain claim must declare propagation state",
+                    )
+                    .at_path(format!("/evidenceGraph/claims/{index}/assertion"))
+                    .for_object(id),
+                );
+            }
+        }
         if let Some(evidence) = claim.get("evidence").and_then(Value::as_array) {
             for (evidence_index, evidence_ref) in evidence.iter().enumerate() {
                 missing_ref(
@@ -638,6 +709,163 @@ pub fn validate_world_definition(document: &Value) -> Vec<Diagnostic> {
         );
     }
 
+    diagnostics
+}
+
+fn derivations_by_id(document: &Value) -> HashMap<&str, &Value> {
+    document
+        .pointer("/evidenceGraph/derivations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|item| Some((string(item, "id")?, item)))
+        .collect()
+}
+
+/// Validate deterministic model selection and exact build provenance.
+pub fn validate_build_manifest(document: &Value) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let mut selections = HashSet::new();
+    for (index, selection) in array(document, "modelSelections").iter().enumerate() {
+        let key = (
+            string(selection, "subjectRef").unwrap_or_default(),
+            string(selection, "family").unwrap_or_default(),
+        );
+        if !selections.insert(key) {
+            diagnostics.push(
+                Diagnostic::error(
+                    "WS_INV_019_MODEL_SELECTION_AMBIGUOUS",
+                    "a subject and model family may resolve to only one selected model",
+                )
+                .at_path(format!("/modelSelections/{index}")),
+            );
+        }
+    }
+    for field in [
+        "worldDefinitionDigest",
+        "evidenceGraphDigest",
+        "targetProfileDigest",
+        "buildIntentDigest",
+        "lockDigest",
+    ] {
+        if document.get(field).is_none() {
+            diagnostics.push(
+                Diagnostic::error(
+                    "WS_INV_042_BUILD_PROVENANCE_INCOMPLETE",
+                    format!("build manifest is missing {field}"),
+                )
+                .at_path(format!("/{field}")),
+            );
+        }
+    }
+    diagnostics
+}
+
+/// Validate that every lowering decision is explicit and non-duplicated.
+pub fn validate_lowering_plan(document: &Value) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let mut decisions = HashSet::new();
+    for (index, item) in array(document, "items").iter().enumerate() {
+        let key = (
+            string(item, "sourceRef").unwrap_or_default(),
+            string(item, "capability").unwrap_or_default(),
+        );
+        if !decisions.insert(key) {
+            diagnostics.push(
+                Diagnostic::error(
+                    "WS_INV_040_LOWERING_DECISION_DUPLICATE",
+                    "each source capability must have exactly one lowering decision",
+                )
+                .at_path(format!("/items/{index}")),
+            );
+        }
+        if string(item, "action") != Some("exact") && string(item, "reason").is_none() {
+            diagnostics.push(
+                Diagnostic::error(
+                    "WS_INV_040_LOWERING_REASON_MISSING",
+                    "non-exact lowering decisions require a reason",
+                )
+                .at_path(format!("/items/{index}/reason")),
+            );
+        }
+    }
+    diagnostics
+}
+
+/// Validate runtime time ordering, epoch separation, and snapshot binding.
+pub fn validate_runtime_record(document: &Value) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let record_digest = string(document, "worldDefinitionDigest");
+    let snapshot_digest = document
+        .pointer("/initialSnapshot/worldDefinitionDigest")
+        .and_then(Value::as_str);
+    if record_digest != snapshot_digest {
+        diagnostics.push(
+            Diagnostic::error(
+                "WS_INV_031_SNAPSHOT_WORLD_DIGEST_MISMATCH",
+                "snapshot must bind the exact WorldDefinition digest",
+            )
+            .at_path("/initialSnapshot/worldDefinitionDigest"),
+        );
+    }
+    let record_epoch = string(document, "epoch");
+    for (stream_index, stream) in array(document, "stateStreams").iter().enumerate() {
+        if string(stream, "epoch") != record_epoch {
+            diagnostics.push(
+                Diagnostic::error(
+                    "WS_INV_030_EPOCH_MISMATCH",
+                    "state stream epoch differs from its runtime record",
+                )
+                .at_path(format!("/stateStreams/{stream_index}/epoch")),
+            );
+        }
+        let mut previous = None;
+        for (sample_index, sample) in array(stream, "samples").iter().enumerate() {
+            let timestamp = sample
+                .get("timestamp")
+                .and_then(Value::as_f64)
+                .unwrap_or_default();
+            if previous.is_some_and(|value| timestamp < value) {
+                diagnostics.push(
+                    Diagnostic::error(
+                        "WS_INV_029_TIMESTAMP_NOT_MONOTONIC",
+                        "state stream timestamps must be monotonically non-decreasing",
+                    )
+                    .at_path(format!(
+                        "/stateStreams/{stream_index}/samples/{sample_index}/timestamp"
+                    )),
+                );
+            }
+            previous = Some(timestamp);
+        }
+    }
+    for (index, event) in array(document, "events").iter().enumerate() {
+        if string(event, "epoch") != record_epoch {
+            diagnostics.push(
+                Diagnostic::error(
+                    "WS_INV_030_EVENT_EPOCH_MISMATCH",
+                    "event epoch differs from its runtime record",
+                )
+                .at_path(format!("/events/{index}/epoch")),
+            );
+        }
+    }
+    diagnostics
+}
+
+/// Validate certificate state transitions that cannot be expressed by shape alone.
+pub fn validate_certificate(document: &Value) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let invalidated = !array(document, "invalidatedBy").is_empty();
+    if invalidated && document.get("valid").and_then(Value::as_bool) == Some(true) {
+        diagnostics.push(
+            Diagnostic::error(
+                "CERT_INVALIDATION_CONFLICT",
+                "an invalidated certificate cannot remain valid",
+            )
+            .at_path("/valid"),
+        );
+    }
     diagnostics
 }
 

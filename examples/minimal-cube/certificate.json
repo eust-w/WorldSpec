@@ -10,5 +10,6 @@
   "issuedAt": "2026-07-28T00:00:00Z",
   "issuer": "WorldSpec documentation baseline",
   "valid": false,
-  "invalidatedBy": []
+  "invalidatedBy": [],
+  "signatureStatus": "unsigned"
 }

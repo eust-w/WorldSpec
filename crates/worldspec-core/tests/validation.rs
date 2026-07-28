@@ -1,6 +1,9 @@
 use serde_json::Value;
 use std::{fs, path::PathBuf};
-use worldspec_core::validate_file;
+use worldspec_core::{
+    validate_build_manifest, validate_certificate, validate_file, validate_runtime_record,
+    validate_world_definition,
+};
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -132,4 +135,74 @@ fn diagnostics_are_deterministically_sorted() {
         ))
     });
     assert_eq!(report.diagnostics, sorted);
+}
+
+#[test]
+fn runtime_record_rejects_time_regression_and_wrong_snapshot() {
+    let mut record = read("examples/minimal-cube/runtime-record.json");
+    record["initialSnapshot"]["worldDefinitionDigest"] =
+        Value::String(format!("sha256:{}", "9".repeat(64)));
+    record["stateStreams"][0]["samples"][1]["timestamp"] = Value::from(-0.01);
+    let found = validate_runtime_record(&record);
+    let found = found
+        .iter()
+        .map(|diagnostic| diagnostic.code.as_str())
+        .collect::<Vec<_>>();
+    assert!(found.contains(&"WS_INV_031_SNAPSHOT_WORLD_DIGEST_MISMATCH"));
+    assert!(found.contains(&"WS_INV_029_TIMESTAMP_NOT_MONOTONIC"));
+}
+
+#[test]
+fn build_manifest_rejects_ambiguous_model_selection() {
+    let mut manifest = read("examples/minimal-cube/build-manifest.json");
+    let duplicate = manifest["modelSelections"][0].clone();
+    manifest["modelSelections"]
+        .as_array_mut()
+        .unwrap()
+        .push(duplicate);
+    let found = validate_build_manifest(&manifest);
+    assert!(
+        found
+            .iter()
+            .any(|diagnostic| diagnostic.code == "WS_INV_019_MODEL_SELECTION_AMBIGUOUS")
+    );
+}
+
+#[test]
+fn invalidated_certificate_cannot_remain_valid() {
+    let mut certificate = read("examples/minimal-cube/certificate.json");
+    certificate["valid"] = Value::Bool(true);
+    certificate["invalidatedBy"] = serde_json::json!([
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    ]);
+    let found = validate_certificate(&certificate);
+    assert!(
+        found
+            .iter()
+            .any(|diagnostic| diagnostic.code == "CERT_INVALIDATION_CONFLICT")
+    );
+}
+
+#[test]
+fn derivation_cannot_upgrade_evidence_authority() {
+    let mut world = read("examples/minimal-cube/world.json");
+    world["evidenceGraph"]["claims"][0]["derivedBy"] =
+        Value::String("derivation://cube/invalid-upgrade".to_owned());
+    world["evidenceGraph"]["claims"][0]["status"] = Value::String("measured".to_owned());
+    world["evidenceGraph"]["derivations"] = serde_json::json!([
+        {
+            "id": "derivation://cube/invalid-upgrade",
+            "method": "copy",
+            "methodVersion": "0.1.0",
+            "inputs": ["claim://cube/dimensions"],
+            "outputs": ["claim://cube/mass"],
+            "assumptions": []
+        }
+    ]);
+    let found = validate_world_definition(&world);
+    assert!(
+        found
+            .iter()
+            .any(|diagnostic| diagnostic.code == "WS_INV_035_DERIVED_AUTHORITY_UPGRADE")
+    );
 }

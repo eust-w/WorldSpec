@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/ingestion-profile.schema.json",
+  "title": "WorldSpec IngestionProfile 0.1",
+  "type": "object",
+  "required": ["id", "profileVersion", "formats", "unitPolicy", "externalReferencePolicy", "nativePayloadPolicy"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "formats": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/sourceFormat" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "unitPolicy": { "enum": ["require_declared", "infer_and_review", "use_profile_default"] },
+    "defaultLengthUnit": { "type": "string" },
+    "externalReferencePolicy": { "enum": ["reject", "cas_only"] },
+    "nativePayloadPolicy": { "enum": ["preserve", "reject_unknown"] },
+    "maxExpandedBytes": { "type": "integer", "minimum": 1 },
+    "maxFileCount": { "type": "integer", "minimum": 1 },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

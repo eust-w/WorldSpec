@@ -1,0 +1,15 @@
+{
+  "id": "generationprofile://worldspec/trellis2-single-image",
+  "profileVersion": "0.1.0",
+  "modality": "single_image",
+  "backend": "trellis2",
+  "backendVersion": "pinned-by-lockfile",
+  "containerDigest": "sha256:1212121212121212121212121212121212121212121212121212121212121212",
+  "modelDigests": [
+    "sha256:1313131313131313131313131313131313131313131313131313131313131313"
+  ],
+  "outputFormats": ["glb", "quality_report"],
+  "evidenceCeiling": "generated",
+  "parameters": {},
+  "profileDigest": "sha256:1414141414141414141414141414141414141414141414141414141414141414"
+}

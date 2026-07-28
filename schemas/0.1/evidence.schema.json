@@ -57,8 +57,24 @@
             "distribution": { "type": "object" },
             "uncertaintyPropagation": {
               "enum": ["propagated", "unpropagated", "not_applicable"]
+            },
+            "nominalSelectionPolicy": {
+              "enum": ["measured", "mean", "median", "mode", "midpoint", "conservative", "optimistic", "sampled", "manual"]
             }
           },
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  { "required": ["interval"] },
+                  { "required": ["distribution"] }
+                ]
+              },
+              "then": {
+                "required": ["uncertaintyPropagation", "nominalSelectionPolicy"]
+              }
+            }
+          ],
           "additionalProperties": false
         },
         "status": { "$ref": "common.schema.json#/$defs/evidenceStatus" },
@@ -73,6 +89,18 @@
           "$ref": "common.schema.json#/$defs/validityDomain"
         }
       },
+      "allOf": [
+        {
+          "if": { "required": ["derivedBy"] },
+          "then": {
+            "properties": {
+              "status": {
+                "enum": ["derived", "estimated", "generated", "default", "unknown"]
+              }
+            }
+          }
+        }
+      ],
       "additionalProperties": false
     },
     "derivation": {

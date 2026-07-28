@@ -181,7 +181,8 @@
             "maximum": 0.4,
             "unit": "kg"
           },
-          "uncertaintyPropagation": "propagated"
+          "uncertaintyPropagation": "propagated",
+          "nominalSelectionPolicy": "manual"
         },
         "status": "estimated",
         "evidence": ["evidence://mug/synthetic-model"]

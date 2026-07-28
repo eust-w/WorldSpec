@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/task-profile.schema.json",
+  "title": "WorldSpec TaskProfile 0.1",
+  "type": "object",
+  "required": ["id", "profileVersion", "worldDigest", "robotRef", "initialStateDigest", "predicateProfiles", "goals", "safety", "execution", "certification"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "worldDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "robotRef": { "$ref": "common.schema.json#/$defs/id" },
+    "controlProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "initialStateDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "predicateProfiles": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/digest" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["predicate", "arguments"],
+        "properties": {
+          "predicate": { "$ref": "common.schema.json#/$defs/id" },
+          "arguments": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" } },
+          "holdForSeconds": { "type": "number", "minimum": 0 }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "safety": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["predicate", "mustRemain"],
+        "properties": {
+          "predicate": { "$ref": "common.schema.json#/$defs/id" },
+          "mustRemain": { "enum": ["true", "false"] },
+          "arguments": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" } }
+        },
+        "additionalProperties": false
+      }
+    },
+    "execution": {
+      "type": "object",
+      "required": ["timeLimitSeconds", "fixedInitialState"],
+      "properties": {
+        "timeLimitSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "fixedInitialState": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "certification": {
+      "type": "object",
+      "required": ["requiredRuns", "requiredSuccesses"],
+      "properties": {
+        "requiredRuns": { "type": "integer", "minimum": 1 },
+        "requiredSuccesses": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

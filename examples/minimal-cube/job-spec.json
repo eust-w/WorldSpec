@@ -1,0 +1,23 @@
+{
+  "id": "job://examples/minimal-cube/compile",
+  "protocolVersion": "0.1.0",
+  "operation": "compile",
+  "inputs": [
+    {
+      "id": "artifact://examples/minimal-cube/world",
+      "digest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "mediaType": "application/vnd.worldspec.world+json",
+      "path": "world.json"
+    }
+  ],
+  "profileDigests": [
+    "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+  ],
+  "limits": {
+    "timeoutSeconds": 300,
+    "memoryBytes": 1073741824,
+    "gpuCount": 0
+  },
+  "submittedAt": "2026-07-28T00:00:00Z",
+  "jobDigest": "sha256:2424242424242424242424242424242424242424242424242424242424242424"
+}

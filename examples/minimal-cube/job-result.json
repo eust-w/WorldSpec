@@ -1,0 +1,18 @@
+{
+  "id": "jobresult://examples/minimal-cube/compile",
+  "protocolVersion": "0.1.0",
+  "jobRef": "job://examples/minimal-cube/compile",
+  "status": "succeeded",
+  "outputs": [
+    {
+      "id": "artifact://examples/minimal-cube/model",
+      "digest": "sha256:0505050505050505050505050505050505050505050505050505050505050505",
+      "mediaType": "application/mujoco+xml",
+      "path": "model.xml"
+    }
+  ],
+  "diagnostics": [],
+  "startedAt": "2026-07-28T00:00:01Z",
+  "finishedAt": "2026-07-28T00:00:02Z",
+  "resultDigest": "sha256:2525252525252525252525252525252525252525252525252525252525252525"
+}

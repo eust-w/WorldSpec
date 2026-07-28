@@ -13,7 +13,8 @@
     "lossReportDigest",
     "issuedAt",
     "issuer",
-    "valid"
+    "valid",
+    "signatureStatus"
   ],
   "properties": {
     "id": { "$ref": "common.schema.json#/$defs/id" },
@@ -37,6 +38,21 @@
       "type": "array",
       "items": { "$ref": "common.schema.json#/$defs/digest" },
       "uniqueItems": true
+    },
+    "signatureStatus": { "enum": ["signed", "unsigned"] },
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "publicKeyId", "value"],
+      "properties": {
+        "algorithm": { "const": "Ed25519" },
+        "publicKeyId": { "$ref": "common.schema.json#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$",
+          "minLength": 43
+        }
+      },
+      "additionalProperties": false
     }
   },
   "allOf": [
@@ -53,6 +69,20 @@
         "required": ["level"]
       },
       "then": { "required": ["taskProfileDigest"] }
+    },
+    {
+      "if": {
+        "properties": { "signatureStatus": { "const": "signed" } },
+        "required": ["signatureStatus"]
+      },
+      "then": { "required": ["signature"] }
+    },
+    {
+      "if": {
+        "properties": { "signatureStatus": { "const": "unsigned" } },
+        "required": ["signatureStatus"]
+      },
+      "then": { "not": { "required": ["signature"] } }
     }
   ],
   "additionalProperties": false

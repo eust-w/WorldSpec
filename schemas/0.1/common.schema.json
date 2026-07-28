@@ -110,6 +110,23 @@
         "unsupported"
       ]
     },
+    "rightsStatus": {
+      "enum": ["cleared", "restricted", "review_required", "unknown"]
+    },
+    "sourceFormat": {
+      "enum": [
+        "glb",
+        "obj",
+        "urdf",
+        "mjcf",
+        "step",
+        "iges",
+        "openusd",
+        "image",
+        "image_set",
+        "video"
+      ]
+    },
     "diagnostic": {
       "type": "object",
       "required": ["code", "severity", "message"],

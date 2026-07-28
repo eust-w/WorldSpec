@@ -3,15 +3,16 @@
   "specVersion": "0.1.0",
   "sourceBundle": {
     "id": "sourcebundle://examples/minimal-cube",
+    "bundleVersion": "0.1.0",
     "items": [
       {
         "id": "source://examples/minimal-cube-definition",
         "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
         "mediaType": "application/json",
-        "format": "glb",
-        "rightsStatus": "cleared"
+        "format": "glb"
       }
     ],
+    "rightsRef": "rights://examples/minimal-cube",
     "bundleDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
     "nativePayloads": []
   },

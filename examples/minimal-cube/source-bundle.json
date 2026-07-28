@@ -1,0 +1,16 @@
+{
+  "id": "sourcebundle://examples/minimal-cube",
+  "bundleVersion": "0.1.0",
+  "items": [
+    {
+      "id": "source://examples/minimal-cube-definition",
+      "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "mediaType": "model/gltf-binary",
+      "format": "glb",
+      "logicalPath": "source/cube.glb"
+    }
+  ],
+  "rightsRef": "rights://examples/minimal-cube",
+  "bundleDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "nativePayloads": []
+}

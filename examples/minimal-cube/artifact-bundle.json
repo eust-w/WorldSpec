@@ -1,0 +1,18 @@
+{
+  "id": "artifactbundle://examples/minimal-cube-mujoco",
+  "bundleVersion": "0.1.0",
+  "artifacts": [
+    {
+      "id": "artifact://examples/minimal-cube/model",
+      "digest": "sha256:0505050505050505050505050505050505050505050505050505050505050505",
+      "mediaType": "application/mujoco+xml",
+      "path": "model.xml",
+      "sizeBytes": 1024,
+      "role": "entrypoint"
+    }
+  ],
+  "manifestDigest": "sha256:0707070707070707070707070707070707070707070707070707070707070707",
+  "bundleDigest": "sha256:1616161616161616161616161616161616161616161616161616161616161616",
+  "rightsDigest": "sha256:1717171717171717171717171717171717171717171717171717171717171717",
+  "distributionStatus": "allowed"
+}

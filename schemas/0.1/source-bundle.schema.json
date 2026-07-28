@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/source-bundle.schema.json",
+  "title": "WorldSpec SourceBundle 0.1",
+  "$defs": {
+    "sourceItem": {
+      "type": "object",
+      "required": ["id", "digest", "mediaType", "format"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "format": { "$ref": "common.schema.json#/$defs/sourceFormat" },
+        "logicalPath": {
+          "type": "string",
+          "minLength": 1,
+          "not": { "pattern": "(^/|(^|/)\\.\\.(/|$))" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": ["id", "bundleVersion", "items", "rightsRef", "bundleDigest"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "bundleVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceItem" },
+      "minItems": 1
+    },
+    "rightsRef": { "$ref": "common.schema.json#/$defs/id" },
+    "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "nativePayloads": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/nativePayload" }
+    }
+  },
+  "additionalProperties": false
+}

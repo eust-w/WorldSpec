@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/generation-profile.schema.json",
+  "title": "WorldSpec GenerationProfile 0.1",
+  "type": "object",
+  "required": ["id", "profileVersion", "modality", "backend", "backendVersion", "containerDigest", "outputFormats", "evidenceCeiling"],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "modality": { "enum": ["single_image", "multi_view", "video"] },
+    "backend": { "enum": ["trellis2", "nerfstudio", "custom"] },
+    "backendVersion": { "type": "string", "minLength": 1 },
+    "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "modelDigests": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/digest" },
+      "uniqueItems": true
+    },
+    "outputFormats": {
+      "type": "array",
+      "items": { "enum": ["glb", "mesh", "nerf", "3dgs", "camera_poses", "quality_report"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "evidenceCeiling": { "enum": ["generated", "estimated"] },
+    "parameters": { "type": "object" },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

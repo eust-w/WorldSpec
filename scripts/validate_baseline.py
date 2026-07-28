@@ -193,6 +193,19 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
         "minimal-cube/build-manifest.json": "build-manifest.schema.json",
         "minimal-cube/conformance-report.json": "conformance-report.schema.json",
         "minimal-cube/certificate.json": "certificate.schema.json",
+        "minimal-cube/rights.json": "rights.schema.json",
+        "minimal-cube/source-bundle.json": "source-bundle.schema.json",
+        "minimal-cube/ingestion-profile.json": "ingestion-profile.schema.json",
+        "minimal-cube/generation-profile.json": "generation-profile.schema.json",
+        "minimal-cube/lowering-plan.json": "lowering-plan.schema.json",
+        "minimal-cube/artifact-bundle.json": "artifact-bundle.schema.json",
+        "minimal-cube/backend-calibration.json": "backend-calibration.schema.json",
+        "minimal-cube/predicate-profile.json": "predicate-profile.schema.json",
+        "minimal-cube/control-profile.json": "control-profile.schema.json",
+        "minimal-cube/task-profile.json": "task-profile.schema.json",
+        "minimal-cube/runtime-record.json": "runtime-record.schema.json",
+        "minimal-cube/job-spec.json": "job.schema.json",
+        "minimal-cube/job-result.json": "job.schema.json",
     }
     for relative, schema_name in positive.items():
         path = EXAMPLES / relative
@@ -302,7 +315,7 @@ def main() -> int:
     print(
         "PASS: "
         f"{len(schemas)} schemas; "
-        "10 positive fixtures; "
+        "23 positive fixtures; "
         "4 negative fixtures; "
         "bilingual mirrors and local links"
     )

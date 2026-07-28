@@ -32,5 +32,8 @@ The Chinese document is the normative source; this page is its official translat
 | D-018 | Frame-by-frame cross-backend physics equality | Superseded | Replaced by task/behavior tolerance |
 | D-019 | World/Task/Benchmark Generation, Registry, Marketplace | Future | [roadmap](roadmap.md) |
 | D-020 | Physics inference, collision parameters, and generation cost thresholds | Research | [open questions](research/open-questions.md) |
+| D-021 | Rust Axum + Python OCI workers with file CAS + SQLite WAL | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
+| D-022 | H1 + Robotiq 2F-85, short walk then drawer/mug task, fixed-scene 5/5 | Accepted Design | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
+| D-023 | Separate physical, visual-shell, and physical-invariance evidence with joint acceptance | Accepted | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

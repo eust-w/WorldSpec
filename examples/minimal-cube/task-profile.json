@@ -1,0 +1,28 @@
+{
+  "id": "taskprofile://examples/cube-stable",
+  "profileVersion": "0.1.0",
+  "worldDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "robotRef": "entity://cube",
+  "controlProfileDigest": "sha256:2020202020202020202020202020202020202020202020202020202020202020",
+  "initialStateDigest": "sha256:2121212121212121212121212121212121212121212121212121212121212121",
+  "predicateProfiles": [
+    "sha256:1919191919191919191919191919191919191919191919191919191919191919"
+  ],
+  "goals": [
+    {
+      "predicate": "predicate://worldspec/stable",
+      "arguments": ["entity://cube"],
+      "holdForSeconds": 0.5
+    }
+  ],
+  "safety": [],
+  "execution": {
+    "timeLimitSeconds": 5,
+    "fixedInitialState": true
+  },
+  "certification": {
+    "requiredRuns": 5,
+    "requiredSuccesses": 5
+  },
+  "profileDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+}

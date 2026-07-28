@@ -1,0 +1,17 @@
+{
+  "id": "rights://examples/minimal-cube",
+  "specVersion": "0.1.0",
+  "status": "cleared",
+  "allowedUses": ["internal", "research", "commercial", "redistribution"],
+  "redistribution": "allowed",
+  "licenseExpression": "CC0-1.0",
+  "sources": [
+    {
+      "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "status": "cleared",
+      "licenseExpression": "CC0-1.0"
+    }
+  ],
+  "reviewedBy": "WorldSpec fixture maintainer",
+  "reviewedAt": "2026-07-28T00:00:00Z"
+}

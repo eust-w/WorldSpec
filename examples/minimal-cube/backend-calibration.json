@@ -1,0 +1,18 @@
+{
+  "id": "calibration://examples/mujoco-3.6.0-cpu",
+  "calibrationVersion": "0.1.0",
+  "targetProfileDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "backend": "mujoco",
+  "runtimeVersion": "3.6.0",
+  "hardware": {
+    "os": "linux",
+    "architecture": "x86_64"
+  },
+  "tests": [
+    {
+      "id": "test://worldspec/native-load",
+      "status": "passed"
+    }
+  ],
+  "calibrationDigest": "sha256:1818181818181818181818181818181818181818181818181818181818181818"
+}

@@ -1,0 +1,24 @@
+{
+  "id": "controlprofile://examples/cube-hold",
+  "profileVersion": "0.1.0",
+  "clockDomain": "clock://simulation",
+  "updateRateHz": 50,
+  "controllers": [
+    {
+      "id": "controller://examples/hold",
+      "type": "controller://worldspec/position",
+      "inputs": ["state://cube/pose"],
+      "outputs": ["command://cube/pose"],
+      "priority": 10,
+      "parameters": {},
+      "latencySeconds": 0
+    }
+  ],
+  "arbitration": "priority",
+  "safety": {
+    "watchdogSeconds": 0.1,
+    "onTimeout": "safe_stop",
+    "limitPolicy": "reject"
+  },
+  "profileDigest": "sha256:2020202020202020202020202020202020202020202020202020202020202020"
+}
