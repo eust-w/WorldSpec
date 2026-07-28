@@ -126,6 +126,8 @@ def test_locked_runtime_probe_uses_digest_without_credentials_or_installs() -> N
     assert container["image"] == "__RUNTIME_IMAGE__"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
     assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["requests"]["cpu"] == "8"
+    assert container["resources"]["requests"]["memory"] == "32Gi"
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
     assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
@@ -162,6 +164,8 @@ def test_ppo_smoke_is_isolated_and_cannot_claim_canonical_training() -> None:
     assert container["image"] == "__RUNTIME_IMAGE__"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
     assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["requests"]["cpu"] == "8"
+    assert container["resources"]["requests"]["memory"] == "32Gi"
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
     assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])

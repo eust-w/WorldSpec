@@ -68,13 +68,13 @@ spec:
               value: "0"
           resources:
             requests:
-              cpu: "16"
-              memory: 64Gi
+              cpu: "8"
+              memory: 32Gi
               ephemeral-storage: 50Gi
               nvidia.com/gpu: "1"
             limits:
-              cpu: "16"
-              memory: 64Gi
+              cpu: "8"
+              memory: 32Gi
               ephemeral-storage: 50Gi
               nvidia.com/gpu: "1"
           command:
