@@ -1,0 +1,82 @@
+{
+  "lockVersion": "0.1.0",
+  "purpose": "WorldSpec H1 kitchen L3 reference assets",
+  "sources": [
+    {
+      "id": "source://third-party/mujoco-menagerie",
+      "repository": "https://github.com/google-deepmind/mujoco_menagerie.git",
+      "commit": "71f066ad0be9cd271f7ed58c030243ef157af9f4",
+      "components": [
+        {
+          "id": "component://third-party/unitree-h1",
+          "path": "unitree_h1",
+          "kind": "tree",
+          "fileCount": 27,
+          "treeDigestAlgorithm": "sha256sum-lines-v1",
+          "treeDigest": "sha256:f5fd51d29649aeba63fe1104b49af75b184a57140f2eb26ce72674157b1d0a47",
+          "license": {
+            "spdx": "BSD-3-Clause",
+            "path": "unitree_h1/LICENSE",
+            "digest": "sha256:98335465f43a20b5850e4651db6e74c4aa1e9fc8e8813d38f345178045c0da50"
+          }
+        },
+        {
+          "id": "component://third-party/robotiq-2f85",
+          "path": "robotiq_2f85",
+          "kind": "tree",
+          "fileCount": 14,
+          "treeDigestAlgorithm": "sha256sum-lines-v1",
+          "treeDigest": "sha256:2ac39fa4b94e6a0b8fac0ed35f0506de4efcf63f2eeba73a00c9c6fe85de074e",
+          "license": {
+            "spdx": "BSD-2-Clause",
+            "path": "robotiq_2f85/LICENSE",
+            "digest": "sha256:3d5edd18d1e22a17666e9bb84270171ed5ac90b192d24e0177fd171708ea2316"
+          }
+        }
+      ]
+    },
+    {
+      "id": "source://third-party/unitree-rl-gym",
+      "repository": "https://github.com/unitreerobotics/unitree_rl_gym.git",
+      "commit": "276801e46c5d433564f24658bac64f254b7d2d4b",
+      "components": [
+        {
+          "id": "component://third-party/h1-locomotion-policy",
+          "kind": "files",
+          "license": {
+            "spdx": "BSD-3-Clause",
+            "path": "LICENSE",
+            "digest": "sha256:aef6394ba1597725a68308167324e675f562e6606027404deb1b9da254c2b9c1"
+          },
+          "files": [
+            {
+              "path": "deploy/pre_train/h1/motion.pt",
+              "sizeBytes": 139345,
+              "digest": "sha256:44a0fbceb81f3877833ae9a398d039bea1759cb0d3c8188181013885f70589eb"
+            },
+            {
+              "path": "deploy/deploy_mujoco/configs/h1.yaml",
+              "sizeBytes": 697,
+              "digest": "sha256:4e509fa63fda52e38d21d9f1924b7c0d6bf9dfd1c2d9b94450b7f6e7ca281329"
+            },
+            {
+              "path": "deploy/deploy_mujoco/deploy_mujoco.py",
+              "sizeBytes": 4862,
+              "digest": "sha256:48e9f7a6b8ba701e68dfa48f2e89944c9f2aac1ec39c0a9915d6fe14ec71a4da"
+            },
+            {
+              "path": "resources/robots/h1/scene.xml",
+              "sizeBytes": 853,
+              "digest": "sha256:88ffcccad2c5df71a7472b4b30ec7e4ea06e045efc6b4e11ccd8bebc2848f0b3"
+            },
+            {
+              "path": "resources/robots/h1/h1.xml",
+              "sizeBytes": 10982,
+              "digest": "sha256:2bee8abddbf4bc093bcdb2266c7139cd1c78e279bf65f7ee9fde41fe599900d4"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
