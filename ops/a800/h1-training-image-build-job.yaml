@@ -46,6 +46,8 @@ spec:
                 - CHOWN
                 - DAC_OVERRIDE
                 - FOWNER
+                - SETGID
+                - SETUID
           resources:
             requests:
               cpu: "4"

@@ -90,6 +90,8 @@ def test_h1_image_builder_contains_registry_secret_to_build_namespace() -> None:
         "CHOWN",
         "DAC_OVERRIDE",
         "FOWNER",
+        "SETGID",
+        "SETUID",
     ]
 
     secret_volumes = [

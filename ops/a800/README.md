@@ -38,7 +38,8 @@ The build uploads only the exact published Git archive to the existing
 Drobodata build-context PVC. Its tokenless Kaniko Pod runs in the
 `droboticflow` namespace and mounts the existing registry Secret read-only.
 It drops all default Linux capabilities, then adds only `CHOWN`,
-`DAC_OVERRIDE`, and `FOWNER`, which Kaniko needs to restore base-image file
-ownership and modes while unpacking layers.
+`DAC_OVERRIDE`, `FOWNER`, `SETGID`, and `SETUID`, which Kaniko needs to restore
+base-image file ownership and modes and to enter the Dockerfile-declared user
+while executing build layers.
 The Secret is never copied into `worldspec-a800-poc`, the repository, or the
 local report. The build context and Job are removed after evidence capture.
