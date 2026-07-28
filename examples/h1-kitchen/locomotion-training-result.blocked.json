@@ -1,7 +1,7 @@
 {
   "id": "trainingresult://worldspec/h1-menagerie-right-robotiq/blocked",
   "resultVersion": "0.1.0",
-  "trainingProfileDigest": "sha256:520b60932d62c76e6556652096716b6c58f0639b0aece54253014a8384bcaffc",
+  "trainingProfileDigest": "sha256:ad1b7ad9b67cd793e0c47202aced10abefe8e597e3245f2977cc05909b2fe0de",
   "targetBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
   "status": "blocked",
   "executionEvidence": "not_executed",
@@ -11,8 +11,8 @@
     {
       "code": "TRAINING_NOT_EXECUTED",
       "severity": "error",
-      "message": "The digest-pinned Linux GPU OCI runtime passed an A800 MJX/Warp one-step probe, but PPO training has not executed and no policy checkpoint exists."
+      "message": "A current-source digest-pinned Linux GPU OCI was built successfully, but its locked A800 runtime probe, canonical PPO training, and policy checkpoint do not yet exist."
     }
   ],
-  "generatedAt": "2026-07-28T14:50:50Z"
+  "generatedAt": "2026-07-28T15:51:00Z"
 }

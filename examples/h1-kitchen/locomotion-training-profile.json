@@ -27,7 +27,7 @@
     "status": "locked",
     "targetPlatform": "linux_x86_64_nvidia",
     "minimumGpuCount": 1,
-    "containerDigest": "sha256:576c564be62a0319be0862fa2f8ca7bd344ed100a46f5c34c4d4d5ae1774058f",
+    "containerDigest": "sha256:70c1bf800cd6fd98782d7a2be373942bfedd6885947bdb13e00562901706de6a",
     "backendPackage": "worldspec_h1_training",
     "backendVersion": "0.1.0",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",

@@ -120,7 +120,6 @@ env \
   BUNDLE_DIR="${BUNDLE_DIR}" \
   MODEL_DIR="${MODEL_DIR}" \
   RESULT_DIR="${RESULT_DIR}" \
-  PYTHONPATH="${SOURCE_DIR}/python/worldspec-h1-training/src" \
   python - <<'PY'
 from __future__ import annotations
 
