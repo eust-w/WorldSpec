@@ -72,3 +72,27 @@ def test_runtime_spike_reports_execution_without_claiming_locked_oci() -> None:
     assert '"materialization": "verified_git_archive"' in entrypoint
     assert 'jaxBackend"] != "gpu"' in entrypoint
     assert "WORLDSPEC_A800_SPIKE_RESULT=" in entrypoint
+
+
+def test_h1_image_builder_contains_registry_secret_to_build_namespace() -> None:
+    (job,) = _documents("h1-training-image-build-job.yaml")
+    assert job["metadata"]["namespace"] == "droboticflow"
+
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    (container,) = pod["containers"]
+    assert "@sha256:" in container["image"]
+    assert "--digest-file=/dev/termination-log" in container["args"]
+    assert any(argument.startswith("--destination=__") for argument in container["args"])
+    assert container["securityContext"]["allowPrivilegeEscalation"] is False
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+
+    secret_volumes = [
+        volume["secret"]["secretName"]
+        for volume in pod["volumes"]
+        if "secret" in volume
+    ]
+    assert secret_volumes == ["droboticflow-registry"]
+    spike = _documents("h1-runtime-spike-job.yaml")[0]
+    spike_volumes = spike["spec"]["template"]["spec"]["volumes"]
+    assert all("secret" not in volume for volume in spike_volumes)

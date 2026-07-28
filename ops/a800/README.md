@@ -26,3 +26,16 @@ runtime installation is not a substitute for a digest-pinned final OCI image.
 
 The namespace is separate from `amdcompetition-poc`, uses a tokenless Service
 Account, requests one GPU, and has no PVC or credential mounts.
+
+After the compatibility spike passes, build the digest-pinned training image:
+
+```bash
+KUBECONFIG=/Users/d-robotics/.config/droboticflow/kubeconfigs/poc.config \
+  ./scripts/build_a800_h1_training_image.sh
+```
+
+The build uploads only the exact published Git archive to the existing
+Drobodata build-context PVC. Its tokenless Kaniko Pod runs in the
+`droboticflow` namespace and mounts the existing registry Secret read-only.
+The Secret is never copied into `worldspec-a800-poc`, the repository, or the
+local report. The build context and Job are removed after evidence capture.

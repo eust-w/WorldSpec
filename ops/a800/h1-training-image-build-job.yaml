@@ -1,0 +1,74 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: worldspec-h1-image-build-
+  namespace: droboticflow
+  labels:
+    app.kubernetes.io/name: worldspec-h1-image-build
+    app.kubernetes.io/part-of: worldspec
+    app.kubernetes.io/managed-by: worldspec
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worldspec-h1-image-build
+        app.kubernetes.io/part-of: worldspec
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor@sha256:c3109d5926a997b100c4343944e06c6b30a6804b2f9abe0994d3de6ef92b028e
+          args:
+            - --context=dir://__CONTEXT_DIR__
+            - --dockerfile=__CONTEXT_DIR__/containers/h1-training/Dockerfile
+            - --destination=__DESTINATION__
+            - --build-arg=TRAINING_BASE_IMAGE=__BASE_IMAGE__
+            - --build-arg=WORLDSPEC_SOURCE_COMMIT=__WORLD_SPEC_REVISION__
+            - --build-arg=WORLDSPEC_PACKAGE_LOCK_DIGEST=__PACKAGE_LOCK_DIGEST__
+            - --digest-file=/dev/termination-log
+            - --registry-mirror=mirror.gcr.io
+            - --snapshot-mode=redo
+            - --use-new-run
+            - --verbosity=info
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "4"
+              memory: 16Gi
+              ephemeral-storage: 60Gi
+            limits:
+              cpu: "4"
+              memory: 16Gi
+              ephemeral-storage: 60Gi
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: docker-config
+              mountPath: /kaniko/.docker
+              readOnly: true
+            - name: temporary
+              mountPath: /tmp
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: droboticflow-workspace
+        - name: docker-config
+          secret:
+            secretName: droboticflow-registry
+            items:
+              - key: .dockerconfigjson
+                path: config.json
+        - name: temporary
+          emptyDir:
+            sizeLimit: 10Gi
