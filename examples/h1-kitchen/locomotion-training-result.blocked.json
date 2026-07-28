@@ -11,8 +11,8 @@
     {
       "code": "TRAINING_NOT_EXECUTED",
       "severity": "error",
-      "message": "A current-source digest-pinned Linux GPU OCI was built successfully, but its locked A800 runtime probe, canonical PPO training, and policy checkpoint do not yet exist."
+      "message": "The current-source digest-pinned Linux GPU OCI passed its locked A800 runtime probe, but canonical PPO training and a policy checkpoint do not yet exist."
     }
   ],
-  "generatedAt": "2026-07-28T15:51:00Z"
+  "generatedAt": "2026-07-28T15:57:36Z"
 }
