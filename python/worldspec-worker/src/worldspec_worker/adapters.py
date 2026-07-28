@@ -11,6 +11,7 @@ from typing import Any
 from .cas import FileCas
 from .generation import GENERATION_ADAPTERS
 from .runner import Handler, WorkerFailure
+from .training import TRAINING_ADAPTERS
 
 
 def _canonical(value: object) -> bytes:
@@ -253,6 +254,7 @@ ADAPTERS: dict[str, Handler] = {
     "cad": cad_handler,
     "openusd": openusd_handler,
     **GENERATION_ADAPTERS,
+    **TRAINING_ADAPTERS,
 }
 
 

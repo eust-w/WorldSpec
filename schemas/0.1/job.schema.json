@@ -9,7 +9,7 @@
       "properties": {
         "id": { "$ref": "common.schema.json#/$defs/id" },
         "protocolVersion": { "const": "0.1.0" },
-        "operation": { "enum": ["ingest", "generate", "diagnose", "repair", "validate", "compile", "certify", "bundle"] },
+        "operation": { "enum": ["ingest", "generate", "train", "diagnose", "repair", "validate", "compile", "certify", "bundle"] },
         "inputs": {
           "type": "array",
           "items": { "$ref": "common.schema.json#/$defs/artifactRef" },

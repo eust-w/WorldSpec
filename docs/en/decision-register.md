@@ -37,7 +37,7 @@ The Chinese document is the normative source; this page is its official translat
 | D-023 | Separate physical, visual-shell, and physical-invariance evidence with joint acceptance | Accepted | [ADR-0009](decisions/0009-v0.1-execution-baseline.md) |
 | D-024 | Generation model bundles use a per-file-digest content-addressed read-only cache | Accepted | [ADR-0010](decisions/0010-generation-model-bundles.md) |
 | D-025 | H1/Robotiq use locked Menagerie sources and locomotion uses locked Unitree RL Gym; dirty BiGym payloads are not copied | Accepted Design | [ADR-0011](decisions/0011-h1-reference-sources.md) |
-| D-026 | H1/Robotiq composition uses a separate profile, complete namespacing, and immutable native payloads; the right single gripper is only an experiment candidate | Accepted Design | [ADR-0012](decisions/0012-h1-robotiq-composition.md) |
-| D-027 | Menagerie H1 locomotion path: retrain/adapt, hybrid model, or visual-demo downgrade | Research / User Decision Required | [experiment and options](research/h1-locomotion-policy.md) |
+| D-026 | H1/Robotiq composition uses a separate profile, complete namespacing, and immutable native payloads; the first L3 case locks one right gripper | Accepted Design | [ADR-0012](decisions/0012-h1-robotiq-composition.md) |
+| D-027 | Select A+R: adapt/retrain Menagerie H1 plus one right Robotiq; reject hybrid-model and kinematic-switch routes | Accepted Design | [ADR-0013](decisions/0013-h1-target-dynamics-retraining.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

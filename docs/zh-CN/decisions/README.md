@@ -20,5 +20,6 @@ last-verified: 2026-07-28
 - [ADR-0010 生成模型包内容寻址](0010-generation-model-bundles.md)
 - [ADR-0011 H1 厨房参考来源](0011-h1-reference-sources.md)
 - [ADR-0012 H1 与 Robotiq 的可追溯组合](0012-h1-robotiq-composition.md)
+- [ADR-0013 H1 目标动力学重训路线](0013-h1-target-dynamics-retraining.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

@@ -1,0 +1,12 @@
+{
+  "id": "trainingresult://negative/false-success",
+  "resultVersion": "0.1.0",
+  "trainingProfileDigest": "sha256:34db2cf2490fafbba65f3683adee6f7a0ca0dc39b70ba51a897a555580e4c3f6",
+  "targetBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+  "status": "succeeded",
+  "executionEvidence": "not_executed",
+  "artifacts": [],
+  "tests": [],
+  "diagnostics": [],
+  "generatedAt": "2026-07-28T00:00:00Z"
+}

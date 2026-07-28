@@ -211,6 +211,8 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
         "h1-kitchen/native-load-conformance.darwin-arm64.json": "h1-composition-conformance.schema.json",
         "h1-kitchen/locomotion-adapter-profile.json": "h1-locomotion-adapter.schema.json",
         "h1-kitchen/locomotion-conformance.darwin-arm64.failed.json": "h1-locomotion-conformance.schema.json",
+        "h1-kitchen/locomotion-training-profile.json": "h1-locomotion-training-profile.schema.json",
+        "h1-kitchen/locomotion-training-result.blocked.json": "h1-locomotion-training-result.schema.json",
     }
     for relative, schema_name in positive.items():
         path = EXAMPLES / relative
@@ -320,8 +322,8 @@ def main() -> int:
     print(
         "PASS: "
         f"{len(schemas)} schemas; "
-        "29 positive fixtures; "
-        "4 negative fixtures; "
+        "31 positive fixtures; "
+        "5 negative fixtures; "
         "bilingual mirrors and local links"
     )
     return 0

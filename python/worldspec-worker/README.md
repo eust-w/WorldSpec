@@ -5,12 +5,20 @@ This package implements the versioned `JobSpec -> JobResult` protocol. It includ
 - isolated `cad` and `openusd` ingestion adapters;
 - a locked `trellis2` single-image generation adapter;
 - a locked `nerfstudio` multi-view/video generation adapter.
+- a fail-closed `h1-locomotion` target-dynamics training adapter.
 
 The ingestion adapters execute real `cadquery-ocp` or `usd-core` APIs only when those dependencies are present in a locked worker image. They produce digest-addressed inspection evidence and preserve the source Blob as Native Payload, but do not produce or certify a `WorldDefinition`.
 
 The generation adapters require an exact OCI digest attestation, requested and available CUDA, supported outputs, and locked runtime dependencies. TRELLIS.2 additionally verifies every model-bundle file by SHA-256 and rejects undeclared files or symlinks. Outputs remain `generated` or `estimated`, include a quality report, and must re-enter normal Ingestion and Doctor processing. They do not issue a certificate.
 
 No real A800/H100 generation run is recorded in this repository yet. Current automated tests prove fail-closed profile/container/model gates; they are not GPU execution evidence.
+
+The H1 training adapter is locked to the accepted Menagerie H1 + one right
+Robotiq 2F-85 route. It requires an executed native-load conformance input, the
+exact immutable composition bundle, a locked Linux GPU OCI/package environment,
+and the `worldspec_h1_training.run_training(...)` output contract. The checked-in
+profile is deliberately `planned`, so the adapter returns
+`TRAINING_RUNTIME_NOT_LOCKED`; no locomotion training has run.
 
 Without a real handler, the worker returns `WORKER_HANDLER_UNAVAILABLE` and exits non-zero. `--mock` is an explicit CI-only digest-preserving echo and is never valid generation, target-load, or certification evidence.
 
@@ -23,6 +31,7 @@ worldspec-worker --adapter cad --job job.json --result result.json --cas-root .w
 worldspec-worker --adapter openusd --job job.json --result result.json --cas-root .worldspec
 worldspec-worker --adapter trellis2 --job job.json --result result.json --cas-root .worldspec
 worldspec-worker --adapter nerfstudio --job job.json --result result.json --cas-root .worldspec
+worldspec-worker --adapter h1-locomotion --job job.json --result result.json --cas-root .worldspec
 ```
 
 ## Immutable model-bundle cache

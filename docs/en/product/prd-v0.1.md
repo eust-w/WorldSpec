@@ -41,7 +41,7 @@ Unknown native fields and source blobs must be preserved; every degradation must
 
 ## Functional requirements
 
-- CLI and asynchronous Job API operations: `ingest`, `generate`, `validate`, `compile`, `certify`, `inspect`, and `bundle`.
+- CLI and asynchronous Job API operations: `ingest`, `generate`, `train`, `validate`, `compile`, `certify`, `inspect`, and `bundle`. In v0.1, `train` is limited to the locked H1 reference case and is not a general policy-training platform.
 - Local content-addressed storage for sources, derived resources, manifests, lockfiles, reports, and certificates.
 - MuJoCo compilation produces a natively loadable MJCF bundle.
 - Three.js compilation produces GLB, scene manifest, and preview/debug bundle.

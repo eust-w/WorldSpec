@@ -1,0 +1,247 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-training-profile.schema.json",
+  "title": "WorldSpec H1 Locomotion Training Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "route",
+    "target",
+    "runtime",
+    "control",
+    "curriculum",
+    "validation",
+    "outputs",
+    "evidenceStatus"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "route": { "const": "target_dynamics_retraining" },
+    "decisionRef": { "$ref": "common.schema.json#/$defs/id" },
+    "target": {
+      "type": "object",
+      "required": [
+        "sourceLockDigest",
+        "compositionProfileDigest",
+        "bundleDigest",
+        "baseRobotComponent",
+        "effector",
+        "gripperCount"
+      ],
+      "properties": {
+        "sourceLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "compositionProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "baseRobotComponent": { "$ref": "common.schema.json#/$defs/id" },
+        "effector": { "$ref": "common.schema.json#/$defs/id" },
+        "gripperCount": { "const": 1 }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "engine",
+        "algorithm",
+        "status",
+        "targetPlatform",
+        "minimumGpuCount"
+      ],
+      "properties": {
+        "engine": { "const": "mujoco_mjx" },
+        "algorithm": { "const": "ppo" },
+        "status": { "enum": ["planned", "locked"] },
+        "targetPlatform": { "const": "linux_x86_64_nvidia" },
+        "minimumGpuCount": { "type": "integer", "minimum": 1 },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "backendPackage": { "const": "worldspec_h1_training" },
+        "backendVersion": { "$ref": "common.schema.json#/$defs/semver" },
+        "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "locked" } },
+            "required": ["status"]
+          },
+          "then": {
+            "required": [
+              "containerDigest",
+              "backendPackage",
+              "backendVersion",
+              "packageLockDigest"
+            ]
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "teacherPolicy": {
+      "type": "object",
+      "required": ["digest", "usage", "behaviorOnTarget"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "usage": {
+          "enum": [
+            "interface_reference",
+            "initialization_candidate",
+            "distillation_candidate"
+          ]
+        },
+        "behaviorOnTarget": { "const": "failed" }
+      },
+      "additionalProperties": false
+    },
+    "control": {
+      "type": "object",
+      "required": [
+        "policyJoints",
+        "policyActuators",
+        "heldJoints",
+        "gripperActuators",
+        "controlDecimation"
+      ],
+      "properties": {
+        "policyJoints": { "$ref": "#/$defs/nameArray" },
+        "policyActuators": { "$ref": "#/$defs/nameArray" },
+        "heldJoints": { "$ref": "#/$defs/nameArray" },
+        "gripperActuators": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+          },
+          "minItems": 1,
+          "maxItems": 1,
+          "uniqueItems": true
+        },
+        "controlDecimation": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "curriculum": {
+      "type": "object",
+      "required": ["stages", "randomizationPolicy"],
+      "properties": {
+        "stages": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "objective", "exitGate"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/id" },
+              "objective": {
+                "enum": [
+                  "stand",
+                  "velocity_tracking",
+                  "loaded_velocity_tracking",
+                  "stop_and_settle"
+                ]
+              },
+              "exitGate": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": false
+          },
+          "minItems": 4,
+          "maxItems": 4,
+          "allOf": [
+            {
+              "contains": {
+                "type": "object",
+                "properties": { "objective": { "const": "stand" } },
+                "required": ["objective"]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "type": "object",
+                "properties": { "objective": { "const": "velocity_tracking" } },
+                "required": ["objective"]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "type": "object",
+                "properties": { "objective": { "const": "loaded_velocity_tracking" } },
+                "required": ["objective"]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "type": "object",
+                "properties": { "objective": { "const": "stop_and_settle" } },
+                "required": ["objective"]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            }
+          ]
+        },
+        "randomizationPolicy": {
+          "enum": ["disabled_until_nominal_pass", "bounded_after_nominal_pass"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "validation": {
+      "type": "object",
+      "required": [
+        "nominalDurationSeconds",
+        "minimumBaseHeight",
+        "minimumUprightCosine",
+        "minimumForwardDisplacement",
+        "maximumLateralDrift",
+        "maximumJointLimitViolations",
+        "maximumNonFiniteSamples",
+        "requiredConsecutivePasses"
+      ],
+      "properties": {
+        "nominalDurationSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "minimumBaseHeight": { "type": "number", "minimum": 0 },
+        "minimumUprightCosine": { "type": "number", "minimum": -1, "maximum": 1 },
+        "minimumForwardDisplacement": { "type": "number", "minimum": 0 },
+        "maximumLateralDrift": { "type": "number", "minimum": 0 },
+        "maximumJointLimitViolations": { "type": "integer", "minimum": 0 },
+        "maximumNonFiniteSamples": { "type": "integer", "minimum": 0 },
+        "requiredConsecutivePasses": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "torchscript_policy",
+          "training_result",
+          "evaluation_traces",
+          "environment_lock"
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 4,
+      "uniqueItems": true
+    },
+    "evidenceStatus": { "const": "derived" },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "$defs": {
+    "nameArray": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "additionalProperties": false
+}

@@ -23,6 +23,12 @@
       "schema": "loss-report.schema.json",
       "validationLayer": "semantic",
       "expectedCode": "LOSS_COVERAGE_MISMATCH"
+    },
+    {
+      "path": "training-false-success/result.json",
+      "schema": "h1-locomotion-training-result.schema.json",
+      "validationLayer": "schema",
+      "expectedCode": "SCHEMA_EXECUTION_EVIDENCE_MISMATCH"
     }
   ]
 }

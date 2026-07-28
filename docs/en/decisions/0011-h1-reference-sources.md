@@ -42,8 +42,8 @@ and makes later mounting or control changes auditable.
 
 ## Open items
 
-- Gripper count, left/right mount transforms, and authoritative TCPs require
-  composition experiments.
+- One right Robotiq is selected; its mount transform and authoritative TCP
+  still require composition experiments.
 - The policy must be executed against the composed H1 dynamics before
   compatibility is claimed.
 - Third-party license records do not replace project dual-license, CLA, brand,

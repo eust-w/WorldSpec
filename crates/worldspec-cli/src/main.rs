@@ -52,6 +52,8 @@ enum Command {
     },
     /// Queue a generation job using an explicit GenerationProfile.
     Generate(JobSubmitArgs),
+    /// Queue a fail-closed locomotion training job using an explicit profile.
+    Train(JobSubmitArgs),
     /// Inspect a JSON document and compute its canonical digest.
     Inspect {
         input: PathBuf,
@@ -1669,6 +1671,7 @@ fn run() -> Result<bool, String> {
             schema_dir,
         ),
         Command::Generate(args) => submit_job("generate", args),
+        Command::Train(args) => submit_job("train", args),
         Command::Inspect {
             input,
             schema,

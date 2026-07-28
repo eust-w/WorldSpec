@@ -10,12 +10,13 @@ last-verified: 2026-07-28
 
 The Chinese document is the normative source; this page is its official translation.
 
-The v0.1 surface is CLI/API. The local CAS, SQLite WAL job index, loopback API, and command envelopes listed below are implemented. The OBJ Doctor, structured robot ingestion, MuJoCo/Three.js reference compilers, and isolated generation adapters are implemented. Creating a generation Job or passing gate tests still does not prove that a real GPU ran; L2/L3 certification requires the corresponding execution evidence.
+The v0.1 surface is CLI/API. The local CAS, SQLite WAL job index, loopback API, and command envelopes listed below are implemented. The OBJ Doctor, structured robot ingestion, MuJoCo/Three.js reference compilers, isolated generation adapters, and H1 training-gate adapter are implemented. Creating a generation/training Job or passing gate tests still does not prove that a real GPU ran; L2/L3 certification requires the corresponding execution evidence.
 
 | Command | Input | Main output | Current status |
 |---|---|---|---|
 | `ingest` | local sources and RightsSpec | CAS SourceBundle and AssetDraft | Mesh/URDF/MJCF implemented; CAD/USD isolated inspection skeleton |
 | `generate` | source artifact and GenerationProfile | recoverable JobSpec | Queue + TRELLIS.2/Nerfstudio Worker implemented; GPU unaccepted |
+| `train` | native-load Conformance and LocomotionTrainingProfile | recoverable JobSpec | A+R binding and fail-closed Worker implemented; runtime unlocked and GPU not executed |
 | `validate` | JSON and schema name | structural and semantic diagnostics | Implemented |
 | `compile` | WorldDefinition, TargetProfile, and BuildIntent | local reference Bundle | MuJoCo/Three.js reference slices implemented |
 | `certify` | L2 evidence; L3 additionally binds Task/Control/Predicate/InitialState/RuntimeRecord/TaskRunReport | digest-bound signed/unsigned Certificate | L2/L3 evidence assessment implemented; H1 5/5 not executed |

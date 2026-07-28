@@ -20,8 +20,8 @@ meshes, materials, default classes, tendons, equality constraints, and
 actuators, and mounts the result on the H1 body named by a separate
 CompositionProfile.
 
-The profile supports one or two Robotiq 2F-85 grippers. v0.1 currently provides
-one **experimental right-hand, single-gripper candidate**:
+The profile supports one or two Robotiq 2F-85 grippers. The user has locked the
+**right-hand single-gripper (R) reference configuration** for the first v0.1 L3 case:
 
 ```text
 parent body: right_elbow_link
@@ -34,9 +34,10 @@ frame at the distal endpoint of the H1 elbow collision capsule. An independent
 mount frame wraps the native Robotiq root body without overwriting its source
 transform. The TCP binds the upstream `pinch` site and is resolved through the
 composed frame graph. The mount remains an `estimated` hypothesis, not a
-manufacturer-declared interface or measured TCP. This candidate does not
-freeze the final task to one gripper; the left, right, or dual-gripper choice
-remains a user decision for the final Task/ControlProfile.
+manufacturer-declared interface or measured TCP. This choice freezes the
+effector count and side used by the L3 task and locomotion retraining. It does
+not upgrade the mount-transform evidence. The mount geometry and TCP still
+require kinematic validation before manipulation control and L3.
 
 ## Evidence obtained
 
@@ -69,4 +70,4 @@ It does not establish:
 - Unitree RL Gym policy compatibility with the composed dynamics;
 - stable walking, balance, or kitchen-task completion;
 - Linux x86_64, A800/H100, or real-robot validation; or
-- whether the final task should use one or two grippers.
+- that the mount geometry and TCP have passed kinematic or real-robot validation.

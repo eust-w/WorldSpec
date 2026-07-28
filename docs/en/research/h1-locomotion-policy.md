@@ -56,28 +56,20 @@ a TorchScript interface or ten-leg-joint mapping error. The right gripper is
 not the sole cause: the unmodified Menagerie H1 also falls under the same
 control.
 
-## User decision required
+## Frozen choice
 
-### A. Adapt or retrain locomotion for Menagerie H1 plus the selected gripper (recommended)
+The user selected `A + R`, recorded in
+[ADR-0013](../decisions/0013-h1-target-dynamics-retraining.md):
 
-- Preserves the selected continuous whole-body dynamics and final L3 meaning.
-- Requires Linux GPU training, policy selection, and stability regression.
-- Costs the most time and compute but gives the cleanest evidence chain.
+- adapt or retrain locomotion for Menagerie H1 plus one right Robotiq 2F-85;
+- preserve continuous whole-body dynamics and the final L3 semantics;
+- retain the old Unitree policy only as an interface or initialization candidate.
 
-### B. Build a hybrid H1 around Unitree RL Gym's native lower-body dynamics
+The following routes are rejected:
 
-- Reuses the already validated policy and may be faster.
-- Requires reconstructing the articulated upper body, mass, inertia, and
-  contact calibration.
-- Is no longer the unmodified Menagerie H1 and requires a new
-  Model/Derivation and behavior certificate.
+- `B`: build a hybrid H1 from Unitree RL Gym lower-body dynamics;
+- `C`: switch models or use kinematic translation during locomotion.
 
-### C. Switch models after walking or move kinematically during the walking phase
-
-- Produces a visual demo fastest.
-- Breaks continuous state/dynamics and cannot satisfy the current physical L3.
-- Is acceptable only if the user lowers the acceptance target.
-
-Until a choice is made, the project remains at “composition native-load
-passed, policy interface compatible, locomotion behavior failed” and cannot
-advance to the kitchen 5/5 L3 state machine.
+The route-decision blocker is cleared, but the project remains at “training
+runtime unlocked, GPU not executed, no new policy.” It cannot enter the kitchen
+5/5 L3 state machine before real training and behavior validation.

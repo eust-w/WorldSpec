@@ -39,7 +39,7 @@ ingest/generate
 
 ## 功能需求
 
-- CLI 与异步 Job API 提供 `ingest`、`generate`、`validate`、`compile`、`certify`、`inspect`、`bundle`。
+- CLI 与异步 Job API 提供 `ingest`、`generate`、`train`、`validate`、`compile`、`certify`、`inspect`、`bundle`。`train` 在 v0.1 仅用于锁定的 H1 参考案例，不代表通用策略训练平台。
 - 本地内容寻址保存源、派生资源、Manifest、Lockfile、报告和证书。
 - MuJoCo 编译输出可原生加载的 MJCF Bundle。
 - Three.js 编译输出 GLB、场景 Manifest 与预览/调试 Bundle。

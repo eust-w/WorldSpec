@@ -1,0 +1,107 @@
+{
+  "id": "trainingprofile://worldspec/h1-menagerie-right-robotiq-locomotion",
+  "profileVersion": "0.1.0",
+  "route": "target_dynamics_retraining",
+  "decisionRef": "decision://worldspec/D-027",
+  "target": {
+    "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+    "compositionProfileDigest": "sha256:f1296bdcc67e718cf7235cb1eb9cfec02a5b434c4fef191b4bc63b2698673732",
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "baseRobotComponent": "component://third-party/unitree-h1",
+    "effector": "effector://h1/right-robotiq-2f85",
+    "gripperCount": 1
+  },
+  "runtime": {
+    "engine": "mujoco_mjx",
+    "algorithm": "ppo",
+    "status": "planned",
+    "targetPlatform": "linux_x86_64_nvidia",
+    "minimumGpuCount": 1
+  },
+  "teacherPolicy": {
+    "digest": "sha256:44a0fbceb81f3877833ae9a398d039bea1759cb0d3c8188181013885f70589eb",
+    "usage": "interface_reference",
+    "behaviorOnTarget": "failed"
+  },
+  "control": {
+    "policyJoints": [
+      "left_hip_yaw",
+      "left_hip_roll",
+      "left_hip_pitch",
+      "left_knee",
+      "left_ankle",
+      "right_hip_yaw",
+      "right_hip_roll",
+      "right_hip_pitch",
+      "right_knee",
+      "right_ankle"
+    ],
+    "policyActuators": [
+      "left_hip_yaw",
+      "left_hip_roll",
+      "left_hip_pitch",
+      "left_knee",
+      "left_ankle",
+      "right_hip_yaw",
+      "right_hip_roll",
+      "right_hip_pitch",
+      "right_knee",
+      "right_ankle"
+    ],
+    "heldJoints": [
+      "torso",
+      "left_shoulder_pitch",
+      "left_shoulder_roll",
+      "left_shoulder_yaw",
+      "left_elbow",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "gripperActuators": ["right_gripper_fingers_actuator"],
+    "controlDecimation": 10
+  },
+  "curriculum": {
+    "stages": [
+      {
+        "id": "stage://worldspec/h1-locomotion/stand",
+        "objective": "stand",
+        "exitGate": "Nominal target bundle remains upright and finite."
+      },
+      {
+        "id": "stage://worldspec/h1-locomotion/track",
+        "objective": "velocity_tracking",
+        "exitGate": "Unloaded nominal velocity tracking passes the locked locomotion thresholds."
+      },
+      {
+        "id": "stage://worldspec/h1-locomotion/loaded-track",
+        "objective": "loaded_velocity_tracking",
+        "exitGate": "The selected right Robotiq composition passes the same nominal thresholds."
+      },
+      {
+        "id": "stage://worldspec/h1-locomotion/settle",
+        "objective": "stop_and_settle",
+        "exitGate": "H1 stops and reaches the manipulation-ready stability window."
+      }
+    ],
+    "randomizationPolicy": "disabled_until_nominal_pass"
+  },
+  "validation": {
+    "nominalDurationSeconds": 4.0,
+    "minimumBaseHeight": 0.65,
+    "minimumUprightCosine": 0.5,
+    "minimumForwardDisplacement": 0.1,
+    "maximumLateralDrift": 0.5,
+    "maximumJointLimitViolations": 0,
+    "maximumNonFiniteSamples": 0,
+    "requiredConsecutivePasses": 5
+  },
+  "outputs": [
+    "torchscript_policy",
+    "training_result",
+    "evaluation_traces",
+    "environment_lock"
+  ],
+  "evidenceStatus": "derived"
+}

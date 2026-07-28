@@ -1,0 +1,128 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-training-result.schema.json",
+  "title": "WorldSpec H1 Locomotion Training Result 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "resultVersion",
+    "trainingProfileDigest",
+    "targetBundleDigest",
+    "status",
+    "executionEvidence",
+    "artifacts",
+    "tests",
+    "diagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "resultVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "trainingProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "targetBundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "status": { "enum": ["succeeded", "failed", "blocked"] },
+    "executionEvidence": { "enum": ["executed", "not_executed"] },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerDigest",
+        "packageLockDigest",
+        "backendPackage",
+        "backendVersion",
+        "device"
+      ],
+      "properties": {
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "backendPackage": { "const": "worldspec_h1_training" },
+        "backendVersion": { "$ref": "common.schema.json#/$defs/semver" },
+        "device": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/artifactRef" }
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "result", "metrics"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "result": { "enum": ["pass", "fail", "unknown", "not_run"] },
+          "metrics": { "type": "object" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "succeeded" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "executionEvidence": { "const": "executed" },
+          "artifacts": {
+            "minItems": 3,
+            "allOf": [
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "role": { "const": "torchscript_policy" } },
+                  "required": ["role"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "role": { "const": "evaluation_traces" } },
+                  "required": ["role"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "role": { "const": "environment_lock" } },
+                  "required": ["role"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              }
+            ]
+          },
+          "tests": { "minItems": 1 }
+        },
+        "required": ["runtime"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "executionEvidence": { "const": "not_executed" } },
+        "required": ["executionEvidence"]
+      },
+      "then": {
+        "properties": {
+          "status": { "const": "blocked" },
+          "artifacts": { "maxItems": 0 },
+          "tests": { "maxItems": 0 },
+          "diagnostics": { "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}
