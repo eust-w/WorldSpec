@@ -1,0 +1,98 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: worldspec-h1-runtime-spike-
+  namespace: worldspec-a800-poc
+  labels:
+    app.kubernetes.io/name: worldspec-h1-runtime-spike
+    app.kubernetes.io/part-of: worldspec
+    app.kubernetes.io/managed-by: worldspec
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 7200
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worldspec-h1-runtime-spike
+        app.kubernetes.io/part-of: worldspec
+    spec:
+      restartPolicy: Never
+      serviceAccountName: worldspec-a800-runner
+      automountServiceAccountToken: false
+      nodeSelector:
+        node.kubernetes.io/cce-instance-type: ehc.lgn5.c128m1024.8a800.8re.4d
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: spike
+          image: __BASE_IMAGE__
+          imagePullPolicy: Never
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: WORLD_SPEC_REPOSITORY
+              value: https://github.com/eust-w/WorldSpec.git
+            - name: WORLD_SPEC_REVISION
+              value: __WORLD_SPEC_REVISION__
+            - name: WORLD_SPEC_BASE_IMAGE
+              value: __BASE_IMAGE__
+            - name: HOME
+              value: /scratch/home
+            - name: XDG_CACHE_HOME
+              value: /scratch/cache
+            - name: UV_CACHE_DIR
+              value: /scratch/cache/uv
+            - name: UV_PYTHON_INSTALL_DIR
+              value: /scratch/uv/python
+            - name: UV_PROJECT_ENVIRONMENT
+              value: /scratch/runtime
+            - name: JAX_DEFAULT_MATMUL_PRECISION
+              value: highest
+            - name: JAX_PLATFORMS
+              value: cuda
+            - name: CUDA_VISIBLE_DEVICES
+              value: "0"
+          resources:
+            requests:
+              cpu: "8"
+              memory: 32Gi
+              ephemeral-storage: 80Gi
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: 32Gi
+              ephemeral-storage: 80Gi
+              nvidia.com/gpu: "1"
+          command:
+            - /bin/bash
+            - /opt/worldspec-spike/run.sh
+          volumeMounts:
+            - name: scratch
+              mountPath: /scratch
+            - name: dshm
+              mountPath: /dev/shm
+            - name: spike-script
+              mountPath: /opt/worldspec-spike
+              readOnly: true
+      volumes:
+        - name: scratch
+          emptyDir:
+            sizeLimit: 80Gi
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 8Gi
+        - name: spike-script
+          configMap:
+            name: __SCRIPT_CONFIGMAP__
+            defaultMode: 0555

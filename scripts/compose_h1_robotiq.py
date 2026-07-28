@@ -25,7 +25,7 @@ DEFAULT_LOCK = ROOT / "third_party" / "h1-kitchen.lock.json"
 DEFAULT_PROFILE = ROOT / "examples" / "h1-kitchen" / "composition-profile.json"
 
 sys.path.insert(0, str(ROOT / "scripts"))
-from fetch_h1_kitchen_sources import (
+from fetch_h1_kitchen_sources import (  # noqa: E402
     VerificationError,
     digest_file,
     read_lock,

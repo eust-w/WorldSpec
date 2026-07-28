@@ -9,14 +9,14 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from compose_h1_robotiq import (
+from compose_h1_robotiq import (  # noqa: E402
     CompositionError,
     component_file,
     file_inventory,
     namespace_tree,
 )
-from fetch_h1_kitchen_sources import tree_digest
-from validate_h1_locomotion_policy import (
+from fetch_h1_kitchen_sources import tree_digest  # noqa: E402
+from validate_h1_locomotion_policy import (  # noqa: E402
     PolicyValidationError,
     gravity_orientation,
     validate_profile,

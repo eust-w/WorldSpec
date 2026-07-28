@@ -4,6 +4,7 @@ __pycache__/
 .worldspec/
 /third_party/cache/
 /examples/h1-kitchen/generated/
+/runs/
 .pytest_cache/
 .ruff_cache/
 node_modules/
