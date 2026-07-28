@@ -90,7 +90,8 @@ the L3 state machine before those behavior validations pass.
 A subsequent review of the MuJoCo 3.6 MJX-Warp capacity semantics confirmed
 that `naconmax` and `naccdmax` are shared across all vectorized worlds, while
 `njmax` is per world. The current Profile therefore uses 16 active contacts
-and eight CCD contacts per environment with per-world `njmax=128`. The prior
-smoke and runtime reports remain historical evidence but no longer lock the
-current Profile. Its runtime status is `planned` until a rebuilt image, an
-8,192-environment scale probe, and a new smoke pass.
+and eight CCD contacts per environment with per-world `njmax=128`. A new
+digest-pinned image has been built from commit `101aff7`; the prior smoke and
+runtime reports remain historical evidence only. A new one-step, an
+8,192-environment scale probe, and a new smoke still require execution for the
+current Profile.

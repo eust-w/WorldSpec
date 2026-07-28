@@ -65,6 +65,22 @@ CPU-only pre-pull Job in `droboticflow`. Kubelet uses the existing
 node. The pre-pull Pod does not mount the Secret, and it is deleted before the
 credential-free runtime probe starts in `worldspec-a800-poc`.
 
+Before canonical PPO training, run the exact 8,192-environment allocation and
+vectorization preflight:
+
+```bash
+KUBECONFIG=/Users/d-robotics/.config/droboticflow/kubeconfigs/poc.config \
+  ./scripts/run_a800_h1_capacity_scale_probe.sh
+```
+
+This probe compiles a vectorized reset and one zero-action step using the
+canonical environment count. It requires finite observations, state, and
+reward and fails closed on capacity-overflow diagnostics. It does not update a
+policy, save a checkpoint, establish convergence, or satisfy L3; the report is
+permanently classified as
+`runtimeAcceptance=capacity_scale_preflight` and
+`canonicalTrainingStatus=not_executed`.
+
 Run a bounded, non-publishable PPO compile/update smoke after the locked probe:
 
 ```bash

@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-capacity-scale-report.schema.json",
+  "title": "WorldSpec H1 A800 MJX Capacity Scale Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "canonicalTrainingStatus",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "profileDigest",
+    "runtimeCapacity",
+    "logDiagnostics",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "batchedOneStep",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "status": { "const": "passed" },
+    "scope": { "const": "h1_mjx_capacity_scale_probe" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "capacity_scale_preflight" },
+    "canonicalTrainingStatus": { "const": "not_executed" },
+    "probeDefinition": {
+      "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit"
+    },
+    "imageSource": {
+      "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit"
+    },
+    "probeInput": {
+      "allOf": [
+        { "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit" },
+        {
+          "type": "object",
+          "required": ["materialization", "archiveDigest"],
+          "properties": {
+            "materialization": { "const": "verified_git_archive" },
+            "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "container": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/container"
+    },
+    "platform": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/platform"
+    },
+    "gpu": { "$ref": "h1-runtime-spike-report.schema.json#/properties/gpu" },
+    "packages": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/packages"
+    },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "runtimeCapacity": {
+      "type": "object",
+      "required": [
+        "activeContactsPerEnvironment",
+        "ccdContactsPerEnvironment",
+        "njmax",
+        "numEnvs",
+        "effectiveNaconmax",
+        "effectiveNaccdmax",
+        "naconmaxSemantics",
+        "naccdmaxSemantics",
+        "njmaxSemantics"
+      ],
+      "properties": {
+        "activeContactsPerEnvironment": { "const": 16 },
+        "ccdContactsPerEnvironment": { "const": 8 },
+        "njmax": { "const": 128 },
+        "numEnvs": { "const": 8192 },
+        "effectiveNaconmax": { "const": 131072 },
+        "effectiveNaccdmax": { "const": 65536 },
+        "naconmaxSemantics": { "const": "shared_across_all_worlds" },
+        "naccdmaxSemantics": { "const": "shared_across_all_worlds" },
+        "njmaxSemantics": { "const": "per_world" }
+      },
+      "additionalProperties": false
+    },
+    "logDiagnostics": {
+      "type": "object",
+      "required": ["ccdOverflowCount", "capacityOverflowCount", "overflowFree"],
+      "properties": {
+        "ccdOverflowCount": { "const": 0 },
+        "capacityOverflowCount": { "const": 0 },
+        "overflowFree": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "staticPreflight": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/staticPreflight"
+    },
+    "runtimePreflight": {
+      "$ref": "h1-runtime-spike-report.schema.json#/properties/runtimePreflight"
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "sourceBundleDigest",
+        "derivedModelDigest",
+        "singleEnvironmentQposSize",
+        "singleEnvironmentQvelSize",
+        "actuatorCount"
+      ],
+      "properties": {
+        "sourceBundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "derivedModelDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "singleEnvironmentQposSize": { "type": "integer", "minimum": 1 },
+        "singleEnvironmentQvelSize": { "type": "integer", "minimum": 1 },
+        "actuatorCount": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "batchedOneStep": {
+      "type": "object",
+      "required": [
+        "numEnvs",
+        "observationShape",
+        "qposShape",
+        "qvelShape",
+        "rewardShape",
+        "doneShape",
+        "resetElapsedSeconds",
+        "stepElapsedSeconds",
+        "observationFinite",
+        "qposFinite",
+        "qvelFinite",
+        "rewardFinite"
+      ],
+      "properties": {
+        "numEnvs": { "const": 8192 },
+        "observationShape": { "$ref": "#/$defs/batchedShape" },
+        "qposShape": { "$ref": "#/$defs/batchedShape" },
+        "qvelShape": { "$ref": "#/$defs/batchedShape" },
+        "rewardShape": {
+          "type": "array",
+          "prefixItems": [{ "const": 8192 }],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "doneShape": {
+          "type": "array",
+          "prefixItems": [{ "const": 8192 }],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "resetElapsedSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "stepElapsedSeconds": { "type": "number", "exclusiveMinimum": 0 },
+        "observationFinite": { "const": true },
+        "qposFinite": { "const": true },
+        "qvelFinite": { "const": true },
+        "rewardFinite": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "batchedShape": {
+      "type": "array",
+      "prefixItems": [
+        { "const": 8192 },
+        { "type": "integer", "minimum": 1 }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    }
+  },
+  "additionalProperties": false
+}

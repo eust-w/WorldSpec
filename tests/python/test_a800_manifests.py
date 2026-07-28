@@ -141,6 +141,37 @@ def test_locked_runtime_probe_uses_digest_without_credentials_or_installs() -> N
     assert "serviceAccountTokenMounted" in entrypoint
 
 
+def test_capacity_scale_probe_is_isolated_and_uses_canonical_environment_count() -> None:
+    (job,) = _documents("h1-capacity-scale-probe-job.yaml")
+    assert job["metadata"]["namespace"] == "worldspec-a800-poc"
+    assert job["metadata"]["labels"]["app.kubernetes.io/name"] == (
+        "worldspec-h1-capacity-scale-probe"
+    )
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["securityContext"]["runAsUser"] == 10001
+    assert pod["securityContext"]["runAsGroup"] == 10001
+    (container,) = pod["containers"]
+    environment = {item["name"]: item["value"] for item in container["env"]}
+    assert environment["WORLD_SPEC_PROBE_MODE"] == "capacity_scale"
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
+
+    entrypoint = (A800 / "h1-locked-runtime-probe-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    assert '"runtimeAcceptance": "capacity_scale_preflight"' in entrypoint
+    assert '"canonicalTrainingStatus": "not_executed"' in entrypoint
+    assert '"numEnvs": num_envs' in entrypoint
+    assert '"effectiveNaconmax"' in entrypoint
+    assert '"effectiveNaccdmax"' in entrypoint
+    assert "WORLDSPEC_A800_CAPACITY_SCALE_RESULT=" in entrypoint
+
+
 def test_private_image_is_prepulled_without_mounting_registry_secret() -> None:
     (job,) = _documents("h1-training-image-prepull-job.yaml")
     assert job["metadata"]["namespace"] == "droboticflow"

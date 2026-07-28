@@ -49,8 +49,9 @@ Trace。训练 Worker 必须 fail-closed；缺少锁定运行时、GPU、原生�
 Digest 锁定 OCI 与一次 32,768 请求步、256 环境的 PPO smoke 已真实运行并通过
 数值与容量门禁，但都绑定容量语义修订前的 Profile。smoke 明确为
 `research_smoke / non_publishable`，没有 Checkpoint，也不表示产生了可用新策略。
-当前 Profile 暂为 `planned`，等待新镜像、8,192 环境规模预检和重新锁定；规范
-1 亿步训练与五次连续评估仍是验收阻塞项。
+容量语义修订后的新 Digest 锁定镜像已由提交 `101aff7` 构建，但当前 Profile 的
+新 one-step、8,192 环境规模预检和 smoke 尚待真实执行；规范 1 亿步训练与五次
+连续评估仍是验收阻塞项。
 
 ## 后果
 

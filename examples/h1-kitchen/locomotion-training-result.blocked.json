@@ -1,7 +1,7 @@
 {
   "id": "trainingresult://worldspec/h1-menagerie-right-robotiq/blocked",
   "resultVersion": "0.1.0",
-  "trainingProfileDigest": "sha256:2496eba1acfbbe1e607a09698b5fb053839f7da0883ac529a7d804ed372220f6",
+  "trainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
   "targetBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
   "status": "blocked",
   "executionEvidence": "not_executed",
@@ -11,8 +11,8 @@
     {
       "code": "TRAINING_NOT_EXECUTED",
       "severity": "error",
-      "message": "The MJX capacity model changed after the last locked A800 probe. A new digest-pinned OCI, scale probe, canonical PPO training, and policy checkpoint do not yet exist for the revised profile."
+      "message": "A digest-pinned OCI now exists for the revised MJX capacity model, but the locked runtime probe, 8,192-environment scale probe, canonical PPO training, and policy checkpoint have not yet passed for this exact profile."
     }
   ],
-  "generatedAt": "2026-07-28T16:08:00Z"
+  "generatedAt": "2026-07-28T16:29:00Z"
 }

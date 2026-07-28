@@ -6,15 +6,40 @@ KUBECONFIG_PATH="${KUBECONFIG:-/Users/d-robotics/.config/droboticflow/kubeconfig
 K8S_NAMESPACE="${K8S_NAMESPACE:-worldspec-a800-poc}"
 BUILD_NAMESPACE="${WORLD_SPEC_BUILD_NAMESPACE:-droboticflow}"
 NAMESPACE_MANIFEST="${ROOT_DIR}/ops/a800/namespace.yaml"
-JOB_TEMPLATE="${ROOT_DIR}/ops/a800/h1-locked-runtime-probe-job.yaml"
+PROBE_MODE="${WORLD_SPEC_PROBE_MODE:-locked_runtime}"
+if [[ "${PROBE_MODE}" == "capacity_scale" ]]; then
+  DEFAULT_JOB_TEMPLATE="${ROOT_DIR}/ops/a800/h1-capacity-scale-probe-job.yaml"
+  APP_LABEL="worldspec-h1-capacity-scale-probe"
+  CONFIG_PREFIX="worldspec-h1-capacity"
+  TEMP_PREFIX="worldspec-h1-capacity"
+  STAGE_MARKER="WORLDSPEC_A800_CAPACITY_SCALE_STAGE"
+  RESULT_MARKER="WORLDSPEC_A800_CAPACITY_SCALE_RESULT"
+  RESULT_FILE="capacity-scale-report.json"
+  ACCEPTANCE="capacity_scale_preflight"
+else
+  DEFAULT_JOB_TEMPLATE="${ROOT_DIR}/ops/a800/h1-locked-runtime-probe-job.yaml"
+  APP_LABEL="worldspec-h1-locked-runtime-probe"
+  CONFIG_PREFIX="worldspec-h1-locked"
+  TEMP_PREFIX="worldspec-h1-locked"
+  STAGE_MARKER="WORLDSPEC_A800_LOCKED_PROBE_STAGE"
+  RESULT_MARKER="WORLDSPEC_A800_LOCKED_PROBE_RESULT"
+  RESULT_FILE="locked-runtime-report.json"
+  ACCEPTANCE="locked"
+fi
+JOB_TEMPLATE="${WORLD_SPEC_JOB_TEMPLATE:-${DEFAULT_JOB_TEMPLATE}}"
 PREPULL_TEMPLATE="${ROOT_DIR}/ops/a800/h1-training-image-prepull-job.yaml"
 ENTRYPOINT="${ROOT_DIR}/ops/a800/h1-locked-runtime-probe-entrypoint.sh"
-RUNTIME_IMAGE="${WORLD_SPEC_H1_RUNTIME_IMAGE:-ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:70c1bf800cd6fd98782d7a2be373942bfedd6885947bdb13e00562901706de6a}"
-IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-4e38f889a2543301a4182a20f7b3665a5ebe6559}"
+RUNTIME_IMAGE="${WORLD_SPEC_H1_RUNTIME_IMAGE:-ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:60df896c6492f9c6aa9488c79e4a9ef9db79a2798473ae899bf9211e68733bec}"
+IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-101aff7c8ffbdf142149f98a32a3777787622a92}"
 PACKAGE_LOCK_DIGEST="${WORLD_SPEC_PACKAGE_LOCK_DIGEST:-sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41}"
 PROBE_REVISION="${WORLD_SPEC_PROBE_DEFINITION_REVISION:-$(git -C "${ROOT_DIR}" rev-parse HEAD)}"
 TIMEOUT_SECONDS="${WORLD_SPEC_A800_TIMEOUT_SECONDS:-3600}"
 
+if [[ "${PROBE_MODE}" != "locked_runtime" ]] &&
+  [[ "${PROBE_MODE}" != "capacity_scale" ]]; then
+  printf 'ERROR: unsupported WORLD_SPEC_PROBE_MODE: %s\n' "${PROBE_MODE}" >&2
+  exit 2
+fi
 for required in \
   "${KUBECONFIG_PATH}" \
   "${NAMESPACE_MANIFEST}" \
@@ -44,7 +69,7 @@ if ! [[ "${TIMEOUT_SECONDS}" =~ ^[1-9][0-9]*$ ]]; then
   exit 2
 fi
 if [[ -n "$(git -C "${ROOT_DIR}" status --porcelain)" ]]; then
-  echo "ERROR: locked runtime probe requires a clean worktree" >&2
+  printf 'ERROR: %s probe requires a clean worktree\n' "${PROBE_MODE}" >&2
   exit 2
 fi
 git -C "${ROOT_DIR}" cat-file -e "${IMAGE_SOURCE_REVISION}^{commit}"
@@ -67,16 +92,16 @@ build_kubectl_cmd=(
 )
 kubectl --kubeconfig "${KUBECONFIG_PATH}" apply -f "${NAMESPACE_MANIFEST}" >/dev/null
 if [[ -n "$("${kubectl_cmd[@]}" get jobs \
-  -l app.kubernetes.io/name=worldspec-h1-locked-runtime-probe -o name)" ]]; then
-  echo "ERROR: a WorldSpec locked runtime probe Job already exists" >&2
+  -l "app.kubernetes.io/name=${APP_LABEL}" -o name)" ]]; then
+  printf 'ERROR: a WorldSpec %s Job already exists\n' "${PROBE_MODE}" >&2
   exit 2
 fi
 
 run_suffix="$(date -u +%Y%m%d%H%M%S)"
 short_revision="${PROBE_REVISION:0:12}"
-script_configmap="worldspec-h1-locked-script-${short_revision}-${run_suffix}"
-source_configmap="worldspec-h1-locked-source-${short_revision}-${run_suffix}"
-temporary_manifest="$(mktemp "${TMPDIR:-/tmp}/worldspec-h1-locked.XXXXXX.yaml")"
+script_configmap="${CONFIG_PREFIX}-script-${short_revision}-${run_suffix}"
+source_configmap="${CONFIG_PREFIX}-source-${short_revision}-${run_suffix}"
+temporary_manifest="$(mktemp "${TMPDIR:-/tmp}/${TEMP_PREFIX}.XXXXXX.yaml")"
 prepull_manifest="$(mktemp "${TMPDIR:-/tmp}/worldspec-h1-prepull.XXXXXX.yaml")"
 source_archive="$(mktemp "${TMPDIR:-/tmp}/worldspec-source.XXXXXX.tar.gz")"
 prepull_job=""
@@ -178,7 +203,8 @@ while ((SECONDS < deadline)); do
       -o jsonpath='{.status.phase}' 2>/dev/null || true)"
     pod_log="$("${kubectl_cmd[@]}" logs "${pod_name}" 2>/dev/null || true)"
     current_stage="$(awk -F= \
-      '/^WORLDSPEC_A800_LOCKED_PROBE_STAGE=/{value=$2} END{print value}' \
+      -v marker="${STAGE_MARKER}" \
+      '$1 == marker {value=$2} END{print value}' \
       <<<"${pod_log}")"
     if [[ -n "${current_stage}" ]] && [[ "${current_stage}" != "${last_stage}" ]]; then
       printf 'pod=%s phase=%s stage=%s\n' \
@@ -202,27 +228,28 @@ fi
 "${kubectl_cmd[@]}" get job "${job_name}" -o yaml \
   >"${local_result_dir}/job.yaml" 2>/dev/null || true
 if [[ -z "${pod_name}" ]]; then
-  echo "ERROR: locked runtime probe did not create a Pod" >&2
+  printf 'ERROR: %s probe did not create a Pod\n' "${PROBE_MODE}" >&2
   exit 1
 fi
 phase="$("${kubectl_cmd[@]}" get pod "${pod_name}" \
   -o jsonpath='{.status.phase}' 2>/dev/null || true)"
 if [[ "${phase}" != "Succeeded" ]]; then
-  printf 'ERROR: locked probe ended in phase %s; see %s\n' \
-    "${phase:-unknown}" "${local_result_dir}" >&2
+  printf 'ERROR: %s probe ended in phase %s; see %s\n' \
+    "${PROBE_MODE}" "${phase:-unknown}" "${local_result_dir}" >&2
   exit 1
 fi
 
 python3 - "${local_result_dir}/job.log" \
-  "${local_result_dir}/locked-runtime-report.json" \
-  "${PROBE_REVISION}" "${IMAGE_SOURCE_REVISION}" "${RUNTIME_IMAGE}" <<'PY'
+  "${local_result_dir}/${RESULT_FILE}" \
+  "${PROBE_REVISION}" "${IMAGE_SOURCE_REVISION}" "${RUNTIME_IMAGE}" \
+  "${RESULT_MARKER}" "${ACCEPTANCE}" "${PROBE_MODE}" <<'PY'
 import json
 import pathlib
 import sys
 
 log_path = pathlib.Path(sys.argv[1])
 report_path = pathlib.Path(sys.argv[2])
-prefix = "WORLDSPEC_A800_LOCKED_PROBE_RESULT="
+prefix = sys.argv[6] + "="
 matches = [
     line[len(prefix):]
     for line in log_path.read_text(encoding="utf-8").splitlines()
@@ -231,8 +258,25 @@ matches = [
 if len(matches) != 1:
     raise SystemExit(f"expected one result marker, found {len(matches)}")
 report = json.loads(matches[0])
-if report.get("status") != "passed" or report.get("runtimeAcceptance") != "locked":
-    raise SystemExit("locked runtime probe did not pass")
+if sys.argv[8] == "capacity_scale":
+    log_lines = log_path.read_text(encoding="utf-8").splitlines()
+    ccd_overflow_count = sum("CCD overflow" in line for line in log_lines)
+    capacity_overflow_count = sum(
+        "overflow" in line.lower() and "CCD overflow" not in line
+        for line in log_lines
+    )
+    report["logDiagnostics"] = {
+        "ccdOverflowCount": ccd_overflow_count,
+        "capacityOverflowCount": capacity_overflow_count,
+        "overflowFree": ccd_overflow_count == 0 and capacity_overflow_count == 0,
+    }
+    if not report["logDiagnostics"]["overflowFree"]:
+        raise SystemExit(
+            "capacity scale probe emitted overflow diagnostics: "
+            + json.dumps(report["logDiagnostics"], sort_keys=True)
+        )
+if report.get("status") != "passed" or report.get("runtimeAcceptance") != sys.argv[7]:
+    raise SystemExit(f"{sys.argv[8]} probe did not pass")
 if report.get("probeDefinition", {}).get("commit") != sys.argv[3]:
     raise SystemExit("probe definition revision mismatch")
 if report.get("imageSource", {}).get("commit") != sys.argv[4]:

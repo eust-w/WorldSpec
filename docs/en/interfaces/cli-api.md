@@ -16,7 +16,7 @@ The v0.1 surface is CLI/API. The local CAS, SQLite WAL job index, loopback API, 
 |---|---|---|---|
 | `ingest` | local sources and RightsSpec | CAS SourceBundle and AssetDraft | Mesh/URDF/MJCF implemented; CAD/USD isolated inspection skeleton |
 | `generate` | source artifact and GenerationProfile | recoverable JobSpec | Queue + TRELLIS.2/Nerfstudio Worker implemented; GPU unaccepted |
-| `train` | native-load Conformance and LocomotionTrainingProfile | recoverable JobSpec | the prior Profile passed A800 runtime and research smoke; the capacity-revised current Profile awaits a new image, scale probe, and relocking |
+| `train` | native-load Conformance and LocomotionTrainingProfile | recoverable JobSpec | a digest-pinned image exists for the capacity-revised Profile; its new one-step, 8,192-environment scale probe, and smoke remain pending |
 | `validate` | JSON and schema name | structural and semantic diagnostics | Implemented |
 | `compile` | WorldDefinition, TargetProfile, and BuildIntent | local reference Bundle | MuJoCo/Three.js reference slices implemented |
 | `certify` | L2 evidence; L3 additionally binds Task/Control/Predicate/InitialState/RuntimeRecord/TaskRunReport | digest-bound signed/unsigned Certificate | L2/L3 evidence assessment implemented; H1 5/5 not executed |

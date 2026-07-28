@@ -79,6 +79,6 @@ Brax 最终报告 33,280 步，训练吞吐约为 2,596.7 steps/s，训练与派
 
 后续对 MuJoCo 3.6 MJX-Warp 容量语义的复核确认：`naconmax` 与 `naccdmax` 是所有
 并行世界共享容量，`njmax` 才是每个世界容量。当前 Profile 因此改为每环境
-16 个活动接触、8 个 CCD 接触和每世界 `njmax=128`；此前 smoke 与运行时报告继续
-作为历史证据，但不再锁定当前 Profile。重新构建镜像、8,192 环境规模预检和新
-smoke 通过前，当前运行时状态为 `planned`。
+16 个活动接触、8 个 CCD 接触和每世界 `njmax=128`。提交 `101aff7` 的新
+Digest 锁定镜像已经构建；此前 smoke 与运行时报告仍只作为历史证据。当前
+Profile 的新 one-step、8,192 环境规模预检和新 smoke 仍需真实执行。

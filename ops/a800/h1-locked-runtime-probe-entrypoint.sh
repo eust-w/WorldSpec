@@ -7,16 +7,22 @@ readonly BUNDLE_DIR=/scratch/h1-bundle
 readonly MODEL_DIR=/scratch/h1-training-model
 readonly RESULT_DIR=/scratch/results
 readonly SOURCE_ARCHIVE=/opt/worldspec-source/worldspec.tar.gz
+readonly PROBE_MODE="${WORLD_SPEC_PROBE_MODE:-locked_runtime}"
+if [[ "${PROBE_MODE}" == "capacity_scale" ]]; then
+  readonly LOG_PREFIX=WORLDSPEC_A800_CAPACITY_SCALE
+else
+  readonly LOG_PREFIX=WORLDSPEC_A800_LOCKED_PROBE
+fi
 CURRENT_STAGE=initialization
 
 stage() {
   CURRENT_STAGE="$1"
-  printf 'WORLDSPEC_A800_LOCKED_PROBE_STAGE=%s\n' "$1"
+  printf '%s_STAGE=%s\n' "${LOG_PREFIX}" "$1"
 }
 
 fail() {
   local exit_code=$?
-  printf 'WORLDSPEC_A800_LOCKED_PROBE_FAILED=%s\n' "${CURRENT_STAGE}"
+  printf '%s_FAILED=%s\n' "${LOG_PREFIX}" "${CURRENT_STAGE}"
   exit "${exit_code}"
 }
 
@@ -35,6 +41,11 @@ for required in \
     exit 2
   fi
 done
+if [[ "${PROBE_MODE}" != "locked_runtime" ]] &&
+  [[ "${PROBE_MODE}" != "capacity_scale" ]]; then
+  printf 'ERROR: unsupported WORLD_SPEC_PROBE_MODE: %s\n' "${PROBE_MODE}" >&2
+  exit 2
+fi
 
 mkdir -p \
   "${HOME}" \
@@ -120,6 +131,7 @@ env \
   BUNDLE_DIR="${BUNDLE_DIR}" \
   MODEL_DIR="${MODEL_DIR}" \
   RESULT_DIR="${RESULT_DIR}" \
+  WORLD_SPEC_PROBE_MODE="${PROBE_MODE}" \
   python - <<'PY'
 from __future__ import annotations
 
@@ -129,12 +141,14 @@ import importlib.metadata
 import json
 import os
 import platform
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import jax
 import jax.numpy as jp
 import numpy as np
+from mujoco_playground import wrapper
 
 from worldspec_h1_training.contract import digest_json, read_json
 from worldspec_h1_training.environment import make_environment
@@ -153,11 +167,42 @@ static = static_preflight(profile, bundle_dir)
 training_model, derivation = prepare_training_model(profile, bundle_dir, model_dir)
 runtime = runtime_preflight(profile, training_model)
 environment = make_environment(profile, training_model)
-state = environment.reset(jax.random.PRNGKey(profile["training"]["seed"]))
-state = environment.step(state, jp.zeros(environment.action_size))
+probe_mode = os.environ["WORLD_SPEC_PROBE_MODE"]
+if probe_mode == "capacity_scale":
+    num_envs = profile["training"]["numEnvs"]
+    wrapped = wrapper.wrap_for_brax_training(
+        environment,
+        episode_length=profile["training"]["episodeLength"],
+        action_repeat=1,
+    )
+    reset = jax.jit(wrapped.reset)
+    step = jax.jit(wrapped.step)
+    keys = jax.random.split(
+        jax.random.PRNGKey(profile["training"]["seed"]),
+        num_envs,
+    )
+    reset_started = time.monotonic()
+    state = reset(keys)
+    jax.block_until_ready(state.obs["state"])
+    reset_elapsed = time.monotonic() - reset_started
+    action = jp.zeros((num_envs, wrapped.action_size))
+    step_started = time.monotonic()
+    state = step(state, action)
+    jax.block_until_ready(state.obs["state"])
+    step_elapsed = time.monotonic() - step_started
+else:
+    num_envs = 1
+    reset_started = time.monotonic()
+    state = environment.reset(jax.random.PRNGKey(profile["training"]["seed"]))
+    reset_elapsed = time.monotonic() - reset_started
+    step_started = time.monotonic()
+    state = environment.step(state, jp.zeros(environment.action_size))
+    step_elapsed = time.monotonic() - step_started
 observation = np.asarray(jax.block_until_ready(state.obs["state"]))
 qpos = np.asarray(jax.block_until_ready(state.data.qpos))
 qvel = np.asarray(jax.block_until_ready(state.data.qvel))
+reward = np.asarray(jax.block_until_ready(state.reward))
+done = np.asarray(jax.block_until_ready(state.done))
 
 with (result_dir / "gpu.csv").open(encoding="utf-8") as stream:
     gpu_row = next(csv.reader(stream))
@@ -177,16 +222,11 @@ package_names = (
     "worldspec-worker",
 )
 versions = {name: importlib.metadata.version(name) for name in package_names}
-report = {
-    "id": (
-        "runtime-report://worldspec/h1-mjx-warp/a800-locked-"
-        + os.environ["WORLD_SPEC_IMAGE_SOURCE_REVISION"][:12]
-    ),
+capacity = profile["runtime"]["mjxCapacity"]
+common_report = {
     "reportVersion": "0.1.0",
     "status": "passed",
-    "scope": "h1_locked_oci_runtime_probe",
     "executionEvidence": "executed",
-    "runtimeAcceptance": "locked",
     "probeDefinition": {
         "repository": os.environ["WORLD_SPEC_REPOSITORY"],
         "commit": os.environ["WORLD_SPEC_PROBE_DEFINITION_REVISION"],
@@ -226,34 +266,92 @@ report = {
     "profileDigest": digest_json(profile),
     "staticPreflight": static,
     "runtimePreflight": runtime,
-    "target": {
-        "sourceBundleDigest": derivation["sourceBundleDigest"],
-        "derivedModelDigest": derivation["derivedModelDigest"],
-        "qposSize": int(qpos.size),
-        "qvelSize": int(qvel.size),
-        "actuatorCount": int(environment.mj_model.nu),
-    },
-    "oneStep": {
-        "observationSize": int(observation.size),
-        "observationFinite": bool(np.isfinite(observation).all()),
-        "qposFinite": bool(np.isfinite(qpos).all()),
-        "qvelFinite": bool(np.isfinite(qvel).all()),
-        "rewardFinite": bool(np.isfinite(np.asarray(state.reward)).all()),
-    },
-    "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
 }
+finite = {
+    "observationFinite": bool(np.isfinite(observation).all()),
+    "qposFinite": bool(np.isfinite(qpos).all()),
+    "qvelFinite": bool(np.isfinite(qvel).all()),
+    "rewardFinite": bool(np.isfinite(reward).all()),
+}
+if probe_mode == "capacity_scale":
+    report = {
+        **common_report,
+        "id": (
+            "capacity-report://worldspec/h1-mjx-warp/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "scope": "h1_mjx_capacity_scale_probe",
+        "runtimeAcceptance": "capacity_scale_preflight",
+        "canonicalTrainingStatus": "not_executed",
+        "runtimeCapacity": {
+            **capacity,
+            "numEnvs": num_envs,
+            "effectiveNaconmax": capacity["activeContactsPerEnvironment"] * num_envs,
+            "effectiveNaccdmax": capacity["ccdContactsPerEnvironment"] * num_envs,
+            "naconmaxSemantics": "shared_across_all_worlds",
+            "naccdmaxSemantics": "shared_across_all_worlds",
+            "njmaxSemantics": "per_world",
+        },
+        "target": {
+            "sourceBundleDigest": derivation["sourceBundleDigest"],
+            "derivedModelDigest": derivation["derivedModelDigest"],
+            "singleEnvironmentQposSize": int(environment.mj_model.nq),
+            "singleEnvironmentQvelSize": int(environment.mj_model.nv),
+            "actuatorCount": int(environment.mj_model.nu),
+        },
+        "batchedOneStep": {
+            "numEnvs": num_envs,
+            "observationShape": list(observation.shape),
+            "qposShape": list(qpos.shape),
+            "qvelShape": list(qvel.shape),
+            "rewardShape": list(reward.shape),
+            "doneShape": list(done.shape),
+            "resetElapsedSeconds": reset_elapsed,
+            "stepElapsedSeconds": step_elapsed,
+            **finite,
+        },
+        "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    report_path = result_dir / "capacity-scale-report.json"
+    result_prefix = "WORLDSPEC_A800_CAPACITY_SCALE_RESULT="
+else:
+    report = {
+        **common_report,
+        "id": (
+            "runtime-report://worldspec/h1-mjx-warp/a800-locked-"
+            + os.environ["WORLD_SPEC_IMAGE_SOURCE_REVISION"][:12]
+        ),
+        "scope": "h1_locked_oci_runtime_probe",
+        "runtimeAcceptance": "locked",
+        "target": {
+            "sourceBundleDigest": derivation["sourceBundleDigest"],
+            "derivedModelDigest": derivation["derivedModelDigest"],
+            "qposSize": int(qpos.size),
+            "qvelSize": int(qvel.size),
+            "actuatorCount": int(environment.mj_model.nu),
+        },
+        "oneStep": {
+            "observationSize": int(observation.size),
+            **finite,
+        },
+        "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    report_path = result_dir / "locked-runtime-report.json"
+    result_prefix = "WORLDSPEC_A800_LOCKED_PROBE_RESULT="
 if report["gpu"]["jaxBackend"] != "gpu":
     raise SystemExit("JAX did not select the GPU backend")
 finite_keys = ("observationFinite", "qposFinite", "qvelFinite", "rewardFinite")
-if any(report["oneStep"].get(key) is not True for key in finite_keys):
+finite_report = (
+    report["batchedOneStep"] if probe_mode == "capacity_scale" else report["oneStep"]
+)
+if any(finite_report.get(key) is not True for key in finite_keys):
     raise SystemExit("MJX one-step finite-state gate failed")
 
-report_path = result_dir / "locked-runtime-report.json"
 report_path.write_text(
     json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
 )
-print("WORLDSPEC_A800_LOCKED_PROBE_RESULT=" + json.dumps(report, separators=(",", ":")))
+print(result_prefix + json.dumps(report, separators=(",", ":")))
 PY
 
 stage completed

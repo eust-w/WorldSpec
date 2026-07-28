@@ -58,10 +58,11 @@ The digest-pinned OCI and one 32,768-requested-step, 256-environment PPO smoke
 executed and passed numeric and capacity gates, but they bind the Profile
 before its capacity-semantics correction. The smoke is explicitly
 `research_smoke / non_publishable`, produced no checkpoint, and does not
-establish a usable new policy. The current Profile is temporarily `planned`
-pending a new image, an 8,192-environment scale probe, and relocking. The
-canonical 100-million-step run and five consecutive evaluations remain
-acceptance blockers.
+establish a usable new policy. A new digest-pinned image for the corrected
+capacity semantics has been built from commit `101aff7`, but the current
+Profile still requires a new one-step, an 8,192-environment scale probe, and a
+new smoke. The canonical 100-million-step run and five consecutive evaluations
+remain acceptance blockers.
 
 ## Consequences
 

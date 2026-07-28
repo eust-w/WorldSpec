@@ -70,9 +70,10 @@ Brax JAX PPO 的规范输出是 Orbax/JAX Checkpoint，不伪装成 TorchScript�
 - 规范 1 亿步 PPO 未执行；
 - 未完成目标 Bundle 五次连续评估。
 
-当前 Profile 已按 MJX-Warp 语义改为共享接触容量和每世界约束容量，运行时暂为
-`planned`，等待新镜像与 8,192 环境规模预检。因此本 ADR 只构成历史受限 GPU
-smoke 证据，不构成当前 Profile 已锁定、策略可用、正式训练或 L3 通过证据。
+当前 Profile 已按 MJX-Warp 语义改为共享接触容量和每世界约束容量，提交
+`101aff7` 的新 Digest 锁定镜像已经构建；当前 Profile 的新 one-step、
+8,192 环境规模预检和 smoke 尚待执行。因此本 ADR 仍只构成历史受限 GPU smoke
+证据，不构成当前 Profile 运行已验证、策略可用、正式训练或 L3 通过证据。
 
 ## 后果
 
