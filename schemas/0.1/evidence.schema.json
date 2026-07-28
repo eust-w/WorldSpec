@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/evidence.schema.json",
+  "title": "WorldSpec Evidence Graph 0.1",
+  "$defs": {
+    "evidenceSource": {
+      "type": "object",
+      "required": ["id", "kind", "digest", "rightsStatus"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "kind": {
+          "enum": [
+            "measurement",
+            "manufacturer_document",
+            "source_asset",
+            "image",
+            "video",
+            "cad",
+            "dataset",
+            "human_confirmation",
+            "default_policy"
+          ]
+        },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "rightsStatus": {
+          "enum": ["cleared", "restricted", "review_required", "unknown"]
+        },
+        "sourceUri": { "type": "string" },
+        "acquiredAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "claim": {
+      "type": "object",
+      "required": ["id", "target", "assertion", "status", "evidence"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "target": {
+          "type": "object",
+          "required": ["objectRef", "field"],
+          "properties": {
+            "objectRef": { "$ref": "common.schema.json#/$defs/id" },
+            "field": { "type": "string", "minLength": 1 }
+          },
+          "additionalProperties": false
+        },
+        "assertion": {
+          "type": "object",
+          "required": ["nominal"],
+          "properties": {
+            "nominal": {
+              "type": ["string", "number", "boolean", "array", "object", "null"]
+            },
+            "unit": { "type": "string" },
+            "interval": { "$ref": "common.schema.json#/$defs/interval" },
+            "distribution": { "type": "object" },
+            "uncertaintyPropagation": {
+              "enum": ["propagated", "unpropagated", "not_applicable"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "status": { "$ref": "common.schema.json#/$defs/evidenceStatus" },
+        "evidence": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "derivedBy": { "$ref": "common.schema.json#/$defs/id" },
+        "validityDomain": {
+          "$ref": "common.schema.json#/$defs/validityDomain"
+        }
+      },
+      "additionalProperties": false
+    },
+    "derivation": {
+      "type": "object",
+      "required": [
+        "id",
+        "method",
+        "methodVersion",
+        "inputs",
+        "outputs",
+        "assumptions"
+      ],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "method": { "type": "string", "minLength": 1 },
+        "methodVersion": { "type": "string", "minLength": 1 },
+        "inputs": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "outputs": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceGraph": {
+      "type": "object",
+      "required": ["sources", "claims", "derivations"],
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/evidenceSource" }
+        },
+        "claims": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/claim" }
+        },
+        "derivations": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/derivation" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/evidenceGraph"
+}

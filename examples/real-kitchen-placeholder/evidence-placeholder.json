@@ -1,0 +1,12 @@
+{
+  "expectedEvidence": [
+    "capture-owner-and-consent",
+    "source-digest-and-retention-policy",
+    "privacy-and-sensitive-content-review",
+    "redistribution-and-commercial-rights",
+    "camera-and-scale-calibration",
+    "runtime-validation-artifacts"
+  ],
+  "currentEvidence": [],
+  "releaseAllowed": false
+}

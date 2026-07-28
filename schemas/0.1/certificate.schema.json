@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/certificate.schema.json",
+  "title": "WorldSpec Certificate 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "certificateVersion",
+    "level",
+    "assetDigest",
+    "targetProfileDigest",
+    "buildManifestDigest",
+    "lossReportDigest",
+    "issuedAt",
+    "issuer",
+    "valid"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "certificateVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "level": { "enum": ["L0", "L1", "L2", "L3"] },
+    "assetDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "targetProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "buildManifestDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "lossReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "conformanceReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "taskProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "evidenceStatuses": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/evidenceStatus" },
+      "uniqueItems": true
+    },
+    "issuedAt": { "type": "string", "format": "date-time" },
+    "issuer": { "type": "string", "minLength": 1 },
+    "valid": { "type": "boolean" },
+    "invalidatedBy": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/digest" },
+      "uniqueItems": true
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "level": { "enum": ["L2", "L3"] } },
+        "required": ["level"]
+      },
+      "then": { "required": ["conformanceReportDigest"] }
+    },
+    {
+      "if": {
+        "properties": { "level": { "const": "L3" } },
+        "required": ["level"]
+      },
+      "then": { "required": ["taskProfileDigest"] }
+    }
+  ],
+  "additionalProperties": false
+}

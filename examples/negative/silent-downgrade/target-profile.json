@@ -1,0 +1,18 @@
+{
+  "id": "profile://negative/silent-downgrade",
+  "profileVersion": "0.1.0",
+  "target": "mujoco",
+  "runtimeVersion": "example",
+  "platform": {
+    "os": "linux",
+    "architecture": "x86_64"
+  },
+  "capabilities": [
+    {
+      "id": "capability://worldspec/pbr-material",
+      "support": "approximated",
+      "notes": "This non-exact capability must be represented in LossReport."
+    }
+  ],
+  "certificationTests": ["test://worldspec/native-load"]
+}

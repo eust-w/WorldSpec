@@ -1,0 +1,121 @@
+{
+  "id": "world://negative/frame-cycle",
+  "specVersion": "0.1.0",
+  "conventions": {
+    "lengthUnit": "meter",
+    "massUnit": "kilogram",
+    "timeUnit": "second",
+    "angleUnit": "radian",
+    "handedness": "right",
+    "upAxis": "+Z",
+    "forwardAxis": "+X",
+    "quaternionOrder": "wxyz"
+  },
+  "rootEntity": "entity://cycle/world",
+  "rootFrame": "frame://cycle/world",
+  "entities": [
+    {
+      "id": "entity://cycle/world",
+      "kind": "spatial",
+      "displayName": "World",
+      "rootFrame": "frame://cycle/world"
+    },
+    {
+      "id": "entity://cycle/a",
+      "kind": "spatial",
+      "displayName": "A",
+      "ownerEntity": "entity://cycle/world",
+      "rootFrame": "frame://cycle/a"
+    },
+    {
+      "id": "entity://cycle/b",
+      "kind": "spatial",
+      "displayName": "B",
+      "ownerEntity": "entity://cycle/world",
+      "rootFrame": "frame://cycle/b"
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame://cycle/world",
+      "ownerEntity": "entity://cycle/world",
+      "role": "world"
+    },
+    {
+      "id": "frame://cycle/a",
+      "ownerEntity": "entity://cycle/a",
+      "role": "canonical_root"
+    },
+    {
+      "id": "frame://cycle/b",
+      "ownerEntity": "entity://cycle/b",
+      "role": "canonical_root"
+    }
+  ],
+  "components": [],
+  "relations": [
+    {
+      "id": "relation://cycle/world-a",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://cycle/world",
+        "child": "frame://cycle/a"
+      },
+      "parentFrame": "frame://cycle/world",
+      "childFrame": "frame://cycle/a",
+      "transform": {
+        "translation": [0, 0, 0],
+        "rotationWxyz": [1, 0, 0, 0]
+      }
+    },
+    {
+      "id": "relation://cycle/a-b",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://cycle/a",
+        "child": "frame://cycle/b"
+      },
+      "parentFrame": "frame://cycle/a",
+      "childFrame": "frame://cycle/b",
+      "transform": {
+        "translation": [0, 0, 0],
+        "rotationWxyz": [1, 0, 0, 0]
+      }
+    },
+    {
+      "id": "relation://cycle/b-a",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://cycle/b",
+        "child": "frame://cycle/a"
+      },
+      "parentFrame": "frame://cycle/b",
+      "childFrame": "frame://cycle/a",
+      "transform": {
+        "translation": [0, 0, 0],
+        "rotationWxyz": [1, 0, 0, 0]
+      }
+    }
+  ],
+  "representations": [],
+  "models": [],
+  "evidenceGraph": {
+    "sources": [],
+    "claims": [],
+    "derivations": []
+  },
+  "clockDomains": [
+    {
+      "id": "clock://cycle/simulation",
+      "kind": "simulation",
+      "unit": "second",
+      "synchronizationPolicy": "authoritative"
+    }
+  ],
+  "stateChannels": [],
+  "initialState": [],
+  "nativePayloads": []
+}

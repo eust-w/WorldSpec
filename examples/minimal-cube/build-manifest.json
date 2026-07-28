@@ -1,0 +1,33 @@
+{
+  "id": "build://examples/minimal-cube-mujoco",
+  "manifestVersion": "0.1.0",
+  "worldDefinitionDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "evidenceGraphDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "targetProfileDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "buildIntentDigest": "sha256:0101010101010101010101010101010101010101010101010101010101010101",
+  "compiler": {
+    "name": "worldspec-example-compiler",
+    "version": "0.0.0-documentation-only",
+    "digest": "sha256:0202020202020202020202020202020202020202020202020202020202020202"
+  },
+  "modelSelections": [
+    {
+      "subjectRef": "entity://cube/body",
+      "family": "rigid_physics",
+      "modelRef": "model://cube/rigid"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "artifact://examples/minimal-cube-scene",
+      "digest": "sha256:0303030303030303030303030303030303030303030303030303030303030303",
+      "mediaType": "application/mjcf+xml",
+      "path": "scene.xml",
+      "sizeBytes": 0,
+      "role": "target_scene"
+    }
+  ],
+  "lossReportDigest": "sha256:0404040404040404040404040404040404040404040404040404040404040404",
+  "conformanceReportDigest": "sha256:0505050505050505050505050505050505050505050505050505050505050505",
+  "lockDigest": "sha256:0606060606060606060606060606060606060606060606060606060606060606"
+}

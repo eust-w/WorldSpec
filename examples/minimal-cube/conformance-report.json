@@ -1,0 +1,36 @@
+{
+  "id": "conformance://examples/minimal-cube-mujoco",
+  "reportVersion": "0.1.0",
+  "buildManifestDigest": "sha256:0707070707070707070707070707070707070707070707070707070707070707",
+  "environment": {
+    "os": "linux",
+    "architecture": "x86_64",
+    "runtime": "documentation-placeholder",
+    "runtimeVersion": "not-executed",
+    "hardware": "not-applicable"
+  },
+  "tests": [
+    {
+      "id": "test://worldspec/native-load",
+      "version": "0.1.0",
+      "result": "not_run",
+      "metrics": {},
+      "tolerances": {},
+      "evidenceArtifacts": [],
+      "diagnostics": [
+        {
+          "code": "DOCUMENTATION_ONLY",
+          "severity": "info",
+          "message": "This schema example is not evidence of a runtime load."
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "unknown": 0,
+    "notRun": 1,
+    "overall": "incomplete"
+  }
+}

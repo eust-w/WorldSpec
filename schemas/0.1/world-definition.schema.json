@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/world-definition.schema.json",
+  "title": "WorldSpec WorldDefinition 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "specVersion",
+    "conventions",
+    "rootEntity",
+    "rootFrame",
+    "entities",
+    "frames",
+    "components",
+    "relations",
+    "representations",
+    "models",
+    "evidenceGraph",
+    "clockDomains",
+    "stateChannels",
+    "initialState",
+    "nativePayloads"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "specVersion": { "const": "0.1.0" },
+    "conventions": {
+      "type": "object",
+      "required": [
+        "lengthUnit",
+        "massUnit",
+        "timeUnit",
+        "angleUnit",
+        "handedness",
+        "upAxis",
+        "forwardAxis",
+        "quaternionOrder"
+      ],
+      "properties": {
+        "lengthUnit": { "const": "meter" },
+        "massUnit": { "const": "kilogram" },
+        "timeUnit": { "const": "second" },
+        "angleUnit": { "const": "radian" },
+        "handedness": { "const": "right" },
+        "upAxis": { "const": "+Z" },
+        "forwardAxis": { "const": "+X" },
+        "quaternionOrder": { "const": "wxyz" }
+      },
+      "additionalProperties": false
+    },
+    "rootEntity": { "$ref": "common.schema.json#/$defs/id" },
+    "rootFrame": { "$ref": "common.schema.json#/$defs/id" },
+    "entities": {
+      "type": "array",
+      "items": { "$ref": "entity.schema.json" },
+      "minItems": 1
+    },
+    "frames": {
+      "type": "array",
+      "items": { "$ref": "frame.schema.json" },
+      "minItems": 1
+    },
+    "components": {
+      "type": "array",
+      "items": { "$ref": "component.schema.json" }
+    },
+    "relations": {
+      "type": "array",
+      "items": { "$ref": "relation.schema.json" }
+    },
+    "representations": {
+      "type": "array",
+      "items": { "$ref": "representation.schema.json" }
+    },
+    "models": {
+      "type": "array",
+      "items": { "$ref": "model.schema.json" }
+    },
+    "evidenceGraph": { "$ref": "evidence.schema.json" },
+    "clockDomains": {
+      "type": "array",
+      "items": { "$ref": "time-state.schema.json#/$defs/clockDomain" },
+      "minItems": 1
+    },
+    "stateChannels": {
+      "type": "array",
+      "items": { "$ref": "time-state.schema.json#/$defs/stateChannel" }
+    },
+    "initialState": {
+      "type": "array",
+      "items": { "$ref": "time-state.schema.json#/$defs/initialStateEntry" }
+    },
+    "nativePayloads": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/nativePayload" }
+    },
+    "metadata": { "type": "object" }
+  },
+  "additionalProperties": false
+}

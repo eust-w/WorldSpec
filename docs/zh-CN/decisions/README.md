@@ -1,0 +1,20 @@
+---
+status: Normative
+applies-to: WorldSpec 0.1
+normative-language: zh-CN
+mirror: ../../en/decisions/README.md
+last-verified: 2026-07-28
+---
+
+# ADR 目录
+
+- [ADR-0001 产品范围与工作名](0001-product-scope-and-name.md)
+- [ADR-0002 文档真源与 Schema 绑定](0002-document-and-schema-binding.md)
+- [ADR-0003 实现技术与参考运行环境](0003-implementation-and-runtime.md)
+- [ADR-0004 输入与原生载荷](0004-inputs-and-native-payload.md)
+- [ADR-0005 目标后端与认证](0005-targets-and-certification.md)
+- [ADR-0006 生成适配器与 Corpus](0006-generation-and-corpus.md)
+- [ADR-0007 产品入口与分发](0007-product-surface-and-distribution.md)
+- [ADR-0008 许可与贡献](0008-licensing-and-contributions.md)
+
+ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

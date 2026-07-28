@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/build-intent.schema.json",
+  "title": "WorldSpec BuildIntent 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "intentVersion",
+    "purpose",
+    "priorities",
+    "hardRequirements",
+    "allowedDegradation",
+    "evidenceSelection"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "intentVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "purpose": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "priorities": {
+      "type": "array",
+      "items": {
+        "enum": ["semantic_fidelity", "physics_fidelity", "visual_fidelity", "speed", "size"]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "hardRequirements": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/id" },
+      "uniqueItems": true
+    },
+    "allowedDegradation": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/lossStatus" },
+      "uniqueItems": true
+    },
+    "budgets": {
+      "type": "object",
+      "properties": {
+        "maxArtifactBytes": { "type": "integer", "minimum": 0 },
+        "maxTriangleCount": { "type": "integer", "minimum": 0 },
+        "maxCompileSeconds": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "evidenceSelection": {
+      "enum": ["nominal", "conservative", "optimistic", "sampled", "measured_only"]
+    }
+  },
+  "additionalProperties": false
+}

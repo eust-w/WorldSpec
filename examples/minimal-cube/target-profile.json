@@ -1,0 +1,30 @@
+{
+  "id": "profile://worldspec/mujoco-rigid-conformance",
+  "profileVersion": "0.1.0",
+  "target": "mujoco",
+  "runtimeVersion": "reference-unlocked",
+  "platform": {
+    "os": "linux",
+    "architecture": "x86_64"
+  },
+  "capabilities": [
+    {
+      "id": "capability://worldspec/rigid-body",
+      "support": "exact"
+    },
+    {
+      "id": "capability://worldspec/primitive-box",
+      "support": "converted",
+      "notes": "Canonical primitive is serialized to a target geom."
+    },
+    {
+      "id": "capability://worldspec/pbr-material",
+      "support": "approximated",
+      "notes": "The reference MuJoCo profile uses a reduced visual material."
+    }
+  ],
+  "certificationTests": [
+    "test://worldspec/native-load",
+    "test://worldspec/rigid-rest"
+  ]
+}

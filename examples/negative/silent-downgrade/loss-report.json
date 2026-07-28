@@ -1,0 +1,15 @@
+{
+  "id": "lossreport://negative/silent-downgrade",
+  "reportVersion": "0.1.0",
+  "buildId": "build://negative/silent-downgrade",
+  "coverage": {
+    "sourceItemCount": 1,
+    "reportedItemCount": 0,
+    "complete": true
+  },
+  "entries": [],
+  "summary": {
+    "highestSeverity": "none",
+    "buildAllowed": true
+  }
+}

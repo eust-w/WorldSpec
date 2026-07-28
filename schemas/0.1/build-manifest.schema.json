@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/build-manifest.schema.json",
+  "title": "WorldSpec BuildManifest 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "manifestVersion",
+    "worldDefinitionDigest",
+    "evidenceGraphDigest",
+    "targetProfileDigest",
+    "buildIntentDigest",
+    "compiler",
+    "modelSelections",
+    "artifacts",
+    "lossReportDigest"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "manifestVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "worldDefinitionDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "evidenceGraphDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "targetProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "buildIntentDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "backendCalibrationDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "compiler": {
+      "type": "object",
+      "required": ["name", "version", "digest"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
+    "modelSelections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["subjectRef", "family", "modelRef"],
+        "properties": {
+          "subjectRef": { "$ref": "common.schema.json#/$defs/id" },
+          "family": { "type": "string" },
+          "modelRef": { "$ref": "common.schema.json#/$defs/id" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/artifactRef" },
+      "minItems": 1
+    },
+    "lossReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "conformanceReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "lockDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/target-profile.schema.json",
+  "title": "WorldSpec TargetProfile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "target",
+    "runtimeVersion",
+    "platform",
+    "capabilities",
+    "certificationTests"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "target": { "enum": ["mujoco", "threejs", "openusd_input"] },
+    "runtimeVersion": { "type": "string", "minLength": 1 },
+    "platform": {
+      "type": "object",
+      "required": ["os", "architecture"],
+      "properties": {
+        "os": { "type": "string" },
+        "architecture": { "type": "string" },
+        "gpu": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "support"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "support": { "$ref": "common.schema.json#/$defs/lossStatus" },
+          "limits": { "type": "object" },
+          "notes": { "type": "string" }
+        },
+        "minItems": 1,
+        "additionalProperties": false
+      }
+    },
+    "certificationTests": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/id" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" }
+  },
+  "additionalProperties": false
+}

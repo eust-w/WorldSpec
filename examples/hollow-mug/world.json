@@ -1,0 +1,217 @@
+{
+  "id": "world://examples/hollow-mug",
+  "specVersion": "0.1.0",
+  "conventions": {
+    "lengthUnit": "meter",
+    "massUnit": "kilogram",
+    "timeUnit": "second",
+    "angleUnit": "radian",
+    "handedness": "right",
+    "upAxis": "+Z",
+    "forwardAxis": "+X",
+    "quaternionOrder": "wxyz"
+  },
+  "rootEntity": "entity://mug/world",
+  "rootFrame": "frame://mug/world",
+  "entities": [
+    {
+      "id": "entity://mug/world",
+      "kind": "spatial",
+      "displayName": "World",
+      "rootFrame": "frame://mug/world"
+    },
+    {
+      "id": "entity://mug/body",
+      "kind": "spatial",
+      "displayName": "Hollow Mug",
+      "ownerEntity": "entity://mug/world",
+      "rootFrame": "frame://mug/body"
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame://mug/world",
+      "ownerEntity": "entity://mug/world",
+      "role": "world"
+    },
+    {
+      "id": "frame://mug/body",
+      "ownerEntity": "entity://mug/body",
+      "role": "canonical_root"
+    },
+    {
+      "id": "frame://mug/handle",
+      "ownerEntity": "entity://mug/body",
+      "role": "interaction"
+    }
+  ],
+  "components": [
+    {
+      "id": "component://mug/rigid-body",
+      "type": "worldspec://component/physics.rigid_body",
+      "schemaVersion": "0.1.0",
+      "ownerEntity": "entity://mug/body",
+      "anchorFrame": "frame://mug/body",
+      "properties": {
+        "mobility": "dynamic",
+        "shell": true
+      },
+      "claimBindings": {
+        "physics.mass": "claim://mug/mass"
+      }
+    },
+    {
+      "id": "component://mug/receptacle",
+      "type": "worldspec://component/composition.receptacle",
+      "schemaVersion": "0.1.0",
+      "ownerEntity": "entity://mug/body",
+      "anchorFrame": "frame://mug/body",
+      "properties": {
+        "usableVolumeRef": "representation://mug/usable-volume"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation://mug/placement",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://mug/world",
+        "child": "frame://mug/body"
+      },
+      "parentFrame": "frame://mug/world",
+      "childFrame": "frame://mug/body",
+      "transform": {
+        "translation": [0.0, 0.0, 0.1],
+        "rotationWxyz": [1.0, 0.0, 0.0, 0.0]
+      }
+    },
+    {
+      "id": "relation://mug/handle-frame",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://mug/body",
+        "child": "frame://mug/handle"
+      },
+      "parentFrame": "frame://mug/body",
+      "childFrame": "frame://mug/handle",
+      "transform": {
+        "translation": [0.06, 0.0, 0.02],
+        "rotationWxyz": [1.0, 0.0, 0.0, 0.0]
+      }
+    }
+  ],
+  "representations": [
+    {
+      "id": "representation://mug/visual",
+      "subjectRef": "entity://mug/body",
+      "role": "visual",
+      "type": "triangle_mesh_pbr",
+      "anchorFrame": "frame://mug/body",
+      "resourceDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "fidelity": "balanced"
+    },
+    {
+      "id": "representation://mug/collision",
+      "subjectRef": "entity://mug/body",
+      "role": "collision",
+      "type": "convex_decomposition",
+      "anchorFrame": "frame://mug/body",
+      "resourceDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "fidelity": "balanced"
+    },
+    {
+      "id": "representation://mug/usable-volume",
+      "subjectRef": "entity://mug/body",
+      "role": "semantic_geometry",
+      "type": "convex_volume_set",
+      "anchorFrame": "frame://mug/body",
+      "resourceDigest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "fidelity": "accurate",
+      "claimRefs": ["claim://mug/usable-volume"]
+    }
+  ],
+  "models": [
+    {
+      "id": "model://mug/rigid-hollow",
+      "subjectRef": "entity://mug/body",
+      "family": "rigid_physics",
+      "purpose": ["grasp", "containment"],
+      "assumptions": ["rigid_shell", "empty_container"],
+      "validityDomain": {
+        "purpose": ["grasp", "containment"],
+        "unsupported": ["fracture", "fluid"]
+      },
+      "activates": {
+        "components": [
+          "component://mug/rigid-body",
+          "component://mug/receptacle"
+        ],
+        "representations": [
+          "representation://mug/collision",
+          "representation://mug/usable-volume"
+        ]
+      }
+    }
+  ],
+  "evidenceGraph": {
+    "sources": [
+      {
+        "id": "evidence://mug/synthetic-model",
+        "kind": "source_asset",
+        "digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+        "rightsStatus": "cleared",
+        "notes": "Self-authored synthetic hollow mug."
+      }
+    ],
+    "claims": [
+      {
+        "id": "claim://mug/mass",
+        "target": {
+          "objectRef": "component://mug/rigid-body",
+          "field": "physics.mass"
+        },
+        "assertion": {
+          "nominal": 0.31,
+          "unit": "kg",
+          "interval": {
+            "minimum": 0.25,
+            "maximum": 0.4,
+            "unit": "kg"
+          },
+          "uncertaintyPropagation": "propagated"
+        },
+        "status": "estimated",
+        "evidence": ["evidence://mug/synthetic-model"]
+      },
+      {
+        "id": "claim://mug/usable-volume",
+        "target": {
+          "objectRef": "representation://mug/usable-volume",
+          "field": "semantic_geometry.usable_volume"
+        },
+        "assertion": {
+          "nominal": 0.00032,
+          "unit": "m3",
+          "uncertaintyPropagation": "propagated"
+        },
+        "status": "generated",
+        "evidence": ["evidence://mug/synthetic-model"]
+      }
+    ],
+    "derivations": []
+  },
+  "clockDomains": [
+    {
+      "id": "clock://mug/simulation",
+      "kind": "simulation",
+      "unit": "second",
+      "synchronizationPolicy": "authoritative"
+    }
+  ],
+  "stateChannels": [],
+  "initialState": [],
+  "nativePayloads": []
+}

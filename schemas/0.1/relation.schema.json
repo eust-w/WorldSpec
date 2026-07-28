@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/relation.schema.json",
+  "title": "WorldSpec Relation 0.1",
+  "$defs": {
+    "relation": {
+      "type": "object",
+      "required": ["id", "type", "schemaVersion", "endpoints"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "type": { "$ref": "common.schema.json#/$defs/id" },
+        "schemaVersion": { "$ref": "common.schema.json#/$defs/semver" },
+        "endpoints": {
+          "type": "object",
+          "minProperties": 2,
+          "additionalProperties": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        },
+        "parentFrame": { "$ref": "common.schema.json#/$defs/id" },
+        "childFrame": { "$ref": "common.schema.json#/$defs/id" },
+        "transform": { "$ref": "common.schema.json#/$defs/transform" },
+        "parameters": { "type": "object" },
+        "stateChannels": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": { "pattern": "^worldspec://relation/frame\\." }
+            },
+            "required": ["type"]
+          },
+          "then": { "required": ["parentFrame", "childFrame"] }
+        }
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/relation"
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/time-state.schema.json",
+  "title": "WorldSpec Time and State 0.1",
+  "$defs": {
+    "clockDomain": {
+      "type": "object",
+      "required": ["id", "kind", "unit"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "kind": { "enum": ["simulation", "control", "sensor", "render", "wall"] },
+        "unit": { "const": "second" },
+        "rateHz": { "type": "number", "exclusiveMinimum": 0 },
+        "synchronizationPolicy": {
+          "enum": ["authoritative", "sample_and_hold", "interpolate", "timestamp_only"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "stateChannel": {
+      "type": "object",
+      "required": [
+        "id",
+        "subjectRef",
+        "property",
+        "valueType",
+        "unit",
+        "clockDomain",
+        "interpolation",
+        "sourceKind"
+      ],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "subjectRef": { "$ref": "common.schema.json#/$defs/id" },
+        "property": { "type": "string", "minLength": 1 },
+        "valueType": {
+          "enum": ["number", "boolean", "vector3", "quaternion_wxyz", "transform", "string"]
+        },
+        "unit": { "type": "string", "minLength": 1 },
+        "clockDomain": { "$ref": "common.schema.json#/$defs/id" },
+        "interpolation": { "enum": ["none", "step", "linear", "slerp"] },
+        "sourceKind": { "enum": ["simulated", "measured", "commanded", "derived"] }
+      },
+      "additionalProperties": false
+    },
+    "initialStateEntry": {
+      "type": "object",
+      "required": ["channelRef", "value"],
+      "properties": {
+        "channelRef": { "$ref": "common.schema.json#/$defs/id" },
+        "value": {
+          "type": ["string", "number", "boolean", "array", "object", "null"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": ["id", "type", "epoch", "timestamp", "clockDomain", "subjects"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "type": { "type": "string", "minLength": 1 },
+        "epoch": { "type": "string", "minLength": 1 },
+        "timestamp": { "type": "number", "minimum": 0 },
+        "clockDomain": { "$ref": "common.schema.json#/$defs/id" },
+        "subjects": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "causedBy": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

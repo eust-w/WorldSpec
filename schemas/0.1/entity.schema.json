@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/entity.schema.json",
+  "title": "WorldSpec Entity 0.1",
+  "$defs": {
+    "entity": {
+      "type": "object",
+      "required": ["id", "kind", "displayName"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "kind": { "enum": ["spatial", "logical"] },
+        "displayName": { "type": "string", "minLength": 1 },
+        "ownerEntity": { "$ref": "common.schema.json#/$defs/id" },
+        "rootFrame": { "$ref": "common.schema.json#/$defs/id" },
+        "prototypeRef": { "$ref": "common.schema.json#/$defs/id" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "spatial" } },
+            "required": ["kind"]
+          },
+          "then": { "required": ["rootFrame"] }
+        }
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/entity"
+}

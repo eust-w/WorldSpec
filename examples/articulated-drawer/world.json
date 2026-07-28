@@ -1,0 +1,257 @@
+{
+  "id": "world://examples/articulated-drawer",
+  "specVersion": "0.1.0",
+  "conventions": {
+    "lengthUnit": "meter",
+    "massUnit": "kilogram",
+    "timeUnit": "second",
+    "angleUnit": "radian",
+    "handedness": "right",
+    "upAxis": "+Z",
+    "forwardAxis": "+X",
+    "quaternionOrder": "wxyz"
+  },
+  "rootEntity": "entity://drawer/world",
+  "rootFrame": "frame://drawer/world",
+  "entities": [
+    {
+      "id": "entity://drawer/world",
+      "kind": "spatial",
+      "displayName": "World",
+      "rootFrame": "frame://drawer/world"
+    },
+    {
+      "id": "entity://drawer/cabinet",
+      "kind": "spatial",
+      "displayName": "Cabinet",
+      "ownerEntity": "entity://drawer/world",
+      "rootFrame": "frame://drawer/cabinet"
+    },
+    {
+      "id": "entity://drawer/tray",
+      "kind": "spatial",
+      "displayName": "Drawer Tray",
+      "ownerEntity": "entity://drawer/cabinet",
+      "rootFrame": "frame://drawer/tray"
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame://drawer/world",
+      "ownerEntity": "entity://drawer/world",
+      "role": "world"
+    },
+    {
+      "id": "frame://drawer/cabinet",
+      "ownerEntity": "entity://drawer/cabinet",
+      "role": "canonical_root"
+    },
+    {
+      "id": "frame://drawer/tray",
+      "ownerEntity": "entity://drawer/tray",
+      "role": "canonical_root"
+    },
+    {
+      "id": "frame://drawer/handle",
+      "ownerEntity": "entity://drawer/tray",
+      "role": "interaction"
+    }
+  ],
+  "components": [
+    {
+      "id": "component://drawer/cabinet-rigid",
+      "type": "worldspec://component/physics.rigid_body",
+      "schemaVersion": "0.1.0",
+      "ownerEntity": "entity://drawer/cabinet",
+      "anchorFrame": "frame://drawer/cabinet",
+      "properties": {
+        "mobility": "static"
+      }
+    },
+    {
+      "id": "component://drawer/tray-rigid",
+      "type": "worldspec://component/physics.rigid_body",
+      "schemaVersion": "0.1.0",
+      "ownerEntity": "entity://drawer/tray",
+      "anchorFrame": "frame://drawer/tray",
+      "properties": {
+        "mobility": "dynamic"
+      },
+      "claimBindings": {
+        "physics.mass": "claim://drawer/tray-mass"
+      }
+    },
+    {
+      "id": "component://drawer/receptacle",
+      "type": "worldspec://component/composition.receptacle",
+      "schemaVersion": "0.1.0",
+      "ownerEntity": "entity://drawer/tray",
+      "anchorFrame": "frame://drawer/tray",
+      "properties": {
+        "usableVolumeRef": "representation://drawer/usable-volume"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation://drawer/cabinet-placement",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://drawer/world",
+        "child": "frame://drawer/cabinet"
+      },
+      "parentFrame": "frame://drawer/world",
+      "childFrame": "frame://drawer/cabinet",
+      "transform": {
+        "translation": [0.0, 0.0, 0.0],
+        "rotationWxyz": [1.0, 0.0, 0.0, 0.0]
+      }
+    },
+    {
+      "id": "relation://drawer/slide",
+      "type": "worldspec://relation/frame.joint.prismatic",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://drawer/cabinet",
+        "child": "frame://drawer/tray"
+      },
+      "parentFrame": "frame://drawer/cabinet",
+      "childFrame": "frame://drawer/tray",
+      "parameters": {
+        "axis": [1.0, 0.0, 0.0],
+        "lower": 0.0,
+        "upper": 0.45
+      },
+      "stateChannels": ["state://drawer/slide-position"]
+    },
+    {
+      "id": "relation://drawer/handle-placement",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://drawer/tray",
+        "child": "frame://drawer/handle"
+      },
+      "parentFrame": "frame://drawer/tray",
+      "childFrame": "frame://drawer/handle",
+      "transform": {
+        "translation": [0.25, 0.0, 0.08],
+        "rotationWxyz": [1.0, 0.0, 0.0, 0.0]
+      }
+    }
+  ],
+  "representations": [
+    {
+      "id": "representation://drawer/cabinet-visual",
+      "subjectRef": "entity://drawer/cabinet",
+      "role": "visual",
+      "type": "triangle_mesh_pbr",
+      "anchorFrame": "frame://drawer/cabinet",
+      "resourceDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+      "fidelity": "balanced"
+    },
+    {
+      "id": "representation://drawer/tray-collision",
+      "subjectRef": "entity://drawer/tray",
+      "role": "collision",
+      "type": "primitive_compound",
+      "anchorFrame": "frame://drawer/tray",
+      "resourceDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "fidelity": "balanced"
+    },
+    {
+      "id": "representation://drawer/usable-volume",
+      "subjectRef": "entity://drawer/tray",
+      "role": "semantic_geometry",
+      "type": "convex_volume_set",
+      "anchorFrame": "frame://drawer/tray",
+      "resourceDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "fidelity": "accurate"
+    }
+  ],
+  "models": [
+    {
+      "id": "model://drawer/rigid-manipulation",
+      "subjectRef": "entity://drawer/tray",
+      "family": "rigid_physics",
+      "purpose": ["open_close", "containment"],
+      "assumptions": ["rigid_body", "ideal_prismatic_joint"],
+      "validityDomain": {
+        "purpose": ["open_close", "containment"],
+        "unsupported": ["rail_compliance", "wear"]
+      },
+      "activates": {
+        "components": [
+          "component://drawer/tray-rigid",
+          "component://drawer/receptacle"
+        ],
+        "representations": [
+          "representation://drawer/tray-collision",
+          "representation://drawer/usable-volume"
+        ]
+      }
+    }
+  ],
+  "evidenceGraph": {
+    "sources": [
+      {
+        "id": "evidence://drawer/synthetic-model",
+        "kind": "source_asset",
+        "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "rightsStatus": "cleared",
+        "notes": "Self-authored synthetic drawer."
+      }
+    ],
+    "claims": [
+      {
+        "id": "claim://drawer/tray-mass",
+        "target": {
+          "objectRef": "component://drawer/tray-rigid",
+          "field": "physics.mass"
+        },
+        "assertion": {
+          "nominal": 4.2,
+          "unit": "kg",
+          "interval": {
+            "minimum": 3.5,
+            "maximum": 5.0,
+            "unit": "kg"
+          },
+          "uncertaintyPropagation": "propagated"
+        },
+        "status": "estimated",
+        "evidence": ["evidence://drawer/synthetic-model"]
+      }
+    ],
+    "derivations": []
+  },
+  "clockDomains": [
+    {
+      "id": "clock://drawer/simulation",
+      "kind": "simulation",
+      "unit": "second",
+      "rateHz": 500.0,
+      "synchronizationPolicy": "authoritative"
+    }
+  ],
+  "stateChannels": [
+    {
+      "id": "state://drawer/slide-position",
+      "subjectRef": "relation://drawer/slide",
+      "property": "joint.position",
+      "valueType": "number",
+      "unit": "meter",
+      "clockDomain": "clock://drawer/simulation",
+      "interpolation": "linear",
+      "sourceKind": "simulated"
+    }
+  ],
+  "initialState": [
+    {
+      "channelRef": "state://drawer/slide-position",
+      "value": 0.0
+    }
+  ],
+  "nativePayloads": []
+}

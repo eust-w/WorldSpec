@@ -1,0 +1,51 @@
+{
+  "id": "not a valid world id",
+  "specVersion": "0.1.0",
+  "conventions": {
+    "lengthUnit": "meter",
+    "massUnit": "kilogram",
+    "timeUnit": "second",
+    "angleUnit": "radian",
+    "handedness": "right",
+    "upAxis": "+Z",
+    "forwardAxis": "+X",
+    "quaternionOrder": "wxyz"
+  },
+  "rootEntity": "entity://negative/world",
+  "rootFrame": "frame://negative/world",
+  "entities": [
+    {
+      "id": "entity://negative/world",
+      "kind": "spatial",
+      "displayName": "World",
+      "rootFrame": "frame://negative/world"
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame://negative/world",
+      "ownerEntity": "entity://negative/world",
+      "role": "world"
+    }
+  ],
+  "components": [],
+  "relations": [],
+  "representations": [],
+  "models": [],
+  "evidenceGraph": {
+    "sources": [],
+    "claims": [],
+    "derivations": []
+  },
+  "clockDomains": [
+    {
+      "id": "clock://negative/simulation",
+      "kind": "simulation",
+      "unit": "second",
+      "synchronizationPolicy": "authoritative"
+    }
+  ],
+  "stateChannels": [],
+  "initialState": [],
+  "nativePayloads": []
+}

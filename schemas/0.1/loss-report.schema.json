@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/loss-report.schema.json",
+  "title": "WorldSpec LossReport 0.1",
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "sourceRef",
+        "capability",
+        "status",
+        "rationale",
+        "consequence"
+      ],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "sourceRef": { "$ref": "common.schema.json#/$defs/id" },
+        "capability": { "$ref": "common.schema.json#/$defs/id" },
+        "status": { "$ref": "common.schema.json#/$defs/lossStatus" },
+        "targetBinding": { "type": "string" },
+        "rationale": { "type": "string", "minLength": 1 },
+        "consequence": { "type": "string", "minLength": 1 },
+        "diagnostics": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "buildId",
+    "coverage",
+    "entries",
+    "summary"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "buildId": { "$ref": "common.schema.json#/$defs/id" },
+    "coverage": {
+      "type": "object",
+      "required": ["sourceItemCount", "reportedItemCount", "complete"],
+      "properties": {
+        "sourceItemCount": { "type": "integer", "minimum": 0 },
+        "reportedItemCount": { "type": "integer", "minimum": 0 },
+        "complete": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["highestSeverity", "buildAllowed"],
+      "properties": {
+        "highestSeverity": { "enum": ["none", "info", "warning", "error", "fatal"] },
+        "buildAllowed": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

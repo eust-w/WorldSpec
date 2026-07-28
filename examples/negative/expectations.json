@@ -1,0 +1,28 @@
+{
+  "cases": [
+    {
+      "path": "illegal-id/world.json",
+      "schema": "world-definition.schema.json",
+      "validationLayer": "schema",
+      "expectedCode": "SCHEMA_INVALID_ID"
+    },
+    {
+      "path": "frame-cycle/world.json",
+      "schema": "world-definition.schema.json",
+      "validationLayer": "semantic",
+      "expectedCode": "WS_INV_009_FRAME_CYCLE"
+    },
+    {
+      "path": "missing-evidence/world.json",
+      "schema": "world-definition.schema.json",
+      "validationLayer": "semantic",
+      "expectedCode": "WS_INV_032_MISSING_CLAIM"
+    },
+    {
+      "path": "silent-downgrade/loss-report.json",
+      "schema": "loss-report.schema.json",
+      "validationLayer": "semantic",
+      "expectedCode": "LOSS_COVERAGE_MISMATCH"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "id": "world://negative/missing-evidence",
+  "specVersion": "0.1.0",
+  "conventions": {
+    "lengthUnit": "meter",
+    "massUnit": "kilogram",
+    "timeUnit": "second",
+    "angleUnit": "radian",
+    "handedness": "right",
+    "upAxis": "+Z",
+    "forwardAxis": "+X",
+    "quaternionOrder": "wxyz"
+  },
+  "rootEntity": "entity://missing/world",
+  "rootFrame": "frame://missing/world",
+  "entities": [
+    {
+      "id": "entity://missing/world",
+      "kind": "spatial",
+      "displayName": "World",
+      "rootFrame": "frame://missing/world"
+    },
+    {
+      "id": "entity://missing/body",
+      "kind": "spatial",
+      "displayName": "Body",
+      "ownerEntity": "entity://missing/world",
+      "rootFrame": "frame://missing/body"
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame://missing/world",
+      "ownerEntity": "entity://missing/world",
+      "role": "world"
+    },
+    {
+      "id": "frame://missing/body",
+      "ownerEntity": "entity://missing/body",
+      "role": "canonical_root"
+    }
+  ],
+  "components": [
+    {
+      "id": "component://missing/rigid-body",
+      "type": "worldspec://component/physics.rigid_body",
+      "schemaVersion": "0.1.0",
+      "ownerEntity": "entity://missing/body",
+      "anchorFrame": "frame://missing/body",
+      "properties": {
+        "mobility": "dynamic"
+      },
+      "claimBindings": {
+        "physics.mass": "claim://missing/nonexistent-mass"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation://missing/placement",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://missing/world",
+        "child": "frame://missing/body"
+      },
+      "parentFrame": "frame://missing/world",
+      "childFrame": "frame://missing/body",
+      "transform": {
+        "translation": [0, 0, 0],
+        "rotationWxyz": [1, 0, 0, 0]
+      }
+    }
+  ],
+  "representations": [],
+  "models": [],
+  "evidenceGraph": {
+    "sources": [],
+    "claims": [],
+    "derivations": []
+  },
+  "clockDomains": [
+    {
+      "id": "clock://missing/simulation",
+      "kind": "simulation",
+      "unit": "second",
+      "synchronizationPolicy": "authoritative"
+    }
+  ],
+  "stateChannels": [],
+  "initialState": [],
+  "nativePayloads": []
+}

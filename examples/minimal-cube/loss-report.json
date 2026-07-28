@@ -1,0 +1,53 @@
+{
+  "id": "lossreport://examples/minimal-cube-mujoco",
+  "reportVersion": "0.1.0",
+  "buildId": "build://examples/minimal-cube-mujoco",
+  "coverage": {
+    "sourceItemCount": 3,
+    "reportedItemCount": 3,
+    "complete": true
+  },
+  "entries": [
+    {
+      "id": "lowering://examples/cube-rigid-body",
+      "sourceRef": "component://cube/rigid-body",
+      "capability": "capability://worldspec/rigid-body",
+      "status": "exact",
+      "targetBinding": "body:cube",
+      "rationale": "The target profile supports a dynamic rigid body.",
+      "consequence": "Canonical rigid-body intent is retained.",
+      "diagnostics": []
+    },
+    {
+      "id": "lowering://examples/cube-collision",
+      "sourceRef": "representation://cube/collision",
+      "capability": "capability://worldspec/primitive-box",
+      "status": "converted",
+      "targetBinding": "geom:cube_collision",
+      "rationale": "The canonical box is serialized to a MuJoCo box geom.",
+      "consequence": "Shape dimensions are retained; storage syntax changes.",
+      "diagnostics": []
+    },
+    {
+      "id": "lowering://examples/cube-visual",
+      "sourceRef": "representation://cube/visual",
+      "capability": "capability://worldspec/pbr-material",
+      "status": "approximated",
+      "targetBinding": "geom:cube_visual",
+      "rationale": "The example target profile does not preserve full PBR.",
+      "consequence": "Appearance is reduced and cannot be used for visual-fidelity claims.",
+      "diagnostics": [
+        {
+          "code": "PBR_REDUCED",
+          "severity": "warning",
+          "message": "PBR appearance is approximated by the target material.",
+          "objectRef": "representation://cube/visual"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "highestSeverity": "warning",
+    "buildAllowed": true
+  }
+}

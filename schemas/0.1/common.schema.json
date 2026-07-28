@@ -1,0 +1,170 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/common.schema.json",
+  "title": "WorldSpec Common Types 0.1",
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9+.-]*://[^\\s]+$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+    },
+    "vector3": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false
+    },
+    "quaternionWxyz": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false
+    },
+    "transform": {
+      "type": "object",
+      "required": ["translation", "rotationWxyz"],
+      "properties": {
+        "translation": { "$ref": "#/$defs/vector3" },
+        "rotationWxyz": { "$ref": "#/$defs/quaternionWxyz" }
+      },
+      "additionalProperties": false
+    },
+    "quantity": {
+      "type": "object",
+      "required": ["value", "unit"],
+      "properties": {
+        "value": { "type": "number" },
+        "unit": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "interval": {
+      "type": "object",
+      "required": ["minimum", "maximum"],
+      "properties": {
+        "minimum": { "type": "number" },
+        "maximum": { "type": "number" },
+        "unit": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "validityDomain": {
+      "type": "object",
+      "required": ["purpose"],
+      "properties": {
+        "purpose": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "conditions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": ["string", "number", "boolean", "array", "object", "null"]
+          }
+        },
+        "unsupported": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "evidenceStatus": {
+      "enum": [
+        "measured",
+        "manufacturer_declared",
+        "imported",
+        "reconstructed",
+        "derived",
+        "estimated",
+        "generated",
+        "default",
+        "unknown"
+      ]
+    },
+    "lossStatus": {
+      "enum": [
+        "exact",
+        "converted",
+        "approximated",
+        "baked",
+        "emulated",
+        "dropped",
+        "unsupported"
+      ]
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]+$" },
+        "severity": { "enum": ["info", "warning", "error", "fatal"] },
+        "message": { "type": "string", "minLength": 1 },
+        "objectRef": { "$ref": "#/$defs/id" },
+        "details": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "artifactRef": {
+      "type": "object",
+      "required": ["id", "digest", "mediaType", "path"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "digest": { "$ref": "#/$defs/digest" },
+        "mediaType": { "type": "string", "minLength": 1 },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "not": { "pattern": "(^/|(^|/)\\.\\.(/|$))" }
+        },
+        "sizeBytes": { "type": "integer", "minimum": 0 },
+        "role": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "nativePayload": {
+      "type": "object",
+      "required": [
+        "id",
+        "sourceFormat",
+        "sourceVersion",
+        "digest",
+        "namespace",
+        "rightsStatus"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "sourceFormat": { "type": "string", "minLength": 1 },
+        "sourceVersion": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "#/$defs/digest" },
+        "namespace": { "type": "string", "minLength": 1 },
+        "rightsStatus": {
+          "enum": ["cleared", "restricted", "review_required", "unknown"]
+        },
+        "targetScope": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

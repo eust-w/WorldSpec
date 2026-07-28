@@ -1,0 +1,13 @@
+{
+  "id": "buildintent://examples/minimal-cube-mujoco",
+  "intentVersion": "0.1.0",
+  "purpose": ["rigid_body_conformance"],
+  "priorities": ["physics_fidelity", "semantic_fidelity", "speed"],
+  "hardRequirements": ["capability://worldspec/rigid-body"],
+  "allowedDegradation": ["converted", "approximated"],
+  "budgets": {
+    "maxArtifactBytes": 1048576,
+    "maxCompileSeconds": 30.0
+  },
+  "evidenceSelection": "nominal"
+}

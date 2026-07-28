@@ -1,0 +1,14 @@
+{
+  "id": "certificate://examples/minimal-cube-schema-only",
+  "certificateVersion": "0.1.0",
+  "level": "L1",
+  "assetDigest": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "targetProfileDigest": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+  "buildManifestDigest": "sha256:0707070707070707070707070707070707070707070707070707070707070707",
+  "lossReportDigest": "sha256:0404040404040404040404040404040404040404040404040404040404040404",
+  "evidenceStatuses": ["generated"],
+  "issuedAt": "2026-07-28T00:00:00Z",
+  "issuer": "WorldSpec documentation baseline",
+  "valid": false,
+  "invalidatedBy": []
+}

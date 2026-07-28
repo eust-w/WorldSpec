@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/component.schema.json",
+  "title": "WorldSpec Component 0.1",
+  "$defs": {
+    "component": {
+      "type": "object",
+      "required": ["id", "type", "schemaVersion", "ownerEntity", "properties"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "type": { "$ref": "common.schema.json#/$defs/id" },
+        "schemaVersion": { "$ref": "common.schema.json#/$defs/semver" },
+        "ownerEntity": { "$ref": "common.schema.json#/$defs/id" },
+        "anchorFrame": { "$ref": "common.schema.json#/$defs/id" },
+        "properties": { "type": "object" },
+        "claimBindings": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "common.schema.json#/$defs/id"
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/component"
+}

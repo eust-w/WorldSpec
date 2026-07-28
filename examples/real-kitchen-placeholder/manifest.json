@@ -1,0 +1,17 @@
+{
+  "id": "corpuscase://worldspec/real-kitchen-placeholder",
+  "status": "blocked_on_rights_and_acquisition",
+  "intendedScope": [
+    "source-bundle",
+    "asset-draft",
+    "world-definition",
+    "mujoco-bundle",
+    "threejs-bundle",
+    "conformance-reports"
+  ],
+  "sourceAssetsIncluded": false,
+  "rightsStatus": "unknown",
+  "privacyReview": "not_started",
+  "evidenceRef": "evidence-placeholder.json",
+  "notes": "No asset may be added until rights and privacy gates are cleared."
+}

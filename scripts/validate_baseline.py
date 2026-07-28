@@ -1,0 +1,313 @@
+#!/usr/bin/env python3
+"""Repository-only validation for the WorldSpec documentation/schema baseline."""
+
+from __future__ import annotations
+
+import json
+import re
+import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+from jsonschema import Draft202012Validator, FormatChecker
+from referencing import Registry, Resource
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SCHEMA_DIR = ROOT / "schemas" / "0.1"
+EXAMPLES = ROOT / "examples"
+DOCS = ROOT / "docs"
+
+
+class Failure(Exception):
+    pass
+
+
+def read_json(path: Path) -> Any:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        raise Failure(f"JSON_PARSE {path.relative_to(ROOT)}: {exc}") from exc
+
+
+def schema_registry() -> tuple[dict[str, Any], Registry]:
+    schemas: dict[str, Any] = {}
+    resources = []
+    for path in sorted(SCHEMA_DIR.glob("*.schema.json")):
+        schema = read_json(path)
+        Draft202012Validator.check_schema(schema)
+        schemas[path.name] = schema
+        resources.append((schema["$id"], Resource.from_contents(schema)))
+    return schemas, Registry().with_resources(resources)
+
+
+def walk_refs(value: Any):
+    if isinstance(value, dict):
+        for key, child in value.items():
+            if key == "$ref" and isinstance(child, str):
+                yield child
+            yield from walk_refs(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from walk_refs(child)
+
+
+def resolve_pointer(document: Any, fragment: str) -> None:
+    if not fragment:
+        return
+    if not fragment.startswith("/"):
+        raise Failure(f"Unsupported JSON pointer fragment: #{fragment}")
+    cursor = document
+    for token in fragment[1:].split("/"):
+        token = token.replace("~1", "/").replace("~0", "~")
+        if isinstance(cursor, list):
+            cursor = cursor[int(token)]
+        else:
+            cursor = cursor[token]
+
+
+def check_refs(schemas: dict[str, Any]) -> None:
+    for schema_name, schema in schemas.items():
+        for ref in walk_refs(schema):
+            if ref.startswith(("https://", "http://")):
+                continue
+            file_part, _, fragment = ref.partition("#")
+            target_name = file_part or schema_name
+            if target_name not in schemas:
+                raise Failure(f"BROKEN_REF {schema_name}: {ref}")
+            try:
+                resolve_pointer(schemas[target_name], fragment)
+            except Exception as exc:
+                raise Failure(f"BROKEN_REF {schema_name}: {ref}: {exc}") from exc
+
+
+def validate_instance(
+    instance_path: Path,
+    schema_name: str,
+    schemas: dict[str, Any],
+    registry: Registry,
+) -> list[str]:
+    instance = read_json(instance_path)
+    validator = Draft202012Validator(
+        schemas[schema_name],
+        registry=registry,
+        format_checker=FormatChecker(),
+    )
+    return [
+        f"{'/'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
+        for error in sorted(validator.iter_errors(instance), key=lambda item: list(item.absolute_path))
+    ]
+
+
+def all_object_ids(document: Any) -> list[str]:
+    result: list[str] = []
+
+    def visit(value: Any) -> None:
+        if isinstance(value, dict):
+            if isinstance(value.get("id"), str):
+                result.append(value["id"])
+            for child in value.values():
+                visit(child)
+        elif isinstance(value, list):
+            for child in value:
+                visit(child)
+
+    visit(document)
+    return result
+
+
+def semantic_world_errors(document: dict[str, Any]) -> set[str]:
+    codes: set[str] = set()
+    ids = all_object_ids(document)
+    if any(count > 1 for count in Counter(ids).values()):
+        codes.add("WS_INV_001_DUPLICATE_ID")
+
+    claim_ids = {claim["id"] for claim in document["evidenceGraph"]["claims"]}
+    for component in document["components"]:
+        for claim_ref in component.get("claimBindings", {}).values():
+            if claim_ref not in claim_ids:
+                codes.add("WS_INV_032_MISSING_CLAIM")
+    for representation in document["representations"]:
+        for claim_ref in representation.get("claimRefs", []):
+            if claim_ref not in claim_ids:
+                codes.add("WS_INV_032_MISSING_CLAIM")
+
+    adjacency: dict[str, list[str]] = defaultdict(list)
+    incoming: Counter[str] = Counter()
+    for relation in document["relations"]:
+        if relation["type"].startswith("worldspec://relation/frame."):
+            parent = relation["parentFrame"]
+            child = relation["childFrame"]
+            adjacency[parent].append(child)
+            incoming[child] += 1
+    if any(count > 1 for count in incoming.values()):
+        codes.add("WS_INV_012_MULTIPLE_FRAME_DRIVERS")
+
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def has_cycle(node: str) -> bool:
+        if node in visiting:
+            return True
+        if node in visited:
+            return False
+        visiting.add(node)
+        if any(has_cycle(child) for child in adjacency[node]):
+            return True
+        visiting.remove(node)
+        visited.add(node)
+        return False
+
+    if any(has_cycle(node) for node in list(adjacency)):
+        codes.add("WS_INV_009_FRAME_CYCLE")
+    return codes
+
+
+def semantic_loss_errors(report: dict[str, Any], target: dict[str, Any] | None = None) -> set[str]:
+    codes: set[str] = set()
+    coverage = report["coverage"]
+    if coverage["reportedItemCount"] != len(report["entries"]):
+        codes.add("LOSS_REPORTED_COUNT_MISMATCH")
+    if coverage["complete"] and coverage["sourceItemCount"] != coverage["reportedItemCount"]:
+        codes.add("LOSS_COVERAGE_MISMATCH")
+    if target is not None:
+        reported = {entry["capability"] for entry in report["entries"]}
+        non_exact = {
+            item["id"] for item in target["capabilities"] if item["support"] != "exact"
+        }
+        if not non_exact.issubset(reported):
+            codes.add("LOSS_UNREPORTED_NON_EXACT_CAPABILITY")
+    return codes
+
+
+def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
+    positive = {
+        "minimal-cube/world.json": "world-definition.schema.json",
+        "hollow-mug/world.json": "world-definition.schema.json",
+        "articulated-drawer/world.json": "world-definition.schema.json",
+        "minimal-cube/asset-draft.json": "asset-draft.schema.json",
+        "minimal-cube/target-profile.json": "target-profile.schema.json",
+        "minimal-cube/build-intent.json": "build-intent.schema.json",
+        "minimal-cube/loss-report.json": "loss-report.schema.json",
+        "minimal-cube/build-manifest.json": "build-manifest.schema.json",
+        "minimal-cube/conformance-report.json": "conformance-report.schema.json",
+        "minimal-cube/certificate.json": "certificate.schema.json",
+    }
+    for relative, schema_name in positive.items():
+        path = EXAMPLES / relative
+        errors = validate_instance(path, schema_name, schemas, registry)
+        if errors:
+            raise Failure(f"POSITIVE_EXAMPLE {relative}: {'; '.join(errors)}")
+        if path.name == "world.json":
+            semantic = semantic_world_errors(read_json(path))
+            if semantic:
+                raise Failure(f"POSITIVE_SEMANTIC {relative}: {sorted(semantic)}")
+    positive_loss = read_json(EXAMPLES / "minimal-cube/loss-report.json")
+    positive_target = read_json(EXAMPLES / "minimal-cube/target-profile.json")
+    loss_errors = semantic_loss_errors(positive_loss, positive_target)
+    if loss_errors:
+        raise Failure(f"POSITIVE_LOSS: {sorted(loss_errors)}")
+
+
+def check_negative_examples(schemas: dict[str, Any], registry: Registry) -> None:
+    expectations = read_json(EXAMPLES / "negative" / "expectations.json")["cases"]
+    for case in expectations:
+        path = EXAMPLES / "negative" / case["path"]
+        schema_errors = validate_instance(path, case["schema"], schemas, registry)
+        if case["validationLayer"] == "schema":
+            if not schema_errors:
+                raise Failure(f"NEGATIVE_NOT_REJECTED {case['path']}")
+            continue
+        if schema_errors:
+            raise Failure(f"NEGATIVE_WRONG_LAYER {case['path']}: {schema_errors}")
+        document = read_json(path)
+        if case["schema"] == "world-definition.schema.json":
+            semantic_errors = semantic_world_errors(document)
+        else:
+            target_path = path.with_name("target-profile.json")
+            target = read_json(target_path) if target_path.exists() else None
+            semantic_errors = semantic_loss_errors(document, target)
+        if case["expectedCode"] not in semantic_errors:
+            raise Failure(
+                f"NEGATIVE_NOT_REJECTED {case['path']}: "
+                f"expected {case['expectedCode']}, got {sorted(semantic_errors)}"
+            )
+
+
+FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
+MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
+
+
+def metadata(path: Path) -> dict[str, str]:
+    match = FRONT_MATTER.match(path.read_text(encoding="utf-8"))
+    if not match:
+        raise Failure(f"MISSING_FRONT_MATTER {path.relative_to(ROOT)}")
+    result = {}
+    for line in match.group(1).splitlines():
+        key, separator, value = line.partition(":")
+        if separator:
+            result[key.strip()] = value.strip()
+    return result
+
+
+def check_docs() -> None:
+    zh_root = DOCS / "zh-CN"
+    en_root = DOCS / "en"
+    zh_files = {path.relative_to(zh_root) for path in zh_root.rglob("*.md")}
+    en_files = {path.relative_to(en_root) for path in en_root.rglob("*.md")}
+    if zh_files != en_files:
+        raise Failure(
+            f"MIRROR_MISMATCH missing_en={sorted(zh_files - en_files)} "
+            f"missing_zh={sorted(en_files - zh_files)}"
+        )
+    required = {"status", "applies-to", "normative-language", "mirror", "last-verified"}
+    for relative in sorted(zh_files):
+        zh_path = zh_root / relative
+        en_path = en_root / relative
+        for path in (zh_path, en_path):
+            found = metadata(path)
+            missing = required - found.keys()
+            if missing:
+                raise Failure(f"MISSING_METADATA {path.relative_to(ROOT)}: {sorted(missing)}")
+            mirror = (path.parent / found["mirror"]).resolve()
+            expected = en_path.resolve() if path == zh_path else zh_path.resolve()
+            if mirror != expected:
+                raise Failure(f"BAD_MIRROR {path.relative_to(ROOT)} -> {found['mirror']}")
+        en_text = en_path.read_text(encoding="utf-8")
+        if "The Chinese document is the normative source" not in en_text:
+            raise Failure(f"ENGLISH_AUTHORITY_MISSING {en_path.relative_to(ROOT)}")
+
+    for path in [ROOT / "README.md", ROOT / "README.en.md", *DOCS.rglob("*.md")]:
+        text = path.read_text(encoding="utf-8")
+        for target in MARKDOWN_LINK.findall(text):
+            target = target.split("#", 1)[0]
+            if not target or target.startswith(("http://", "https://", "mailto:", "chatgpt-")):
+                continue
+            local = (path.parent / target).resolve()
+            if not local.exists():
+                raise Failure(f"BROKEN_LINK {path.relative_to(ROOT)} -> {target}")
+
+
+def main() -> int:
+    try:
+        schemas, registry = schema_registry()
+        check_refs(schemas)
+        check_examples(schemas, registry)
+        check_negative_examples(schemas, registry)
+        check_docs()
+    except Failure as exc:
+        print(f"FAIL: {exc}", file=sys.stderr)
+        return 1
+    print(
+        "PASS: "
+        f"{len(schemas)} schemas; "
+        "10 positive fixtures; "
+        "4 negative fixtures; "
+        "bilingual mirrors and local links"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

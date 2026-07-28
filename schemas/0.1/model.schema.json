@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/model.schema.json",
+  "title": "WorldSpec Model 0.1",
+  "$defs": {
+    "model": {
+      "type": "object",
+      "required": [
+        "id",
+        "subjectRef",
+        "family",
+        "purpose",
+        "assumptions",
+        "validityDomain",
+        "activates"
+      ],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "subjectRef": { "$ref": "common.schema.json#/$defs/id" },
+        "family": { "type": "string", "minLength": 1 },
+        "purpose": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "assumptions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "validityDomain": {
+          "$ref": "common.schema.json#/$defs/validityDomain"
+        },
+        "activates": {
+          "type": "object",
+          "required": ["components", "representations"],
+          "properties": {
+            "components": {
+              "type": "array",
+              "items": { "$ref": "common.schema.json#/$defs/id" },
+              "uniqueItems": true
+            },
+            "representations": {
+              "type": "array",
+              "items": { "$ref": "common.schema.json#/$defs/id" },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/model"
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/representation.schema.json",
+  "title": "WorldSpec Representation 0.1",
+  "$defs": {
+    "representation": {
+      "type": "object",
+      "required": [
+        "id",
+        "subjectRef",
+        "role",
+        "type",
+        "anchorFrame",
+        "resourceDigest",
+        "fidelity"
+      ],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "subjectRef": { "$ref": "common.schema.json#/$defs/id" },
+        "role": {
+          "enum": [
+            "visual",
+            "collision",
+            "mass",
+            "semantic_geometry",
+            "neural_render",
+            "point_cloud",
+            "preview",
+            "annotation"
+          ]
+        },
+        "type": { "type": "string", "minLength": 1 },
+        "anchorFrame": { "$ref": "common.schema.json#/$defs/id" },
+        "resourceDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "fidelity": { "enum": ["draft", "fast", "balanced", "accurate", "source"] },
+        "mapping": {
+          "type": "object",
+          "properties": {
+            "scale": { "$ref": "common.schema.json#/$defs/vector3" },
+            "transform": { "$ref": "common.schema.json#/$defs/transform" }
+          },
+          "additionalProperties": false
+        },
+        "claimRefs": {
+          "type": "array",
+          "items": { "$ref": "common.schema.json#/$defs/id" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/representation"
+}

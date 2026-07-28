@@ -1,0 +1,172 @@
+{
+  "id": "world://examples/minimal-cube",
+  "specVersion": "0.1.0",
+  "conventions": {
+    "lengthUnit": "meter",
+    "massUnit": "kilogram",
+    "timeUnit": "second",
+    "angleUnit": "radian",
+    "handedness": "right",
+    "upAxis": "+Z",
+    "forwardAxis": "+X",
+    "quaternionOrder": "wxyz"
+  },
+  "rootEntity": "entity://cube/world",
+  "rootFrame": "frame://cube/world",
+  "entities": [
+    {
+      "id": "entity://cube/world",
+      "kind": "spatial",
+      "displayName": "World",
+      "rootFrame": "frame://cube/world"
+    },
+    {
+      "id": "entity://cube/body",
+      "kind": "spatial",
+      "displayName": "Cube",
+      "ownerEntity": "entity://cube/world",
+      "rootFrame": "frame://cube/body"
+    }
+  ],
+  "frames": [
+    {
+      "id": "frame://cube/world",
+      "ownerEntity": "entity://cube/world",
+      "role": "world"
+    },
+    {
+      "id": "frame://cube/body",
+      "ownerEntity": "entity://cube/body",
+      "role": "canonical_root"
+    }
+  ],
+  "components": [
+    {
+      "id": "component://cube/rigid-body",
+      "type": "worldspec://component/physics.rigid_body",
+      "schemaVersion": "0.1.0",
+      "ownerEntity": "entity://cube/body",
+      "anchorFrame": "frame://cube/body",
+      "properties": {
+        "mobility": "dynamic"
+      },
+      "claimBindings": {
+        "physics.mass": "claim://cube/mass"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "id": "relation://cube/placement",
+      "type": "worldspec://relation/frame.fixed",
+      "schemaVersion": "0.1.0",
+      "endpoints": {
+        "parent": "frame://cube/world",
+        "child": "frame://cube/body"
+      },
+      "parentFrame": "frame://cube/world",
+      "childFrame": "frame://cube/body",
+      "transform": {
+        "translation": [0.0, 0.0, 0.5],
+        "rotationWxyz": [1.0, 0.0, 0.0, 0.0]
+      }
+    }
+  ],
+  "representations": [
+    {
+      "id": "representation://cube/visual",
+      "subjectRef": "entity://cube/body",
+      "role": "visual",
+      "type": "primitive_box",
+      "anchorFrame": "frame://cube/body",
+      "resourceDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "fidelity": "source"
+    },
+    {
+      "id": "representation://cube/collision",
+      "subjectRef": "entity://cube/body",
+      "role": "collision",
+      "type": "primitive_box",
+      "anchorFrame": "frame://cube/body",
+      "resourceDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "fidelity": "accurate",
+      "claimRefs": ["claim://cube/dimensions"]
+    }
+  ],
+  "models": [
+    {
+      "id": "model://cube/rigid",
+      "subjectRef": "entity://cube/body",
+      "family": "rigid_physics",
+      "purpose": ["rigid_body_conformance"],
+      "assumptions": ["homogeneous_density", "rigid_body"],
+      "validityDomain": {
+        "purpose": ["rigid_body_conformance"],
+        "unsupported": ["deformation", "fracture"]
+      },
+      "activates": {
+        "components": ["component://cube/rigid-body"],
+        "representations": ["representation://cube/collision"]
+      }
+    }
+  ],
+  "evidenceGraph": {
+    "sources": [
+      {
+        "id": "evidence://cube/synthetic-definition",
+        "kind": "source_asset",
+        "digest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+        "rightsStatus": "cleared",
+        "notes": "Self-authored synthetic conformance asset."
+      }
+    ],
+    "claims": [
+      {
+        "id": "claim://cube/mass",
+        "target": {
+          "objectRef": "component://cube/rigid-body",
+          "field": "physics.mass"
+        },
+        "assertion": {
+          "nominal": 1.0,
+          "unit": "kg",
+          "uncertaintyPropagation": "not_applicable"
+        },
+        "status": "generated",
+        "evidence": ["evidence://cube/synthetic-definition"],
+        "validityDomain": {
+          "purpose": ["rigid_body_conformance"]
+        }
+      },
+      {
+        "id": "claim://cube/dimensions",
+        "target": {
+          "objectRef": "representation://cube/collision",
+          "field": "geometry.size"
+        },
+        "assertion": {
+          "nominal": [1.0, 1.0, 1.0],
+          "unit": "m",
+          "uncertaintyPropagation": "not_applicable"
+        },
+        "status": "generated",
+        "evidence": ["evidence://cube/synthetic-definition"]
+      }
+    ],
+    "derivations": []
+  },
+  "clockDomains": [
+    {
+      "id": "clock://cube/simulation",
+      "kind": "simulation",
+      "unit": "second",
+      "synchronizationPolicy": "authoritative"
+    }
+  ],
+  "stateChannels": [],
+  "initialState": [],
+  "nativePayloads": [],
+  "metadata": {
+    "example": true
+  }
+}

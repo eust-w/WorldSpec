@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/frame.schema.json",
+  "title": "WorldSpec Frame 0.1",
+  "$defs": {
+    "frame": {
+      "type": "object",
+      "required": ["id", "ownerEntity", "role"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "ownerEntity": { "$ref": "common.schema.json#/$defs/id" },
+        "role": {
+          "enum": [
+            "world",
+            "canonical_root",
+            "body",
+            "inertial",
+            "visual",
+            "collision",
+            "joint_mount",
+            "sensor",
+            "sensor_optical",
+            "interaction",
+            "custom"
+          ]
+        },
+        "description": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$ref": "#/$defs/frame"
+}
