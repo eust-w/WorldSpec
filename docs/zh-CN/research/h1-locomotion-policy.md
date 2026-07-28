@@ -76,3 +76,9 @@ Brax 最终报告 33,280 步，训练吞吐约为 2,596.7 steps/s，训练与派
 `research_smoke / non_publishable`：没有保存 Checkpoint，平均评估 Episode 约为
 87.75 步，不能证明策略质量。规范 1 亿步训练、新的可发布策略和厨房 5/5 L3 行为
 仍未执行；在这些行为验证完成前，不能进入 L3 状态机。
+
+后续对 MuJoCo 3.6 MJX-Warp 容量语义的复核确认：`naconmax` 与 `naccdmax` 是所有
+并行世界共享容量，`njmax` 才是每个世界容量。当前 Profile 因此改为每环境
+16 个活动接触、8 个 CCD 接触和每世界 `njmax=128`；此前 smoke 与运行时报告继续
+作为历史证据，但不再锁定当前 Profile。重新构建镜像、8,192 环境规模预检和新
+smoke 通过前，当前运行时状态为 `planned`。

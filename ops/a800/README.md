@@ -79,7 +79,11 @@ as `runtimeAcceptance=research_smoke`, `policyStatus=non_publishable`, and
 `canonicalTrainingStatus=not_executed`. It does not write a policy checkpoint,
 does not satisfy the 100M profile, and cannot satisfy L3. The launcher also
 fails closed when MuJoCo/MJX logs any collision-capacity overflow. The Profile
-declares `activeContactsPerEnvironment=16`, `naccdmax=128`, and `njmax=4096`.
-The runtime computes aggregate `naconmax` as active contacts per environment
-times the vectorized environment count; the 256-environment smoke therefore
-uses `4096`, while the 8,192-environment canonical run would use `131072`.
+declares `activeContactsPerEnvironment=16`,
+`ccdContactsPerEnvironment=8`, and per-world `njmax=128`. The runtime scales
+the aggregate `naconmax` and `naccdmax` by the vectorized environment count.
+The 256-environment smoke therefore uses `4096/2048`, while the
+8,192-environment canonical run would use `131072/65536`. These choices retain
+headroom over the locked upstream H1 reference (`8` contacts per environment
+and `njmax=51`) for the added right Robotiq model and remain subject to the
+canonical-scale capacity probe.

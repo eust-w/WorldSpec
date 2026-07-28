@@ -54,12 +54,14 @@ or output contract is missing.
 - the canonical run remains `blocked / not_executed`, with a separate
   non-publishable PPO research-smoke result.
 
-The digest-pinned OCI passed an A800 one-step probe and the current profile
-runtime is `locked`. One 32,768-requested-step, 256-environment PPO smoke
-executed and passed numeric and capacity gates, but it is explicitly
+The digest-pinned OCI and one 32,768-requested-step, 256-environment PPO smoke
+executed and passed numeric and capacity gates, but they bind the Profile
+before its capacity-semantics correction. The smoke is explicitly
 `research_smoke / non_publishable`, produced no checkpoint, and does not
-establish a usable new policy. The canonical 100-million-step run and five
-consecutive evaluations remain acceptance blockers.
+establish a usable new policy. The current Profile is temporarily `planned`
+pending a new image, an 8,192-environment scale probe, and relocking. The
+canonical 100-million-step run and five consecutive evaluations remain
+acceptance blockers.
 
 ## Consequences
 

@@ -86,8 +86,8 @@ def validate_profile(profile: dict[str, Any]) -> None:
         "targetPlatform": "linux_x86_64_nvidia",
         "mjxCapacity": {
             "activeContactsPerEnvironment": 16,
-            "naccdmax": 128,
-            "njmax": 4096,
+            "ccdContactsPerEnvironment": 8,
+            "njmax": 128,
         },
     }
     actual_runtime = {key: runtime.get(key) for key in expected_runtime}

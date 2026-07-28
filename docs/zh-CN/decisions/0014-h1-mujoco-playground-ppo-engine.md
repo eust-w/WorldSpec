@@ -61,7 +61,7 @@ Brax JAX PPO 的规范输出是 Orbax/JAX Checkpoint，不伪装成 TorchScript�
 
 ## 当前证据状态
 
-训练框架选择和来源锁定为 `Accepted Design`。目标运行时已为 `locked`：
+训练框架选择和来源锁定为 `Accepted Design`。容量语义修订前的目标运行时证据包括：
 
 - Linux x86_64 OCI 镜像已由 Digest 锁定；
 - A800 上 MJX/Warp one-step 预检已通过；
@@ -70,7 +70,9 @@ Brax JAX PPO 的规范输出是 Orbax/JAX Checkpoint，不伪装成 TorchScript�
 - 规范 1 亿步 PPO 未执行；
 - 未完成目标 Bundle 五次连续评估。
 
-因此本 ADR 只构成受限 GPU smoke 证据，不构成策略可用、正式训练或 L3 通过证据。
+当前 Profile 已按 MJX-Warp 语义改为共享接触容量和每世界约束容量，运行时暂为
+`planned`，等待新镜像与 8,192 环境规模预检。因此本 ADR 只构成历史受限 GPU
+smoke 证据，不构成当前 Profile 已锁定、策略可用、正式训练或 L3 通过证据。
 
 ## 后果
 

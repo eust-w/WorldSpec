@@ -102,15 +102,44 @@
       "required": [
         "activeContactsPerEnvironment",
         "effectiveNaconmax",
-        "naccdmax",
         "njmax"
       ],
       "properties": {
-        "activeContactsPerEnvironment": { "const": 16 },
-        "effectiveNaconmax": { "const": 4096 },
-        "naccdmax": { "const": 128 },
-        "njmax": { "const": 4096 }
+        "activeContactsPerEnvironment": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ccdContactsPerEnvironment": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "effectiveNaconmax": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "effectiveNaccdmax": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "naccdmax": {
+          "type": "integer",
+          "minimum": 1,
+          "deprecated": true
+        },
+        "njmax": {
+          "type": "integer",
+          "minimum": 1
+        }
       },
+      "anyOf": [
+        { "required": ["naccdmax"] },
+        {
+          "required": [
+            "ccdContactsPerEnvironment",
+            "effectiveNaccdmax"
+          ]
+        }
+      ],
       "additionalProperties": false
     },
     "logDiagnostics": {

@@ -38,6 +38,6 @@ def test_smoke_uses_explicit_per_environment_mjx_capacity() -> None:
 
     assert smoke["runtime"]["mjxCapacity"] == {
         "activeContactsPerEnvironment": 16,
-        "naccdmax": 128,
-        "njmax": 4096,
+        "ccdContactsPerEnvironment": 8,
+        "njmax": 128,
     }

@@ -66,8 +66,8 @@ that require their own validation evidence.
 
 ## Current evidence status
 
-The framework decision and source lock are `Accepted Design`; the target runtime
-is now `locked`:
+The framework decision and source lock are `Accepted Design`. Evidence for the
+target runtime before the capacity-semantics correction includes:
 
 - the Linux x86_64 OCI image is digest-pinned;
 - the A800 MJX/Warp one-step preflight passed;
@@ -78,7 +78,10 @@ is now `locked`:
 - the canonical 100-million-step PPO run has not executed;
 - the target bundle has not passed five consecutive evaluations.
 
-This ADR is evidence only of a bounded GPU smoke, not of a usable policy,
+The current Profile now follows MJX-Warp shared-contact and per-world
+constraint-capacity semantics, so its runtime is temporarily `planned` pending
+a new image and an 8,192-environment scale probe. This ADR is evidence only of
+a historical bounded GPU smoke, not of a locked current Profile, usable policy,
 canonical training, or L3 acceptance.
 
 ## Consequences

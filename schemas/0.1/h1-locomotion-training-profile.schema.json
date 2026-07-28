@@ -162,7 +162,7 @@
           "type": "object",
           "required": [
             "activeContactsPerEnvironment",
-            "naccdmax",
+            "ccdContactsPerEnvironment",
             "njmax"
           ],
           "properties": {
@@ -170,8 +170,11 @@
               "type": "integer",
               "minimum": 1
             },
-            "naccdmax": { "type": "integer", "minimum": 64 },
-            "njmax": { "type": "integer", "minimum": 512 }
+            "ccdContactsPerEnvironment": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "njmax": { "type": "integer", "minimum": 1 }
           },
           "additionalProperties": false
         }

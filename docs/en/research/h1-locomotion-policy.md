@@ -86,3 +86,11 @@ and its mean evaluation episode length of about 87.75 steps does not establish
 policy quality. The canonical 100-million-step run, a new publishable policy,
 and the kitchen 5/5 L3 behavior remain unexecuted. The pipeline cannot enter
 the L3 state machine before those behavior validations pass.
+
+A subsequent review of the MuJoCo 3.6 MJX-Warp capacity semantics confirmed
+that `naconmax` and `naccdmax` are shared across all vectorized worlds, while
+`njmax` is per world. The current Profile therefore uses 16 active contacts
+and eight CCD contacts per environment with per-world `njmax=128`. The prior
+smoke and runtime reports remain historical evidence but no longer lock the
+current Profile. Its runtime status is `planned` until a rebuilt image, an
+8,192-environment scale probe, and a new smoke pass.

@@ -46,7 +46,7 @@ def test_profile_digest_is_canonical() -> None:
 
 def test_mjx_capacity_is_fail_closed() -> None:
     value = copy.deepcopy(profile())
-    value["runtime"]["mjxCapacity"]["naccdmax"] = 32
+    value["runtime"]["mjxCapacity"]["ccdContactsPerEnvironment"] = 4
     with pytest.raises(TrainingError) as captured:
         validate_profile(value)
     assert captured.value.code == "TRAINING_RUNTIME_PROFILE_INVALID"

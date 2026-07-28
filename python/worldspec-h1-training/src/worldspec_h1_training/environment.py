@@ -45,7 +45,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
         action_repeat=1,
         impl=profile["framework"]["physicsImplementation"],
         naconmax=capacity["activeContactsPerEnvironment"] * training["numEnvs"],
-        naccdmax=capacity["naccdmax"],
+        naccdmax=capacity["ccdContactsPerEnvironment"] * training["numEnvs"],
         njmax=capacity["njmax"],
     )
 

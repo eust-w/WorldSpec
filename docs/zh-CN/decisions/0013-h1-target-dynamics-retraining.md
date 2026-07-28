@@ -46,10 +46,11 @@ Trace。训练 Worker 必须 fail-closed；缺少锁定运行时、GPU、原生�
 - 外部锁定训练包 `worldspec_h1_training` 的明确输出契约；
 - 规范训练仍为 `blocked / not_executed`，并另存不可发布的研究级 PPO smoke 结果。
 
-Digest 锁定 OCI 已通过 A800 one-step 探针，当前 Profile 的运行时状态为 `locked`。
-一次 32,768 请求步、256 环境的 PPO smoke 已真实运行并通过数值与容量门禁，但它
-明确为 `research_smoke / non_publishable`，没有 Checkpoint，也不表示产生了可用
-新策略。规范 1 亿步训练与五次连续评估仍是验收阻塞项。
+Digest 锁定 OCI 与一次 32,768 请求步、256 环境的 PPO smoke 已真实运行并通过
+数值与容量门禁，但都绑定容量语义修订前的 Profile。smoke 明确为
+`research_smoke / non_publishable`，没有 Checkpoint，也不表示产生了可用新策略。
+当前 Profile 暂为 `planned`，等待新镜像、8,192 环境规模预检和重新锁定；规范
+1 亿步训练与五次连续评估仍是验收阻塞项。
 
 ## 后果
 

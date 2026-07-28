@@ -160,6 +160,10 @@ def run_ppo_smoke(
                 profile["runtime"]["mjxCapacity"]["activeContactsPerEnvironment"]
                 * smoke["training"]["numEnvs"]
             ),
+            "effectiveNaccdmax": (
+                profile["runtime"]["mjxCapacity"]["ccdContactsPerEnvironment"]
+                * smoke["training"]["numEnvs"]
+            ),
         },
         "staticPreflight": static,
         "runtimePreflight": runtime,
