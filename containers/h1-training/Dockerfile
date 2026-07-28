@@ -11,6 +11,11 @@ ARG PYTHON_VERSION=3.12.11
 ARG WORLDSPEC_SOURCE_COMMIT
 ARG WORLDSPEC_PACKAGE_LOCK_DIGEST
 
+# The pinned base image runs as UID 10001. Build-time package installation and
+# ownership setup are explicit root-only steps; the final runtime switches back
+# to the fixed non-root UID below.
+USER 0:0
+
 LABEL org.opencontainers.image.source="https://github.com/eust-w/WorldSpec" \
       org.opencontainers.image.revision="${WORLDSPEC_SOURCE_COMMIT}" \
       dev.worldspec.h1.package-lock="${WORLDSPEC_PACKAGE_LOCK_DIGEST}"

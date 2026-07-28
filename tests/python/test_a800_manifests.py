@@ -101,3 +101,13 @@ def test_h1_image_builder_contains_registry_secret_to_build_namespace() -> None:
     spike = _documents("h1-runtime-spike-job.yaml")[0]
     spike_volumes = spike["spec"]["template"]["spec"]["volumes"]
     assert all("secret" not in volume for volume in spike_volumes)
+
+
+def test_h1_training_image_builds_as_root_but_runs_as_non_root() -> None:
+    dockerfile = (
+        Path(__file__).parents[2] / "containers" / "h1-training" / "Dockerfile"
+    ).read_text(encoding="utf-8")
+    build_user = dockerfile.index("USER 0:0")
+    install = dockerfile.index("RUN python -m pip install")
+    runtime_user = dockerfile.rindex("USER 10001:10001")
+    assert build_user < install < runtime_user
