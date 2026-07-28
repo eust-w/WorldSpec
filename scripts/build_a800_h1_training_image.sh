@@ -93,11 +93,20 @@ local_result_dir=""
 context_uploaded=false
 
 cleanup_context() {
-  local attempt
+  local attempt cleanup_api_pod
   for attempt in 1 2 3; do
-    "${kubectl_cmd[@]}" exec "${api_pod}" -- \
+    cleanup_api_pod="$(
+      "${kubectl_cmd[@]}" get pods \
+        -l app=droboticflow-api \
+        --field-selector=status.phase=Running \
+        -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true
+    )"
+    if [[ -z "${cleanup_api_pod}" ]]; then
+      continue
+    fi
+    "${kubectl_cmd[@]}" exec "${cleanup_api_pod}" -- \
       rm -rf -- "${CONTEXT_DIR}" >/dev/null 2>&1 || true
-    if "${kubectl_cmd[@]}" exec "${api_pod}" -- \
+    if "${kubectl_cmd[@]}" exec "${cleanup_api_pod}" -- \
       test ! -e "${CONTEXT_DIR}" >/dev/null 2>&1; then
       context_uploaded=false
       return 0
