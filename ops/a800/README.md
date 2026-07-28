@@ -81,4 +81,5 @@ does not satisfy the 100M profile, and cannot satisfy L3. The launcher also
 fails closed when MuJoCo/MJX logs any collision-capacity overflow; the explicit
 per-environment `naconmax`, `naccdmax`, and `njmax` values are part of the
 canonical training Profile rather than being derived from the number of
-vectorized environments.
+vectorized environments. The A800 convergence spike currently fixes these
+capacities at `512`, `128`, and `4096` respectively.

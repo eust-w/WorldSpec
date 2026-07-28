@@ -101,7 +101,7 @@
       "type": "object",
       "required": ["naconmax", "naccdmax", "njmax"],
       "properties": {
-        "naconmax": { "const": 128 },
+        "naconmax": { "const": 512 },
         "naccdmax": { "const": 128 },
         "njmax": { "const": 4096 }
       },
