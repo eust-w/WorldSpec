@@ -16,7 +16,7 @@ v0.1 产品入口是 CLI/API。当前已经实现本地 CAS、SQLite WAL 作业�
 | `generate` | 源资产与 GenerationProfile | 可恢复 JobSpec | Queue + TRELLIS.2/Nerfstudio Worker 已实现；GPU 未验收 |
 | `validate` | JSON 与 Schema 名称 | 结构与语义诊断 | Implemented |
 | `compile` | WorldDefinition、TargetProfile 与 BuildIntent | 本地参考 Bundle | MuJoCo/Three.js 参考切片已实现 |
-| `certify` | 证书或 World/Build/Loss/Conformance/Bundle、可选 Ed25519 Seed | Digest 绑定的 signed/unsigned Certificate | L2 已实现；L3 Fail-Closed |
+| `certify` | L2 证据；L3 另加 Task/Control/Predicate/InitialState/RuntimeRecord/TaskRunReport | Digest 绑定的 signed/unsigned Certificate | L2 与 L3 证据核验已实现；H1 5/5 未执行 |
 | `inspect` | JSON、可选 Schema | Canonical SHA-256 与诊断 | Implemented |
 | `resolve` | CAS Digest | 原始不可变 Blob | Implemented |
 | `doctor diagnose` | JSON/AssetDraft 或 OBJ | Validator/OBJ 诊断 | 已实现 |

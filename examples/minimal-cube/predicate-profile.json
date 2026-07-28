@@ -11,8 +11,9 @@
   ],
   "requirements": ["channel://worldspec/linear-velocity"],
   "thresholds": {
-    "linearVelocityMax": 0.02,
-    "angularVelocityMax": 0.05
+    "maximumLinearSpeed": 0.02,
+    "maximumAngularSpeed": 0.05,
+    "maximumPoseDrift": 0.002
   },
   "temporal": {
     "evaluationPeriodSeconds": 0.02,

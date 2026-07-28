@@ -943,6 +943,162 @@ pub fn validate_conformance_report(document: &Value) -> Vec<Diagnostic> {
     diagnostics
 }
 
+/// Validate cross-field constraints for a schema-valid TaskProfile.
+pub fn validate_task_profile(document: &Value) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let required_runs = document
+        .pointer("/certification/requiredRuns")
+        .and_then(Value::as_u64)
+        .unwrap_or_default();
+    let required_successes = document
+        .pointer("/certification/requiredSuccesses")
+        .and_then(Value::as_u64)
+        .unwrap_or_default();
+    if required_successes > required_runs {
+        diagnostics.push(
+            Diagnostic::error(
+                "TASK_SUCCESS_REQUIREMENT_IMPOSSIBLE",
+                "requiredSuccesses cannot exceed requiredRuns",
+            )
+            .at_path("/certification/requiredSuccesses"),
+        );
+    }
+    let mut ids = BTreeSet::new();
+    for (kind, obligations) in [
+        ("goals", array(document, "goals")),
+        ("safety", array(document, "safety")),
+    ] {
+        for (index, obligation) in obligations.iter().enumerate() {
+            if let Some(id) = string(obligation, "id")
+                && !ids.insert(id)
+            {
+                diagnostics.push(
+                    Diagnostic::error(
+                        "TASK_DUPLICATE_OBLIGATION_ID",
+                        "goal and safety obligation IDs must be unique",
+                    )
+                    .at_path(format!("/{kind}/{index}/id"))
+                    .for_object(id),
+                );
+            }
+        }
+    }
+    diagnostics
+}
+
+/// Validate accounting and per-run evidence consistency for TaskRunReport.
+pub fn validate_task_run_report(document: &Value) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    let runs = array(document, "runs");
+    let mut passed = 0_u64;
+    let mut failed = 0_u64;
+    let mut unknown = 0_u64;
+    let mut not_run = 0_u64;
+    let mut indices = BTreeSet::new();
+    for (run_index, run) in runs.iter().enumerate() {
+        match string(run, "result") {
+            Some("pass") => passed += 1,
+            Some("fail") => failed += 1,
+            Some("unknown") => unknown += 1,
+            Some("not_run") => not_run += 1,
+            _ => {}
+        }
+        let declared_index = run.get("index").and_then(Value::as_u64).unwrap_or_default();
+        if !indices.insert(declared_index) {
+            diagnostics.push(
+                Diagnostic::error(
+                    "TASK_RUN_DUPLICATE_INDEX",
+                    "task run indices must be unique",
+                )
+                .at_path(format!("/runs/{run_index}/index")),
+            );
+        }
+        let mut obligation_ids = BTreeSet::new();
+        let mut every_obligation_passed = true;
+        for (obligation_index, obligation) in array(run, "obligations").iter().enumerate() {
+            if let Some(id) = string(obligation, "obligationRef")
+                && !obligation_ids.insert(id)
+            {
+                diagnostics.push(
+                    Diagnostic::error(
+                        "TASK_RUN_DUPLICATE_OBLIGATION",
+                        "a run may report each obligation only once",
+                    )
+                    .at_path(format!(
+                        "/runs/{run_index}/obligations/{obligation_index}/obligationRef"
+                    ))
+                    .for_object(id),
+                );
+            }
+            every_obligation_passed &= string(obligation, "result") == Some("pass");
+        }
+        if string(run, "result") == Some("pass") && !every_obligation_passed {
+            diagnostics.push(
+                Diagnostic::error(
+                    "TASK_RUN_PASS_CONFLICT",
+                    "a passing run cannot contain a non-passing obligation",
+                )
+                .at_path(format!("/runs/{run_index}/result")),
+            );
+        }
+    }
+
+    let expected = [
+        ("total", runs.len() as u64),
+        ("passed", passed),
+        ("failed", failed),
+        ("unknown", unknown),
+        ("notRun", not_run),
+    ];
+    for (field, actual) in expected {
+        let declared = document
+            .pointer(&format!("/summary/{field}"))
+            .and_then(Value::as_u64)
+            .unwrap_or_default();
+        if declared != actual {
+            diagnostics.push(
+                Diagnostic::error(
+                    "TASK_RUN_SUMMARY_MISMATCH",
+                    format!("summary.{field} is {declared}, but runs require {actual}"),
+                )
+                .at_path(format!("/summary/{field}")),
+            );
+        }
+    }
+    let expected_overall = if failed > 0 {
+        "fail"
+    } else if unknown > 0 || not_run > 0 {
+        "incomplete"
+    } else {
+        "pass"
+    };
+    if string(document, "executionEvidence") == Some("not_executed") && passed > 0 {
+        diagnostics.push(
+            Diagnostic::error(
+                "TASK_RUN_EXECUTION_EVIDENCE_CONFLICT",
+                "not_executed evidence cannot contain passing runs",
+            )
+            .at_path("/executionEvidence"),
+        );
+    }
+    let declared_overall = document
+        .pointer("/summary/overall")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    if declared_overall != expected_overall {
+        diagnostics.push(
+            Diagnostic::error(
+                "TASK_RUN_OVERALL_MISMATCH",
+                format!(
+                    "summary.overall is {declared_overall}, but run results require {expected_overall}"
+                ),
+            )
+            .at_path("/summary/overall"),
+        );
+    }
+    diagnostics
+}
+
 /// Validate semantic coverage rules for a schema-valid LossReport.
 pub fn validate_loss_report(report: &Value, target_profile: Option<&Value>) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();

@@ -33,6 +33,10 @@ L3 binds a versioned Task/Behavior Profile, initial state, runtime configuration
 - numerical anomalies, penetration, NaN, and instability;
 - asset, compiler, profile, backend, and hardware versions.
 
+`TaskRunReport` does not replace raw runtime records. Every run binds an independent `RuntimeRecord` digest. The issuer checks TaskProfile, ControlProfile, every PredicateProfile, locked initial state, TargetProfile, BuildManifest, and every RuntimeRecord. A summarized `5/5` cannot substitute for five verifiable traces.
+
+The Reference Predicate Engine consumes canonical evidence rather than backend-native booleans. The issuer recomputes truth, robustness, and confidence from every obligation's canonical `metrics` instead of trusting reported booleans. The first implementation covers `inside`, `stable`, `open`, `closed`, `released`, `upright`, finite state, limits, dangerous collision, and penetration predicates. Missing or non-finite evidence produces `unknown`.
+
 A generated asset may reach L3 while Claims remain Generated/Estimated. MuJoCo and Three.js are v0.1 certification backends. Three.js certifies visual/scene loading and declared interaction, not absent dynamics.
 
 Failures distinguish invalid, compile_failed, target_load_failed, behavior_failed, backend_limited, and unknown. Timeout is never automatically treated as an invalid asset.
@@ -44,4 +48,5 @@ Failures distinguish invalid, compile_failed, target_load_failed, behavior_faile
 - `worldspec certify` can construct an L2 candidate from bound evidence and only emits/signs it after all digests, Loss coverage, required tests, environment, and artifacts pass.
 - The current macOS arm64 local Profiles have each issued an unsigned MuJoCo/Three.js L2 certificate and rejected artifact tampering.
 - The repository's locked Linux x86_64 reference Profiles fail on the current Mac by design; they still have no L2 evidence.
-- valid L3 issuance fails closed until TaskProfile, Predicate, and H1 behavior witnesses are implemented.
+- L3 digest/runtime-evidence assessment and issuance are implemented and fail closed without a complete TaskRunReport, all RuntimeRecords, and Predicate evidence.
+- No 5/5 H1 kitchen behavior witness exists yet, so the project-level H1 L3 remains incomplete; this implementation is not evidence that H1 passed.

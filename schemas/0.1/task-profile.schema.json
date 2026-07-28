@@ -21,8 +21,9 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["predicate", "arguments"],
+        "required": ["id", "predicate", "arguments"],
         "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
           "predicate": { "$ref": "common.schema.json#/$defs/id" },
           "arguments": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" } },
           "holdForSeconds": { "type": "number", "minimum": 0 }
@@ -35,8 +36,9 @@
       "type": "array",
       "items": {
         "type": "object",
-        "required": ["predicate", "mustRemain"],
+        "required": ["id", "predicate", "mustRemain"],
         "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
           "predicate": { "$ref": "common.schema.json#/$defs/id" },
           "mustRemain": { "enum": ["true", "false"] },
           "arguments": { "type": "array", "items": { "$ref": "common.schema.json#/$defs/id" } }

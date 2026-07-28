@@ -10,6 +10,7 @@
   ],
   "goals": [
     {
+      "id": "goal://examples/cube/stable",
       "predicate": "predicate://worldspec/stable",
       "arguments": ["entity://cube"],
       "holdForSeconds": 0.5

@@ -26,6 +26,7 @@
     "lossReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "conformanceReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "taskProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "taskRunReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "evidenceStatuses": {
       "type": "array",
       "items": { "$ref": "common.schema.json#/$defs/evidenceStatus" },
@@ -68,7 +69,7 @@
         "properties": { "level": { "const": "L3" } },
         "required": ["level"]
       },
-      "then": { "required": ["taskProfileDigest"] }
+      "then": { "required": ["taskProfileDigest", "taskRunReportDigest"] }
     },
     {
       "if": {

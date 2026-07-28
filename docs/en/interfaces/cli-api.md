@@ -18,7 +18,7 @@ The v0.1 surface is CLI/API. The local CAS, SQLite WAL job index, loopback API, 
 | `generate` | source artifact and GenerationProfile | recoverable JobSpec | Queue + TRELLIS.2/Nerfstudio Worker implemented; GPU unaccepted |
 | `validate` | JSON and schema name | structural and semantic diagnostics | Implemented |
 | `compile` | WorldDefinition, TargetProfile, and BuildIntent | local reference Bundle | MuJoCo/Three.js reference slices implemented |
-| `certify` | Certificate or World/Build/Loss/Conformance/Bundle, optional Ed25519 seed | digest-bound signed/unsigned Certificate | L2 implemented; L3 fail-closed |
+| `certify` | L2 evidence; L3 additionally binds Task/Control/Predicate/InitialState/RuntimeRecord/TaskRunReport | digest-bound signed/unsigned Certificate | L2/L3 evidence assessment implemented; H1 5/5 not executed |
 | `inspect` | JSON, optional Schema | canonical SHA-256 and diagnostics | Implemented |
 | `resolve` | CAS digest | original immutable blob | Implemented |
 | `doctor diagnose` | JSON/AssetDraft or OBJ | validator/OBJ diagnostics | Implemented |

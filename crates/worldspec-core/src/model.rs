@@ -135,8 +135,9 @@ pub struct BuildIntent {
 #[cfg(test)]
 mod tests {
     use super::{
-        BuildIntent, BuildManifest, Certificate, ConformanceReport, LossReport, SourceBundle,
-        TargetProfile, WorldDefinition,
+        BuildIntent, BuildManifest, Certificate, ConformanceReport, ControlProfile, LossReport,
+        PredicateProfile, RuntimeRecord, SourceBundle, TargetProfile, TaskProfile, TaskRunReport,
+        WorldDefinition,
     };
 
     fn parse<T: serde::de::DeserializeOwned>(text: &str) {
@@ -166,6 +167,21 @@ mod tests {
         ));
         parse::<SourceBundle>(include_str!(
             "../../../examples/minimal-cube/source-bundle.json"
+        ));
+        parse::<TaskProfile>(include_str!(
+            "../../../examples/minimal-cube/task-profile.json"
+        ));
+        parse::<PredicateProfile>(include_str!(
+            "../../../examples/minimal-cube/predicate-profile.json"
+        ));
+        parse::<ControlProfile>(include_str!(
+            "../../../examples/minimal-cube/control-profile.json"
+        ));
+        parse::<RuntimeRecord>(include_str!(
+            "../../../examples/minimal-cube/runtime-record.json"
+        ));
+        parse::<TaskRunReport>(include_str!(
+            "../../../examples/minimal-cube/task-run-report.json"
         ));
     }
 }
@@ -204,6 +220,8 @@ pub struct Certificate {
     pub conformance_report_digest: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub task_profile_digest: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub task_run_report_digest: Option<String>,
     #[serde(default)]
     pub evidence_statuses: Vec<String>,
     pub issued_at: String,
@@ -229,6 +247,89 @@ pub struct ConformanceReport {
     pub environment: Value,
     pub tested_artifacts: Vec<ArtifactRef>,
     pub tests: Vec<Value>,
+    pub summary: Value,
+    pub generated_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TaskProfile {
+    pub id: String,
+    pub profile_version: String,
+    pub world_digest: String,
+    pub robot_ref: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub control_profile_digest: Option<String>,
+    pub initial_state_digest: String,
+    pub predicate_profiles: Vec<String>,
+    pub goals: Vec<Value>,
+    pub safety: Vec<Value>,
+    pub execution: Value,
+    pub certification: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profile_digest: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct PredicateProfile {
+    pub id: String,
+    pub profile_version: String,
+    pub predicate_id: String,
+    pub evaluator_version: String,
+    pub signature: Vec<Value>,
+    pub requirements: Vec<String>,
+    pub thresholds: Value,
+    pub temporal: Value,
+    pub output: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profile_digest: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct ControlProfile {
+    pub id: String,
+    pub profile_version: String,
+    pub clock_domain: String,
+    pub update_rate_hz: f64,
+    pub controllers: Vec<Value>,
+    pub arbitration: String,
+    pub safety: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub profile_digest: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct RuntimeRecord {
+    pub id: String,
+    pub record_version: String,
+    pub world_definition_digest: String,
+    pub epoch: String,
+    pub time_spec: Value,
+    pub initial_snapshot: Value,
+    pub state_streams: Vec<Value>,
+    pub events: Vec<Value>,
+    pub record_digest: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TaskRunReport {
+    pub id: String,
+    pub report_version: String,
+    pub task_profile_digest: String,
+    pub world_definition_digest: String,
+    pub target_profile_digest: String,
+    pub build_manifest_digest: String,
+    pub control_profile_digest: String,
+    pub predicate_profile_digests: Vec<String>,
+    pub initial_state_digest: String,
+    pub execution_evidence: String,
+    pub runner: Value,
+    pub environment: Value,
+    pub runs: Vec<Value>,
     pub summary: Value,
     pub generated_at: String,
 }

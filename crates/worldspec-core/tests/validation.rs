@@ -2,7 +2,8 @@ use serde_json::Value;
 use std::{fs, path::PathBuf};
 use worldspec_core::{
     validate_build_manifest, validate_certificate, validate_conformance_report, validate_file,
-    validate_runtime_record, validate_world_definition,
+    validate_runtime_record, validate_task_profile, validate_task_run_report,
+    validate_world_definition,
 };
 
 fn root() -> PathBuf {
@@ -224,4 +225,31 @@ fn derivation_cannot_upgrade_evidence_authority() {
             .iter()
             .any(|diagnostic| diagnostic.code == "WS_INV_035_DERIVED_AUTHORITY_UPGRADE")
     );
+}
+
+#[test]
+fn task_profile_rejects_impossible_success_threshold() {
+    let mut task = read("examples/minimal-cube/task-profile.json");
+    task["certification"]["requiredRuns"] = Value::from(4);
+    task["certification"]["requiredSuccesses"] = Value::from(5);
+    let found = validate_task_profile(&task);
+    assert!(
+        found
+            .iter()
+            .any(|diagnostic| diagnostic.code == "TASK_SUCCESS_REQUIREMENT_IMPOSSIBLE")
+    );
+}
+
+#[test]
+fn task_run_report_rejects_relabelled_summary_and_non_executed_pass() {
+    let mut report = read("examples/minimal-cube/task-run-report.json");
+    report["executionEvidence"] = Value::String("not_executed".to_owned());
+    report["summary"]["total"] = Value::from(5);
+    let found = validate_task_run_report(&report);
+    let found = found
+        .iter()
+        .map(|diagnostic| diagnostic.code.as_str())
+        .collect::<Vec<_>>();
+    assert!(found.contains(&"TASK_RUN_SUMMARY_MISMATCH"));
+    assert!(found.contains(&"TASK_RUN_EXECUTION_EVIDENCE_CONFLICT"));
 }

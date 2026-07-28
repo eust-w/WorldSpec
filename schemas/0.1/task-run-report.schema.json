@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/task-run-report.schema.json",
+  "title": "WorldSpec TaskRunReport 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "taskProfileDigest",
+    "worldDefinitionDigest",
+    "targetProfileDigest",
+    "buildManifestDigest",
+    "controlProfileDigest",
+    "predicateProfileDigests",
+    "initialStateDigest",
+    "executionEvidence",
+    "runner",
+    "environment",
+    "runs",
+    "summary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "taskProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "worldDefinitionDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "targetProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "buildManifestDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "controlProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "predicateProfileDigests": {
+      "type": "array",
+      "items": { "$ref": "common.schema.json#/$defs/digest" },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "initialStateDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "executionEvidence": { "enum": ["executed", "not_executed"] },
+    "runner": {
+      "type": "object",
+      "required": ["name", "version", "digest"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "version": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "required": ["os", "architecture", "runtime", "runtimeVersion"],
+      "properties": {
+        "os": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 },
+        "runtime": { "type": "string", "minLength": 1 },
+        "runtimeVersion": { "type": "string", "minLength": 1 },
+        "hardware": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "index",
+          "epoch",
+          "result",
+          "initialStateDigest",
+          "runtimeRecordDigest",
+          "durationSeconds",
+          "obligations",
+          "diagnostics"
+        ],
+        "properties": {
+          "index": { "type": "integer", "minimum": 0 },
+          "epoch": { "type": "string", "minLength": 1 },
+          "result": { "enum": ["pass", "fail", "unknown", "not_run"] },
+          "initialStateDigest": { "$ref": "common.schema.json#/$defs/digest" },
+          "runtimeRecordDigest": { "$ref": "common.schema.json#/$defs/digest" },
+          "durationSeconds": { "type": "number", "minimum": 0 },
+          "obligations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "obligationRef",
+                "kind",
+                "predicate",
+                "arguments",
+                "result",
+                "truth",
+                "confidence",
+                "evaluatedForSeconds",
+                "evidenceArtifacts"
+              ],
+              "properties": {
+                "obligationRef": { "$ref": "common.schema.json#/$defs/id" },
+                "kind": { "enum": ["goal", "safety"] },
+                "predicate": { "$ref": "common.schema.json#/$defs/id" },
+                "arguments": {
+                  "type": "array",
+                  "items": { "$ref": "common.schema.json#/$defs/id" }
+                },
+                "result": { "enum": ["pass", "fail", "unknown", "not_run"] },
+                "truth": { "enum": ["true", "false", "unknown"] },
+                "robustness": { "type": "number" },
+                "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+                "evaluatedForSeconds": { "type": "number", "minimum": 0 },
+                "firstSatisfiedAtSeconds": { "type": "number", "minimum": 0 },
+                "violationCount": { "type": "integer", "minimum": 0 },
+                "evidenceArtifacts": {
+                  "type": "array",
+                  "items": { "$ref": "common.schema.json#/$defs/artifactRef" }
+                },
+                "metrics": { "type": "object" }
+              },
+              "additionalProperties": false
+            },
+            "minItems": 1
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total", "passed", "failed", "unknown", "notRun", "overall"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "unknown": { "type": "integer", "minimum": 0 },
+        "notRun": { "type": "integer", "minimum": 0 },
+        "overall": { "enum": ["pass", "fail", "incomplete"] }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

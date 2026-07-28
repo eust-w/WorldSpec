@@ -10,7 +10,7 @@ use std::{
 };
 use worldspec_cas::{Cas, JobStatus};
 use worldspec_cert::{
-    CertificationAssessment, assess_l2_bindings, sign_certificate_with_seed,
+    CertificationAssessment, assess_l2_bindings, assess_l3_bindings, sign_certificate_with_seed,
     verify_bundle_artifacts,
 };
 use worldspec_compiler::{
@@ -33,6 +33,7 @@ struct Cli {
 }
 
 #[derive(Subcommand, Debug)]
+#[allow(clippy::large_enum_variant)]
 enum Command {
     /// Ingest local immutable sources into the CAS and produce an AssetDraft.
     Ingest {
@@ -123,6 +124,24 @@ enum Command {
         /// Executed ConformanceReport for this exact build.
         #[arg(long)]
         conformance_report: Option<PathBuf>,
+        /// TaskProfile required when issuing or validating an L3 certificate.
+        #[arg(long)]
+        task_profile: Option<PathBuf>,
+        /// ControlProfile bound by an L3 TaskProfile.
+        #[arg(long)]
+        control_profile: Option<PathBuf>,
+        /// PredicateProfile documents bound by an L3 TaskProfile.
+        #[arg(long)]
+        predicate_profile: Vec<PathBuf>,
+        /// Canonical locked initial-state JSON for L3.
+        #[arg(long)]
+        initial_state: Option<PathBuf>,
+        /// RuntimeRecord documents for every declared L3 run.
+        #[arg(long)]
+        runtime_record: Vec<PathBuf>,
+        /// Executed TaskRunReport for L3.
+        #[arg(long)]
+        task_run_report: Option<PathBuf>,
         /// Directory containing all BuildManifest artifacts.
         #[arg(long)]
         bundle_dir: Option<PathBuf>,
@@ -1134,7 +1153,7 @@ fn decode_seed(path: &Path) -> Result<[u8; 32], String> {
 }
 
 fn require_path(value: Option<PathBuf>, flag: &str) -> Result<PathBuf, String> {
-    value.ok_or_else(|| format!("{flag} is required for a valid L2 certificate"))
+    value.ok_or_else(|| format!("{flag} is required for this valid certificate"))
 }
 
 fn issue_l2_candidate(
@@ -1186,6 +1205,57 @@ fn issue_l2_candidate(
 }
 
 #[allow(clippy::too_many_arguments)]
+fn issue_l3_candidate(
+    world_path: &Path,
+    target_profile_path: &Path,
+    build_manifest_path: &Path,
+    loss_report_path: &Path,
+    conformance_report_path: &Path,
+    task_profile_path: &Path,
+    task_run_report_path: &Path,
+    issuer: &str,
+) -> Result<Value, String> {
+    let world = read_json(world_path)?;
+    let target = read_json(target_profile_path)?;
+    let manifest = read_json(build_manifest_path)?;
+    let loss = read_json(loss_report_path)?;
+    let conformance = read_json(conformance_report_path)?;
+    let task = read_json(task_profile_path)?;
+    let task_run = read_json(task_run_report_path)?;
+    let task_run_digest = canonical_sha256(&task_run).map_err(|error| error.to_string())?;
+    let identity = task_run_digest.trim_start_matches("sha256:");
+    let evidence_statuses = world
+        .pointer("/evidenceGraph/claims")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|claim| claim.get("status").and_then(Value::as_str))
+        .map(str::to_owned)
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .map(Value::String)
+        .collect::<Vec<_>>();
+    Ok(json!({
+        "id": format!("certificate://local/l3/{identity}"),
+        "certificateVersion": "0.1.0",
+        "level": "L3",
+        "assetDigest": canonical_sha256(&world).map_err(|error| error.to_string())?,
+        "targetProfileDigest": canonical_sha256(&target).map_err(|error| error.to_string())?,
+        "buildManifestDigest": canonical_sha256(&manifest).map_err(|error| error.to_string())?,
+        "lossReportDigest": canonical_sha256(&loss).map_err(|error| error.to_string())?,
+        "conformanceReportDigest": canonical_sha256(&conformance).map_err(|error| error.to_string())?,
+        "taskProfileDigest": canonical_sha256(&task).map_err(|error| error.to_string())?,
+        "taskRunReportDigest": task_run_digest,
+        "evidenceStatuses": evidence_statuses,
+        "issuedAt": jiff::Timestamp::now().to_string(),
+        "issuer": issuer,
+        "valid": true,
+        "invalidatedBy": [],
+        "signatureStatus": "unsigned"
+    }))
+}
+
+#[allow(clippy::too_many_arguments)]
 fn assess_certificate_for_issue(
     certificate: &Value,
     world_path: Option<PathBuf>,
@@ -1193,6 +1263,12 @@ fn assess_certificate_for_issue(
     build_manifest_path: Option<PathBuf>,
     loss_report_path: Option<PathBuf>,
     conformance_report_path: Option<PathBuf>,
+    task_profile_path: Option<PathBuf>,
+    control_profile_path: Option<PathBuf>,
+    predicate_profile_paths: Vec<PathBuf>,
+    initial_state_path: Option<PathBuf>,
+    runtime_record_paths: Vec<PathBuf>,
+    task_run_report_path: Option<PathBuf>,
     bundle_dir: Option<PathBuf>,
     assessment_output: Option<&Path>,
     schema_dir: &Path,
@@ -1200,16 +1276,10 @@ fn assess_certificate_for_issue(
     if certificate.get("valid").and_then(Value::as_bool) != Some(true) {
         return Ok(());
     }
-    match certificate.get("level").and_then(Value::as_str) {
-        Some("L2") => {}
-        Some("L3") => {
-            return Err(
-                "valid L3 issuance is disabled until TaskProfile behavior evidence is implemented"
-                    .to_owned(),
-            );
-        }
+    let level = match certificate.get("level").and_then(Value::as_str) {
+        Some(level @ ("L2" | "L3")) => level,
         _ => return Ok(()),
-    }
+    };
     let world = read_json(&require_path(world_path, "--world")?)?;
     let target_profile = read_json(&require_path(target_profile_path, "--target-profile")?)?;
     let build_manifest = read_json(&require_path(build_manifest_path, "--build-manifest")?)?;
@@ -1245,15 +1315,80 @@ fn assess_certificate_for_issue(
         None,
     )?;
     let bundle_assessment = verify_bundle_artifacts(&build_manifest, bundle_dir);
-    let binding_assessment = assess_l2_bindings(
-        certificate,
-        &world,
-        &target_profile,
-        &build_manifest,
-        &loss_report,
-        &conformance_report,
-    )
-    .map_err(|error| error.to_string())?;
+    let binding_assessment = if level == "L2" {
+        assess_l2_bindings(
+            certificate,
+            &world,
+            &target_profile,
+            &build_manifest,
+            &loss_report,
+            &conformance_report,
+        )
+        .map_err(|error| error.to_string())?
+    } else {
+        let task_profile = read_json(&require_path(task_profile_path, "--task-profile")?)?;
+        let control_profile = read_json(&require_path(control_profile_path, "--control-profile")?)?;
+        if predicate_profile_paths.is_empty() {
+            return Err("--predicate-profile is required at least once for L3".to_owned());
+        }
+        if runtime_record_paths.is_empty() {
+            return Err("--runtime-record is required at least once for L3".to_owned());
+        }
+        let predicate_profiles = predicate_profile_paths
+            .iter()
+            .map(|path| read_json(path))
+            .collect::<Result<Vec<_>, _>>()?;
+        let initial_state = read_json(&require_path(initial_state_path, "--initial-state")?)?;
+        let runtime_records = runtime_record_paths
+            .iter()
+            .map(|path| read_json(path))
+            .collect::<Result<Vec<_>, _>>()?;
+        let task_run_report = read_json(&require_path(task_run_report_path, "--task-run-report")?)?;
+        validate_document(schema_dir, "task-profile.schema.json", &task_profile, None)?;
+        validate_document(
+            schema_dir,
+            "control-profile.schema.json",
+            &control_profile,
+            None,
+        )?;
+        for predicate_profile in &predicate_profiles {
+            validate_document(
+                schema_dir,
+                "predicate-profile.schema.json",
+                predicate_profile,
+                None,
+            )?;
+        }
+        for runtime_record in &runtime_records {
+            validate_document(
+                schema_dir,
+                "runtime-record.schema.json",
+                runtime_record,
+                None,
+            )?;
+        }
+        validate_document(
+            schema_dir,
+            "task-run-report.schema.json",
+            &task_run_report,
+            None,
+        )?;
+        assess_l3_bindings(
+            certificate,
+            &world,
+            &target_profile,
+            &build_manifest,
+            &loss_report,
+            &conformance_report,
+            &task_profile,
+            &control_profile,
+            &predicate_profiles,
+            &initial_state,
+            &runtime_records,
+            &task_run_report,
+        )
+        .map_err(|error| error.to_string())?
+    };
     let mut diagnostics = bundle_assessment.diagnostics;
     diagnostics.extend(binding_assessment.diagnostics);
     let assessment = CertificationAssessment {
@@ -1617,6 +1752,12 @@ fn run() -> Result<bool, String> {
             build_manifest,
             loss_report,
             conformance_report,
+            task_profile,
+            control_profile,
+            predicate_profile,
+            initial_state,
+            runtime_record,
+            task_run_report,
             bundle_dir,
             assessment_output,
             signing_key,
@@ -1626,17 +1767,30 @@ fn run() -> Result<bool, String> {
             let mut certificate = if let Some(input) = input {
                 read_json(&input)?
             } else {
-                let issuer = issuer.as_deref().ok_or_else(|| {
-                    "--issuer is required when issuing a new L2 certificate".to_owned()
-                })?;
-                issue_l2_candidate(
-                    &require_path(world.clone(), "--world")?,
-                    &require_path(target_profile.clone(), "--target-profile")?,
-                    &require_path(build_manifest.clone(), "--build-manifest")?,
-                    &require_path(loss_report.clone(), "--loss-report")?,
-                    &require_path(conformance_report.clone(), "--conformance-report")?,
-                    issuer,
-                )?
+                let issuer = issuer
+                    .as_deref()
+                    .ok_or_else(|| "--issuer is required when issuing a certificate".to_owned())?;
+                if task_profile.is_some() || task_run_report.is_some() {
+                    issue_l3_candidate(
+                        &require_path(world.clone(), "--world")?,
+                        &require_path(target_profile.clone(), "--target-profile")?,
+                        &require_path(build_manifest.clone(), "--build-manifest")?,
+                        &require_path(loss_report.clone(), "--loss-report")?,
+                        &require_path(conformance_report.clone(), "--conformance-report")?,
+                        &require_path(task_profile.clone(), "--task-profile")?,
+                        &require_path(task_run_report.clone(), "--task-run-report")?,
+                        issuer,
+                    )?
+                } else {
+                    issue_l2_candidate(
+                        &require_path(world.clone(), "--world")?,
+                        &require_path(target_profile.clone(), "--target-profile")?,
+                        &require_path(build_manifest.clone(), "--build-manifest")?,
+                        &require_path(loss_report.clone(), "--loss-report")?,
+                        &require_path(conformance_report.clone(), "--conformance-report")?,
+                        issuer,
+                    )?
+                }
             };
             assess_certificate_for_issue(
                 &certificate,
@@ -1645,6 +1799,12 @@ fn run() -> Result<bool, String> {
                 build_manifest,
                 loss_report,
                 conformance_report,
+                task_profile,
+                control_profile,
+                predicate_profile,
+                initial_state,
+                runtime_record,
+                task_run_report,
                 bundle_dir,
                 assessment_output.as_deref(),
                 &schema_dir,

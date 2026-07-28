@@ -1837,6 +1837,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "worldspec-core",
+ "worldspec-predicate",
 ]
 
 [[package]]
@@ -1880,6 +1881,14 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2",
+]
+
+[[package]]
+name = "worldspec-predicate"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

@@ -204,6 +204,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> None:
         "minimal-cube/predicate-profile.json": "predicate-profile.schema.json",
         "minimal-cube/control-profile.json": "control-profile.schema.json",
         "minimal-cube/task-profile.json": "task-profile.schema.json",
+        "minimal-cube/task-run-report.json": "task-run-report.schema.json",
         "minimal-cube/runtime-record.json": "runtime-record.schema.json",
         "minimal-cube/job-spec.json": "job.schema.json",
         "minimal-cube/job-result.json": "job.schema.json",
@@ -316,7 +317,7 @@ def main() -> int:
     print(
         "PASS: "
         f"{len(schemas)} schemas; "
-        "24 positive fixtures; "
+        "25 positive fixtures; "
         "4 negative fixtures; "
         "bilingual mirrors and local links"
     )

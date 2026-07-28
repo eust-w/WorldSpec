@@ -2,7 +2,7 @@
 
 WorldSpec is a canonical semantic model, evidence model, and cross-simulator compilation IR for embodied assets. It aims to turn existing assets or image/video generation results into traceable, verifiable, and loss-transparent SimReady assets.
 
-> Repository status: this repository contains v0.1 documentation, 29 JSON Schemas, examples, Rust Core/Validator, canonical digests, a file CAS, SQLite WAL job index, optional Ed25519 certificate signing, CLI, and loopback asynchronous API. Generate/compile commands currently create recoverable jobs only. MuJoCo/Three.js backends, GPU workers, and L2/L3 behavioral certification are not implemented, so product v0.1 is not accepted as a whole.
+> Repository status: this repository contains v0.1 documentation, 30 JSON Schemas, examples, Rust Core/Validator, canonical digests, a file CAS, SQLite WAL job index, optional Ed25519 certificate signing, CLI, and a loopback asynchronous API. MuJoCo/Three.js reference compilation, local macOS arm64 L2 evidence, immutable L3 TaskRun/RuntimeRecord assessment, the Reference Predicate Engine, fail-closed generation workers, and selected ingestion/Doctor slices are implemented. Linux x86_64 reference L2, real A800/H100 generation, full CAD/USD native execution, and the H1 kitchen 5/5 L3 witness remain incomplete, so product v0.1 is not accepted as a whole.
 
 ## Entry points
 

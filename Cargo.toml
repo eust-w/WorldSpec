@@ -6,6 +6,7 @@ members = [
     "crates/worldspec-compiler",
     "crates/worldspec-core",
     "crates/worldspec-forge",
+    "crates/worldspec-predicate",
     "crates/worldspec-server",
 ]
 resolver = "2"
