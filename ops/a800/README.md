@@ -46,3 +46,15 @@ local report. The build context and Job are removed after evidence capture.
 The Dockerfile must never recursively change `/workspace`: that path is the
 shared build-context PVC in Kaniko. Runtime input and output directories are
 provided as dedicated volumes by runtime Jobs instead.
+
+Run the resulting digest-pinned image without installing dependencies:
+
+```bash
+KUBECONFIG=/Users/d-robotics/.config/droboticflow/kubeconfigs/poc.config \
+  ./scripts/run_a800_h1_locked_runtime_probe.sh
+```
+
+The probe records the image source commit separately from the later probe
+definition commit. It runs as UID/GID 10001 with a read-only root filesystem,
+no ServiceAccount token, no Secret mounts, and one A800. Passing this probe
+establishes a locked runtime, not PPO convergence or L3 task success.

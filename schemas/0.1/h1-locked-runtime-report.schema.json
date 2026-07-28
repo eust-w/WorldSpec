@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locked-runtime-report.schema.json",
+  "title": "WorldSpec H1 Locked OCI Runtime Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "probeDefinition",
+    "imageSource",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "profileDigest",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "oneStep",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "status": { "const": "passed" },
+    "scope": { "const": "h1_locked_oci_runtime_probe" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "locked" },
+    "probeDefinition": { "$ref": "#/$defs/sourceCommit" },
+    "imageSource": {
+      "allOf": [
+        { "$ref": "#/$defs/sourceCommit" },
+        {
+          "type": "object",
+          "required": ["materialization", "archiveDigest"],
+          "properties": {
+            "materialization": { "const": "verified_git_archive" },
+            "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "container": {
+      "type": "object",
+      "required": [
+        "image",
+        "runAsUser",
+        "runAsGroup",
+        "readOnlyRootFilesystem",
+        "serviceAccountTokenMounted",
+        "secretMountCount"
+      ],
+      "properties": {
+        "image": {
+          "type": "string",
+          "pattern": "^[^\\s@]+@sha256:[a-f0-9]{64}$"
+        },
+        "runAsUser": { "const": 10001 },
+        "runAsGroup": { "const": 10001 },
+        "readOnlyRootFilesystem": { "const": true },
+        "serviceAccountTokenMounted": { "const": false },
+        "secretMountCount": { "const": 0 }
+      },
+      "additionalProperties": false
+    },
+    "platform": {
+      "type": "object",
+      "required": ["system", "machine", "python"],
+      "properties": {
+        "system": { "const": "Linux" },
+        "machine": { "enum": ["x86_64", "amd64"] },
+        "python": { "const": "3.12.11" }
+      },
+      "additionalProperties": false
+    },
+    "gpu": { "$ref": "h1-runtime-spike-report.schema.json#/properties/gpu" },
+    "packages": {
+      "type": "object",
+      "required": [
+        "brax",
+        "flax",
+        "jax",
+        "jaxlib",
+        "jsonschema",
+        "mujoco",
+        "mujoco-mjx",
+        "orbax-checkpoint",
+        "playground",
+        "warp-lang",
+        "worldspec-h1-training",
+        "worldspec-worker"
+      ],
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "staticPreflight": {
+      "$ref": "h1-runtime-spike-report.schema.json#/properties/staticPreflight"
+    },
+    "runtimePreflight": {
+      "$ref": "h1-runtime-spike-report.schema.json#/properties/runtimePreflight"
+    },
+    "target": { "$ref": "h1-runtime-spike-report.schema.json#/properties/target" },
+    "oneStep": { "$ref": "h1-runtime-spike-report.schema.json#/properties/oneStep" },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "sourceCommit": {
+      "type": "object",
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": { "type": "string", "format": "uri" },
+        "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+      }
+    }
+  },
+  "additionalProperties": false
+}

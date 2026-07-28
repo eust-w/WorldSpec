@@ -114,3 +114,26 @@ def test_h1_training_image_builds_as_root_but_runs_as_non_root() -> None:
     runtime_user = dockerfile.rindex("USER 10001:10001")
     assert build_user < install < runtime_user
     assert "chown -R 10001:10001 /home/worldspec /workspace" not in dockerfile
+
+
+def test_locked_runtime_probe_uses_digest_without_credentials_or_installs() -> None:
+    (job,) = _documents("h1-locked-runtime-probe-job.yaml")
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["securityContext"]["runAsUser"] == 10001
+    assert pod["securityContext"]["runAsGroup"] == 10001
+    (container,) = pod["containers"]
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
+
+    entrypoint = (A800 / "h1-locked-runtime-probe-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    assert '"runtimeAcceptance": "locked"' in entrypoint
+    assert "uv sync" not in entrypoint
+    assert "pip install" not in entrypoint
+    assert "serviceAccountTokenMounted" in entrypoint
