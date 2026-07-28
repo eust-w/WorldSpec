@@ -9,7 +9,10 @@ use std::{
 };
 use worldspec_cas::{Cas, JobStatus};
 use worldspec_cert::sign_certificate_with_seed;
-use worldspec_compiler::{compile_mujoco, compile_threejs, write_compile_summary};
+use worldspec_compiler::{
+    ResourceMap, compile_mujoco_with_resources, compile_threejs_with_resources,
+    write_compile_summary,
+};
 use worldspec_core::{ValidationReport, canonical_json, canonical_sha256, validate_file};
 use worldspec_forge::{
     DiagnosticSeverity, ForgeDiagnostic, diagnose_glb, diagnose_obj, diagnose_robot_xml,
@@ -35,6 +38,8 @@ enum Command {
         rights: PathBuf,
         #[arg(long)]
         output: PathBuf,
+        #[arg(long)]
+        candidate_output: Option<PathBuf>,
         #[arg(long, default_value = ".worldspec")]
         cas_root: PathBuf,
         #[arg(long, default_value = "schemas/0.1")]
@@ -85,6 +90,8 @@ enum Command {
         build_intent: PathBuf,
         #[arg(long)]
         output_dir: PathBuf,
+        #[arg(long, default_value = ".worldspec")]
+        cas_root: PathBuf,
         #[arg(long, default_value = "schemas/0.1")]
         schema_dir: PathBuf,
     },
@@ -267,10 +274,141 @@ fn local_id(kind: &str, operation: &str) -> String {
     format!("{kind}://local/{operation}-{nanos}")
 }
 
+fn visual_world_candidate(
+    format: &str,
+    resource_digest: &str,
+    rights_status: &str,
+    display_name: &str,
+) -> Value {
+    let suffix = resource_digest.trim_start_matches("sha256:");
+    let root_entity = format!("entity://ingest/{suffix}/world");
+    let asset_entity = format!("entity://ingest/{suffix}/asset");
+    let root_frame = format!("frame://ingest/{suffix}/world");
+    let asset_frame = format!("frame://ingest/{suffix}/asset");
+    let evidence = format!("evidence://ingest/{suffix}/source");
+    let representation = format!("representation://ingest/{suffix}/visual");
+    json!({
+        "id": format!("world://ingest/{suffix}"),
+        "specVersion": "0.1.0",
+        "conventions": {
+            "lengthUnit": "meter",
+            "massUnit": "kilogram",
+            "timeUnit": "second",
+            "angleUnit": "radian",
+            "handedness": "right",
+            "upAxis": "+Z",
+            "forwardAxis": "+X",
+            "quaternionOrder": "wxyz"
+        },
+        "rootEntity": root_entity,
+        "rootFrame": root_frame,
+        "entities": [
+            {
+                "id": root_entity,
+                "kind": "spatial",
+                "displayName": "World",
+                "rootFrame": root_frame
+            },
+            {
+                "id": asset_entity,
+                "kind": "spatial",
+                "displayName": display_name,
+                "ownerEntity": root_entity,
+                "rootFrame": asset_frame,
+                "tags": ["imported", format]
+            }
+        ],
+        "frames": [
+            {
+                "id": root_frame,
+                "ownerEntity": root_entity,
+                "role": "world"
+            },
+            {
+                "id": asset_frame,
+                "ownerEntity": asset_entity,
+                "role": "canonical_root"
+            }
+        ],
+        "components": [],
+        "relations": [
+            {
+                "id": format!("relation://ingest/{suffix}/placement"),
+                "type": "worldspec://relation/frame.fixed",
+                "schemaVersion": "0.1.0",
+                "endpoints": {
+                    "parent": root_frame,
+                    "child": asset_frame
+                },
+                "parentFrame": root_frame,
+                "childFrame": asset_frame,
+                "transform": {
+                    "translation": [0.0, 0.0, 0.0],
+                    "rotationWxyz": [1.0, 0.0, 0.0, 0.0]
+                }
+            }
+        ],
+        "representations": [
+            {
+                "id": representation,
+                "subjectRef": asset_entity,
+                "role": "visual",
+                "type": if format == "glb" {"gltf_binary_pbr"} else {"triangle_mesh"},
+                "anchorFrame": asset_frame,
+                "resourceDigest": resource_digest,
+                "fidelity": "source"
+            }
+        ],
+        "models": [],
+        "evidenceGraph": {
+            "sources": [
+                {
+                    "id": evidence,
+                    "kind": "source_asset",
+                    "digest": resource_digest,
+                    "rightsStatus": rights_status,
+                    "notes": "Imported immutable visual source; scale and physical properties are unresolved."
+                }
+            ],
+            "claims": [],
+            "derivations": []
+        },
+        "clockDomains": [
+            {
+                "id": format!("clock://ingest/{suffix}/simulation"),
+                "kind": "simulation",
+                "unit": "second",
+                "synchronizationPolicy": "authoritative"
+            }
+        ],
+        "stateChannels": [],
+        "initialState": [],
+        "nativePayloads": [
+            {
+                "id": format!("native://ingest/{suffix}/{format}"),
+                "sourceFormat": format,
+                "sourceVersion": if format == "glb" {"2.0"} else {"unknown"},
+                "digest": resource_digest,
+                "namespace": "worldspec.ingestion.source",
+                "rightsStatus": rights_status,
+                "targetScope": [format]
+            }
+        ],
+        "metadata": {
+            "ingestion": {
+                "format": format,
+                "unitStatus": "unknown",
+                "physicsStatus": "unresolved"
+            }
+        }
+    })
+}
+
 fn ingest(
     inputs: Vec<PathBuf>,
     rights_path: PathBuf,
     output: PathBuf,
+    candidate_output: Option<PathBuf>,
     cas_root: PathBuf,
     schema_dir: PathBuf,
 ) -> Result<bool, String> {
@@ -281,6 +419,10 @@ fn ingest(
         .get("id")
         .and_then(Value::as_str)
         .ok_or_else(|| "RightsSpec.id is required".to_owned())?;
+    let rights_status = rights
+        .get("status")
+        .and_then(Value::as_str)
+        .ok_or_else(|| "RightsSpec.status is required".to_owned())?;
     let rights_bytes = canonical_json(&rights).map_err(|error| error.to_string())?;
     let rights_digest = cas
         .put_bytes(&rights_bytes, Some("application/vnd.worldspec.rights+json"))
@@ -344,18 +486,53 @@ fn ingest(
     });
     let bundle_digest = canonical_sha256(&source_bundle).map_err(|error| error.to_string())?;
     source_bundle["bundleDigest"] = Value::String(bundle_digest);
-    let draft = json!({
+    let candidate = source_bundle["items"]
+        .as_array()
+        .filter(|items| items.len() == 1)
+        .and_then(|items| items.first())
+        .and_then(|item| {
+            let format = item.get("format")?.as_str()?;
+            matches!(format, "obj" | "glb").then(|| {
+                visual_world_candidate(
+                    format,
+                    item["digest"].as_str().unwrap_or_default(),
+                    rights_status,
+                    item["logicalPath"].as_str().unwrap_or("Imported asset"),
+                )
+            })
+        });
+    if let Some(candidate) = candidate.as_ref() {
+        validate_document(&schema_dir, "world-definition.schema.json", candidate, None)?;
+    }
+    let mut draft = json!({
         "id": format!("assetdraft://local/{}", source_bundle["bundleDigest"].as_str().unwrap_or(identity_suffix).trim_start_matches("sha256:")),
         "specVersion": "0.1.0",
         "sourceBundle": source_bundle,
         "status": "needs_review",
         "diagnostics": diagnostics,
         "unresolved": [{
-            "code": "INGESTION_ADAPTER_REQUIRED",
-            "question": "Run the format-specific ingestion adapter to create a candidate WorldDefinition.",
+            "code": if candidate.is_some() {"UNIT_CONFIRMATION_REQUIRED"} else {"INGESTION_ADAPTER_REQUIRED"},
+            "question": if candidate.is_some() {"Confirm source units and canonical scale before L1 validation."} else {"Run the format-specific ingestion adapter to create a candidate WorldDefinition."},
             "impact": "blocking"
         }]
     });
+    if let Some(candidate) = candidate {
+        draft["candidateWorldDefinition"] = candidate;
+        draft["unresolved"]
+            .as_array_mut()
+            .expect("unresolved is an array")
+            .push(json!({
+                "code": "PHYSICS_GENERATION_REQUIRED",
+                "question": "Select collision, mass, center-of-mass, and inertia evidence before physics compilation.",
+                "impact": "blocking"
+            }));
+    }
+    if let (Some(path), Some(candidate)) = (
+        candidate_output.as_ref(),
+        draft.get("candidateWorldDefinition"),
+    ) {
+        write_json(path, candidate)?;
+    }
     write_json(&output, &draft)?;
     println!(
         "{}",
@@ -600,6 +777,7 @@ fn compile_local(
     target_profile_path: PathBuf,
     build_intent_path: PathBuf,
     output_dir: PathBuf,
+    cas_root: PathBuf,
     schema_dir: PathBuf,
 ) -> Result<bool, String> {
     let world = read_json(&input)?;
@@ -620,9 +798,25 @@ fn compile_local(
         .ok_or_else(|| "TargetProfile.target is required".to_owned())?;
     fs::create_dir_all(&output_dir)
         .map_err(|error| format!("cannot create {}: {error}", output_dir.display()))?;
+    let cas = Cas::open(cas_root).map_err(|error| error.to_string())?;
+    let mut resources = ResourceMap::new();
+    for digest in world
+        .get("representations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(|item| item.get("resourceDigest").and_then(Value::as_str))
+    {
+        if cas.verify(digest).map_err(|error| error.to_string())? {
+            resources.insert(
+                digest.to_owned(),
+                cas.get_bytes(digest).map_err(|error| error.to_string())?,
+            );
+        }
+    }
     let mut summary = match target {
-        "mujoco" => compile_mujoco(&world, &output_dir),
-        "threejs" => compile_threejs(&world, &output_dir),
+        "mujoco" => compile_mujoco_with_resources(&world, &output_dir, &resources),
+        "threejs" => compile_threejs_with_resources(&world, &output_dir, &resources),
         other => return Err(format!("unsupported certified target: {other}")),
     }
     .map_err(|error| error.to_string())?;
@@ -781,9 +975,17 @@ fn run() -> Result<bool, String> {
             inputs,
             rights,
             output,
+            candidate_output,
             cas_root,
             schema_dir,
-        } => ingest(inputs, rights, output, cas_root, schema_dir),
+        } => ingest(
+            inputs,
+            rights,
+            output,
+            candidate_output,
+            cas_root,
+            schema_dir,
+        ),
         Command::Generate(args) => submit_job("generate", args),
         Command::Inspect {
             input,
@@ -849,8 +1051,16 @@ fn run() -> Result<bool, String> {
             target_profile,
             build_intent,
             output_dir,
+            cas_root,
             schema_dir,
-        } => compile_local(input, target_profile, build_intent, output_dir, schema_dir),
+        } => compile_local(
+            input,
+            target_profile,
+            build_intent,
+            output_dir,
+            cas_root,
+            schema_dir,
+        ),
         Command::Certify {
             input,
             output,

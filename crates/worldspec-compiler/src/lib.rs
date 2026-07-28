@@ -62,6 +62,8 @@ pub struct CompileSummary {
     pub losses: Vec<Value>,
 }
 
+pub type ResourceMap = BTreeMap<String, Vec<u8>>;
+
 fn values<'a>(world: &'a Value, key: &str) -> &'a [Value] {
     world
         .get(key)
@@ -168,6 +170,128 @@ fn relation_for_entity<'a>(world: &'a Value, root_frame: &str) -> Option<&'a Val
         .find(|relation| field(relation, "childFrame") == root_frame)
 }
 
+fn representation_for_entity<'a>(
+    world: &'a Value,
+    entity_id: &str,
+    preferred_role: &str,
+) -> Option<&'a Value> {
+    values(world, "representations")
+        .iter()
+        .find(|item| {
+            field(item, "subjectRef") == entity_id && field(item, "role") == preferred_role
+        })
+        .or_else(|| {
+            values(world, "representations").iter().find(|item| {
+                field(item, "subjectRef") == entity_id && field(item, "role") == "visual"
+            })
+        })
+}
+
+fn source_format_for_digest<'a>(world: &'a Value, digest: &str) -> Option<&'a str> {
+    values(world, "nativePayloads")
+        .iter()
+        .find(|payload| field(payload, "digest") == digest)
+        .map(|payload| field(payload, "sourceFormat"))
+}
+
+fn representation_scale(representation: &Value) -> Vec<f64> {
+    number_list(representation.pointer("/mapping/scale"), &[1.0, 1.0, 1.0])
+}
+
+fn append_unresolved_ingestion_losses(world: &Value, target: &str, losses: &mut Vec<Value>) {
+    if world
+        .pointer("/metadata/ingestion/unitStatus")
+        .and_then(Value::as_str)
+        == Some("unknown")
+    {
+        losses.push(json!({
+            "id": format!("loss://{target}/ingestion/unit-scale"),
+            "sourceRef": field(world, "id"),
+            "capability": "capability://worldspec/canonical-unit-scale",
+            "status": "unsupported",
+            "targetBinding": target,
+            "rationale": "The imported source unit has not been confirmed.",
+            "consequence": "The bundle may be inspected, but cannot receive L2 certification."
+        }));
+    }
+}
+
+#[derive(Debug, Clone)]
+struct MujocoMeshBinding {
+    name: String,
+    relative_path: String,
+    scale: Vec<f64>,
+    collision_authoritative: bool,
+}
+
+fn materialize_mujoco_meshes(
+    world: &Value,
+    output: &Path,
+    resources: &ResourceMap,
+    losses: &mut Vec<Value>,
+) -> Result<(BTreeMap<String, MujocoMeshBinding>, Vec<CompiledArtifact>), CompilerError> {
+    let mut bindings = BTreeMap::new();
+    let mut artifacts = Vec::new();
+    let mut written = BTreeMap::<String, String>::new();
+    for entity in values(world, "entities") {
+        let entity_id = field(entity, "id");
+        let Some(representation) = representation_for_entity(world, entity_id, "collision") else {
+            continue;
+        };
+        let digest = field(representation, "resourceDigest");
+        let Some(bytes) = resources.get(digest) else {
+            continue;
+        };
+        let source_format = source_format_for_digest(world, digest).unwrap_or_default();
+        if source_format != "obj" {
+            losses.push(json!({
+                "id": format!("loss://mujoco/{}/mesh-format", safe_name(entity_id)),
+                "sourceRef": field(representation, "id"),
+                "capability": "capability://worldspec/mesh-format",
+                "status": "unsupported",
+                "targetBinding": "mujoco://asset/mesh",
+                "rationale": format!("The reference MuJoCo compiler only materializes OBJ; source format is {source_format}."),
+                "consequence": "A diagnostic primitive is emitted instead of the source mesh."
+            }));
+            continue;
+        }
+        let path = written.entry(digest.to_owned()).or_insert_with(|| {
+            format!(
+                "assets/{}.obj",
+                digest.trim_start_matches("sha256:").to_ascii_lowercase()
+            )
+        });
+        if !artifacts
+            .iter()
+            .any(|artifact: &CompiledArtifact| artifact.path == *path)
+        {
+            artifacts.push(write_artifact(output, path, "model/obj", "mesh", bytes)?);
+        }
+        let collision_authoritative = field(representation, "role") == "collision";
+        if !collision_authoritative {
+            losses.push(json!({
+                "id": format!("loss://mujoco/{}/visual-only-mesh", safe_name(entity_id)),
+                "sourceRef": field(representation, "id"),
+                "capability": "capability://worldspec/collision-shape",
+                "status": "unsupported",
+                "targetBinding": format!("mujoco://geom/{}", safe_name(entity_id)),
+                "rationale": "Only a visual representation exists; it is emitted with collision disabled.",
+                "consequence": "The source shape is visible but cannot be used for physical task certification."
+            }));
+        }
+        bindings.insert(
+            entity_id.to_owned(),
+            MujocoMeshBinding {
+                name: format!("mesh_{}", safe_name(entity_id)),
+                relative_path: path.clone(),
+                scale: representation_scale(representation),
+                collision_authoritative,
+            },
+        );
+    }
+    Ok((bindings, artifacts))
+}
+
 fn write_artifact(
     output: &Path,
     path: &str,
@@ -206,6 +330,7 @@ fn append_mujoco_body(
     world: &Value,
     entity: &Value,
     children: &HashMap<&str, Vec<&Value>>,
+    mesh_bindings: &BTreeMap<String, MujocoMeshBinding>,
     losses: &mut Vec<Value>,
     depth: usize,
 ) {
@@ -292,38 +417,61 @@ fn append_mujoco_body(
         }));
     }
 
-    let dimensions = entity_dimensions(world, id);
-    let size = dimensions
-        .as_ref()
-        .map(|values| values.iter().map(|value| value / 2.0).collect::<Vec<_>>())
-        .unwrap_or_else(|| vec![0.1, 0.1, 0.1]);
-    if dimensions.is_none() {
-        losses.push(json!({
-            "id": format!("loss://mujoco/{name}/collision-fallback", name = safe_name(id)),
-            "sourceRef": id,
-            "capability": "capability://worldspec/collision-shape",
-            "status": "approximated",
-            "targetBinding": format!("mujoco://geom/{name}", name = safe_name(id)),
-            "rationale": "No resolved collision resource or dimensions were available; a 0.2 m diagnostic box was emitted.",
-            "consequence": "Collision behavior is diagnostic only and cannot be used for task certification."
-        }));
-    }
     let mass = entity_mass(world, id);
     let mass_attribute = mass
         .map(|value| format!(" mass=\"{value}\""))
         .unwrap_or_default();
-    xml.push_str(&format!(
-        "{indent}  <geom name=\"{}_geom\" type=\"box\" size=\"{} {} {}\"{} rgba=\"0.55 0.65 0.8 1\"/>\n",
-        xml_escape(&safe_name(id)),
-        size[0],
-        size[1],
-        size[2],
-        mass_attribute
-    ));
+    if let Some(binding) = mesh_bindings.get(id) {
+        let collision_attributes = if binding.collision_authoritative {
+            ""
+        } else {
+            " contype=\"0\" conaffinity=\"0\""
+        };
+        xml.push_str(&format!(
+            "{indent}  <geom name=\"{}_geom\" type=\"mesh\" mesh=\"{}\"{}{} rgba=\"0.55 0.65 0.8 1\"/>\n",
+            xml_escape(&safe_name(id)),
+            xml_escape(&binding.name),
+            mass_attribute,
+            collision_attributes
+        ));
+    } else {
+        let dimensions = entity_dimensions(world, id);
+        let size = dimensions
+            .as_ref()
+            .map(|values| values.iter().map(|value| value / 2.0).collect::<Vec<_>>())
+            .unwrap_or_else(|| vec![0.1, 0.1, 0.1]);
+        if dimensions.is_none() {
+            losses.push(json!({
+                "id": format!("loss://mujoco/{name}/collision-fallback", name = safe_name(id)),
+                "sourceRef": id,
+                "capability": "capability://worldspec/collision-shape",
+                "status": "approximated",
+                "targetBinding": format!("mujoco://geom/{name}", name = safe_name(id)),
+                "rationale": "No resolved collision resource or dimensions were available; a 0.2 m diagnostic box was emitted.",
+                "consequence": "Collision behavior is diagnostic only and cannot be used for task certification."
+            }));
+        }
+        xml.push_str(&format!(
+            "{indent}  <geom name=\"{}_geom\" type=\"box\" size=\"{} {} {}\"{} rgba=\"0.55 0.65 0.8 1\"/>\n",
+            xml_escape(&safe_name(id)),
+            size[0],
+            size[1],
+            size[2],
+            mass_attribute
+        ));
+    }
 
     if let Some(entity_children) = children.get(id) {
         for child in entity_children {
-            append_mujoco_body(xml, world, child, children, losses, depth + 1);
+            append_mujoco_body(
+                xml,
+                world,
+                child,
+                children,
+                mesh_bindings,
+                losses,
+                depth + 1,
+            );
         }
     }
     xml.push_str(&format!("{indent}</body>\n"));
@@ -332,6 +480,14 @@ fn append_mujoco_body(
 pub fn compile_mujoco(
     world: &Value,
     output: impl AsRef<Path>,
+) -> Result<CompileSummary, CompilerError> {
+    compile_mujoco_with_resources(world, output, &ResourceMap::new())
+}
+
+pub fn compile_mujoco_with_resources(
+    world: &Value,
+    output: impl AsRef<Path>,
+    resources: &ResourceMap,
 ) -> Result<CompileSummary, CompilerError> {
     let output = output.as_ref();
     fs::create_dir_all(output)?;
@@ -357,12 +513,44 @@ pub fn compile_mujoco(
     }
 
     let mut losses = Vec::new();
+    append_unresolved_ingestion_losses(world, "mujoco", &mut losses);
+    let (mesh_bindings, mut artifacts) =
+        materialize_mujoco_meshes(world, output, resources, &mut losses)?;
     let mut xml = String::from(
-        "<mujoco model=\"worldspec\">\n  <compiler angle=\"radian\" coordinate=\"local\"/>\n  <option timestep=\"0.002\"/>\n  <worldbody>\n",
+        "<mujoco model=\"worldspec\">\n  <compiler angle=\"radian\" coordinate=\"local\"/>\n  <option timestep=\"0.002\"/>\n",
     );
+    if !mesh_bindings.is_empty() {
+        xml.push_str("  <asset>\n");
+        let mut unique_meshes = BTreeMap::new();
+        for binding in mesh_bindings.values() {
+            unique_meshes
+                .entry(binding.name.as_str())
+                .or_insert(binding);
+        }
+        for binding in unique_meshes.values() {
+            xml.push_str(&format!(
+                "    <mesh name=\"{}\" file=\"{}\" scale=\"{} {} {}\"/>\n",
+                xml_escape(&binding.name),
+                xml_escape(&binding.relative_path),
+                binding.scale[0],
+                binding.scale[1],
+                binding.scale[2]
+            ));
+        }
+        xml.push_str("  </asset>\n");
+    }
+    xml.push_str("  <worldbody>\n");
     if let Some(root_children) = children.get(root_entity) {
         for child in root_children {
-            append_mujoco_body(&mut xml, world, child, &children, &mut losses, 2);
+            append_mujoco_body(
+                &mut xml,
+                world,
+                child,
+                &children,
+                &mesh_bindings,
+                &mut losses,
+                2,
+            );
         }
     } else if !entity_by_id.contains_key(root_entity) {
         return Err(CompilerError::InvalidWorld(
@@ -370,13 +558,16 @@ pub fn compile_mujoco(
         ));
     }
     xml.push_str("  </worldbody>\n</mujoco>\n");
-    let artifacts = vec![write_artifact(
-        output,
-        "model.xml",
-        "application/mujoco+xml",
-        "entrypoint",
-        xml.as_bytes(),
-    )?];
+    artifacts.insert(
+        0,
+        write_artifact(
+            output,
+            "model.xml",
+            "application/mujoco+xml",
+            "entrypoint",
+            xml.as_bytes(),
+        )?,
+    );
     Ok(CompileSummary {
         target: "mujoco".to_owned(),
         artifacts,
@@ -544,10 +735,52 @@ pub fn compile_threejs(
     world: &Value,
     output: impl AsRef<Path>,
 ) -> Result<CompileSummary, CompilerError> {
+    compile_threejs_with_resources(world, output, &ResourceMap::new())
+}
+
+pub fn compile_threejs_with_resources(
+    world: &Value,
+    output: impl AsRef<Path>,
+    resources: &ResourceMap,
+) -> Result<CompileSummary, CompilerError> {
     let output = output.as_ref();
     fs::create_dir_all(output)?;
     let mut losses = Vec::new();
-    let glb = build_glb(world, &mut losses)?;
+    append_unresolved_ingestion_losses(world, "threejs", &mut losses);
+    let source_glb = values(world, "representations")
+        .iter()
+        .filter(|item| {
+            field(item, "role") == "visual"
+                && field(item, "type") == "gltf_binary_pbr"
+                && source_format_for_digest(world, field(item, "resourceDigest")) == Some("glb")
+        })
+        .filter_map(|item| {
+            let digest = field(item, "resourceDigest");
+            Some((item, resources.get(digest)?))
+        })
+        .collect::<Vec<_>>();
+    let (glb, source_binding) = if source_glb.len() == 1 {
+        let (representation, bytes) = source_glb[0];
+        losses.push(json!({
+            "id": "loss://threejs/source-glb/stable-id-wrapper",
+            "sourceRef": field(representation, "id"),
+            "capability": "capability://worldspec/stable-id-binding",
+            "status": "converted",
+            "targetBinding": "threejs://scene/source-root",
+            "rationale": "The source GLB is preserved byte-for-byte and its root is bound to the WorldSpec entity by the scene manifest.",
+            "consequence": "Source-internal node names remain native and are not rewritten."
+        }));
+        (
+            bytes.to_vec(),
+            Some(json!({
+                "entityRef": field(representation, "subjectRef"),
+                "representationRef": field(representation, "id"),
+                "strategy": "manifest_root_binding"
+            })),
+        )
+    } else {
+        (build_glb(world, &mut losses)?, None)
+    };
     let mut artifacts = vec![write_artifact(
         output,
         "scene.glb",
@@ -565,6 +798,7 @@ pub fn compile_threejs(
             "rootRotationXDegrees": -90
         },
         "scene": "scene.glb",
+        "sourceSceneBinding": source_binding,
         "stableIds": values(world, "entities")
             .iter()
             .map(|entity| (field(entity, "id"), safe_name(field(entity, "id"))))
@@ -599,8 +833,12 @@ pub fn write_compile_summary(
 
 #[cfg(test)]
 mod tests {
-    use super::{compile_mujoco, compile_threejs};
-    use serde_json::Value;
+    use super::{
+        ResourceMap, compile_mujoco, compile_mujoco_with_resources, compile_threejs,
+        compile_threejs_with_resources,
+    };
+    use serde_json::{Value, json};
+    use sha2::{Digest, Sha256};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn world() -> Value {
@@ -635,5 +873,69 @@ mod tests {
         );
         std::fs::remove_dir_all(first).unwrap();
         std::fs::remove_dir_all(second).unwrap();
+    }
+
+    #[test]
+    fn materializes_resolved_obj_for_mujoco() {
+        let output = temporary("obj-resource");
+        let mut world = world();
+        let bytes = include_bytes!("../../../examples/minimal-cube/source/cube.obj").to_vec();
+        let digest = format!("sha256:{:x}", Sha256::digest(&bytes));
+        world["representations"] = json!([{
+            "id": "representation://cube/source-visual",
+            "subjectRef": "entity://cube/body",
+            "role": "visual",
+            "type": "triangle_mesh",
+            "anchorFrame": "frame://cube/body",
+            "resourceDigest": digest,
+            "fidelity": "source"
+        }]);
+        world["nativePayloads"] = json!([{
+            "id": "native://cube/source-obj",
+            "sourceFormat": "obj",
+            "sourceVersion": "unknown",
+            "digest": digest,
+            "namespace": "worldspec.test",
+            "rightsStatus": "cleared"
+        }]);
+        let resources = ResourceMap::from([(digest, bytes)]);
+        let summary = compile_mujoco_with_resources(&world, &output, &resources).unwrap();
+        assert!(summary.artifacts.iter().any(|item| item.role == "mesh"));
+        let xml = std::fs::read_to_string(output.join("model.xml")).unwrap();
+        assert!(xml.contains("<mesh name="));
+        assert!(xml.contains("contype=\"0\" conaffinity=\"0\""));
+        std::fs::remove_dir_all(output).unwrap();
+    }
+
+    #[test]
+    fn preserves_single_resolved_source_glb_byte_for_byte() {
+        let source_output = temporary("source-glb");
+        let output = temporary("resolved-glb");
+        compile_threejs(&world(), &source_output).unwrap();
+        let source = std::fs::read(source_output.join("scene.glb")).unwrap();
+        let digest = format!("sha256:{:x}", Sha256::digest(&source));
+        let mut imported = world();
+        imported["representations"] = json!([{
+            "id": "representation://cube/source-glb",
+            "subjectRef": "entity://cube/body",
+            "role": "visual",
+            "type": "gltf_binary_pbr",
+            "anchorFrame": "frame://cube/body",
+            "resourceDigest": digest,
+            "fidelity": "source"
+        }]);
+        imported["nativePayloads"] = json!([{
+            "id": "native://cube/source-glb",
+            "sourceFormat": "glb",
+            "sourceVersion": "2.0",
+            "digest": digest,
+            "namespace": "worldspec.test",
+            "rightsStatus": "cleared"
+        }]);
+        let resources = ResourceMap::from([(digest, source.clone())]);
+        compile_threejs_with_resources(&imported, &output, &resources).unwrap();
+        assert_eq!(source, std::fs::read(output.join("scene.glb")).unwrap());
+        std::fs::remove_dir_all(source_output).unwrap();
+        std::fs::remove_dir_all(output).unwrap();
     }
 }
