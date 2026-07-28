@@ -2,7 +2,7 @@ import hashlib
 import json
 from pathlib import Path
 
-from worldspec_worker.runner import run_job
+from worldspec_worker.runner import WorkerFailure, run_job
 
 
 def job(digest: str) -> dict:
@@ -45,3 +45,23 @@ def test_mock_is_explicit_and_digest_preserving(tmp_path: Path) -> None:
     assert result["status"] == "succeeded"
     assert result["outputs"][0]["digest"] == digest
     assert result["outputs"][0]["role"] == "mock_ci_echo"
+
+
+def test_structured_worker_failure_is_preserved(tmp_path: Path) -> None:
+    digest = store(tmp_path, b"{}")
+
+    def unavailable(_job: dict, _cas: object) -> list[dict]:
+        raise WorkerFailure(
+            "WORKER_DEPENDENCY_UNAVAILABLE",
+            "native runtime is absent",
+            {"executionEvidence": "not_executed"},
+        )
+
+    result = run_job(job(digest), tmp_path, handlers={"compile": unavailable})
+    assert result["status"] == "failed"
+    assert result["diagnostics"][0] == {
+        "code": "WORKER_DEPENDENCY_UNAVAILABLE",
+        "severity": "error",
+        "message": "native runtime is absent",
+        "details": {"executionEvidence": "not_executed"},
+    }

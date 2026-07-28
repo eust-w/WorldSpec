@@ -38,3 +38,5 @@ Rust Forge 已实现解析器之前的源扫描：大小上限、ZIP/归档隔�
 GLB Doctor 已实现 v2 容器、声明长度、JSON Chunk 和节点/网格/材质表诊断。URDF/MJCF Doctor 已实现 Link/Body、单父 Joint 树、轴、限位与局部位姿提取，拒绝重复名称、多父 Link、缺失端点、非正质量和非正定惯量。安全的单文件机器人描述会生成 Schema-valid `candidateWorldDefinition`：所有权树仍由逻辑 Robot 管理，运动学严格来自 Frame Placement Graph；源 XML 同时作为 Native Payload 保留。
 
 机器人候选只证明“源结构可规范映射”。Mesh/package 解析、执行器、传感器、传动、质量惯量和碰撞仍标为阻塞项；编译器产生的诊断 box 和 MuJoCo 默认动力学不得用于 L2。CAD、OpenUSD 与归档格式仍未完成语义接入；USDZ 等归档当前会被隔离门拒绝，直到受限展开 Worker 完成。
+
+Python OCI Worker 已提供可选的 `cad` 与 `openusd` 真实 API 适配器骨架：前者调用 OpenCascade 读取 STEP/IGES 的根、边界和拓扑计数，后者调用 `usd-core` 读取 Stage、Prim、Up Axis 与单位。适配器只生成内容寻址的 `ingestion_inspection`，保留源 Blob，并明确阻塞 Canonical Mapping；它们不会签发 WorldDefinition。当前本机未安装这两个原生依赖，测试证据仅证明缺失时会返回 `WORKER_DEPENDENCY_UNAVAILABLE / not_executed`，不是 CAD/USD 运行证据。

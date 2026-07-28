@@ -14,6 +14,15 @@ from .cas import CasError, FileCas
 Handler = Callable[[dict[str, Any], FileCas], list[dict[str, Any]]]
 
 
+class WorkerFailure(RuntimeError):
+    def __init__(
+        self, code: str, message: str, details: dict[str, Any] | None = None
+    ) -> None:
+        super().__init__(message)
+        self.code = code
+        self.details = details or {}
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
@@ -94,6 +103,15 @@ def run_job(
         )
     try:
         return _result(job, "succeeded", handler(job, cas), [], started_at)
+    except WorkerFailure as error:
+        diagnostic: dict[str, Any] = {
+            "code": error.code,
+            "severity": "error",
+            "message": str(error),
+        }
+        if error.details:
+            diagnostic["details"] = error.details
+        return _result(job, "failed", [], [diagnostic], started_at)
     except (CasError, OSError, ValueError, KeyError) as error:
         return _result(
             job,
