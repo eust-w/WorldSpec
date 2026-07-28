@@ -26,7 +26,7 @@ The Chinese document is the normative source; English is the official translatio
 - Compiler and interfaces: [compiler model](compiler/compiler-model.md), [MuJoCo](compiler/mujoco.md), [Three.js](compiler/threejs.md), [CLI/API](interfaces/cli-api.md), [reports](interfaces/reports.md)
 - Current implementation: [Rust Validator](implementation/validator.md)
 - Governance: [decision register](decision-register.md), [versioning](governance/versioning.md), [licensing](governance/licensing.md)
-- Research and future: [open questions](research/open-questions.md), [roadmap](roadmap.md)
+- Research and future: [open questions](research/open-questions.md), [H1 locomotion policy mismatch](research/h1-locomotion-policy.md), [roadmap](roadmap.md)
 - ADRs: [decision directory](decisions/README.md)
 
 ## Normative binding

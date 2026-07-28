@@ -15,6 +15,11 @@ from compose_h1_robotiq import (
     file_inventory,
     namespace_tree,
 )
+from validate_h1_locomotion_policy import (
+    PolicyValidationError,
+    gravity_orientation,
+    validate_profile,
+)
 
 
 def test_namespace_tree_resolves_implicit_mesh_and_references() -> None:
@@ -63,3 +68,38 @@ def test_inventory_excludes_self_referential_manifest(tmp_path: Path) -> None:
     (tmp_path / "composition-manifest.json").write_text("{}", encoding="utf-8")
     inventory = file_inventory(tmp_path)
     assert [item["path"] for item in inventory] == ["model.xml"]
+
+
+def test_locomotion_profile_rejects_implicit_joint_slicing() -> None:
+    profile = {
+        "profileVersion": "0.1.0",
+        "sourceLockDigest": "sha256:" + "a" * 64,
+        "legControl": {
+            "joints": ["left_hip"],
+            "actuators": ["left_hip"],
+            "kps": [100],
+            "kds": [2],
+            "defaultAngles": [0],
+        },
+        "observation": {"actions": 2, "dimensions": 17},
+        "upperBodyHold": {
+            "joints": ["torso"],
+            "actuators": ["torso"],
+            "targets": [0],
+            "kps": [10],
+            "kds": [1],
+        },
+        "simulation": {
+            "timestepSeconds": 0.002,
+            "controlDecimation": 10,
+            "durationSeconds": 1,
+        },
+    }
+    with pytest.raises(PolicyValidationError):
+        validate_profile(profile, "sha256:" + "a" * 64)
+
+
+def test_projected_gravity_is_upright_for_identity_quaternion() -> None:
+    np = pytest.importorskip("numpy")
+    value = gravity_orientation([1.0, 0.0, 0.0, 0.0], np)
+    assert value.tolist() == [0.0, -0.0, -1.0]

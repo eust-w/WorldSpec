@@ -2,7 +2,7 @@
 
 WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真器编译中间层。目标是把现有资产或图像/视频生成结果整理为可追溯、可验证、损失透明的 SimReady 资产。
 
-> 当前仓库状态：包含 v0.1 文档、32 个 JSON Schema、示例、Rust Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、CLI 与 loopback 异步 API。已实现 MuJoCo/Three.js 参考编译、Digest 绑定的 L2 Conformance/Certificate、L3 TaskRun/RuntimeRecord 证据核验、Reference Predicate Engine、真实 MuJoCo 3.6.0 加载与步进、真实 Chromium/Three.js 0.185.1 加载与截图，以及产物篡改拒绝；当前 macOS arm64 本地 Profile 达到 L2。还实现 OBJ 不可变修复、最小 URDF/MJCF 运动学接入、CAD/OpenUSD 隔离检查骨架、TRELLIS.2/Nerfstudio 生成 Worker 的 Fail-Closed 门控，以及锁定来源的 H1/Robotiq 确定性组合；后者已通过本机原生加载，但安装位姿仍是估算。尚无 Linux x86_64 参考 Profile 的 L2 证书、真实 A800/H100 生成、完整 CAD/USD 原生运行或 H1 厨房 5/5 L3 证据，因此产品 v0.1 尚未整体验收。
+> 当前仓库状态：包含 v0.1 文档、34 个 JSON Schema、示例、Rust Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、CLI 与 loopback 异步 API。已实现 MuJoCo/Three.js 参考编译、Digest 绑定的 L2 Conformance/Certificate、L3 TaskRun/RuntimeRecord 证据核验、Reference Predicate Engine、真实 MuJoCo 3.6.0 加载与步进、真实 Chromium/Three.js 0.185.1 加载与截图，以及产物篡改拒绝；当前 macOS arm64 本地 Profile 达到 L2。还实现 OBJ 不可变修复、最小 URDF/MJCF 运动学接入、CAD/OpenUSD 隔离检查骨架、TRELLIS.2/Nerfstudio 生成 Worker 的 Fail-Closed 门控，以及锁定来源的 H1/Robotiq 确定性组合；后者已通过本机原生加载，但安装位姿仍是估算。锁定 Unitree 步态策略的接口推理通过，但在 Menagerie 全身模型上的 4 秒行为验证失败，路线待决策。尚无 Linux x86_64 参考 Profile 的 L2 证书、真实 A800/H100 生成、完整 CAD/USD 原生运行或 H1 厨房 5/5 L3 证据，因此产品 v0.1 尚未整体验收。
 
 ## 快速入口
 

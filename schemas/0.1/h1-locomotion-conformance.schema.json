@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-conformance.schema.json",
+  "title": "WorldSpec H1 Locomotion Policy Conformance 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "bundleDigest",
+    "sourceLockDigest",
+    "adapterProfileDigest",
+    "policyDigest",
+    "executionEvidence",
+    "environment",
+    "tests",
+    "summary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "$ref": "common.schema.json#/$defs/semver" },
+    "bundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "sourceLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "adapterProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "policyDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "executionEvidence": { "enum": ["executed", "not_executed"] },
+    "environment": {
+      "type": "object",
+      "required": [
+        "os",
+        "architecture",
+        "python",
+        "mujoco",
+        "torch",
+        "numpy"
+      ],
+      "properties": {
+        "os": { "type": "string", "minLength": 1 },
+        "architecture": { "type": "string", "minLength": 1 },
+        "python": { "type": "string", "minLength": 1 },
+        "mujoco": { "type": "string", "minLength": 1 },
+        "torch": { "type": "string", "minLength": 1 },
+        "numpy": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "result", "metrics", "diagnostics"],
+        "properties": {
+          "id": { "$ref": "common.schema.json#/$defs/id" },
+          "result": { "enum": ["pass", "fail", "unknown", "not_run"] },
+          "metrics": { "type": "object" },
+          "diagnostics": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
+          }
+        },
+        "additionalProperties": false
+      },
+      "minItems": 1
+    },
+    "summary": {
+      "type": "object",
+      "required": ["passed", "failed", "unknown", "notRun", "overall"],
+      "properties": {
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "unknown": { "type": "integer", "minimum": 0 },
+        "notRun": { "type": "integer", "minimum": 0 },
+        "overall": { "enum": ["pass", "fail", "incomplete"] }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

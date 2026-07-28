@@ -26,7 +26,7 @@ last-verified: 2026-07-28
 - 编译与接口：[编译器模型](compiler/compiler-model.md)、[MuJoCo](compiler/mujoco.md)、[Three.js](compiler/threejs.md)、[CLI/API](interfaces/cli-api.md)、[报告](interfaces/reports.md)
 - 当前实现：[Rust Validator](implementation/validator.md)
 - 治理：[决策登记](decision-register.md)、[版本](governance/versioning.md)、[许可](governance/licensing.md)
-- 研究与后续：[开放问题](research/open-questions.md)、[路线图](roadmap.md)
+- 研究与后续：[开放问题](research/open-questions.md)、[H1 步态策略不匹配](research/h1-locomotion-policy.md)、[路线图](roadmap.md)
 - ADR：[决策目录](decisions/README.md)
 
 ## 规范绑定

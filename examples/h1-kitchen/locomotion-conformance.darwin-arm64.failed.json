@@ -1,0 +1,88 @@
+{
+  "id": "conformance://worldspec/h1-locomotion-policy/short-horizon",
+  "reportVersion": "0.1.0",
+  "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+  "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+  "adapterProfileDigest": "sha256:c19a8de255f84e66fc0bf166889f89ae9b8016b6e50e0840de35d489e8fc0e75",
+  "policyDigest": "sha256:44a0fbceb81f3877833ae9a398d039bea1759cb0d3c8188181013885f70589eb",
+  "executionEvidence": "executed",
+  "environment": {
+    "os": "darwin",
+    "architecture": "arm64",
+    "python": "3.12.9",
+    "mujoco": "3.6.0",
+    "torch": "2.12.0",
+    "numpy": "2.4.6"
+  },
+  "tests": [
+    {
+      "id": "test://worldspec/h1-policy/artifact-integrity",
+      "result": "pass",
+      "metrics": {
+        "artifactCount": 74
+      },
+      "diagnostics": []
+    },
+    {
+      "id": "test://worldspec/h1-policy/binding-and-inference",
+      "result": "pass",
+      "metrics": {
+        "actions": 10,
+        "observations": 41,
+        "legJointCount": 10,
+        "upperBodyJointCount": 9,
+        "gripperActuatorCount": 1,
+        "outputShape": [1, 10],
+        "outputFinite": true
+      },
+      "diagnostics": []
+    },
+    {
+      "id": "test://worldspec/h1-policy/finite-execution",
+      "result": "fail",
+      "metrics": {
+        "stepsRequested": 2000,
+        "stepsExecuted": 2000,
+        "simulationTimeSeconds": 3.999999999999781,
+        "finite": true,
+        "jointLimitViolationSamples": 1274,
+        "controlSaturationCount": 510,
+        "maximumAbsoluteControl": 300.0
+      },
+      "diagnostics": [
+        {
+          "code": "H1_POLICY_EXECUTION_INVALID",
+          "severity": "error",
+          "message": "execution produced non-finite state or exceeded a joint limit"
+        }
+      ]
+    },
+    {
+      "id": "test://worldspec/h1-policy/short-horizon-locomotion",
+      "result": "fail",
+      "metrics": {
+        "startPosition": [0.0, 0.0, 1.06],
+        "finalPosition": [-2.2239396684771635, 0.5791202268604068, 0.15210247031696952],
+        "forwardDisplacement": -2.2239396684771635,
+        "lateralDrift": 0.5791202268604068,
+        "minimumBaseHeight": 0.10324282064470064,
+        "minimumUprightCosine": -0.16157060861587524
+      },
+      "diagnostics": [
+        {
+          "code": "H1_POLICY_BEHAVIOR_OUTSIDE_PROFILE",
+          "severity": "error",
+          "message": "short-horizon balance or locomotion fell outside profile thresholds"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 2,
+    "unknown": 0,
+    "notRun": 0,
+    "overall": "fail"
+  },
+  "generatedAt": "2026-07-28T12:00:51.707618Z"
+}

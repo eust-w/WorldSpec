@@ -1,0 +1,100 @@
+{
+  "id": "controlprofile://worldspec/h1-unitree-rl-gym-adapter",
+  "profileVersion": "0.1.0",
+  "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+  "policy": {
+    "componentId": "component://third-party/h1-locomotion-policy",
+    "path": "deploy/pre_train/h1/motion.pt",
+    "digest": "sha256:44a0fbceb81f3877833ae9a398d039bea1759cb0d3c8188181013885f70589eb"
+  },
+  "sourceConfig": {
+    "componentId": "component://third-party/h1-locomotion-policy",
+    "path": "deploy/deploy_mujoco/configs/h1.yaml",
+    "digest": "sha256:4e509fa63fda52e38d21d9f1924b7c0d6bf9dfd1c2d9b94450b7f6e7ca281329"
+  },
+  "simulation": {
+    "timestepSeconds": 0.002,
+    "controlDecimation": 10,
+    "durationSeconds": 4.0
+  },
+  "legControl": {
+    "joints": [
+      "left_hip_yaw",
+      "left_hip_roll",
+      "left_hip_pitch",
+      "left_knee",
+      "left_ankle",
+      "right_hip_yaw",
+      "right_hip_roll",
+      "right_hip_pitch",
+      "right_knee",
+      "right_ankle"
+    ],
+    "actuators": [
+      "left_hip_yaw",
+      "left_hip_roll",
+      "left_hip_pitch",
+      "left_knee",
+      "left_ankle",
+      "right_hip_yaw",
+      "right_hip_roll",
+      "right_hip_pitch",
+      "right_knee",
+      "right_ankle"
+    ],
+    "kps": [150, 150, 150, 200, 40, 150, 150, 150, 200, 40],
+    "kds": [2, 2, 2, 4, 2, 2, 2, 2, 4, 2],
+    "defaultAngles": [0, 0, -0.1, 0.3, -0.2, 0, 0, -0.1, 0.3, -0.2],
+    "actionScale": 0.25,
+    "command": [0.5, 0.0, 0.0]
+  },
+  "observation": {
+    "actions": 10,
+    "dimensions": 41,
+    "angularVelocityScale": 0.25,
+    "jointPositionScale": 1.0,
+    "jointVelocityScale": 0.05,
+    "commandScale": [2.0, 2.0, 0.25],
+    "phasePeriodSeconds": 0.8
+  },
+  "upperBodyHold": {
+    "joints": [
+      "torso",
+      "left_shoulder_pitch",
+      "left_shoulder_roll",
+      "left_shoulder_yaw",
+      "left_elbow",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "actuators": [
+      "torso",
+      "left_shoulder_pitch",
+      "left_shoulder_roll",
+      "left_shoulder_yaw",
+      "left_elbow",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "targets": [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "kps": [100, 40, 40, 18, 18, 40, 40, 18, 18],
+    "kds": [5, 2, 2, 1, 1, 2, 2, 1, 1]
+  },
+  "gripperControls": [
+    {
+      "actuator": "right_gripper_fingers_actuator",
+      "value": 0
+    }
+  ],
+  "validation": {
+    "minimumBaseHeight": 0.65,
+    "minimumUprightCosine": 0.5,
+    "minimumForwardDisplacement": 0.1,
+    "maximumLateralDrift": 0.5
+  },
+  "evidenceStatus": "derived"
+}

@@ -36,5 +36,6 @@ last-verified: 2026-07-28
 | D-024 | 生成模型包使用逐文件 Digest 的内容寻址只读缓存 | Accepted | [ADR-0010](decisions/0010-generation-model-bundles.md) |
 | D-025 | H1/Robotiq 使用锁定 Menagerie 源，步态使用锁定 Unitree RL Gym；不复制 dirty BiGym 载荷 | Accepted Design | [ADR-0011](decisions/0011-h1-reference-sources.md) |
 | D-026 | H1/Robotiq 通过独立 Profile、完整命名空间和不可变原生载荷组合；右手单夹爪仅为实验候选 | Accepted Design | [ADR-0012](decisions/0012-h1-robotiq-composition.md) |
+| D-027 | Menagerie H1 步态策略路径：重训/适配、混合模型或降低为视觉 Demo | Research / User Decision Required | [实验与选项](research/h1-locomotion-policy.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。
