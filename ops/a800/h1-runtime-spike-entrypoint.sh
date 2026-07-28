@@ -92,13 +92,14 @@ stage target_composition
   --output "${BUNDLE_DIR}"
 
 stage mjx_warp_preflight
-PYTHONPATH="${SOURCE_DIR}/python/worldspec-h1-training/src" \
-SOURCE_DIR="${SOURCE_DIR}" \
-BUNDLE_DIR="${BUNDLE_DIR}" \
-MODEL_DIR="${MODEL_DIR}" \
-RESULT_DIR="${RESULT_DIR}" \
-WORLD_SPEC_BASE_IMAGE="${WORLD_SPEC_BASE_IMAGE}" \
-"${RUNTIME_PYTHON}" - <<'PY'
+env \
+  PYTHONPATH="${SOURCE_DIR}/python/worldspec-h1-training/src" \
+  SOURCE_DIR="${SOURCE_DIR}" \
+  BUNDLE_DIR="${BUNDLE_DIR}" \
+  MODEL_DIR="${MODEL_DIR}" \
+  RESULT_DIR="${RESULT_DIR}" \
+  WORLD_SPEC_BASE_IMAGE="${WORLD_SPEC_BASE_IMAGE}" \
+  "${RUNTIME_PYTHON}" - <<'PY'
 from __future__ import annotations
 
 import csv
