@@ -10,5 +10,6 @@ export WORLD_SPEC_RETENTION_TEACHER_REPORT="${ROOT_DIR}/examples/h1-kitchen/loco
 export WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT="${ROOT_DIR}/runs/a800/worldspec-h1-midterm-rmnnr/midterm-checkpoint.zip"
 export WORLD_SPEC_SUPERVISOR_STAND_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json"
 export WORLD_SPEC_SUPERVISOR_STAND_CHECKPOINT="${ROOT_DIR}/runs/a800/worldspec-h1-calibration-4mklr/calibration-checkpoint.zip"
+export WORLD_SPEC_IMAGE_SOURCE_REVISION="0abd9b57bc6b738dfae03468b4d17eef2e518104"
 
 exec "${ROOT_DIR}/scripts/run_a800_h1_locomotion_midterm.sh"
