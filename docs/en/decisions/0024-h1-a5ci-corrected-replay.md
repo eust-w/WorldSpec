@@ -95,3 +95,29 @@ with a failed formal diagnostic gate. The correction only adds `blend` to the
 diagnostic Trace active-policy enumeration; controller, gates, policies, scene,
 seed, and runtime parameters remain unchanged. A later replay still uses a new
 commit, image, and Attempt.
+
+## Attempt-05 result
+
+Attempt-05 completed one equivalent diagnostic replay on a Drobodata A800.
+Remote source, immutable OCI, all three policy Checkpoints, frozen A5-C
+evidence, and the package lock passed pre-run identity checks. The Report,
+Controller, 225 diagnostic Trace records, Equivalence report, and Receipt were
+fully transferred and independently audited for SHA-256, size, and offline
+Schema conformance.
+
+The result is:
+
+- `formalDiagnosticReplayGate=passed`;
+- `formalControlGate=failed`;
+- `controllerStatus=non_publishable`;
+- all four termination channels are present, with only `joint_limit` active;
+- the replay termination joint is `right_hip_yaw`;
+- static semantic equivalence passed; dynamic Trace differences remain
+  informational evidence only;
+- the historical root cause of the original A5-C remains `unknown` and is not
+  retroactively rewritten;
+- A5, 5/5, 100M, and L3 were not executed.
+
+The ADR-0024 diagnostic-correction target is complete. Any controller-behavior
+correction requires a separate control-design ADR; this workflow does not
+continue automatically.

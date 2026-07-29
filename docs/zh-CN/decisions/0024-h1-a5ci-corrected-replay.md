@@ -77,3 +77,24 @@ Schema 只列出 `motion/capture/stand`。`blend` 是冻结 A4 Supervisor 已有
 Attempt-04 正式诊断门仍按失败归档。修正只把 `blend` 加入诊断 Trace 的
 活动策略枚举，不修改控制器、门槛、策略、场景、种子或运行参数；后续使用
 新提交、新镜像和新 Attempt。
+
+## Attempt-05 结果
+
+Attempt-05 在 Drobodata A800 上完成单次等价诊断重放。远端源码、不可变
+OCI、三份策略 Checkpoint、旧 A5-C 证据和包锁均通过启动前身份校验；
+Report、Controller、225 条诊断 Trace、Equivalence 和 Receipt 完整回传并
+通过独立 SHA-256、大小和离线 Schema 审计。
+
+结果为：
+
+- `formalDiagnosticReplayGate=passed`；
+- `formalControlGate=failed`；
+- `controllerStatus=non_publishable`；
+- 四个终止通道完整，唯一触发通道为 `joint_limit`；
+- 本次重放终止关节为 `right_hip_yaw`；
+- 静态语义等价通过，动态 Trace 差异只作信息证据；
+- 旧 A5-C 的历史根因仍为 `unknown`，不得追溯性改写；
+- A5、5/5、100M 和 L3 均未执行。
+
+至此 ADR-0024 的诊断修正目标已经完成。下一步若要修复控制行为，必须另立
+控制设计 ADR；本流程不自动继续。

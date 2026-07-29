@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-diagnostic-replay-passed-summary.schema.json",
+  "title": "WorldSpec H1 A5-CI Passed Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "attemptId",
+    "formalDiagnosticReplayGate",
+    "formalControlGate",
+    "controllerStatus",
+    "job",
+    "diagnosticEvidence",
+    "artifacts",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "passed" },
+    "scope": {
+      "const": "h1_whole_body_task_space_control_diagnostic_replay"
+    },
+    "executionEvidence": { "const": "executed" },
+    "attemptId": {
+      "const": "a5-ci-20260730-termination-replay-05"
+    },
+    "formalDiagnosticReplayGate": { "const": "passed" },
+    "formalControlGate": { "const": "failed" },
+    "controllerStatus": { "const": "non_publishable" },
+    "job": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "name",
+        "podName",
+        "podPhase",
+        "probeCommit",
+        "imageSourceCommit",
+        "image",
+        "gpu",
+        "backoffLimit",
+        "restartCount"
+      ],
+      "properties": {
+        "namespace": { "const": "worldspec-a800-poc" },
+        "name": { "const": "worldspec-h1-a5ci-4f4143af8ac5" },
+        "podName": { "const": "worldspec-h1-a5ci-4f4143af8ac5-z8nxj" },
+        "podPhase": { "const": "Succeeded" },
+        "probeCommit": {
+          "const": "e4634e25112b3ab6ebe2b0fb38be68405c90213e"
+        },
+        "imageSourceCommit": {
+          "const": "1e89b640158e39aa429130d1f73fc8d5ba2da5fe"
+        },
+        "image": {
+          "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:23215f267540072893c9e21cb3b8bbc6fecd5dd8705d747122b1119642743b6c"
+        },
+        "gpu": { "const": "NVIDIA A800-SXM4-80GB" },
+        "backoffLimit": { "const": 0 },
+        "restartCount": { "const": 0 }
+      },
+      "additionalProperties": false
+    },
+    "diagnosticEvidence": {
+      "const": {
+        "recordCount": 225,
+        "diagnosticCompleteness": "passed",
+        "staticEquivalence": "passed",
+        "terminationChannels": {
+          "joint_limit": true,
+          "fall_height": false,
+          "fall_upright": false,
+          "nonfinite": false
+        },
+        "terminalJoints": ["right_hip_yaw"],
+        "activePolicies": ["blend", "capture", "motion", "stand"],
+        "originalTerminationReason": "unknown"
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "required": [
+        "report",
+        "controller",
+        "trace",
+        "equivalence",
+        "receipt",
+        "jobLog",
+        "jobManifest",
+        "podManifest",
+        "podDescription"
+      ],
+      "additionalProperties": { "$ref": "#/$defs/artifact" }
+    },
+    "claimBoundary": {
+      "const": {
+        "diagnosticClaim": "passed",
+        "controlClaim": "failed",
+        "controllerCandidate": "forbidden",
+        "a5": "not_executed",
+        "fiveRunGate": "not_executed",
+        "formalTraining": "not_started",
+        "l3Claim": "forbidden",
+        "automaticRetry": "not_executed"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["digest", "sizeBytes"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
