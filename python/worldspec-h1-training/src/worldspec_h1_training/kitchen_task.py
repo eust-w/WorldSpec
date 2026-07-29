@@ -276,6 +276,22 @@ def validate_kitchen_task_profile(
         )
 
 
+def make_kitchen_task_evaluation_profile(
+    base_profile: dict[str, Any],
+    supervisor_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    """Build the effective A5 runtime while preserving its deterministic seed."""
+
+    validate_kitchen_task_profile(base_profile, supervisor_profile, profile)
+    effective = make_supervisor_evaluation_profile(base_profile, supervisor_profile)
+    effective["runtime"]["containerDigest"] = profile["runtime"]["containerDigest"]
+    effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
+    effective["training"]["numEnvs"] = 1
+    effective["training"]["seed"] = profile["seed"]
+    return effective
+
+
 def _child(root: ET.Element, tag: str) -> ET.Element:
     value = root.find(tag)
     return value if value is not None else ET.SubElement(root, tag)
@@ -640,7 +656,7 @@ def evaluate_kitchen_task_suite(
         return state.replace(info=info, obs=observation)
 
     def run(run_index: int) -> dict[str, Any]:
-        rng = jax.random.PRNGKey(profile["seed"] + run_index)
+        rng = jax.random.PRNGKey(profile["training"]["seed"] + run_index)
         state = reset(rng)
         locomotion = SupervisorState()
         task = KitchenTaskState()
@@ -807,11 +823,11 @@ def run_fixed_kitchen_task_probe(
 
     from .environment import make_environment
 
-    validate_kitchen_task_profile(base_profile, supervisor_profile, profile)
-    effective = make_supervisor_evaluation_profile(base_profile, supervisor_profile)
-    effective["runtime"]["containerDigest"] = profile["runtime"]["containerDigest"]
-    effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
-    effective["training"]["numEnvs"] = 1
+    effective = make_kitchen_task_evaluation_profile(
+        base_profile,
+        supervisor_profile,
+        profile,
+    )
     static = static_preflight(base_profile, bundle_dir)
     task_model, derivation = prepare_kitchen_task_model(base_profile, bundle_dir, model_dir)
     runtime = runtime_preflight(effective, task_model)

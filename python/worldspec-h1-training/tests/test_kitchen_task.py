@@ -14,6 +14,7 @@ from worldspec_h1_training.kitchen_task import (
     PHASES,
     TASK_CONTROLLER,
     KitchenTaskState,
+    make_kitchen_task_evaluation_profile,
     prepare_kitchen_task_model,
     validate_kitchen_task_profile,
 )
@@ -100,6 +101,17 @@ def test_a5_profile_binds_a4_and_forbids_l3() -> None:
     assert task["scene"]["hiddenAttachment"] is False
     assert task["scene"]["graspModel"] == "physical_contact_only"
     assert task["artifactPolicy"]["l3Claim"] == "forbidden"
+
+
+def test_a5_effective_profile_uses_task_seed_and_runtime() -> None:
+    base, supervisor, task = _profiles()
+
+    effective = make_kitchen_task_evaluation_profile(base, supervisor, task)
+
+    assert effective["training"]["seed"] == task["seed"]
+    assert effective["training"]["numEnvs"] == 1
+    assert effective["runtime"]["containerDigest"] == task["runtime"]["containerDigest"]
+    assert effective["runtime"]["ccdIterations"] == task["runtime"]["ccdIterations"]
 
 
 def test_a5_rejects_hidden_attachment_and_policy_drift() -> None:
