@@ -1,0 +1,91 @@
+{
+  "id": "conformance://worldspec/h1/a5ci/a5-ci-20260730-termination-replay-02/handoff",
+  "reportVersion": "0.1.0",
+  "status": "failed",
+  "scope": "h1_whole_body_task_space_control_diagnostic_replay_handoff",
+  "executionEvidence": "executed_incomplete",
+  "attemptId": "a5-ci-20260730-termination-replay-02",
+  "formalDiagnosticReplayGate": "failed",
+  "reportedDiagnosticGate": "passed",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "job": {
+    "namespace": "worldspec-a800-poc",
+    "name": "worldspec-h1-a5ci-4441e0f60079",
+    "podName": "worldspec-h1-a5ci-4441e0f60079-6g8lp",
+    "podPhase": "Succeeded",
+    "probeCommit": "b110468d0e9d442342dac360299888b0f4b172ca",
+    "imageSourceCommit": "2107e21a29ac20ff3fcb7dba6b77fdd8ec84c446",
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:cb672082c9771c29f8e51c054a7e8b52361e2ac2a6c029a2dbdb009ecc2be272",
+    "gpu": "NVIDIA A800-SXM4-80GB",
+    "backoffLimit": 0,
+    "restartCount": 0
+  },
+  "failure": {
+    "stage": "local_artifact_receipt",
+    "category": "launcher_receipt_postprocessing_error",
+    "exception": "NameError",
+    "missingSymbol": "datetime",
+    "message": "NameError: name 'datetime' is not defined",
+    "coreArtifactsCopied": true
+  },
+  "diagnosticEvidence": {
+    "diagnosticCompleteness": "passed",
+    "staticEquivalence": "passed",
+    "replayTerminationReasons": [
+      "joint_limit"
+    ],
+    "terminalJoints": [
+      "right_hip_yaw"
+    ],
+    "originalTerminationReason": "unknown"
+  },
+  "recoveredEvidence": {
+    "report": {
+      "digest": "sha256:bdb66bc5f1b412d648144aa56d68f20b9970a8c1abc3b24601c367c7a14f2893",
+      "sizeBytes": 13490
+    },
+    "controller": {
+      "digest": "sha256:fdcb0557e0509174eff8cec7b629cf5e846931efb1d805f5df3647bc456274fb",
+      "sizeBytes": 2005
+    },
+    "trace": {
+      "digest": "sha256:455ead2aa97e0a9e9d8b46433773fba2affaf74d517d53b7d4e1ce307bb21b3d",
+      "sizeBytes": 1619174
+    },
+    "equivalence": {
+      "digest": "sha256:b1d804ca751959065c29337ac8eb6c9960b21c77657dd14e6f3a99c2e73d6514",
+      "sizeBytes": 4954
+    },
+    "jobLog": {
+      "digest": "sha256:feda21f30c111ff9d2ed3dc3dbe88c3533429da3347aee7cd5e09a4b46271c66",
+      "sizeBytes": 29017
+    },
+    "jobManifest": {
+      "digest": "sha256:9fdcb97e1f00e61f77834ed80ce096200ed3649a0d131b6d139744fc31defcc1",
+      "sizeBytes": 5780
+    },
+    "podManifest": {
+      "digest": "sha256:975c4d90f86a09de37da5a07afa2b68a582e2e198e807361402d095ece1a268e",
+      "sizeBytes": 7950
+    },
+    "podDescription": {
+      "digest": "sha256:893a62697e8fc8195a2e876ceaf8011d3447d3080abeb6859061656198bf71fb",
+      "sizeBytes": 5635
+    }
+  },
+  "missingRequiredArtifacts": {
+    "receipt": "not_created_due_to_launcher_postprocessing_error"
+  },
+  "claimBoundary": {
+    "diagnosticClaim": "failed_handoff",
+    "controlClaim": "failed",
+    "controllerCandidate": "forbidden",
+    "a5": "not_executed",
+    "fiveRunGate": "not_executed",
+    "formalTraining": "not_started",
+    "l3Claim": "forbidden",
+    "automaticRetry": "not_executed"
+  },
+  "generatedAt": "2026-07-29T21:36:41Z"
+}

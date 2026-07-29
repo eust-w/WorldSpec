@@ -11,6 +11,7 @@ PREPULL_TEMPLATE="${ROOT_DIR}/ops/a800/h1-training-image-prepull-job.yaml"
 ENTRYPOINT="${ROOT_DIR}/ops/a800/h1-locomotion-midterm-entrypoint.sh"
 CHUNK_UPLOAD="${ROOT_DIR}/scripts/upload_kubernetes_file.py"
 CHUNK_COPY="${ROOT_DIR}/scripts/copy_kubernetes_file.py"
+DIAGNOSTIC_FINALIZER="${ROOT_DIR}/scripts/finalize_h1_diagnostic_artifacts.py"
 MIDTERM_PROFILE="${WORLD_SPEC_MIDTERM_PROFILE:-${ROOT_DIR}/examples/h1-kitchen/locomotion-midterm-profile.json}"
 STAND_REPORT="${WORLD_SPEC_WARM_START_REPORT:-${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json}"
 STAND_CHECKPOINT="${WORLD_SPEC_WARM_START_CHECKPOINT:-${WORLD_SPEC_STAND_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-calibration-4mklr/calibration-checkpoint.zip}}"
@@ -51,6 +52,7 @@ for required in \
   "${ENTRYPOINT}" \
   "${CHUNK_UPLOAD}" \
   "${CHUNK_COPY}" \
+  "${DIAGNOSTIC_FINALIZER}" \
   "${MIDTERM_PROFILE}" \
   "${STAND_REPORT}" \
   "${STAND_CHECKPOINT}"; do
@@ -956,55 +958,13 @@ PY
           --expected-digest "${equivalence_digest}" \
           --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
           --retries "${OUTPUT_COPY_RETRIES}"
-        python3 - \
-          "${local_result_dir}/${REPORT_FILENAME}" \
-          "${local_result_dir}/whole-body-controller.json" \
-          "${local_result_dir}/evaluation-traces.jsonl" \
-          "${local_result_dir}/equivalence-report.json" \
-          "${local_result_dir}/artifact-receipt.json" \
-          "${A5CI_ATTEMPT_ID}" <<'PY'
-import hashlib
-import json
-import pathlib
-import sys
-
-
-def identity(path):
-    payload = path.read_bytes()
-    return {
-        "path": path.name,
-        "sizeBytes": len(payload),
-        "digest": f"sha256:{hashlib.sha256(payload).hexdigest()}",
-    }
-
-
-report_path = pathlib.Path(sys.argv[1])
-report = json.loads(report_path.read_text(encoding="utf-8"))
-report["artifactTransferStatus"] = "passed"
-report_path.write_text(
-    json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-    encoding="utf-8",
-)
-receipt_path = pathlib.Path(sys.argv[5])
-receipt = {
-    "id": f"receipt://worldspec/h1/a5ci/{sys.argv[6]}",
-    "receiptVersion": "0.1.0",
-    "attemptId": sys.argv[6],
-    "status": "verified",
-    "artifactCopied": True,
-    "artifacts": {
-        "report": identity(report_path),
-        "controller": identity(pathlib.Path(sys.argv[2])),
-        "trace": identity(pathlib.Path(sys.argv[3])),
-        "equivalence": identity(pathlib.Path(sys.argv[4])),
-    },
-    "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-}
-receipt_path.write_text(
-    json.dumps(receipt, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-    encoding="utf-8",
-)
-PY
+        python3 "${DIAGNOSTIC_FINALIZER}" \
+          --report "${local_result_dir}/${REPORT_FILENAME}" \
+          --controller "${local_result_dir}/whole-body-controller.json" \
+          --trace "${local_result_dir}/evaluation-traces.jsonl" \
+          --equivalence "${local_result_dir}/equivalence-report.json" \
+          --receipt "${local_result_dir}/artifact-receipt.json" \
+          --attempt-id "${A5CI_ATTEMPT_ID}"
       fi
       "${kubectl_cmd[@]}" exec "${pod_name}" -c midterm -- \
         touch /scratch/results/artifact-copied

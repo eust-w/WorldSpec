@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-diagnostic-replay-handoff-failure-summary.schema.json",
+  "title": "WorldSpec H1 A5-CI Handoff Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "attemptId",
+    "formalDiagnosticReplayGate",
+    "reportedDiagnosticGate",
+    "formalControlGate",
+    "controllerStatus",
+    "job",
+    "failure",
+    "diagnosticEvidence",
+    "recoveredEvidence",
+    "missingRequiredArtifacts",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "failed" },
+    "scope": {
+      "const": "h1_whole_body_task_space_control_diagnostic_replay_handoff"
+    },
+    "executionEvidence": { "const": "executed_incomplete" },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^a5-ci-[a-z0-9][a-z0-9-]{2,63}$"
+    },
+    "formalDiagnosticReplayGate": { "const": "failed" },
+    "reportedDiagnosticGate": { "const": "passed" },
+    "formalControlGate": { "const": "failed" },
+    "controllerStatus": { "const": "non_publishable" },
+    "job": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "name",
+        "podName",
+        "podPhase",
+        "probeCommit",
+        "imageSourceCommit",
+        "image",
+        "gpu",
+        "backoffLimit",
+        "restartCount"
+      ],
+      "properties": {
+        "namespace": { "const": "worldspec-a800-poc" },
+        "name": { "type": "string", "minLength": 1 },
+        "podName": { "type": "string", "minLength": 1 },
+        "podPhase": { "const": "Succeeded" },
+        "probeCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "imageSourceCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "image": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "gpu": { "const": "NVIDIA A800-SXM4-80GB" },
+        "backoffLimit": { "const": 0 },
+        "restartCount": { "const": 0 }
+      },
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "required": [
+        "stage",
+        "category",
+        "exception",
+        "missingSymbol",
+        "message",
+        "coreArtifactsCopied"
+      ],
+      "properties": {
+        "stage": { "const": "local_artifact_receipt" },
+        "category": { "const": "launcher_receipt_postprocessing_error" },
+        "exception": { "const": "NameError" },
+        "missingSymbol": { "const": "datetime" },
+        "message": { "const": "NameError: name 'datetime' is not defined" },
+        "coreArtifactsCopied": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "diagnosticEvidence": {
+      "const": {
+        "diagnosticCompleteness": "passed",
+        "staticEquivalence": "passed",
+        "replayTerminationReasons": ["joint_limit"],
+        "terminalJoints": ["right_hip_yaw"],
+        "originalTerminationReason": "unknown"
+      }
+    },
+    "recoveredEvidence": {
+      "type": "object",
+      "required": [
+        "report",
+        "controller",
+        "trace",
+        "equivalence",
+        "jobLog",
+        "jobManifest",
+        "podManifest",
+        "podDescription"
+      ],
+      "additionalProperties": { "$ref": "#/$defs/artifact" }
+    },
+    "missingRequiredArtifacts": {
+      "const": {
+        "receipt": "not_created_due_to_launcher_postprocessing_error"
+      }
+    },
+    "claimBoundary": {
+      "const": {
+        "diagnosticClaim": "failed_handoff",
+        "controlClaim": "failed",
+        "controllerCandidate": "forbidden",
+        "a5": "not_executed",
+        "fiveRunGate": "not_executed",
+        "formalTraining": "not_started",
+        "l3Claim": "forbidden",
+        "automaticRetry": "not_executed"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["digest", "sizeBytes"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

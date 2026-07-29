@@ -48,3 +48,21 @@ A5, 5/5, 100M, or publishing a failed Controller as a candidate.
 - failure-artifact handoff improves diagnosis but does not prove control;
 - changing controller, gates, policies, scene, seed, or capacity invalidates
   equivalent-replay status.
+
+## Attempt-02 result
+
+Attempt-02 completed its equivalent replay on a Drobodata A800. Diagnostic
+completeness and static semantic equivalence passed. The replay terminated on
+`joint_limit` at `right_hip_yaw`; the formal control gate failed and the
+Controller remains `non_publishable`.
+
+The Launcher copied the Report, Controller, Trace, and Equivalence artifacts,
+then failed while creating the Receipt because `datetime` was not imported.
+Because the Receipt and final Schema audit did not complete, Attempt-02 is
+treated as a failed formal diagnostic handoff; the `passed` field in the Pod
+Report alone is not completion evidence.
+
+The correction replaces the embedded Receipt Python fragment with a standalone,
+unit-tested Finalizer that verifies artifact identities before atomic writes.
+Attempt-02 remains immutable, and the correction uses a new commit, image, and
+Attempt.

@@ -486,6 +486,7 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert "artifact_failure_ready" in launcher
     assert "failure-artifacts-copied" in launcher
     assert "diagnostic failure handoff artifact allowlist violation" in launcher
+    assert "finalize_h1_diagnostic_artifacts.py" in launcher
     assert "A5-CI deterministic attempt already has local evidence" in launcher
     assert "worldspec-h1-a5ci-" in launcher
     assert "backoffLimit" not in launcher

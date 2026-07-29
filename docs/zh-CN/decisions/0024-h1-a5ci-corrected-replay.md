@@ -38,3 +38,18 @@ A800 上执行，但诊断后处理错误 `KeyError: 'control'` 发生在正式 
 - 已失败的 Attempt-01 保持不可变，不因代码修复而追溯性通过；
 - 失败产物交接提高可诊断性，不等于控制行为通过；
 - 再次修改控制器、门槛、策略、场景、种子或容量会失去等价重放资格。
+
+## Attempt-02 结果
+
+Attempt-02 在 Drobodata A800 上完成了等价重放，诊断完备性和静态语义
+等价性均通过；重放终止原因定位为 `joint_limit`，终止关节为
+`right_hip_yaw`，正式控制门失败，Controller 保持 `non_publishable`。
+
+Launcher 已复制 Report、Controller、Trace 和 Equivalence，但在生成 Receipt
+时因缺少 `datetime` 导入而失败。由于 Receipt 和最终 Schema 审计未完成，
+Attempt-02 的正式诊断门按失败处理，不能仅凭 Pod Report 中的 `passed` 字段
+宣称完成。
+
+修正方案不再使用内嵌 Receipt Python 片段，改为独立、可单测、先验证产物
+身份再原子写入的 Finalizer。Attempt-02 仍保持不可变，修正使用新提交、新
+镜像和新 Attempt。
