@@ -26,5 +26,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0014 H1 MuJoCo Playground PPO training engine](0014-h1-mujoco-playground-ppo-engine.md)
 - [ADR-0015 H1 transition-braking curriculum and single-candidate CCD spike](0015-h1-transition-braking-calibration.md)
 - [ADR-0016 H1 stand replay and teacher-action distillation](0016-h1-stand-retention-distillation.md)
+- [ADR-0017 H1 motion/stand dual-policy supervisor](0017-h1-dual-policy-supervisor.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

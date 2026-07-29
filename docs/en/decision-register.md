@@ -42,5 +42,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-028 | Use MuJoCo Playground v0.2.0, MuJoCo/MJX, Warp, and Brax JAX PPO for H1 retraining; adapt the target composition and retain Orbax as the native output | Accepted Design | [ADR-0014](decisions/0014-h1-mujoco-playground-ppo-engine.md) |
 | D-029 | Keep the original midterm gates; add a move-to-zero curriculum and settling rewards, gated by one CCD 35→50 numerical spike before A800 calibration | Accepted Design | [ADR-0015](decisions/0015-h1-transition-braking-calibration.md) |
 | D-030 | A1 uses 60% walk/settle, 40% stand replay, and stand-v2.1 teacher-action distillation; run a small A800 calibration without relaxing gates | Accepted Design | [ADR-0016](decisions/0016-h1-stand-retention-distillation.md) |
+| D-031 | A2 separates motion and zero-velocity/stand into two frozen policies with a deterministic five-step linear-action-blend supervisor; first run a zero-training A800 probe | Accepted Design | [ADR-0017](decisions/0017-h1-dual-policy-supervisor.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

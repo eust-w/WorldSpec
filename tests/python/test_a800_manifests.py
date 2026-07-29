@@ -380,6 +380,30 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "run_a800_h1_locomotion_midterm.sh" in retention_launcher
 
 
+def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:
+    entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    launcher = (
+        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
+    ).read_text(encoding="utf-8")
+    wrapper = (
+        ROOT / "scripts" / "run_a800_h1_dual_policy_probe.sh"
+    ).read_text(encoding="utf-8")
+
+    assert 'stage == "dual_policy_switch_probe"' in entrypoint
+    assert "run_dual_policy_probe" in entrypoint
+    assert "WORLDSPEC_A800_DUAL_POLICY_RESULT=" in entrypoint
+    assert '"controllerStatus"' in entrypoint
+    assert 'REPORT_SCHEMA=h1-locomotion-dual-policy-report.schema.json' in launcher
+    assert 'GATE_FIELD=formalProbeGate' in launcher
+    assert "/scratch/results/artifacts/dual-policy-controller.json" in launcher
+    assert "locomotion-transition.a800.failed.json" in wrapper
+    assert "locomotion-calibration.a800.passed.json" in wrapper
+    assert "worldspec-h1-midterm-nxszt/midterm-checkpoint.zip" in wrapper
+    assert "worldspec-h1-calibration-4mklr/calibration-checkpoint.zip" in wrapper
+
+
 def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> None:
     (job,) = _documents("h1-locomotion-formal-job.yaml")
     assert job["metadata"]["namespace"] == "worldspec-a800-poc"

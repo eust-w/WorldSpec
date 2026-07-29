@@ -1,0 +1,216 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-dual-policy-report.schema.json",
+  "title": "WorldSpec H1 Dual-Policy Switch Probe Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "controllerStatus",
+    "formalProbeGate",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "baseTrainingProfileDigest",
+    "dualPolicyProfileDigest",
+    "motionPolicy",
+    "standPolicy",
+    "runtimeCapacity",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "supervisor",
+    "qualityAssessment",
+    "controllerArtifact",
+    "traceArtifact",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": { "const": "h1_dual_policy_switch_probe" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "research_probe" },
+    "controllerStatus": { "enum": ["candidate", "non_publishable"] },
+    "formalProbeGate": { "enum": ["passed", "failed"] },
+    "probeDefinition": { "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision" },
+    "imageSource": { "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision" },
+    "probeInput": { "$ref": "#/$defs/probeInput" },
+    "container": { "type": "object" },
+    "platform": { "type": "object" },
+    "gpu": { "type": "object" },
+    "packages": { "type": "object" },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "baseTrainingProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "dualPolicyProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "motionPolicy": { "$ref": "#/$defs/policyInitialization" },
+    "standPolicy": { "$ref": "#/$defs/policyInitialization" },
+    "runtimeCapacity": { "type": "object" },
+    "staticPreflight": { "type": "object" },
+    "runtimePreflight": { "type": "object" },
+    "target": { "$ref": "#/$defs/target" },
+    "supervisor": { "type": "object" },
+    "qualityAssessment": {
+      "type": "object",
+      "required": ["status", "deterministicSuiteGate", "tests"],
+      "properties": {
+        "status": { "enum": ["passed", "failed"] },
+        "deterministicSuiteGate": { "type": "boolean" },
+        "tests": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": { "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/test" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "controllerArtifact": { "$ref": "#/$defs/artifact" },
+    "traceArtifact": { "$ref": "#/$defs/artifact" },
+    "logDiagnostics": { "$ref": "#/$defs/logDiagnostics" },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "policyInitialization": {
+      "type": "object",
+      "required": [
+        "archiveDigest",
+        "archiveSizeBytes",
+        "selectedStep",
+        "networkConfig",
+        "restored",
+        "optimizerState",
+        "role"
+      ],
+      "properties": {
+        "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "archiveSizeBytes": { "type": "integer", "minimum": 1 },
+        "selectedStep": { "type": "integer", "minimum": 0 },
+        "networkConfig": { "type": "object" },
+        "restored": {
+          "type": "object",
+          "required": ["normalizer", "policy", "value", "optimizer"],
+          "properties": {
+            "normalizer": { "const": true },
+            "policy": { "const": true },
+            "value": { "const": true },
+            "optimizer": { "const": false }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": { "const": "reset" },
+        "role": { "enum": ["motion", "zero_velocity_and_stand"] }
+      },
+      "additionalProperties": false
+    },
+    "probeInput": {
+      "allOf": [
+        { "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision" },
+        {
+          "type": "object",
+          "required": ["materialization", "archiveDigest"],
+          "properties": {
+            "materialization": { "type": "string", "minLength": 1 },
+            "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "sourceBundleDigest",
+        "derivedModelDigest",
+        "observationSize",
+        "actionSize"
+      ],
+      "properties": {
+        "sourceBundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "derivedModelDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "observationSize": { "type": "integer", "minimum": 1 },
+        "actionSize": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": true
+    },
+    "logDiagnostics": {
+      "type": "object",
+      "required": [
+        "ccdOverflowCount",
+        "capacityOverflowCount",
+        "abnormalContactCount",
+        "jointLimitViolationCount",
+        "nonFiniteCount",
+        "clean"
+      ],
+      "properties": {
+        "ccdOverflowCount": { "type": "integer", "minimum": 0 },
+        "capacityOverflowCount": { "type": "integer", "minimum": 0 },
+        "abnormalContactCount": { "type": "integer", "minimum": 0 },
+        "jointLimitViolationCount": { "type": "integer", "minimum": 0 },
+        "nonFiniteCount": { "type": "integer", "minimum": 0 },
+        "clean": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["path", "sizeBytes", "digest"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sizeBytes": { "type": "integer", "minimum": 1 },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "distribution": { "const": "internal_only" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "formalProbeGate": { "const": "passed" } },
+        "required": ["formalProbeGate"]
+      },
+      "then": {
+        "properties": {
+          "controllerStatus": { "const": "candidate" },
+          "qualityAssessment": {
+            "properties": {
+              "status": { "const": "passed" },
+              "deterministicSuiteGate": { "const": true },
+              "tests": {
+                "not": {
+                  "contains": {
+                    "properties": { "result": { "const": "fail" } },
+                    "required": ["result"]
+                  }
+                }
+              }
+            }
+          },
+          "logDiagnostics": {
+            "properties": {
+              "ccdOverflowCount": { "const": 0 },
+              "capacityOverflowCount": { "const": 0 },
+              "abnormalContactCount": { "const": 0 },
+              "jointLimitViolationCount": { "const": 0 },
+              "nonFiniteCount": { "const": 0 },
+              "clean": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

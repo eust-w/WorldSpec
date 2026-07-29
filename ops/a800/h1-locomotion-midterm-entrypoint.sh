@@ -117,6 +117,7 @@ import pathlib
 import sys
 
 profile = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+stage = profile["stage"]
 checked_report_path = pathlib.Path(sys.argv[2])
 input_report_path = pathlib.Path(sys.argv[3])
 checkpoint_path = pathlib.Path(sys.argv[4])
@@ -124,7 +125,7 @@ checked_report = checked_report_path.read_bytes()
 input_report = input_report_path.read_bytes()
 if input_report != checked_report:
     raise SystemExit("uploaded warm-start report differs from the repository-bound report")
-source = profile["warmStart"]
+source = profile["motionPolicy"] if stage == "dual_policy_switch_probe" else profile["warmStart"]
 report_digest = f"sha256:{hashlib.sha256(input_report).hexdigest()}"
 checkpoint_payload = checkpoint_path.read_bytes()
 checkpoint_digest = f"sha256:{hashlib.sha256(checkpoint_payload).hexdigest()}"
@@ -162,8 +163,12 @@ if profile["runtime"]["containerImage"] != sys.argv[5]:
     raise SystemExit("midterm Profile container image mismatch")
 if profile["runtime"]["packageLockDigest"] != sys.argv[6]:
     raise SystemExit("midterm Profile package lock mismatch")
-if profile["stage"] == "loaded_track_settle_retention":
-    teacher = profile["retentionTeacher"]
+if stage in {"loaded_track_settle_retention", "dual_policy_switch_probe"}:
+    teacher = (
+        profile["standPolicy"]
+        if stage == "dual_policy_switch_probe"
+        else profile["retentionTeacher"]
+    )
     teacher_filename = sys.argv[8]
     if not teacher_filename:
         raise SystemExit("retention teacher report filename is missing")
@@ -196,8 +201,7 @@ if profile["stage"] == "loaded_track_settle_retention":
     teacher_report = json.loads(teacher_input_report)
     if (
         teacher_report["qualityAssessment"]["status"] != "passed"
-        or teacher_report["researchCheckpoint"]["digest"]
-        != teacher_checkpoint_digest
+        or teacher_report["researchCheckpoint"]["digest"] != teacher_checkpoint_digest
     ):
         raise SystemExit("retention teacher evidence is not the passing stand-v2.1 source")
 PY
@@ -256,6 +260,7 @@ from pathlib import Path
 import jax
 
 from worldspec_h1_training.contract import read_json
+from worldspec_h1_training.dual_policy import run_dual_policy_probe
 from worldspec_h1_training.midterm import run_midterm_calibration
 
 source_dir = Path(os.environ["SOURCE_DIR"])
@@ -270,20 +275,31 @@ midterm_profile = read_json(
     / "h1-kitchen"
     / os.environ["WORLD_SPEC_MIDTERM_PROFILE_FILENAME"]
 )
-result = run_midterm_calibration(
-    base_profile,
-    midterm_profile,
-    Path(os.environ["BUNDLE_DIR"]),
-    Path(os.environ["MODEL_DIR"]),
-    artifact_dir,
-    Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
-    (
-        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip"
-        if midterm_profile["stage"] == "loaded_track_settle_retention"
-        else None
-    ),
-)
-result["training"]["profileStage"] = midterm_profile["stage"]
+if midterm_profile["stage"] == "dual_policy_switch_probe":
+    result = run_dual_policy_probe(
+        base_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+    )
+else:
+    result = run_midterm_calibration(
+        base_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        (
+            Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip"
+            if midterm_profile["stage"] == "loaded_track_settle_retention"
+            else None
+        ),
+    )
+    result["training"]["profileStage"] = midterm_profile["stage"]
 with (result_dir / "gpu.csv").open(encoding="utf-8") as stream:
     gpu_row = next(csv.reader(stream))
 package_names = (
@@ -300,22 +316,7 @@ package_names = (
     "worldspec-h1-training",
     "worldspec-worker",
 )
-report = {
-    "id": (
-        "midterm-report://worldspec/h1-loaded-track-settle/a800-"
-        + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
-    ),
-    "reportVersion": "0.1.0",
-    "status": "completed",
-    "scope": "h1_loaded_track_settle_midterm",
-    "executionEvidence": "executed",
-    "runtimeAcceptance": "research_midterm",
-    "policyStatus": "non_publishable",
-    "formalTrainingGate": (
-        "passed"
-        if result["qualityAssessment"]["status"] == "passed"
-        else "failed"
-    ),
+common = {
     "probeDefinition": {
         "repository": os.environ["WORLD_SPEC_REPOSITORY"],
         "commit": os.environ["WORLD_SPEC_PROBE_DEFINITION_REVISION"],
@@ -355,7 +356,53 @@ report = {
     **result,
     "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
 }
-print("WORLDSPEC_A800_MIDTERM_RESULT=" + json.dumps(report, separators=(",", ":")))
+if midterm_profile["stage"] == "dual_policy_switch_probe":
+    report = {
+        "id": (
+            "dual-policy-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_dual_policy_switch_probe",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_probe",
+        "controllerStatus": (
+            "candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalProbeGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_DUAL_POLICY_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+else:
+    report = {
+        "id": (
+            "midterm-report://worldspec/h1-loaded-track-settle/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_loaded_track_settle_midterm",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_midterm",
+        "policyStatus": "non_publishable",
+        "formalTrainingGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print("WORLDSPEC_A800_MIDTERM_RESULT=" + json.dumps(report, separators=(",", ":")))
 PY
 
 stage artifact_ready

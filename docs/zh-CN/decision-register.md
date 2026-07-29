@@ -40,5 +40,6 @@ last-verified: 2026-07-29
 | D-028 | H1 重训采用 MuJoCo Playground v0.2.0、MuJoCo/MJX、Warp 与 Brax JAX PPO；目标组合使用专用适配器，训练产物为 Orbax | Accepted Design | [ADR-0014](decisions/0014-h1-mujoco-playground-ppo-engine.md) |
 | D-029 | 保持原中期门槛；增加移动到零命令课程和停稳奖励，先以 CCD 35→50 单候选数值探针门控 A800 校准 | Accepted Design | [ADR-0015](decisions/0015-h1-transition-braking-calibration.md) |
 | D-030 | A1 使用 60% 行走停稳、40% 站立回放和 stand-v2.1 教师动作蒸馏；先做小规模 A800 校准且不放宽门槛 | Accepted Design | [ADR-0016](decisions/0016-h1-stand-retention-distillation.md) |
+| D-031 | A2 将运动与零速度/站立拆为两个冻结策略，由 5 步线性动作混合的确定性 Supervisor 切换；先做零训练 A800 探针 | Accepted Design | [ADR-0017](decisions/0017-h1-dual-policy-supervisor.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

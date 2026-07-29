@@ -206,3 +206,14 @@ A1 已在单张 A800 上执行。五次零命令站立回归恢复为 5/5 通过
 
 规范化报告见
 [`locomotion-retention.a800.failed.json`](../../../examples/h1-kitchen/locomotion-retention.a800.failed.json)。
+
+### 2026-07-29 A2 双策略切换探针
+
+A2 不再对单一策略继续训练。它把 ADR-0015 的过渡 Checkpoint 固定为运动策略，把通过
+的 `stand-v2.1` 固定为零速度/站立策略，并在 3 秒运动结束后的 0.1 秒内用五个控制步
+线性混合两个策略的动作。站立回归完全绕过运动策略。
+
+本轮先执行零训练 A800 探针，原五次行走—停稳、五次站立回归和全部安全门槛均不变。
+通过只能产生内部复合控制器候选；失败则保存 Trace 并停止，不自动重试或启动 100M。
+规范决策见
+[`ADR-0017`](../decisions/0017-h1-dual-policy-supervisor.md)。

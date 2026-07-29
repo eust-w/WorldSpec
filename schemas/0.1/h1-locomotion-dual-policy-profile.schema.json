@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-dual-policy-profile.schema.json",
+  "title": "WorldSpec H1 Dual-Policy Switch Probe Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "baseTrainingProfileDigest",
+    "motionPolicy",
+    "standPolicy",
+    "supervisor",
+    "qualityGates",
+    "runtime",
+    "artifactPolicy"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "stage": { "const": "dual_policy_switch_probe" },
+    "baseTrainingProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "motionPolicy": { "$ref": "#/$defs/policySource" },
+    "standPolicy": { "$ref": "#/$defs/policySource" },
+    "supervisor": {
+      "type": "object",
+      "required": [
+        "mode",
+        "motionCommandThreshold",
+        "moveSteps",
+        "settleSteps",
+        "handoff",
+        "standRegressionPolicy"
+      ],
+      "properties": {
+        "mode": { "const": "command_state_machine" },
+        "motionCommandThreshold": { "type": "number", "exclusiveMinimum": 0 },
+        "moveSteps": { "const": 150 },
+        "settleSteps": { "const": 50 },
+        "handoff": {
+          "type": "object",
+          "required": ["mode", "blendSteps", "durationSeconds", "observationCommand"],
+          "properties": {
+            "mode": { "const": "linear_action_blend" },
+            "blendSteps": { "const": 5 },
+            "durationSeconds": { "const": 0.1 },
+            "observationCommand": {
+              "type": "array",
+              "prefixItems": [
+                { "const": 0.0 },
+                { "const": 0.0 },
+                { "const": 0.0 }
+              ],
+              "items": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "standRegressionPolicy": { "const": "standPolicy" }
+      },
+      "additionalProperties": false
+    },
+    "qualityGates": { "$ref": "#/$defs/qualityGates" },
+    "runtime": { "$ref": "#/$defs/runtime" },
+    "artifactPolicy": {
+      "type": "object",
+      "required": ["controller", "distribution"],
+      "properties": {
+        "controller": { "const": "research_only" },
+        "distribution": { "const": "internal_only" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "policySource": {
+      "type": "object",
+      "required": [
+        "sourceStage",
+        "sourceReportDigest",
+        "checkpointDigest",
+        "checkpointSizeBytes",
+        "distribution",
+        "selectedRole"
+      ],
+      "properties": {
+        "sourceStage": { "type": "string", "minLength": 1 },
+        "sourceReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "checkpointDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "checkpointSizeBytes": { "type": "integer", "minimum": 1 },
+        "distribution": { "const": "internal_only" },
+        "selectedRole": {
+          "enum": ["motion", "zero_velocity_and_stand"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "qualityGates": {
+      "type": "object",
+      "required": [
+        "nominalDurationSeconds",
+        "moveDurationSeconds",
+        "settleWindowSeconds",
+        "requiredConsecutivePasses",
+        "minimumForwardDisplacement",
+        "maximumForwardDisplacement",
+        "maximumLateralDrift",
+        "maximumTrackingRmse",
+        "minimumBaseHeight",
+        "minimumUprightCosine",
+        "maximumSettleLinearSpeed",
+        "maximumSettleAngularSpeed",
+        "maximumStandPlanarDrift",
+        "maximumNonFiniteSamples"
+      ],
+      "properties": {
+        "nominalDurationSeconds": { "const": 4.0 },
+        "moveDurationSeconds": { "const": 3.0 },
+        "settleWindowSeconds": { "const": 1.0 },
+        "requiredConsecutivePasses": { "const": 5 },
+        "minimumForwardDisplacement": { "const": 1.0 },
+        "maximumForwardDisplacement": { "const": 2.2 },
+        "maximumLateralDrift": { "const": 0.2 },
+        "maximumTrackingRmse": { "const": 0.25 },
+        "minimumBaseHeight": { "const": 0.8 },
+        "minimumUprightCosine": { "const": 0.8 },
+        "maximumSettleLinearSpeed": { "const": 0.2 },
+        "maximumSettleAngularSpeed": { "const": 0.4 },
+        "maximumStandPlanarDrift": { "const": 0.2 },
+        "maximumNonFiniteSamples": { "const": 0 }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations",
+        "evaluationEnvironments"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "ccdIterations": { "const": 50 },
+        "evaluationEnvironments": { "const": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

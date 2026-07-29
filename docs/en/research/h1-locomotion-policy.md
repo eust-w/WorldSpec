@@ -260,3 +260,17 @@ algorithm rerun was started.
 See the normalized
 [`locomotion-retention.a800.failed.json`](../../../examples/h1-kitchen/locomotion-retention.a800.failed.json)
 report.
+
+### 2026-07-29 A2 dual-policy switch probe
+
+A2 does not continue training one policy. It freezes the ADR-0015 transition
+checkpoint as the motion policy and the passing `stand-v2.1` checkpoint as the
+zero-velocity/stand policy. After three seconds of motion, it linearly blends
+the two policy actions over five control steps (0.1 seconds). Stand regression
+bypasses the motion policy entirely.
+
+This stage first runs a zero-training A800 probe without changing the five
+walk-settle tests, five stand-regression tests, or any safety gate. A pass can
+create only an internal composite-controller candidate. A failure retains the
+Trace and stops without automatic retry or a 100M run. See
+[`ADR-0017`](../decisions/0017-h1-dual-policy-supervisor.md).

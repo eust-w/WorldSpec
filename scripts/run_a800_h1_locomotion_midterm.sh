@@ -24,6 +24,10 @@ IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-}"
 PACKAGE_LOCK_DIGEST="${WORLD_SPEC_PACKAGE_LOCK_DIGEST:-sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41}"
 PROBE_REVISION="${WORLD_SPEC_PROBE_DEFINITION_REVISION:-$(git -C "${ROOT_DIR}" rev-parse HEAD)}"
 TIMEOUT_SECONDS="${WORLD_SPEC_A800_TIMEOUT_SECONDS:-21600}"
+REPORT_FILENAME=midterm-report.json
+REPORT_MARKER=WORLDSPEC_A800_MIDTERM_RESULT=
+REPORT_SCHEMA=h1-locomotion-midterm-report.schema.json
+GATE_FIELD=formalTrainingGate
 
 for required in \
   "${KUBECONFIG_PATH}" \
@@ -56,7 +60,14 @@ print(
 )
 PY
 )
-if [[ "${profile_stage}" == "loaded_track_settle_retention" ]]; then
+if [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
+  REPORT_FILENAME=dual-policy-report.json
+  REPORT_MARKER=WORLDSPEC_A800_DUAL_POLICY_RESULT=
+  REPORT_SCHEMA=h1-locomotion-dual-policy-report.schema.json
+  GATE_FIELD=formalProbeGate
+fi
+if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
+  [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
   for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: retention teacher input is not readable: %s\n' \
@@ -114,7 +125,11 @@ import sys
 profile = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 report_payload = pathlib.Path(sys.argv[2]).read_bytes()
 checkpoint_payload = pathlib.Path(sys.argv[3]).read_bytes()
-source = profile["warmStart"]
+source = (
+    profile["motionPolicy"]
+    if profile["stage"] == "dual_policy_switch_probe"
+    else profile["warmStart"]
+)
 if f"sha256:{hashlib.sha256(report_payload).hexdigest()}" != source["sourceReportDigest"]:
     raise SystemExit("stand report digest mismatch")
 if (
@@ -123,10 +138,14 @@ if (
     or len(checkpoint_payload) != source["checkpointSizeBytes"]
 ):
     raise SystemExit("stand checkpoint identity mismatch")
-if profile["stage"] == "loaded_track_settle_retention":
+if profile["stage"] in {"loaded_track_settle_retention", "dual_policy_switch_probe"}:
     teacher_report_payload = pathlib.Path(sys.argv[4]).read_bytes()
     teacher_checkpoint_payload = pathlib.Path(sys.argv[5]).read_bytes()
-    teacher = profile["retentionTeacher"]
+    teacher = (
+        profile["standPolicy"]
+        if profile["stage"] == "dual_policy_switch_probe"
+        else profile["retentionTeacher"]
+    )
     if (
         f"sha256:{hashlib.sha256(teacher_report_payload).hexdigest()}"
         != teacher["sourceReportDigest"]
@@ -309,7 +328,8 @@ PY
         --remote-path /scratch/inputs/stand-checkpoint.zip \
         --expected-size "${checkpoint_size}" \
         --expected-digest "${checkpoint_digest}"
-      if [[ "${profile_stage}" == "loaded_track_settle_retention" ]]; then
+      if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
+        [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
         read -r teacher_report_size teacher_report_digest \
           teacher_checkpoint_size teacher_checkpoint_digest < <(
           python3 - \
@@ -354,18 +374,21 @@ PY
       "${kubectl_cmd[@]}" logs "${pod_name}" \
         >"${local_result_dir}/job.log"
       python3 - "${local_result_dir}/job.log" \
-        "${local_result_dir}/midterm-report.json" <<'PY'
+        "${local_result_dir}/${REPORT_FILENAME}" \
+        "${REPORT_MARKER}" \
+        "${GATE_FIELD}" <<'PY'
 import json
 import pathlib
 import sys
 
 log_path = pathlib.Path(sys.argv[1])
 report_path = pathlib.Path(sys.argv[2])
+prefix = sys.argv[3]
+gate_field = sys.argv[4]
 lines = log_path.read_text(encoding="utf-8").splitlines()
-prefix = "WORLDSPEC_A800_MIDTERM_RESULT="
 matches = [line[len(prefix):] for line in lines if line.startswith(prefix)]
 if len(matches) != 1:
-    raise SystemExit(f"expected one midterm result marker, found {len(matches)}")
+    raise SystemExit(f"expected one result marker, found {len(matches)}")
 report = json.loads(matches[0])
 ccd = sum("CCD overflow" in line for line in lines)
 capacity = sum(
@@ -388,18 +411,44 @@ report["logDiagnostics"] = {
     "nonFiniteCount": nonfinite,
     "clean": clean,
 }
-report["formalTrainingGate"] = (
+report[gate_field] = (
     "passed"
     if report["qualityAssessment"]["status"] == "passed" and clean
     else "failed"
 )
+if gate_field == "formalProbeGate":
+    report["controllerStatus"] = (
+        "candidate" if report[gate_field] == "passed" else "non_publishable"
+    )
 report_path.write_text(
     json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
 )
 PY
-      read -r checkpoint_size checkpoint_digest trace_size trace_digest < <(
-        python3 - "${local_result_dir}/midterm-report.json" <<'PY'
+      if [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
+        read -r controller_size controller_digest trace_size trace_digest < <(
+          python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
+import json
+import pathlib
+import sys
+report = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+controller = report["controllerArtifact"]
+trace = report["traceArtifact"]
+print(controller["sizeBytes"], controller["digest"], trace["sizeBytes"], trace["digest"])
+PY
+        )
+        python3 "${CHUNK_COPY}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --remote-path /scratch/results/artifacts/dual-policy-controller.json \
+          --destination "${local_result_dir}/dual-policy-controller.json" \
+          --expected-size "${controller_size}" \
+          --expected-digest "${controller_digest}"
+      else
+        read -r checkpoint_size checkpoint_digest trace_size trace_digest < <(
+          python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
 import json
 import pathlib
 import sys
@@ -408,16 +457,17 @@ checkpoint = report["researchCheckpoint"]
 trace = report["traceArtifact"]
 print(checkpoint["sizeBytes"], checkpoint["digest"], trace["sizeBytes"], trace["digest"])
 PY
-      )
-      python3 "${CHUNK_COPY}" \
-        --kubeconfig "${KUBECONFIG_PATH}" \
-        --namespace "${K8S_NAMESPACE}" \
-        --pod "${pod_name}" \
-        --container midterm \
-        --remote-path /scratch/results/artifacts/midterm-checkpoint.zip \
-        --destination "${local_result_dir}/midterm-checkpoint.zip" \
-        --expected-size "${checkpoint_size}" \
-        --expected-digest "${checkpoint_digest}"
+        )
+        python3 "${CHUNK_COPY}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --remote-path /scratch/results/artifacts/midterm-checkpoint.zip \
+          --destination "${local_result_dir}/midterm-checkpoint.zip" \
+          --expected-size "${checkpoint_size}" \
+          --expected-digest "${checkpoint_digest}"
+      fi
       python3 "${CHUNK_COPY}" \
         --kubeconfig "${KUBECONFIG_PATH}" \
         --namespace "${K8S_NAMESPACE}" \
@@ -461,7 +511,10 @@ if [[ "${phase}" != "Succeeded" ]] || [[ "${artifact_copied}" != "true" ]]; then
   exit 1
 fi
 
-python3 - "${ROOT_DIR}" "${local_result_dir}/midterm-report.json" <<'PY'
+python3 - \
+  "${ROOT_DIR}" \
+  "${local_result_dir}/${REPORT_FILENAME}" \
+  "${REPORT_SCHEMA}" <<'PY'
 import json
 import pathlib
 import sys
@@ -470,6 +523,7 @@ from jsonschema import Draft202012Validator
 
 root = pathlib.Path(sys.argv[1])
 report_path = pathlib.Path(sys.argv[2])
+schema_name = sys.argv[3]
 schemas = {}
 registry = Registry()
 for path in (root / "schemas" / "0.1").glob("*.schema.json"):
@@ -478,7 +532,7 @@ for path in (root / "schemas" / "0.1").glob("*.schema.json"):
     registry = registry.with_resource(value["$id"], Resource.from_contents(value))
 errors = sorted(
     Draft202012Validator(
-        schemas["h1-locomotion-midterm-report.schema.json"],
+        schemas[schema_name],
         registry=registry,
     ).iter_errors(json.loads(report_path.read_text(encoding="utf-8"))),
     key=lambda error: list(error.path),
@@ -488,10 +542,10 @@ if errors:
 PY
 
 gate="$(
-  python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["formalTrainingGate"])' \
-    "${local_result_dir}/midterm-report.json"
+  python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))[sys.argv[2]])' \
+    "${local_result_dir}/${REPORT_FILENAME}" "${GATE_FIELD}"
 )"
-printf 'midterm_gate=%s\nresult_dir=%s\n' "${gate}" "${local_result_dir}"
+printf 'probe_gate=%s\nresult_dir=%s\n' "${gate}" "${local_result_dir}"
 if [[ -n "${WORLD_SPEC_MIDTERM_RESULT_POINTER:-}" ]]; then
   printf '%s\n' "${local_result_dir}" >"${WORLD_SPEC_MIDTERM_RESULT_POINTER}"
 fi
