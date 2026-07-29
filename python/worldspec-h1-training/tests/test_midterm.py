@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import json
+import sys
+import types
 from pathlib import Path
 
 import pytest
@@ -170,3 +172,74 @@ def test_retention_rejects_relaxed_original_gate() -> None:
 
     with pytest.raises(TrainingError, match="quality gates"):
         validate_retention_profile(base, retention)
+
+
+def test_teacher_policy_loader_rebuilds_the_verified_network(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: dict[str, object] = {}
+
+    def network_factory(observation_size, action_size, preprocess_observations_fn):
+        calls["network"] = (
+            observation_size,
+            action_size,
+            preprocess_observations_fn,
+        )
+        return "teacher-network"
+
+    def make_inference_fn(network):
+        calls["inference_network"] = network
+
+        def bind(params, deterministic):
+            calls["bound"] = (params, deterministic)
+            return "teacher-policy"
+
+        return bind
+
+    checkpoint_module = types.SimpleNamespace(load=lambda path: ("params", path))
+    networks_module = types.SimpleNamespace(make_inference_fn=make_inference_fn)
+    statistics_module = types.SimpleNamespace(normalize="normalize")
+    brax_module = types.ModuleType("brax")
+    training_module = types.ModuleType("brax.training")
+    acme_module = types.ModuleType("brax.training.acme")
+    agents_module = types.ModuleType("brax.training.agents")
+    ppo_module = types.ModuleType("brax.training.agents.ppo")
+    acme_module.running_statistics = statistics_module
+    ppo_module.checkpoint = checkpoint_module
+    ppo_module.networks = networks_module
+    training_module.acme = acme_module
+    training_module.agents = agents_module
+    agents_module.ppo = ppo_module
+    brax_module.training = training_module
+    for name, module in (
+        ("brax", brax_module),
+        ("brax.training", training_module),
+        ("brax.training.acme", acme_module),
+        ("brax.training.acme.running_statistics", statistics_module),
+        ("brax.training.agents", agents_module),
+        ("brax.training.agents.ppo", ppo_module),
+        ("brax.training.agents.ppo.checkpoint", checkpoint_module),
+        ("brax.training.agents.ppo.networks", networks_module),
+    ):
+        monkeypatch.setitem(sys.modules, name, module)
+
+    from worldspec_h1_training.midterm import _load_deterministic_teacher_policy
+
+    policy = _load_deterministic_teacher_policy(
+        Path("/checkpoint/000004505600"),
+        {
+            "networkConfig": {
+                "observation_size": {"state": {"shape": [42]}},
+                "action_size": 10,
+            }
+        },
+        network_factory,
+    )
+
+    assert policy == "teacher-policy"
+    assert calls["network"] == ({"state": 42}, 10, "normalize")
+    assert calls["inference_network"] == "teacher-network"
+    assert calls["bound"] == (
+        ("params", Path("/checkpoint/000004505600")),
+        True,
+    )

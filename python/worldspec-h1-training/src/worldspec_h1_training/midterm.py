@@ -570,6 +570,45 @@ def make_retention_training_profile(
     return effective
 
 
+def _load_deterministic_teacher_policy(
+    selected_step: Path,
+    initialization: dict[str, Any],
+    network_factory: Any,
+) -> Any:
+    """Load a teacher without Brax's null-kernel config deserialization bug."""
+
+    from brax.training.acme import running_statistics
+    from brax.training.agents.ppo import checkpoint as ppo_checkpoint
+    from brax.training.agents.ppo import networks as ppo_networks
+
+    config = initialization["networkConfig"]
+    observation = config["observation_size"]["state"]
+    shape = observation["shape"]
+    action_size = config["action_size"]
+    if (
+        not isinstance(shape, list)
+        or len(shape) != 1
+        or not isinstance(shape[0], int)
+        or shape[0] <= 0
+        or not isinstance(action_size, int)
+        or action_size <= 0
+    ):
+        raise TrainingError(
+            "RETENTION_TEACHER_NETWORK_CONFIG_INVALID",
+            "Teacher checkpoint has an invalid observation or action ABI.",
+        )
+    teacher_network = network_factory(
+        {"state": shape[0]},
+        action_size,
+        preprocess_observations_fn=running_statistics.normalize,
+    )
+    teacher_params = ppo_checkpoint.load(selected_step)
+    return ppo_networks.make_inference_fn(teacher_network)(
+        teacher_params,
+        deterministic=True,
+    )
+
+
 def run_midterm_calibration(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
@@ -582,7 +621,6 @@ def run_midterm_calibration(
     """Warm-start, train, evaluate, and retain a midterm checkpoint."""
 
     import numpy as np
-    from brax.training.agents.ppo import checkpoint as ppo_checkpoint
     from brax.training.agents.ppo import networks as ppo_networks
     from brax.training.agents.ppo import train as ppo
     from mujoco_playground import wrapper
@@ -654,9 +692,10 @@ def run_midterm_calibration(
                 teacher_spec["checkpointDigest"],
                 teacher_spec["checkpointSizeBytes"],
             )
-            teacher_policy = ppo_checkpoint.load_policy(
+            teacher_policy = _load_deterministic_teacher_policy(
                 teacher_step,
-                deterministic=True,
+                teacher_initialization,
+                network_factory,
             )
             teacher_initialization = {
                 **teacher_initialization,
