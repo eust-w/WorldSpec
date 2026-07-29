@@ -49,6 +49,7 @@
         "distribution",
         "drawer",
         "cup",
+        "support",
         "graspModel",
         "hiddenAttachment"
       ],
@@ -84,6 +85,16 @@
           },
           "additionalProperties": false
         },
+        "support": {
+          "type": "object",
+          "required": ["type", "center", "halfSize"],
+          "properties": {
+            "type": { "const": "fixed_box" },
+            "center": { "$ref": "#/$defs/vector3" },
+            "halfSize": { "$ref": "#/$defs/positiveVector3" }
+          },
+          "additionalProperties": false
+        },
         "graspModel": { "const": "physical_contact_only" },
         "hiddenAttachment": { "const": false }
       },
@@ -97,6 +108,9 @@
         "damping",
         "maximumJointTargetStep",
         "positionToleranceMeters",
+        "ikIterations",
+        "preflightToleranceMeters",
+        "jointLimitMarginRadians",
         "openGripperCommand",
         "closedGripperCommand",
         "phaseMinimumSteps",
@@ -117,6 +131,9 @@
         "damping": { "type": "number", "exclusiveMinimum": 0 },
         "maximumJointTargetStep": { "type": "number", "exclusiveMinimum": 0 },
         "positionToleranceMeters": { "type": "number", "exclusiveMinimum": 0 },
+        "ikIterations": { "const": 96 },
+        "preflightToleranceMeters": { "const": 0.015 },
+        "jointLimitMarginRadians": { "const": 0.05 },
         "openGripperCommand": { "const": 0.0 },
         "closedGripperCommand": { "const": 255.0 },
         "phaseMinimumSteps": { "$ref": "#/$defs/phaseSteps" },
@@ -165,7 +182,8 @@
         "containerDigest",
         "packageLockDigest",
         "ccdIterations",
-        "evaluationEnvironments"
+        "evaluationEnvironments",
+        "mjxCapacity"
       ],
       "properties": {
         "containerImage": {
@@ -177,7 +195,14 @@
           "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
         },
         "ccdIterations": { "const": 50 },
-        "evaluationEnvironments": { "const": 1 }
+        "evaluationEnvironments": { "const": 1 },
+        "mjxCapacity": {
+          "const": {
+            "activeContactsPerEnvironment": 32,
+            "ccdContactsPerEnvironment": 16,
+            "njmax": 128
+          }
+        }
       },
       "additionalProperties": false
     },
@@ -202,6 +227,15 @@
     "range2": {
       "type": "array",
       "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "items": false
+    },
+    "positiveVector3": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "type": "number", "exclusiveMinimum": 0 },
+        { "type": "number", "exclusiveMinimum": 0 }
+      ],
       "items": false
     },
     "phaseSteps": {

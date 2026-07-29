@@ -231,6 +231,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-training-profile.json": "h1-locomotion-training-profile.schema.json",
         "h1-kitchen/locomotion-training-profile.task-v1.json": "h1-locomotion-training-profile.schema.json",
         "h1-kitchen/kitchen-task-profile.json": "h1-kitchen-task-profile.schema.json",
+        "h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json": "h1-kitchen-task-preflight.schema.json",
         "h1-kitchen/locomotion-training-result.blocked.json": "h1-locomotion-training-result.schema.json",
         "h1-kitchen/runtime-spike.a800.passed.json": "h1-runtime-spike-report.schema.json",
         "h1-kitchen/training-image-build.a800.passed.json": "h1-image-build-report.schema.json",

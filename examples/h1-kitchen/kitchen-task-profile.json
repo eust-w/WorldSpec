@@ -1,5 +1,5 @@
 {
-  "id": "taskprofile://worldspec/h1-kitchen/fixed-full-loop-v1",
+  "id": "taskprofile://worldspec/h1-kitchen/fixed-full-loop-a5r-v2",
   "profileVersion": "0.1.0",
   "status": "research",
   "stage": "fixed_kitchen_full_loop_probe",
@@ -31,7 +31,7 @@
     "selectedRole": "zero_velocity_and_stand"
   },
   "scene": {
-    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v1",
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v2",
     "evidenceStatus": "generated",
     "distribution": "internal_only",
     "drawer": {
@@ -45,6 +45,11 @@
       "initialCenter": [1.88, -0.21, 1.195],
       "proxy": "short_cylinder",
       "massKg": 0.18
+    },
+    "support": {
+      "type": "fixed_box",
+      "center": [1.88, -0.21, 1.155],
+      "halfSize": [0.1, 0.09, 0.015]
     },
     "graspModel": "physical_contact_only",
     "hiddenAttachment": false
@@ -60,6 +65,9 @@
     "damping": 0.04,
     "maximumJointTargetStep": 0.04,
     "positionToleranceMeters": 0.035,
+    "ikIterations": 96,
+    "preflightToleranceMeters": 0.015,
+    "jointLimitMarginRadians": 0.05,
     "openGripperCommand": 0.0,
     "closedGripperCommand": 255.0,
     "phaseMinimumSteps": {
@@ -113,7 +121,12 @@
     "containerDigest": "sha256:f3eaaa71f9ad38aa7d9ae61514ee4f4c36db3a44676b1167d9d19a200489f0d8",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50,
-    "evaluationEnvironments": 1
+    "evaluationEnvironments": 1,
+    "mjxCapacity": {
+      "activeContactsPerEnvironment": 32,
+      "ccdContactsPerEnvironment": 16,
+      "njmax": 128
+    }
   },
   "artifactPolicy": {
     "controller": "research_only",

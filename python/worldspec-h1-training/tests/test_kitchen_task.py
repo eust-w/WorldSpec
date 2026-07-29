@@ -12,6 +12,7 @@ from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.kitchen_task import (
     PHASES,
+    TASK_CAPACITY,
     TASK_CONTROLLER,
     KitchenTaskState,
     make_kitchen_task_evaluation_profile,
@@ -100,6 +101,8 @@ def test_a5_profile_binds_a4_and_forbids_l3() -> None:
     assert task["supervisorProfileDigest"] == digest_json(supervisor)
     assert task["scene"]["hiddenAttachment"] is False
     assert task["scene"]["graspModel"] == "physical_contact_only"
+    assert task["scene"]["support"]["type"] == "fixed_box"
+    assert task["controller"]["ikIterations"] == 96
     assert task["artifactPolicy"]["l3Claim"] == "forbidden"
 
 
@@ -112,6 +115,7 @@ def test_a5_effective_profile_uses_task_seed_and_runtime() -> None:
     assert effective["training"]["numEnvs"] == 1
     assert effective["runtime"]["containerDigest"] == task["runtime"]["containerDigest"]
     assert effective["runtime"]["ccdIterations"] == task["runtime"]["ccdIterations"]
+    assert effective["runtime"]["mjxCapacity"] == TASK_CAPACITY
 
 
 def test_a5_rejects_hidden_attachment_and_policy_drift() -> None:
@@ -124,6 +128,11 @@ def test_a5_rejects_hidden_attachment_and_policy_drift() -> None:
     _, _, task = _profiles()
     task["standPolicy"]["checkpointDigest"] = "sha256:" + ("0" * 64)
     with pytest.raises(TrainingError, match="frozen A4"):
+        validate_kitchen_task_profile(base, supervisor, task)
+
+    _, _, task = _profiles()
+    task["runtime"]["mjxCapacity"]["activeContactsPerEnvironment"] = 16
+    with pytest.raises(TrainingError, match="locked capacity"):
         validate_kitchen_task_profile(base, supervisor, task)
 
 
@@ -167,6 +176,13 @@ def test_task_scene_is_derived_without_hidden_constraint(tmp_path: Path) -> None
     assert root.find(".//joint[@name='worldspec_drawer_slide']") is not None
     assert root.find(".//freejoint[@name='worldspec_cup_free']") is not None
     assert root.find(".//site[@name='worldspec_drawer_handle_site']") is not None
+    support = root.find(".//geom[@name='worldspec_cup_support']")
+    assert support is not None
+    assert support.get("type") == "box"
+    assert support.get("pos") == "1.88 -0.21 1.155"
+    assert support.get("size") == "0.1 0.09 0.015"
+    assert root.find(".//geom[@name='worldspec_cup_rail_left']") is None
+    assert root.find(".//geom[@name='worldspec_cup_rail_right']") is None
     assert root.find(".//equality") is None
     assert root.find(".//body[@mocap='true']") is None
     assert "No weld" in derivation["dynamicsStatement"]

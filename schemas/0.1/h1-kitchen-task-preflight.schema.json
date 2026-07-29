@@ -1,0 +1,146 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-kitchen-task-preflight.schema.json",
+  "title": "WorldSpec H1 Kitchen A5-R CPU Preflight 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "sourceBundleDigest",
+    "sourceLockDigest",
+    "taskProfileDigest",
+    "derivedModelDigest",
+    "environment",
+    "modelCounts",
+    "reachability",
+    "supportStability",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "passed" },
+    "scope": { "const": "h1_kitchen_a5r_cpu_preflight" },
+    "executionEvidence": { "const": "executed" },
+    "sourceBundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "sourceLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "taskProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "derivedModelDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "environment": {
+      "type": "object",
+      "required": ["os", "architecture", "runtime", "runtimeVersion"],
+      "properties": {
+        "os": { "const": "darwin" },
+        "architecture": { "const": "arm64" },
+        "runtime": { "const": "mujoco" },
+        "runtimeVersion": { "const": "3.6.0" }
+      },
+      "additionalProperties": false
+    },
+    "modelCounts": {
+      "type": "object",
+      "required": ["nq", "nv", "nu", "nbody", "ngeom"],
+      "properties": {
+        "nq": { "type": "integer", "minimum": 1 },
+        "nv": { "type": "integer", "minimum": 1 },
+        "nu": { "type": "integer", "minimum": 1 },
+        "nbody": { "type": "integer", "minimum": 1 },
+        "ngeom": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "reachability": {
+      "type": "object",
+      "required": [
+        "status",
+        "method",
+        "maximumResidualMeters",
+        "minimumJointLimitMarginRadians",
+        "targets"
+      ],
+      "properties": {
+        "status": { "const": "passed" },
+        "method": { "const": "fixed_base_four_joint_iterative_dls" },
+        "maximumResidualMeters": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.015
+        },
+        "minimumJointLimitMarginRadians": {
+          "type": "number",
+          "minimum": 0.05
+        },
+        "targets": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "required": [
+              "phase",
+              "target",
+              "residualMeters",
+              "jointLimitMarginRadians",
+              "iterations",
+              "status"
+            ],
+            "properties": {
+              "phase": { "type": "string", "minLength": 1 },
+              "target": { "$ref": "common.schema.json#/$defs/vector3" },
+              "residualMeters": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 0.015
+              },
+              "jointLimitMarginRadians": {
+                "type": "number",
+                "minimum": 0.05
+              },
+              "iterations": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 96
+              },
+              "status": { "const": "passed" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "supportStability": {
+      "type": "object",
+      "required": [
+        "status",
+        "steps",
+        "startZ",
+        "minimumZ",
+        "endZ",
+        "maximumContacts"
+      ],
+      "properties": {
+        "status": { "const": "passed" },
+        "steps": { "type": "integer", "minimum": 1000 },
+        "startZ": { "type": "number" },
+        "minimumZ": { "type": "number", "minimum": 1.17 },
+        "endZ": { "type": "number", "minimum": 1.17 },
+        "maximumContacts": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "claimBoundary": {
+      "const": {
+        "status": "cpu_preflight_only",
+        "a800DynamicTaskClaim": "forbidden",
+        "l3Claim": "forbidden"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "additionalProperties": false
+}

@@ -29,7 +29,7 @@ from .trainer import _flat_observation_size
 from .warm_start import materialize_warm_start, validate_network_compatibility
 
 TASK_SCENE = {
-    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v1",
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v2",
     "evidenceStatus": "generated",
     "distribution": "internal_only",
     "drawer": {
@@ -43,6 +43,11 @@ TASK_SCENE = {
         "initialCenter": [1.88, -0.21, 1.195],
         "proxy": "short_cylinder",
         "massKg": 0.18,
+    },
+    "support": {
+        "type": "fixed_box",
+        "center": [1.88, -0.21, 1.155],
+        "halfSize": [0.10, 0.09, 0.015],
     },
     "graspModel": "physical_contact_only",
     "hiddenAttachment": False,
@@ -75,6 +80,9 @@ TASK_CONTROLLER = {
     "damping": 0.04,
     "maximumJointTargetStep": 0.04,
     "positionToleranceMeters": 0.035,
+    "ikIterations": 96,
+    "preflightToleranceMeters": 0.015,
+    "jointLimitMarginRadians": 0.05,
     "openGripperCommand": 0.0,
     "closedGripperCommand": 255.0,
     "phaseMinimumSteps": {
@@ -107,6 +115,12 @@ TASK_CONTROLLER = {
         "push_drawer": 140,
         "final_hold": 25,
     },
+}
+
+TASK_CAPACITY = {
+    "activeContactsPerEnvironment": 32,
+    "ccdContactsPerEnvironment": 16,
+    "njmax": 128,
 }
 
 TASK_GATES = {
@@ -261,10 +275,14 @@ def validate_kitchen_task_profile(
             "A5 remains internal research evidence and cannot claim L3.",
         )
     runtime = profile.get("runtime", {})
-    if runtime.get("ccdIterations") != 50 or runtime.get("evaluationEnvironments") != 1:
+    if (
+        runtime.get("ccdIterations") != 50
+        or runtime.get("evaluationEnvironments") != 1
+        or runtime.get("mjxCapacity") != TASK_CAPACITY
+    ):
         raise TrainingError(
             "KITCHEN_TASK_RUNTIME_INVALID",
-            "A5 requires CCD=50 and one deterministic environment.",
+            "A5-R requires CCD=50, one deterministic environment, and its locked capacity.",
         )
     if (
         runtime.get("containerDigest")
@@ -287,6 +305,7 @@ def make_kitchen_task_evaluation_profile(
     effective = make_supervisor_evaluation_profile(base_profile, supervisor_profile)
     effective["runtime"]["containerDigest"] = profile["runtime"]["containerDigest"]
     effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
+    effective["runtime"]["mjxCapacity"] = copy.deepcopy(profile["runtime"]["mjxCapacity"])
     effective["training"]["numEnvs"] = 1
     effective["training"]["seed"] = profile["seed"]
     return effective
@@ -333,19 +352,19 @@ def prepare_kitchen_task_model(
                 "friction": "0.8 0.01 0.001",
             },
         )
-    for side, y in (("left", -0.275), ("right", -0.145)):
-        ET.SubElement(
-            cabinet,
-            "geom",
-            {
-                "name": f"worldspec_cup_rail_{side}",
-                "type": "box",
-                "pos": f"1.88 {y} 1.155",
-                "size": "0.08 0.02 0.012",
-                "rgba": "0.35 0.35 0.35 1",
-                "friction": "1.0 0.01 0.001",
-            },
-        )
+    support = TASK_SCENE["support"]
+    ET.SubElement(
+        cabinet,
+        "geom",
+        {
+            "name": "worldspec_cup_support",
+            "type": "box",
+            "pos": " ".join(str(value) for value in support["center"]),
+            "size": " ".join(str(value) for value in support["halfSize"]),
+            "rgba": "0.35 0.35 0.35 1",
+            "friction": "1.0 0.01 0.001",
+        },
+    )
 
     drawer = ET.SubElement(
         worldbody,
@@ -462,6 +481,7 @@ def prepare_kitchen_task_model(
         "transformations": [
             "add_self_authored_static_cabinet",
             "add_prismatic_drawer_and_handle",
+            "add_fixed_collision_cup_support",
             "add_dynamic_short_cylinder_cup",
         ],
         "dynamicsStatement": (
@@ -510,35 +530,145 @@ class JacobianImpedanceController:
         self._dofs = model.jnt_dofadr[self._joint_ids]
         self._ranges = model.jnt_range[self._joint_ids]
 
-    def solve(self, qpos, qvel, target) -> tuple[list[float], float, list[float]]:
+    def _solve_joint_target(
+        self,
+        qpos,
+        qvel,
+        target,
+    ) -> tuple[list[float], float, list[float], float, float, int]:
         np = self._np
-        self._data.qpos[:] = np.asarray(qpos)
-        self._data.qvel[:] = np.asarray(qvel)
+        working_qpos = np.asarray(qpos, dtype=float).copy()
+        working_qvel = np.asarray(qvel, dtype=float)
+        target_value = np.asarray(target, dtype=float)
+        self._data.qpos[:] = working_qpos
+        self._data.qvel[:] = working_qvel
         self._mujoco.mj_forward(self._model, self._data)
-        jacp = np.zeros((3, self._model.nv))
-        jacr = np.zeros((3, self._model.nv))
-        self._mujoco.mj_jacSite(
-            self._model,
-            self._data,
-            jacp,
-            jacr,
-            self._site,
-        )
         current = self._data.site_xpos[self._site].copy()
-        error = np.asarray(target, dtype=float) - current
-        jac = jacp[:, self._dofs]
-        damping = float(TASK_CONTROLLER["damping"])
-        delta = jac.T @ np.linalg.solve(jac @ jac.T + damping**2 * np.eye(3), error)
-        limit = float(TASK_CONTROLLER["maximumJointTargetStep"])
-        delta = np.clip(delta, -limit, limit)
-        values = np.clip(
-            self._data.qpos[self._qpos] + delta,
-            self._ranges[:, 0] + 0.01,
-            self._ranges[:, 1] - 0.01,
+        current_error = float(np.linalg.norm(target_value - current))
+        iterations = 0
+        for iterations in range(1, int(TASK_CONTROLLER["ikIterations"]) + 1):
+            self._data.qpos[:] = working_qpos
+            self._data.qvel[:] = 0.0
+            self._mujoco.mj_forward(self._model, self._data)
+            solved = self._data.site_xpos[self._site].copy()
+            error = target_value - solved
+            if np.linalg.norm(error) <= TASK_CONTROLLER["preflightToleranceMeters"]:
+                break
+            jacp = np.zeros((3, self._model.nv))
+            jacr = np.zeros((3, self._model.nv))
+            self._mujoco.mj_jacSite(
+                self._model,
+                self._data,
+                jacp,
+                jacr,
+                self._site,
+            )
+            jac = jacp[:, self._dofs]
+            damping = float(TASK_CONTROLLER["damping"])
+            delta = jac.T @ np.linalg.solve(
+                jac @ jac.T + damping**2 * np.eye(3),
+                error,
+            )
+            limit = float(TASK_CONTROLLER["maximumJointTargetStep"])
+            delta = np.clip(delta, -limit, limit)
+            working_qpos[self._qpos] = np.clip(
+                working_qpos[self._qpos] + delta,
+                self._ranges[:, 0] + 0.01,
+                self._ranges[:, 1] - 0.01,
+            )
+        self._data.qpos[:] = working_qpos
+        self._data.qvel[:] = 0.0
+        self._mujoco.mj_forward(self._model, self._data)
+        solved = self._data.site_xpos[self._site].copy()
+        residual = float(np.linalg.norm(target_value - solved))
+        values = working_qpos[self._qpos]
+        joint_margin = float(
+            np.min(
+                np.minimum(
+                    values - self._ranges[:, 0],
+                    self._ranges[:, 1] - values,
+                )
+            )
+        )
+        return (
+            [float(value) for value in values],
+            current_error,
+            [float(value) for value in current],
+            residual,
+            joint_margin,
+            iterations,
+        )
+
+    def solve(
+        self,
+        qpos,
+        qvel,
+        target,
+    ) -> tuple[list[float], float, list[float], float]:
+        values, current_error, current, residual, _, _ = self._solve_joint_target(
+            qpos,
+            qvel,
+            target,
         )
         held = [0.0] * 9
-        held[5:9] = [float(value) for value in values]
-        return held, float(np.linalg.norm(error)), [float(value) for value in current]
+        held[5:9] = values
+        return held, current_error, current, residual
+
+    def assess_reachability(
+        self,
+        qpos,
+        qvel,
+        metrics: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Certify all fixed-base task-space targets before manipulation starts."""
+
+        phases = [
+            "stand_ready",
+            "reach_handle",
+            "pull_drawer",
+            "release_handle",
+            "reach_cup",
+            "lift_cup",
+            "insert_cup",
+            "retract",
+            "push_drawer",
+            "final_hold",
+        ]
+        results = []
+        for phase in phases:
+            target = _target_for_phase(phase, metrics)
+            _, _, _, residual, joint_margin, iterations = self._solve_joint_target(
+                qpos,
+                qvel,
+                target,
+            )
+            passed = (
+                residual <= TASK_CONTROLLER["preflightToleranceMeters"]
+                and joint_margin >= TASK_CONTROLLER["jointLimitMarginRadians"]
+            )
+            results.append(
+                {
+                    "phase": phase,
+                    "target": target,
+                    "residualMeters": residual,
+                    "jointLimitMarginRadians": joint_margin,
+                    "iterations": iterations,
+                    "status": "passed" if passed else "failed",
+                }
+            )
+        maximum_residual = max(result["residualMeters"] for result in results)
+        minimum_margin = min(result["jointLimitMarginRadians"] for result in results)
+        return {
+            "status": (
+                "passed"
+                if all(result["status"] == "passed" for result in results)
+                else "failed"
+            ),
+            "method": "fixed_base_four_joint_iterative_dls",
+            "maximumResidualMeters": maximum_residual,
+            "minimumJointLimitMarginRadians": minimum_margin,
+            "targets": results,
+        }
 
 
 def _task_metrics(env, state) -> dict[str, Any]:
@@ -620,7 +750,11 @@ def evaluate_kitchen_task_suite(
     motion_policy,
     capture_policy,
     stand_policy,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+) -> tuple[
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+    list[dict[str, Any]],
+]:
     """Run a one-episode gate, then four more episodes only when it passes."""
 
     import jax
@@ -636,6 +770,7 @@ def evaluate_kitchen_task_suite(
     dt = env.dt
     tests: list[dict[str, Any]] = []
     traces: list[dict[str, Any]] = []
+    reachability_preflights: list[dict[str, Any]] = []
 
     def with_inputs(state, command, held_targets, gripper):
         info = dict(state.info)
@@ -668,7 +803,9 @@ def evaluate_kitchen_task_suite(
         failed_reason = None
         task_started = False
         target_error = 0.0
+        ik_residual = 0.0
         tcp = [0.0, 0.0, 0.0]
+        reachability_preflight: dict[str, Any] | None = None
         maximum_steps = 200 + sum(TASK_CONTROLLER["phaseMaximumSteps"].values())
         for index in range(maximum_steps):
             moving = index < SUPERVISOR["moveSteps"]
@@ -696,14 +833,28 @@ def evaluate_kitchen_task_suite(
                 active_policy = "stand"
                 metrics_before = _task_metrics(env, state)
                 phase = task.phase
-                target = _target_for_phase(phase, metrics_before)
-                held_targets, target_error, tcp = controller.solve(
-                    np.asarray(state.data.qpos),
-                    np.asarray(state.data.qvel),
-                    target,
-                )
-                gripper = _gripper_for_phase(phase)
                 action = stand_action
+                if reachability_preflight is None:
+                    reachability_preflight = controller.assess_reachability(
+                        np.asarray(state.data.qpos),
+                        np.asarray(state.data.qvel),
+                        metrics_before,
+                    )
+                    if reachability_preflight["status"] != "passed":
+                        failed_reason = "ik_reachability_preflight_failed"
+                if failed_reason is None:
+                    target = _target_for_phase(phase, metrics_before)
+                    held_targets, target_error, tcp, ik_residual = controller.solve(
+                        np.asarray(state.data.qpos),
+                        np.asarray(state.data.qvel),
+                        target,
+                    )
+                    gripper = _gripper_for_phase(phase)
+                else:
+                    held_targets = [0.0] * 9
+                    gripper = 0.0
+                    target_error = reachability_preflight["maximumResidualMeters"]
+                    ik_residual = target_error
             state = with_inputs(state, command, held_targets, gripper)
             state = step(state, action)
             jax.block_until_ready(state.reward)
@@ -728,15 +879,16 @@ def evaluate_kitchen_task_suite(
                 if locomotion.handoff_failed:
                     failed_reason = "locomotion_handoff_timeout"
             else:
-                task.observe(
-                    target_error=target_error,
-                    drawer_position=task_metrics["drawerPosition"],
-                    cup_inside=task_metrics["cupInside"],
-                    cup_linear_speed=task_metrics["cupLinearSpeed"],
-                    cup_angular_speed=task_metrics["cupAngularSpeed"],
-                )
-                if task.failed_reason:
-                    failed_reason = task.failed_reason
+                if failed_reason is None:
+                    task.observe(
+                        target_error=target_error,
+                        drawer_position=task_metrics["drawerPosition"],
+                        cup_inside=task_metrics["cupInside"],
+                        cup_linear_speed=task_metrics["cupLinearSpeed"],
+                        cup_angular_speed=task_metrics["cupAngularSpeed"],
+                    )
+                    if task.failed_reason:
+                        failed_reason = task.failed_reason
             traces.append(
                 {
                     "run": run_index,
@@ -745,6 +897,7 @@ def evaluate_kitchen_task_suite(
                     "phase": phase,
                     "activePolicy": active_policy,
                     "targetError": target_error,
+                    "ikResidualMeters": ik_residual,
                     "tcpPosition": tcp,
                     "gripperCommand": gripper,
                     "basePosition": [float(qpos[0]), float(qpos[1]), height],
@@ -778,7 +931,7 @@ def evaluate_kitchen_task_suite(
             and nonfinite <= TASK_GATES["maximumNonFiniteSamples"]
             and not done_seen
         )
-        return {
+        test = {
             "id": f"test://worldspec/h1-kitchen/full-loop/{run_index + 1}",
             "result": "pass" if passed else "fail",
             "metrics": {
@@ -795,15 +948,36 @@ def evaluate_kitchen_task_suite(
                 "cupAngularSpeed": final["cupAngularSpeed"],
                 "nonFiniteSamples": nonfinite,
                 "doneSeen": done_seen,
+                "ikPreflightStatus": (
+                    reachability_preflight["status"]
+                    if reachability_preflight is not None
+                    else "not_executed"
+                ),
+                "ikMaximumResidualMeters": (
+                    reachability_preflight["maximumResidualMeters"]
+                    if reachability_preflight is not None
+                    else None
+                ),
+                "ikMinimumJointLimitMarginRadians": (
+                    reachability_preflight["minimumJointLimitMarginRadians"]
+                    if reachability_preflight is not None
+                    else None
+                ),
             },
         }
+        return test, reachability_preflight
 
-    first = run(0)
+    first, first_preflight = run(0)
     tests.append(first)
+    if first_preflight is not None:
+        reachability_preflights.append(first_preflight)
     if first["result"] == "pass":
         for run_index in range(1, TASK_GATES["acceptanceRuns"]):
-            tests.append(run(run_index))
-    return tests, traces
+            test, preflight = run(run_index)
+            tests.append(test)
+            if preflight is not None:
+                reachability_preflights.append(preflight)
+    return tests, traces, reachability_preflights
 
 
 def run_fixed_kitchen_task_probe(
@@ -865,7 +1039,7 @@ def run_fixed_kitchen_task_probe(
             )
             initialization["role"] = source["selectedRole"]
             loaded[role] = initialization
-        tests, traces = evaluate_kitchen_task_suite(
+        tests, traces, reachability_preflights = evaluate_kitchen_task_suite(
             effective,
             environment,
             policies["motion"],
@@ -882,6 +1056,7 @@ def run_fixed_kitchen_task_probe(
         "profileDigest": digest_json(profile),
         "supervisorProfileDigest": digest_json(supervisor_profile),
         "controller": copy.deepcopy(TASK_CONTROLLER),
+        "reachabilityPreflight": reachability_preflights,
         "scene": copy.deepcopy(TASK_SCENE),
         "policies": {
             role: {
@@ -914,6 +1089,7 @@ def run_fixed_kitchen_task_probe(
         },
         "scene": copy.deepcopy(TASK_SCENE),
         "controller": copy.deepcopy(TASK_CONTROLLER),
+        "reachabilityPreflight": reachability_preflights,
         "qualityAssessment": {
             "status": "passed" if full_gate else "failed",
             "singleRunGate": bool(tests and tests[0]["result"] == "pass"),

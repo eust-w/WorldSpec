@@ -3,7 +3,7 @@ status: Official Translation
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../zh-CN/decisions/0021-h1-a5-failure-response.md
-last-verified: 2026-07-29
+last-verified: 2026-07-30
 ---
 
 # ADR-0021: response to the first H1 A5 behavior failure
@@ -35,9 +35,14 @@ The normalized failure report is
 [`kitchen-task.a800.failed.json`](../../../examples/h1-kitchen/kitchen-task.a800.failed.json).
 The full internal trace digest is `sha256:20d065ef...fc506f`.
 
-## User decision required
+## Decision
 
-### A5-R (recommended): repair the benchmark before judging control
+On 2026-07-30, the user selected **A5-R**. This iteration repairs only proven
+benchmark and controller implementation defects. It does not add base
+repositioning, MPC/QP, hidden grasp constraints, or automatic tuning retries.
+A5-C and A5-S are not the active implementation route.
+
+### A5-R: repair the benchmark before judging control
 
 - raise A5-specific contact capacity to at least 32;
 - replace the ineffective side rails with a real collision support surface,
@@ -67,3 +72,37 @@ available.
 Merely increasing the timeout or starting task training is not recommended:
 the mug support and contact capacity are already known to be invalid, so that
 would train against benchmark defects.
+
+## A5-R implementation boundary
+
+A5-R freezes these changes:
+
+- one-environment MJX capacity is `active=32`, `ccd=16`, and `njmax=128`;
+- a fixed collision box of `0.10 × 0.09 × 0.015 m` replaces the ineffective
+  side rails;
+- the arm still controls only the four existing H1 joints, but each control
+  cycle solves a complete joint target using up to 96 DLS iterations instead
+  of emitting a single `0.04 rad` increment;
+- before manipulation, every run scans ten fixed task-space targets from the
+  actual settled state; maximum residual must be at most `0.015 m`, and minimum
+  joint-limit margin must be at least `0.05 rad`;
+- a failed preflight returns `ik_reachability_preflight_failed` and prevents
+  the remaining acceptance runs.
+
+On 2026-07-30, the composed H1 + Robotiq model passed a MuJoCo 3.6.0 CPU
+preflight:
+
+- all 10 targets passed;
+- maximum IK residual was `0.007970 m`;
+- minimum joint-limit margin was `0.331436 rad`;
+- after 1,000 steps on the new support, the mug minimum height was
+  `1.193790 m` and final height was `1.193808 m`;
+- this CPU evidence proves fixed-base kinematic reachability and support
+  validity only; it does not prove dynamic manipulation in MJX/A800.
+
+The structured evidence is
+[`kitchen-task-preflight.darwin-arm64.passed.json`](../../../examples/h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json).
+
+The next release gate remains one A800 run with the newly pinned image. Only a
+passing first run may proceed to the remaining four. Any behavioral failure
+stops the run and does not start 100M.

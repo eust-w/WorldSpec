@@ -1,9 +1,9 @@
 ---
-status: Pending Decision
+status: Accepted Design
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../en/decisions/0021-h1-a5-failure-response.md
-last-verified: 2026-07-29
+last-verified: 2026-07-30
 ---
 
 # ADR-0021：H1 A5 首次行为失败后的处理
@@ -30,9 +30,13 @@ last-verified: 2026-07-29
 完整内部 Trace Digest 为
 `sha256:20d065ef...fc506f`。
 
-## 待用户选择
+## 决策
 
-### A5-R（推荐）：先修复基准，再验证控制
+用户于 2026-07-30 选择 **A5-R**。本轮只修复已经证实的基准和控制器实现缺陷，
+不引入底座微调、MPC/QP、隐藏抓取约束或自动调参重试。A5-C 和 A5-S 不再作为
+当前实施路径。
+
+### A5-R：先修复基准，再验证控制
 
 - A5 专用接触容量提升到至少 32；
 - 用真实碰撞支撑面替换无效侧轨，但不增加 weld、mocap 或隐藏附件；
@@ -57,3 +61,31 @@ last-verified: 2026-07-29
 
 不建议只增加超时时间或直接开始任务训练：当前杯子支撑和接触容量已明确无效，
 这样做会把基准缺陷混入策略。
+
+## A5-R 实施收敛
+
+A5-R 固定以下变化：
+
+- 单环境 MJX 容量固定为 `active=32`、`ccd=16`、`njmax=128`；
+- 以尺寸为 `0.10 × 0.09 × 0.015 m` 的固定碰撞盒替换两条无效侧轨；
+- 右臂仍只控制四个既有 H1 关节，但每个控制周期以最多 96 次 DLS 迭代求完整
+  关节目标，不再只发送一次 `0.04 rad` 增量；
+- 每次进入操作阶段前，必须从实际站稳状态扫描 10 个固定任务空间目标；最大残差
+  不得超过 `0.015 m`，最小关节限位余量不得低于 `0.05 rad`；
+- 预检失败立即返回 `ik_reachability_preflight_failed`，不得消耗后续五次运行。
+
+2026-07-30 在真实组合后的 H1 + Robotiq 模型上完成 MuJoCo 3.6.0 CPU 预检：
+
+- 10/10 目标通过；
+- 最大 IK 残差 `0.007970 m`；
+- 最小关节限位余量 `0.331436 rad`；
+- 杯子在新支撑面上步进 1,000 步，最低高度 `1.193790 m`，结束高度
+  `1.193808 m`；
+- 该 CPU 证据只证明固定基座运动学可达和杯托物理有效，不证明 MJX/A800 动态
+  操作成功。
+
+结构化证据见
+[`kitchen-task-preflight.darwin-arm64.passed.json`](../../../examples/h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json)。
+
+下一项放行证据仍必须来自锁定新镜像的 A800 单次门控。只有单次通过才自动继续
+其余四次；任何行为失败都停止，不启动 100M。

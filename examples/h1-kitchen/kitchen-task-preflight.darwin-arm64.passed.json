@@ -1,0 +1,126 @@
+{
+  "id": "conformance://worldspec/h1-kitchen/a5r-cpu-preflight",
+  "reportVersion": "0.1.0",
+  "status": "passed",
+  "scope": "h1_kitchen_a5r_cpu_preflight",
+  "executionEvidence": "executed",
+  "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+  "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+  "taskProfileDigest": "sha256:0ccb0f5707b153600f8876ef22965cfd44cc678a2ff1de8096add7d5bf906a69",
+  "derivedModelDigest": "sha256:e43323d01a65d22d937d6d908222db7e13d4f4ef432564f4b129d949d5d6b43b",
+  "environment": {
+    "os": "darwin",
+    "architecture": "arm64",
+    "runtime": "mujoco",
+    "runtimeVersion": "3.6.0"
+  },
+  "modelCounts": {
+    "nq": 42,
+    "nv": 40,
+    "nu": 20,
+    "nbody": 39,
+    "ngeom": 93
+  },
+  "reachability": {
+    "status": "passed",
+    "method": "fixed_base_four_joint_iterative_dls",
+    "maximumResidualMeters": 0.007969957631874738,
+    "minimumJointLimitMarginRadians": 0.3314363131190009,
+    "targets": [
+      {
+        "phase": "stand_ready",
+        "target": [1.72, -0.21, 1.16],
+        "residualMeters": 0.004618584327110167,
+        "jointLimitMarginRadians": 0.4198049605779245,
+        "iterations": 11,
+        "status": "passed"
+      },
+      {
+        "phase": "reach_handle",
+        "target": [1.87, -0.21, 1.075],
+        "residualMeters": 0.0015204228142858013,
+        "jointLimitMarginRadians": 0.37266653690786966,
+        "iterations": 6,
+        "status": "passed"
+      },
+      {
+        "phase": "pull_drawer",
+        "target": [1.63, -0.21, 1.075],
+        "residualMeters": 0.00036646637349323723,
+        "jointLimitMarginRadians": 0.6435706548713338,
+        "iterations": 16,
+        "status": "passed"
+      },
+      {
+        "phase": "release_handle",
+        "target": [1.58, -0.21, 1.12],
+        "residualMeters": 0.0002648235196889701,
+        "jointLimitMarginRadians": 0.6981091447642179,
+        "iterations": 20,
+        "status": "passed"
+      },
+      {
+        "phase": "reach_cup",
+        "target": [1.88, -0.21, 1.195],
+        "residualMeters": 0.006682440998868605,
+        "jointLimitMarginRadians": 0.38363895883899796,
+        "iterations": 3,
+        "status": "passed"
+      },
+      {
+        "phase": "lift_cup",
+        "target": [1.8, -0.21, 1.27],
+        "residualMeters": 0.007969957631874738,
+        "jointLimitMarginRadians": 0.33706914439748825,
+        "iterations": 11,
+        "status": "passed"
+      },
+      {
+        "phase": "insert_cup",
+        "target": [1.78, -0.21, 1.065],
+        "residualMeters": 0.0004763669656745165,
+        "jointLimitMarginRadians": 0.3314363131190009,
+        "iterations": 6,
+        "status": "passed"
+      },
+      {
+        "phase": "retract",
+        "target": [1.58, -0.21, 1.22],
+        "residualMeters": 0.006877260812360247,
+        "jointLimitMarginRadians": 0.44999999999999984,
+        "iterations": 21,
+        "status": "passed"
+      },
+      {
+        "phase": "push_drawer",
+        "target": [1.91, -0.21, 1.075],
+        "residualMeters": 0.007499635203860167,
+        "jointLimitMarginRadians": 0.4079207094708942,
+        "iterations": 9,
+        "status": "passed"
+      },
+      {
+        "phase": "final_hold",
+        "target": [1.72, -0.21, 1.16],
+        "residualMeters": 0.004618584327110167,
+        "jointLimitMarginRadians": 0.4198049605779245,
+        "iterations": 11,
+        "status": "passed"
+      }
+    ]
+  },
+  "supportStability": {
+    "status": "passed",
+    "steps": 1000,
+    "startZ": 1.195,
+    "minimumZ": 1.1937904457155004,
+    "endZ": 1.193808332829412,
+    "maximumContacts": 14
+  },
+  "claimBoundary": {
+    "status": "cpu_preflight_only",
+    "a800DynamicTaskClaim": "forbidden",
+    "l3Claim": "forbidden"
+  },
+  "generatedAt": "2026-07-29T17:26:29Z"
+}

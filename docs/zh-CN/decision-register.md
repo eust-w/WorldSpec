@@ -44,6 +44,6 @@ last-verified: 2026-07-29
 | D-032 | A3 从冻结运动策略真实 rollout 采样交接状态，训练独立 Capture Policy；停稳门测最后 0.2 秒静止保持，失败不自动调参或启动 100M | Accepted Design | [ADR-0018](decisions/0018-h1-motion-state-capture-policy.md) |
 | D-033 | A4 用速度连续稳定门控串联 Motion、Capture、Stand 三策略；Capture 最多 40 步、交接混合 5 步、纯 Stand 至少 10 步，探针不启动 100M | Accepted Design | [ADR-0019](decisions/0019-h1-phase-aware-supervisor.md) |
 | D-034 | A5 冻结 A4 腿部 Supervisor，以右臂 Jacobian/阻抗和物理接触完成固定 primitive 厨房闭环；先单次再 5/5，禁止隐藏抓取约束和 L3 声明 | Accepted Design | [ADR-0020](decisions/0020-h1-fixed-kitchen-integration.md) |
-| D-035 | A5 首次 A800 行为运行在 reach_handle 超时，并暴露杯子支撑和接触容量缺陷；修复基准、升级控制或停止等待用户选择 | Pending Decision | [ADR-0021](decisions/0021-h1-a5-failure-response.md) |
+| D-035 | 选择 A5-R：修复杯托、容量和单步 IK 实现，增加固定基座可达性预检；不扩大到全身 MPC/QP，单次通过后才继续 5/5 | Accepted Design | [ADR-0021](decisions/0021-h1-a5-failure-response.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。
