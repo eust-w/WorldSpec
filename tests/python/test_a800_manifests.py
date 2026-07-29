@@ -352,6 +352,10 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "A800_CAPACITY_BLOCKED" in launcher
     assert "formalTrainingGate" in launcher
     assert "/scratch/inputs/stand-teacher-checkpoint.zip" in launcher
+    assert "WORLD_SPEC_OUTPUT_CHUNK_SIZE_BYTES" in launcher
+    assert "WORLD_SPEC_OUTPUT_COPY_RETRIES" in launcher
+    assert "WORLD_SPEC_RETAIN_INCOMPLETE_REMOTE" in launcher
+    assert "remote_evidence_retained=true" in launcher
 
     transition_launcher = (
         ROOT / "scripts" / "run_a800_h1_transition_calibration.sh"

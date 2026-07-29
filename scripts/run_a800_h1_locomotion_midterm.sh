@@ -27,6 +27,9 @@ IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-}"
 PACKAGE_LOCK_DIGEST="${WORLD_SPEC_PACKAGE_LOCK_DIGEST:-sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41}"
 PROBE_REVISION="${WORLD_SPEC_PROBE_DEFINITION_REVISION:-$(git -C "${ROOT_DIR}" rev-parse HEAD)}"
 TIMEOUT_SECONDS="${WORLD_SPEC_A800_TIMEOUT_SECONDS:-21600}"
+OUTPUT_CHUNK_SIZE_BYTES="${WORLD_SPEC_OUTPUT_CHUNK_SIZE_BYTES:-131072}"
+OUTPUT_COPY_RETRIES="${WORLD_SPEC_OUTPUT_COPY_RETRIES:-12}"
+RETAIN_INCOMPLETE_REMOTE="${WORLD_SPEC_RETAIN_INCOMPLETE_REMOTE:-true}"
 REPORT_FILENAME=midterm-report.json
 REPORT_MARKER=WORLDSPEC_A800_MIDTERM_RESULT=
 REPORT_SCHEMA=h1-locomotion-midterm-report.schema.json
@@ -269,19 +272,32 @@ artifact_copied=false
 
 cleanup() {
   local exit_code=$?
+  local retain_remote=false
   set +e
+  if [[ -n "${job_name}" ]] &&
+    [[ "${exit_code}" -ne 0 ]] &&
+    [[ "${artifact_copied}" != "true" ]] &&
+    [[ "${RETAIN_INCOMPLETE_REMOTE}" == "true" ]]; then
+    retain_remote=true
+  fi
   if [[ -n "${prepull_job}" ]]; then
     "${build_kubectl_cmd[@]}" delete job "${prepull_job}" \
       --ignore-not-found --wait=true --timeout=180s >/dev/null 2>&1
   fi
-  if [[ -n "${job_name}" ]]; then
+  if [[ -n "${job_name}" ]] && [[ "${retain_remote}" != "true" ]]; then
     "${kubectl_cmd[@]}" delete job "${job_name}" \
       --ignore-not-found --wait=true --timeout=180s >/dev/null 2>&1
   fi
-  "${kubectl_cmd[@]}" delete configmap "${script_configmap}" \
-    --ignore-not-found >/dev/null 2>&1
-  "${kubectl_cmd[@]}" delete configmap "${source_configmap}" \
-    --ignore-not-found >/dev/null 2>&1
+  if [[ "${retain_remote}" == "true" ]]; then
+    printf \
+      'remote_evidence_retained=true job=%s namespace=%s result_dir=%s\n' \
+      "${job_name:-unset}" "${K8S_NAMESPACE}" "${local_result_dir:-unset}" >&2
+  else
+    "${kubectl_cmd[@]}" delete configmap "${script_configmap}" \
+      --ignore-not-found >/dev/null 2>&1
+    "${kubectl_cmd[@]}" delete configmap "${source_configmap}" \
+      --ignore-not-found >/dev/null 2>&1
+  fi
   rm -f "${temporary_manifest}" "${prepull_manifest}" "${source_archive}"
   exit "${exit_code}"
 }
@@ -561,7 +577,9 @@ PY
             fi
           )" \
           --expected-size "${controller_size}" \
-          --expected-digest "${controller_digest}"
+          --expected-digest "${controller_digest}" \
+          --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+          --retries "${OUTPUT_COPY_RETRIES}"
       else
         read -r checkpoint_size checkpoint_digest trace_size trace_digest < <(
           python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
@@ -582,7 +600,9 @@ PY
           --remote-path /scratch/results/artifacts/midterm-checkpoint.zip \
           --destination "${local_result_dir}/midterm-checkpoint.zip" \
           --expected-size "${checkpoint_size}" \
-          --expected-digest "${checkpoint_digest}"
+          --expected-digest "${checkpoint_digest}" \
+          --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+          --retries "${OUTPUT_COPY_RETRIES}"
         if [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
           read -r snapshot_size snapshot_digest < <(
             python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
@@ -602,7 +622,9 @@ PY
             --remote-path /scratch/results/artifacts/capture-state-bank.npz \
             --destination "${local_result_dir}/capture-state-bank.npz" \
             --expected-size "${snapshot_size}" \
-            --expected-digest "${snapshot_digest}"
+            --expected-digest "${snapshot_digest}" \
+            --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+            --retries "${OUTPUT_COPY_RETRIES}"
         fi
       fi
       python3 "${CHUNK_COPY}" \
@@ -613,7 +635,9 @@ PY
         --remote-path /scratch/results/artifacts/evaluation-traces.jsonl \
         --destination "${local_result_dir}/evaluation-traces.jsonl" \
         --expected-size "${trace_size}" \
-        --expected-digest "${trace_digest}"
+        --expected-digest "${trace_digest}" \
+        --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+        --retries "${OUTPUT_COPY_RETRIES}"
       "${kubectl_cmd[@]}" exec "${pod_name}" -c midterm -- \
         touch /scratch/results/artifact-copied
       artifact_copied=true

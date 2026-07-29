@@ -145,6 +145,8 @@ def test_a800_supervisor_entrypoint_and_launcher_are_fail_closed() -> None:
     assert "WORLDSPEC_A800_SUPERVISOR_RESULT=" in entrypoint
     assert "formalSupervisorGate" in launcher
     assert "phase-aware-supervisor.json" in launcher
+    assert "WORLD_SPEC_RETAIN_INCOMPLETE_REMOTE" in launcher
+    assert "remote_evidence_retained=true" in launcher
     assert "WORLD_SPEC_SUPERVISOR_STAND_CHECKPOINT" in wrapper
     assert "100000000" not in entrypoint
     assert "100000000" not in wrapper
