@@ -274,3 +274,11 @@ walk-settle tests, five stand-regression tests, or any safety gate. A pass can
 create only an internal composite-controller candidate. A failure retains the
 Trace and stops without automatic retry or a 100M run. See
 [`ADR-0017`](../decisions/0017-h1-dual-policy-supervisor.md).
+
+A2 has now run on one A800. All five stand regressions passed, while all five
+walk-settle tests failed. Velocity declined after motion but was still
+0.2370–0.3146 m/s at step 199, and the start of the blend produced an action
+jump of approximately 1.94–1.99. The result shows that `stand-v2.1` is a
+reliable static-balance policy but not a capture policy from arbitrary gait
+phase. The formal probe gate failed, the controller remains
+`non_publishable`, and no 100M run started.

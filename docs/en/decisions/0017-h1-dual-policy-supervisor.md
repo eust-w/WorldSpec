@@ -64,3 +64,29 @@ A failure must retain its report and Trace and stop downstream training.
 - A1 remains unchanged as evidence of unified-policy capability interference;
 - if A2 fails, the next step requires a new evidence-based decision rather
   than a silent gate relaxation.
+
+## Execution result
+
+On 2026-07-29, A2 completed on one NVIDIA A800-SXM4-80GB. Both checkpoints
+passed digest, size, selected-step, and 42-observation/10-action ABI checks. The
+supervisor executed 150 motion steps, five action-blend steps, and stand-policy
+takeover as specified. There was no early termination, NaN, joint-limit
+violation, capacity overflow, or abnormal contact.
+
+All five independent stand regressions passed. Maximum planar drift was only
+0.021689–0.021690 m and maximum settling-window linear speed was
+0.000303–0.000304 m/s. All five motion segments also passed displacement,
+lateral drift, tracking, base-height, and upright gates.
+
+All five walk-settle tests nevertheless failed. Maximum settling-window linear
+speed was 0.4462–0.4549 m/s and maximum angular speed was
+0.6169–0.7265 rad/s. At step 199, linear speed remained
+0.2370–0.3146 m/s. The first blend step produced an action jump of
+approximately 1.94–1.99, showing that action interpolation alone cannot make a
+stand policy trained from rest smoothly capture a moving gait phase.
+
+The `formalProbeGate` is therefore `failed` and the controller is
+`non_publishable`. No 100M run, automatic tuning, or retry was started. See the
+normalized
+[`locomotion-dual-policy.a800.failed.json`](../../../examples/h1-kitchen/locomotion-dual-policy.a800.failed.json)
+report.

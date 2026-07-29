@@ -1,0 +1,467 @@
+{
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:79baed154978e9e33eca4b82b65d54e3b9de93a4d542c73111838251c87cf879",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "controllerArtifact": {
+    "digest": "sha256:5382ab2782fac6c9f1199b427ddb0e0b2e09d40dd1a3963c56fcab67039d8732",
+    "distribution": "internal_only",
+    "path": "dual-policy-controller.json",
+    "sizeBytes": 813
+  },
+  "controllerStatus": "non_publishable",
+  "dualPolicyProfileDigest": "sha256:1daeae4881073087e282649fbc7994c295ea8b1e0b98008638a3facff527f952",
+  "executionEvidence": "executed",
+  "formalProbeGate": "failed",
+  "generatedAt": "2026-07-29T10:36:47.578634Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "dual-policy-report://worldspec/h1/a800-fd96f8b891ac",
+  "imageSource": {
+    "commit": "62d0e7335d6f7fe4c4e8b1b51c69db211bb0d301",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "abnormalContactCount": 0,
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "clean": true,
+    "jointLimitViolationCount": 0,
+    "nonFiniteCount": 0
+  },
+  "motionPolicy": {
+    "archiveDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+    "archiveSizeBytes": 8838595,
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "role": "motion",
+    "selectedStep": 17203200
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "probeDefinition": {
+    "commit": "fd96f8b891acbe7fb479c6924278378ed94d67a9",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:aebe45af05256a3b540878dabd469d99a968f7f16a6ba82781b4a4086d554a6c",
+    "commit": "fd96f8b891acbe7fb479c6924278378ed94d67a9",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "qualityAssessment": {
+    "deterministicSuiteGate": false,
+    "status": "failed",
+    "tests": [
+      {
+        "id": "test://worldspec/h1-dual-policy/walk_settle/1",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.548685073852539,
+          "lateralDrift": 0.03161405771970749,
+          "maximumActionJumpNorm": 1.9927699078354182,
+          "maximumPlanarDrift": 1.5490077167719822,
+          "maximumSettleAngularSpeed": 0.6624807005887454,
+          "maximumSettleLinearSpeed": 0.44622101000998643,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9984921813011169,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.15166168471441405
+        },
+        "result": "fail",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/walk_settle/2",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.5709344148635864,
+          "lateralDrift": 0.020433334633708,
+          "maximumActionJumpNorm": 2.3891020134083876,
+          "maximumPlanarDrift": 1.571067298675347,
+          "maximumSettleAngularSpeed": 0.711783648376507,
+          "maximumSettleLinearSpeed": 0.45336433971274487,
+          "minimumBaseHeight": 0.9883298873901367,
+          "minimumUprightCosine": 0.9984921813011169,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.1517210394941981
+        },
+        "result": "fail",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/walk_settle/3",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.5717546939849854,
+          "lateralDrift": 0.025866324082016945,
+          "maximumActionJumpNorm": 2.189031158133903,
+          "maximumPlanarDrift": 1.5719675202704892,
+          "maximumSettleAngularSpeed": 0.7265031754027766,
+          "maximumSettleLinearSpeed": 0.4549437557965135,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9984921813011169,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.15162387078688908
+        },
+        "result": "fail",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/walk_settle/4",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.555058479309082,
+          "lateralDrift": 0.029492272064089775,
+          "maximumActionJumpNorm": 2.1945957376811314,
+          "maximumPlanarDrift": 1.5553381202113503,
+          "maximumSettleAngularSpeed": 0.6168791089346837,
+          "maximumSettleLinearSpeed": 0.4524854708629608,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9984921813011169,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.1517865397207248
+        },
+        "result": "fail",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/walk_settle/5",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.5692150592803955,
+          "lateralDrift": 0.02266407199203968,
+          "maximumActionJumpNorm": 2.012164972261614,
+          "maximumPlanarDrift": 1.5693787186118064,
+          "maximumSettleAngularSpeed": 0.7014313884135942,
+          "maximumSettleLinearSpeed": 0.4490903219249176,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9984921813011169,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.15166346685020515
+        },
+        "result": "fail",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/stand_regression/1",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": -0.01961616799235344,
+          "lateralDrift": 0.00022224662825465202,
+          "maximumActionJumpNorm": 1.1293424971747454,
+          "maximumPlanarDrift": 0.021689751365034187,
+          "maximumSettleAngularSpeed": 0.0007196723266476735,
+          "maximumSettleLinearSpeed": 0.00030367096401575554,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/stand_regression/2",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": -0.01961556263267994,
+          "lateralDrift": 0.00022226714645512402,
+          "maximumActionJumpNorm": 1.1293413090893147,
+          "maximumPlanarDrift": 0.021689441364335465,
+          "maximumSettleAngularSpeed": 0.0007201209824261499,
+          "maximumSettleLinearSpeed": 0.0003033676778273173,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/stand_regression/3",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": -0.019615812227129936,
+          "lateralDrift": 0.00022222621191758662,
+          "maximumActionJumpNorm": 1.1293424514778485,
+          "maximumPlanarDrift": 0.02168992589106658,
+          "maximumSettleAngularSpeed": 0.0007198750805494818,
+          "maximumSettleLinearSpeed": 0.0003035556526910037,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/stand_regression/4",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": -0.01961595192551613,
+          "lateralDrift": 0.0002223009942099452,
+          "maximumActionJumpNorm": 1.1293418269320705,
+          "maximumPlanarDrift": 0.021690073180804605,
+          "maximumSettleAngularSpeed": 0.0007191536443012752,
+          "maximumSettleLinearSpeed": 0.0003037731847443397,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-dual-policy/stand_regression/5",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": -0.019615834578871727,
+          "lateralDrift": 0.00022220310347620398,
+          "maximumActionJumpNorm": 1.129342661099137,
+          "maximumPlanarDrift": 0.021689525560735657,
+          "maximumSettleAngularSpeed": 0.0007193755373857504,
+          "maximumSettleLinearSpeed": 0.0003035946171674342,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      }
+    ]
+  },
+  "reportVersion": "0.1.0",
+  "runtimeAcceptance": "research_probe",
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "ccdContactsPerEnvironment": 8,
+    "effectiveNaccdmax": 8,
+    "effectiveNaconmax": 16,
+    "njmax": 128
+  },
+  "runtimePreflight": {
+    "ccdIterations": 50,
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scope": "h1_dual_policy_switch_probe",
+  "standPolicy": {
+    "archiveDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "archiveSizeBytes": 6280684,
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "role": "zero_velocity_and_stand",
+    "selectedStep": 4505600
+  },
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "completed",
+  "supervisor": {
+    "handoff": {
+      "blendSteps": 5,
+      "durationSeconds": 0.1,
+      "mode": "linear_action_blend",
+      "observationCommand": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "mode": "command_state_machine",
+    "motionCommandThreshold": 0.05,
+    "moveSteps": 150,
+    "settleSteps": 50,
+    "standRegressionPolicy": "standPolicy"
+  },
+  "target": {
+    "actionSize": 10,
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "observationSize": 42,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "traceArtifact": {
+    "digest": "sha256:16eee50561781ed72a90b762fc6208485bd7e016fd06153f5e80e9345b775a39",
+    "distribution": "internal_only",
+    "path": "evaluation-traces.jsonl",
+    "sizeBytes": 947133
+  }
+}

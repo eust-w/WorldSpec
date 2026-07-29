@@ -52,3 +52,23 @@ Checkpoint Digest、目标 Bundle、OCI Digest、包锁和代码提交的真实�
 - Trace 必须记录 `activePolicy`、`blendAlpha` 与 `actionJumpNorm`；
 - A1 不被删除或重写，作为“统一策略发生能力干扰”的失败证据保留；
 - 若 A2 失败，下一步必须基于报告重新决策，不能静默放宽门槛。
+
+## 执行结果
+
+2026-07-29，A2 在单张 NVIDIA A800-SXM4-80GB 上完成。两份 Checkpoint 分别按
+Digest、大小、选中步和 42 维观察/10 维动作 ABI 通过验证；Supervisor 按规定执行
+150 步运动、5 步动作混合和站立策略接管。运行无提前终止、NaN、关节越限、容量
+溢出或异常接触。
+
+五次独立站立回归全部通过，最大平面漂移仅为 0.021689–0.021690 米，停稳窗口最大
+线速度为 0.000303–0.000304 m/s。五次运动阶段也满足位移、横向漂移、跟踪、基座
+高度和直立门槛。
+
+但五次行走—停稳均失败：整个停稳窗口最大线速度为 0.4462–0.4549 m/s，最大角速度
+为 0.6169–0.7265 rad/s；在第 199 步，线速度仍为 0.2370–0.3146 m/s。首次混合步的
+动作跳变量约为 1.94–1.99，说明仅用动作线性混合不能让从静止状态训练的 stand
+policy 平滑接管运动相位。
+
+因此 `formalProbeGate=failed`，控制器为 `non_publishable`，未启动 100M 训练，也未
+自动调参或重试。规范化报告见
+[`locomotion-dual-policy.a800.failed.json`](../../../examples/h1-kitchen/locomotion-dual-policy.a800.failed.json)。

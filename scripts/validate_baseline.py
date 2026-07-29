@@ -253,6 +253,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-transition-profile.json": "h1-locomotion-transition-profile.schema.json",
         "h1-kitchen/locomotion-retention-profile.json": "h1-locomotion-retention-profile.schema.json",
         "h1-kitchen/locomotion-dual-policy-profile.json": "h1-locomotion-dual-policy-profile.schema.json",
+        "h1-kitchen/locomotion-dual-policy.a800.failed.json": "h1-locomotion-dual-policy-report.schema.json",
         "../third_party/h1-training.lock.json": "h1-training-source-lock.schema.json",
     }
     for relative, schema_name in positive.items():
