@@ -117,8 +117,8 @@
     "maximumNonFiniteSamples": 0
   },
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:f3eaaa71f9ad38aa7d9ae61514ee4f4c36db3a44676b1167d9d19a200489f0d8",
-    "containerDigest": "sha256:f3eaaa71f9ad38aa7d9ae61514ee4f4c36db3a44676b1167d9d19a200489f0d8",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:da616cd9b9fecaadaa7f0c17ef67fd68395fc465ff2e97dba5be4b6269b4def3",
+    "containerDigest": "sha256:da616cd9b9fecaadaa7f0c17ef67fd68395fc465ff2e97dba5be4b6269b4def3",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50,
     "evaluationEnvironments": 1,
