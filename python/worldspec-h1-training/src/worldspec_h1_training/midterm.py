@@ -24,6 +24,53 @@ STAND_CHECKPOINT_DIGEST = (
     "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c"
 )
 STAND_CHECKPOINT_SIZE = 6_280_684
+FAILED_MIDTERM_REPORT_DIGEST = (
+    "sha256:961ab5fa5c5f70482f46c8751496f3806f2377654d75d5bba4e6a9d7491a1e39"
+)
+FAILED_MIDTERM_CHECKPOINT_DIGEST = (
+    "sha256:86d8e0de7c900fdbbf945cca1160518f4e27bf7735f40323de7ffadbf07d2c6a"
+)
+FAILED_MIDTERM_CHECKPOINT_SIZE = 8_821_958
+
+TRANSITION_COMMAND = {
+    "linearVelocityX": [0.0, 0.6],
+    "linearVelocityY": [-0.1, 0.1],
+    "angularVelocityYaw": [-0.25, 0.25],
+    "zeroCommandProbability": 0.2,
+}
+TRANSITION_CURRICULUM = {
+    "mode": "move_then_zero",
+    "transitionCycleProbability": 0.75,
+    "moveSteps": 150,
+    "settleSteps": 50,
+    "motionCommandDistribution": {
+        "linearVelocityX": [0.4, 0.6],
+        "linearVelocityY": [-0.05, 0.05],
+        "angularVelocityYaw": [-0.1, 0.1],
+    },
+}
+TRANSITION_REWARD_ADDITIONS = {
+    "settleLinear": 8.0,
+    "settleYaw": 3.0,
+    "settleActionRateScale": 0.25,
+}
+TRANSITION_QUALITY_GATES = {
+    "minimumFinalMeanEpisodeLength": 900.0,
+    "nominalDurationSeconds": 4.0,
+    "moveDurationSeconds": 3.0,
+    "settleWindowSeconds": 1.0,
+    "requiredConsecutivePasses": 5,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "maximumLateralDrift": 0.2,
+    "maximumTrackingRmse": 0.25,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "maximumSettleLinearSpeed": 0.2,
+    "maximumSettleAngularSpeed": 0.4,
+    "maximumStandPlanarDrift": 0.2,
+    "maximumNonFiniteSamples": 0,
+}
 
 
 def validate_midterm_profile(
@@ -133,6 +180,159 @@ def validate_midterm_profile(
         )
 
 
+def validate_transition_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> None:
+    """Validate the explicit move-to-zero transition calibration contract."""
+
+    validate_profile(base_profile)
+    if (
+        profile.get("profileVersion") != "0.1.0"
+        or profile.get("status") != "research"
+        or profile.get("stage") != "loaded_track_settle_transition"
+    ):
+        raise TrainingError(
+            "TRANSITION_PROFILE_UNSUPPORTED",
+            "Transition calibration must use loaded_track_settle_transition v0.1.",
+        )
+    if profile.get("baseTrainingProfileDigest") != digest_json(base_profile):
+        raise TrainingError(
+            "TRANSITION_BASE_PROFILE_MISMATCH",
+            "Transition calibration is not bound to the exact base training Profile.",
+        )
+    source = profile.get("warmStart", {})
+    if (
+        source.get("sourceStage") != "loaded-track-settle-v1-failed"
+        or source.get("sourceReportDigest") != FAILED_MIDTERM_REPORT_DIGEST
+        or source.get("checkpointDigest") != FAILED_MIDTERM_CHECKPOINT_DIGEST
+        or source.get("checkpointSizeBytes") != FAILED_MIDTERM_CHECKPOINT_SIZE
+    ):
+        raise TrainingError(
+            "TRANSITION_SOURCE_EVIDENCE_MISMATCH",
+            "Transition calibration must bind the failed v1 report and internal checkpoint.",
+        )
+    if source.get("optimizerState") != "reset" or source.get("restore") != {
+        "normalizer": True,
+        "policy": True,
+        "value": True,
+    }:
+        raise TrainingError(
+            "TRANSITION_WARM_START_INVALID",
+            "Transition calibration must restore normalizer/policy/value and reset optimizer.",
+        )
+    if source.get("distribution") != "internal_only":
+        raise TrainingError(
+            "TRANSITION_WARM_START_DISTRIBUTION_INVALID",
+            "Transition warm-start input must remain internal-only.",
+        )
+    expected_overrides = {
+        "numTimesteps": 16_777_216,
+        "numEnvs": 4096,
+        "numEvals": 8,
+        "episodeLength": 1000,
+        "unrollLength": 20,
+        "numMinibatches": 16,
+        "numUpdatesPerBatch": 4,
+        "batchSize": 256,
+    }
+    if profile.get("trainingOverrides") != expected_overrides:
+        raise TrainingError(
+            "TRANSITION_TRAINING_OVERRIDES_INVALID",
+            "Transition calibration budget and topology are frozen.",
+        )
+    environment = profile.get("environment", {})
+    if environment.get("commandDistribution") != TRANSITION_COMMAND:
+        raise TrainingError(
+            "TRANSITION_COMMAND_INVALID",
+            "Transition calibration must retain the accepted kitchen command range.",
+        )
+    if environment.get("transitionCurriculum") != TRANSITION_CURRICULUM:
+        raise TrainingError(
+            "TRANSITION_CURRICULUM_INVALID",
+            "Transition calibration must use the explicit 3-second move and 1-second settle cycle.",
+        )
+    reward = environment.get("reward", {})
+    expected_reward = {
+        "survival": 3.0,
+        "trackingLinear": 6.0,
+        "trackingYaw": 2.0,
+        "upright": 3.0,
+        "baseHeight": 2.0,
+        "pose": 0.5,
+        "verticalVelocityCost": 1.0,
+        "angularVelocityXYCost": 0.5,
+        "torqueCost": 0.000002,
+        "actionRateCost": 0.03,
+        **TRANSITION_REWARD_ADDITIONS,
+    }
+    if reward != expected_reward:
+        raise TrainingError(
+            "TRANSITION_REWARD_INVALID",
+            "Transition calibration must retain the complete braking reward contract.",
+        )
+    if {key: reward.get(key) for key in TRANSITION_REWARD_ADDITIONS} != (
+        TRANSITION_REWARD_ADDITIONS
+    ):
+        raise TrainingError(
+            "TRANSITION_REWARD_INVALID",
+            "Transition calibration must retain the braking and settling reward additions.",
+        )
+    if (
+        environment.get("termination")
+        != {
+            "minimumBaseHeight": 0.5,
+            "minimumUprightCosine": 0.25,
+            "jointLimitToleranceRadians": 0.02,
+        }
+        or environment.get("targets") != {"baseHeight": 0.98}
+        or environment.get("sigmas")
+        != {
+            "tracking": 0.2,
+            "upright": 0.05,
+            "baseHeight": 0.02,
+            "pose": 0.2,
+            "settleTracking": 0.05,
+        }
+        or environment.get("commandResampleSteps") != 200
+    ):
+        raise TrainingError(
+            "TRANSITION_TIMING_INVALID",
+            "Transition calibration timing and settle sigma are frozen.",
+        )
+    if profile.get("qualityGates") != TRANSITION_QUALITY_GATES:
+        raise TrainingError(
+            "TRANSITION_QUALITY_GATES_INVALID",
+            "Transition quality gates must remain identical to the failed v1 contract.",
+        )
+    runtime = profile.get("runtime", {})
+    if runtime.get("ccdIterations") != 50:
+        raise TrainingError(
+            "TRANSITION_CCD_ITERATIONS_INVALID",
+            "Transition calibration requires the bounded CCD candidate of 50 iterations.",
+        )
+    if runtime.get("containerDigest") != (
+        runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1]
+    ):
+        raise TrainingError(
+            "TRANSITION_CONTAINER_BINDING_MISMATCH",
+            "Transition containerImage and containerDigest must identify the same OCI image.",
+        )
+    if runtime.get("packageLockDigest") != base_profile["runtime"]["packageLockDigest"]:
+        raise TrainingError(
+            "TRANSITION_PACKAGE_LOCK_MISMATCH",
+            "Transition calibration must use the base Profile package lock.",
+        )
+    if profile.get("artifactPolicy") != {
+        "checkpoint": "research_only",
+        "distribution": "internal_only",
+    }:
+        raise TrainingError(
+            "TRANSITION_ARTIFACT_POLICY_INVALID",
+            "Transition outputs must remain internal research artifacts.",
+        )
+
+
 def make_midterm_training_profile(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
@@ -143,6 +343,25 @@ def make_midterm_training_profile(
     effective["runtime"]["packageLockDigest"] = profile["runtime"]["packageLockDigest"]
     effective["training"].update(profile["trainingOverrides"])
     effective["training"]["hyperparameterStatus"] = "research_midterm_override"
+    effective["training"]["commandDistribution"] = copy.deepcopy(
+        profile["environment"]["commandDistribution"]
+    )
+    effective["trainingEnvironment"] = copy.deepcopy(profile["environment"])
+    effective["validation"] = copy.deepcopy(profile["qualityGates"])
+    return effective
+
+
+def make_transition_training_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    validate_transition_profile(base_profile, profile)
+    effective = copy.deepcopy(base_profile)
+    effective["runtime"]["containerDigest"] = profile["runtime"]["containerDigest"]
+    effective["runtime"]["packageLockDigest"] = profile["runtime"]["packageLockDigest"]
+    effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
+    effective["training"].update(profile["trainingOverrides"])
+    effective["training"]["hyperparameterStatus"] = "research_transition_override"
     effective["training"]["commandDistribution"] = copy.deepcopy(
         profile["environment"]["commandDistribution"]
     )
@@ -166,7 +385,10 @@ def run_midterm_calibration(
     from brax.training.agents.ppo import train as ppo
     from mujoco_playground import wrapper
 
-    effective = make_midterm_training_profile(base_profile, profile)
+    if profile.get("stage") == "loaded_track_settle_transition":
+        effective = make_transition_training_profile(base_profile, profile)
+    else:
+        effective = make_midterm_training_profile(base_profile, profile)
     static = static_preflight(base_profile, bundle_dir)
     training_model, derivation = prepare_training_model(base_profile, bundle_dir, model_dir)
     runtime = runtime_preflight(effective, training_model)

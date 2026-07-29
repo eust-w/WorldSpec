@@ -31,7 +31,9 @@ for required in \
   WORLD_SPEC_PROBE_INPUT_REVISION \
   WORLD_SPEC_RUNTIME_IMAGE \
   WORLD_SPEC_PACKAGE_LOCK_DIGEST \
-  WORLD_SPEC_SOURCE_ARCHIVE_DIGEST; do
+  WORLD_SPEC_SOURCE_ARCHIVE_DIGEST \
+  WORLD_SPEC_MIDTERM_PROFILE_FILENAME \
+  WORLD_SPEC_WARM_START_REPORT_FILENAME; do
   if [[ -z "${!required:-}" ]]; then
     printf 'ERROR: %s is required\n' "${required}" >&2
     exit 2
@@ -99,8 +101,8 @@ fi
 
 stage input_verification
 python - \
-  "${SOURCE_DIR}/examples/h1-kitchen/locomotion-midterm-profile.json" \
-  "${SOURCE_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json" \
+  "${SOURCE_DIR}/examples/h1-kitchen/${WORLD_SPEC_MIDTERM_PROFILE_FILENAME}" \
+  "${SOURCE_DIR}/examples/h1-kitchen/${WORLD_SPEC_WARM_START_REPORT_FILENAME}" \
   "${INPUT_DIR}/stand-report.json" \
   "${INPUT_DIR}/stand-checkpoint.zip" \
   "${WORLD_SPEC_RUNTIME_IMAGE}" \
@@ -117,23 +119,33 @@ checkpoint_path = pathlib.Path(sys.argv[4])
 checked_report = checked_report_path.read_bytes()
 input_report = input_report_path.read_bytes()
 if input_report != checked_report:
-    raise SystemExit("uploaded stand report differs from the repository-bound report")
+    raise SystemExit("uploaded warm-start report differs from the repository-bound report")
 source = profile["warmStart"]
 report_digest = f"sha256:{hashlib.sha256(input_report).hexdigest()}"
 checkpoint_payload = checkpoint_path.read_bytes()
 checkpoint_digest = f"sha256:{hashlib.sha256(checkpoint_payload).hexdigest()}"
 if report_digest != source["sourceReportDigest"]:
-    raise SystemExit("stand report digest mismatch")
+    raise SystemExit("warm-start report digest mismatch")
 if (
     checkpoint_digest != source["checkpointDigest"]
     or len(checkpoint_payload) != source["checkpointSizeBytes"]
 ):
-    raise SystemExit("stand checkpoint digest or size mismatch")
+    raise SystemExit("warm-start checkpoint digest or size mismatch")
 report = json.loads(input_report)
-if report["qualityAssessment"]["status"] != "passed":
-    raise SystemExit("stand source report is not passing")
+if source["sourceStage"] == "stand-v2.1":
+    if report["qualityAssessment"]["status"] != "passed":
+        raise SystemExit("stand source report is not passing")
+elif source["sourceStage"] == "loaded-track-settle-v1-failed":
+    if (
+        report["qualityAssessment"]["status"] != "failed"
+        or report["formalTrainingGate"] != "failed"
+        or report["policyStatus"] != "non_publishable"
+    ):
+        raise SystemExit("transition source report is not the frozen failed evidence")
+else:
+    raise SystemExit("unsupported warm-start source stage")
 if report["researchCheckpoint"]["digest"] != checkpoint_digest:
-    raise SystemExit("stand report/checkpoint lineage mismatch")
+    raise SystemExit("warm-start report/checkpoint lineage mismatch")
 if profile["runtime"]["containerImage"] != sys.argv[5]:
     raise SystemExit("midterm Profile container image mismatch")
 if profile["runtime"]["packageLockDigest"] != sys.argv[6]:
@@ -203,7 +215,10 @@ base_profile = read_json(
     source_dir / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 )
 midterm_profile = read_json(
-    source_dir / "examples" / "h1-kitchen" / "locomotion-midterm-profile.json"
+    source_dir
+    / "examples"
+    / "h1-kitchen"
+    / os.environ["WORLD_SPEC_MIDTERM_PROFILE_FILENAME"]
 )
 result = run_midterm_calibration(
     base_profile,
@@ -213,6 +228,7 @@ result = run_midterm_calibration(
     artifact_dir,
     Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
 )
+result["training"]["profileStage"] = midterm_profile["stage"]
 with (result_dir / "gpu.csv").open(encoding="utf-8") as stream:
     gpu_row = next(csv.reader(stream))
 package_names = (

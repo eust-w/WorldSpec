@@ -10,12 +10,17 @@ from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.midterm import (
     make_midterm_training_profile,
+    make_transition_training_profile,
     validate_midterm_profile,
+    validate_transition_profile,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 MIDTERM_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-midterm-profile.json"
+TRANSITION_PROFILE = (
+    ROOT / "examples" / "h1-kitchen" / "locomotion-transition-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -67,3 +72,46 @@ def test_midterm_rejects_unbound_stand_report() -> None:
 
     with pytest.raises(TrainingError, match="stand-v2.1 report"):
         validate_midterm_profile(base, midterm)
+
+
+def test_transition_contract_targets_the_failed_settle_behavior() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    transition = json.loads(TRANSITION_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_transition_training_profile(base, transition)
+
+    assert effective["training"]["hyperparameterStatus"] == "research_transition_override"
+    assert effective["runtime"]["ccdIterations"] == 50
+    assert effective["trainingEnvironment"]["transitionCurriculum"] == {
+        "mode": "move_then_zero",
+        "transitionCycleProbability": 0.75,
+        "moveSteps": 150,
+        "settleSteps": 50,
+        "motionCommandDistribution": {
+            "linearVelocityX": [0.4, 0.6],
+            "linearVelocityY": [-0.05, 0.05],
+            "angularVelocityYaw": [-0.1, 0.1],
+        },
+    }
+    assert effective["trainingEnvironment"]["reward"]["settleLinear"] == 8.0
+    assert effective["trainingEnvironment"]["reward"]["settleYaw"] == 3.0
+    assert effective["validation"]["maximumSettleLinearSpeed"] == 0.2
+    assert effective["validation"]["maximumSettleAngularSpeed"] == 0.4
+
+
+def test_transition_rejects_a_relaxed_settle_gate() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    transition = json.loads(TRANSITION_PROFILE.read_text(encoding="utf-8"))
+    transition["qualityGates"]["maximumSettleLinearSpeed"] = 0.5
+
+    with pytest.raises(TrainingError, match="quality gates"):
+        validate_transition_profile(base, transition)
+
+
+def test_transition_rejects_unbound_failed_checkpoint() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    transition = json.loads(TRANSITION_PROFILE.read_text(encoding="utf-8"))
+    transition["warmStart"]["checkpointDigest"] = "sha256:" + ("0" * 64)
+
+    with pytest.raises(TrainingError, match="failed v1 report"):
+        validate_transition_profile(base, transition)

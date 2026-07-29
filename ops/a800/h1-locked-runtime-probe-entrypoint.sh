@@ -10,6 +10,8 @@ readonly SOURCE_ARCHIVE=/opt/worldspec-source/worldspec.tar.gz
 readonly PROBE_MODE="${WORLD_SPEC_PROBE_MODE:-locked_runtime}"
 if [[ "${PROBE_MODE}" == "capacity_scale" ]]; then
   readonly LOG_PREFIX=WORLDSPEC_A800_CAPACITY_SCALE
+elif [[ "${PROBE_MODE}" == "ccd_iterations" ]]; then
+  readonly LOG_PREFIX=WORLDSPEC_A800_CCD_ITERATIONS
 else
   readonly LOG_PREFIX=WORLDSPEC_A800_LOCKED_PROBE
 fi
@@ -42,7 +44,8 @@ for required in \
   fi
 done
 if [[ "${PROBE_MODE}" != "locked_runtime" ]] &&
-  [[ "${PROBE_MODE}" != "capacity_scale" ]]; then
+  [[ "${PROBE_MODE}" != "capacity_scale" ]] &&
+  [[ "${PROBE_MODE}" != "ccd_iterations" ]]; then
   printf 'ERROR: unsupported WORLD_SPEC_PROBE_MODE: %s\n' "${PROBE_MODE}" >&2
   exit 2
 fi
@@ -152,6 +155,7 @@ from mujoco_playground import wrapper
 
 from worldspec_h1_training.contract import digest_json, read_json
 from worldspec_h1_training.environment import make_environment
+from worldspec_h1_training.midterm import make_transition_training_profile
 from worldspec_h1_training.model import prepare_training_model
 from worldspec_h1_training.preflight import runtime_preflight, static_preflight
 
@@ -159,17 +163,29 @@ source_dir = Path(os.environ["SOURCE_DIR"])
 bundle_dir = Path(os.environ["BUNDLE_DIR"])
 model_dir = Path(os.environ["MODEL_DIR"])
 result_dir = Path(os.environ["RESULT_DIR"])
-profile = read_json(
+base_profile = read_json(
     source_dir / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 )
+probe_mode = os.environ["WORLD_SPEC_PROBE_MODE"]
+if probe_mode == "ccd_iterations":
+    transition_profile = read_json(
+        source_dir / "examples" / "h1-kitchen" / "locomotion-transition-profile.json"
+    )
+    profile = make_transition_training_profile(base_profile, transition_profile)
+else:
+    transition_profile = None
+    profile = base_profile
 
-static = static_preflight(profile, bundle_dir)
-training_model, derivation = prepare_training_model(profile, bundle_dir, model_dir)
+static = static_preflight(base_profile, bundle_dir)
+training_model, derivation = prepare_training_model(base_profile, bundle_dir, model_dir)
 runtime = runtime_preflight(profile, training_model)
 environment = make_environment(profile, training_model)
-probe_mode = os.environ["WORLD_SPEC_PROBE_MODE"]
-if probe_mode == "capacity_scale":
-    num_envs = profile["training"]["numEnvs"]
+if probe_mode in {"capacity_scale", "ccd_iterations"}:
+    num_envs = (
+        4096
+        if probe_mode == "ccd_iterations"
+        else profile["training"]["numEnvs"]
+    )
     wrapped = wrapper.wrap_for_brax_training(
         environment,
         episode_length=profile["training"]["episodeLength"],
@@ -185,10 +201,22 @@ if probe_mode == "capacity_scale":
     state = reset(keys)
     jax.block_until_ready(state.obs["state"])
     reset_elapsed = time.monotonic() - reset_started
-    action = jp.zeros((num_envs, wrapped.action_size))
+    action_rng = jax.random.PRNGKey(profile["training"]["seed"] + 1)
+    action = (
+        jax.random.uniform(
+            action_rng,
+            shape=(num_envs, wrapped.action_size),
+            minval=-0.25,
+            maxval=0.25,
+        )
+        if probe_mode == "ccd_iterations"
+        else jp.zeros((num_envs, wrapped.action_size))
+    )
     step_started = time.monotonic()
-    state = step(state, action)
-    jax.block_until_ready(state.obs["state"])
+    rollout_steps = 200 if probe_mode == "ccd_iterations" else 1
+    for _ in range(rollout_steps):
+        state = step(state, action)
+        jax.block_until_ready(state.obs["state"])
     step_elapsed = time.monotonic() - step_started
 else:
     num_envs = 1
@@ -314,6 +342,49 @@ if probe_mode == "capacity_scale":
     }
     report_path = result_dir / "capacity-scale-report.json"
     result_prefix = "WORLDSPEC_A800_CAPACITY_SCALE_RESULT="
+elif probe_mode == "ccd_iterations":
+    report = {
+        **common_report,
+        "id": (
+            "ccd-report://worldspec/h1-mjx-warp/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "scope": "h1_ccd_iterations_numeric_spike",
+        "runtimeAcceptance": "numeric_spike",
+        "canonicalTrainingStatus": "not_executed",
+        "candidate": {
+            "baselineIterations": 35,
+            "candidateIterations": 50,
+            "numEnvs": num_envs,
+            "rolloutSteps": rollout_steps,
+            "selectionPolicy": "single_predeclared_candidate",
+        },
+        "target": {
+            "sourceBundleDigest": derivation["sourceBundleDigest"],
+            "derivedModelDigest": derivation["derivedModelDigest"],
+            "singleEnvironmentQposSize": int(environment.mj_model.nq),
+            "singleEnvironmentQvelSize": int(environment.mj_model.nv),
+            "actuatorCount": int(environment.mj_model.nu),
+            "appliedCcdIterations": int(environment.ccd_iterations),
+        },
+        "batchedRollout": {
+            "numEnvs": num_envs,
+            "rolloutSteps": rollout_steps,
+            "observationShape": list(observation.shape),
+            "qposShape": list(qpos.shape),
+            "qvelShape": list(qvel.shape),
+            "rewardShape": list(reward.shape),
+            "doneShape": list(done.shape),
+            "resetElapsedSeconds": reset_elapsed,
+            "rolloutElapsedSeconds": step_elapsed,
+            "meanStepElapsedSeconds": step_elapsed / rollout_steps,
+            **finite,
+        },
+        "transitionProfileDigest": digest_json(transition_profile),
+        "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    }
+    report_path = result_dir / "ccd-iterations-spike-report.json"
+    result_prefix = "WORLDSPEC_A800_CCD_ITERATIONS_RESULT="
 else:
     report = {
         **common_report,
@@ -342,7 +413,11 @@ if report["gpu"]["jaxBackend"] != "gpu":
     raise SystemExit("JAX did not select the GPU backend")
 finite_keys = ("observationFinite", "qposFinite", "qvelFinite", "rewardFinite")
 finite_report = (
-    report["batchedOneStep"] if probe_mode == "capacity_scale" else report["oneStep"]
+    report["batchedOneStep"]
+    if probe_mode == "capacity_scale"
+    else report["batchedRollout"]
+    if probe_mode == "ccd_iterations"
+    else report["oneStep"]
 )
 if any(finite_report.get(key) is not True for key in finite_keys):
     raise SystemExit("MJX one-step finite-state gate failed")

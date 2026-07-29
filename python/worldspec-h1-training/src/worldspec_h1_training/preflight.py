@@ -16,13 +16,14 @@ from .errors import TrainingError
 def static_preflight(profile: dict[str, Any], bundle_dir: Path) -> dict[str, Any]:
     validate_profile(profile)
     manifest = validate_bundle(profile, bundle_dir)
-    return {
+    report = {
         "status": "pass",
         "executionEvidence": "static_validation",
         "bundleDigest": manifest["bundleDigest"],
         "frameworkDecision": "accepted",
         "runtimeArtifactStatus": profile["runtime"]["status"],
     }
+    return report
 
 
 def runtime_preflight(profile: dict[str, Any], training_model: Path) -> dict[str, Any]:
@@ -85,6 +86,9 @@ def runtime_preflight(profile: dict[str, Any], training_model: Path) -> dict[str
             {"expected": expected, "actual": versions},
         )
     model = mujoco.MjModel.from_xml_path(str(training_model))
+    requested_ccd_iterations = profile["runtime"].get("ccdIterations")
+    if requested_ccd_iterations is not None:
+        model.opt.ccd_iterations = int(requested_ccd_iterations)
     if model.nu < 20:
         raise TrainingError(
             "TRAINING_MODEL_CONTROL_INVALID",
@@ -94,7 +98,7 @@ def runtime_preflight(profile: dict[str, Any], training_model: Path) -> dict[str
     from mujoco import mjx
 
     mjx.put_model(model, impl=profile["framework"]["physicsImplementation"])
-    return {
+    report = {
         "status": "pass",
         "executionEvidence": "executed",
         "jaxBackend": jax.default_backend(),
@@ -102,3 +106,6 @@ def runtime_preflight(profile: dict[str, Any], training_model: Path) -> dict[str
         "versions": versions,
         "physicsImplementation": profile["framework"]["physicsImplementation"],
     }
+    if requested_ccd_iterations is not None:
+        report["ccdIterations"] = int(model.opt.ccd_iterations)
+    return report

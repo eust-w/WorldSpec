@@ -172,3 +172,21 @@ The formal result is evidence-first: checkpoint, policy manifest, traces,
 environment lock, and report are copied and digest-verified even when the ten
 final tests fail. Only ten passing tests produce `policy_candidate`; the
 artifact remains internal and does not claim the full kitchen L3 task.
+
+The first `loaded-track-settle-v1` A800 run failed only the unchanged settling
+linear/angular-speed gates. The selected follow-up is therefore a separate,
+fail-closed transition experiment:
+
+```bash
+./scripts/run_a800_h1_ccd_iterations_spike.sh
+
+WORLD_SPEC_CCD_SPIKE_REPORT=runs/a800/<ccd-job>/ccd-iterations-spike-report.json \
+  ./scripts/run_a800_h1_transition_calibration.sh
+```
+
+The first command tests only the predeclared `ccd_iterations=50` candidate over
+4,096 environments and 200 steps. The second command refuses to run unless
+that report is `passed` and clean. It warm-starts from the frozen failed
+midterm checkpoint, uses a 150-step move plus 50-step zero-command curriculum,
+and retains every original quality gate. Neither command retries or adjusts
+parameters automatically.

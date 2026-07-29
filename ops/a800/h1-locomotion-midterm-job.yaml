@@ -54,6 +54,10 @@ spec:
               value: __PACKAGE_LOCK_DIGEST__
             - name: WORLD_SPEC_SOURCE_ARCHIVE_DIGEST
               value: __SOURCE_ARCHIVE_DIGEST__
+            - name: WORLD_SPEC_MIDTERM_PROFILE_FILENAME
+              value: __MIDTERM_PROFILE_FILENAME__
+            - name: WORLD_SPEC_WARM_START_REPORT_FILENAME
+              value: __WARM_START_REPORT_FILENAME__
             - name: HOME
               value: /scratch/home
             - name: XDG_CACHE_HOME

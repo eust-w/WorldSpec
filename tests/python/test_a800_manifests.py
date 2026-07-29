@@ -173,6 +173,49 @@ def test_capacity_scale_probe_is_isolated_and_uses_canonical_environment_count()
     assert "WORLDSPEC_A800_CAPACITY_SCALE_RESULT=" in entrypoint
 
 
+def test_ccd_iterations_probe_is_single_candidate_and_fail_closed() -> None:
+    (job,) = _documents("h1-ccd-iterations-probe-job.yaml")
+    assert job["metadata"]["namespace"] == "worldspec-a800-poc"
+    assert job["metadata"]["labels"]["app.kubernetes.io/name"] == (
+        "worldspec-h1-ccd-iterations-probe"
+    )
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["securityContext"]["runAsUser"] == 10001
+    assert pod["securityContext"]["runAsGroup"] == 10001
+    (container,) = pod["containers"]
+    environment = {item["name"]: item["value"] for item in container["env"]}
+    assert environment["WORLD_SPEC_PROBE_MODE"] == "ccd_iterations"
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
+    assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all(
+        "persistentVolumeClaim" not in volume
+        for volume in pod["volumes"]
+    )
+
+    entrypoint = (A800 / "h1-locked-runtime-probe-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    assert '"baselineIterations": 35' in entrypoint
+    assert '"candidateIterations": 50' in entrypoint
+    assert '"selectionPolicy": "single_predeclared_candidate"' in entrypoint
+    assert "rollout_steps = 200" in entrypoint
+    assert "WORLDSPEC_A800_CCD_ITERATIONS_RESULT=" in entrypoint
+
+    launcher = (
+        ROOT / "scripts" / "run_a800_h1_locked_runtime_probe.sh"
+    ).read_text(encoding="utf-8")
+    assert '"ccd_iterations, currently set" in line' in launcher
+    assert '"needs to be increased" in line' in launcher
+    assert 'report["status"] = "passed" if report["logDiagnostics"]["clean"]' in (
+        launcher
+    )
+
+
 def test_private_image_is_prepulled_without_mounting_registry_secret() -> None:
     (job,) = _documents("h1-training-image-prepull-job.yaml")
     assert job["metadata"]["namespace"] == "droboticflow"
@@ -269,6 +312,13 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert pod["securityContext"]["runAsUser"] == 10001
     assert pod["securityContext"]["runAsGroup"] == 10001
     (container,) = pod["containers"]
+    environment = {item["name"]: item["value"] for item in container["env"]}
+    assert environment["WORLD_SPEC_MIDTERM_PROFILE_FILENAME"] == (
+        "__MIDTERM_PROFILE_FILENAME__"
+    )
+    assert environment["WORLD_SPEC_WARM_START_REPORT_FILENAME"] == (
+        "__WARM_START_REPORT_FILENAME__"
+    )
     assert container["name"] == "midterm"
     assert container["image"] == "__RUNTIME_IMAGE__"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
@@ -298,6 +348,16 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "copy_kubernetes_file.py" in launcher
     assert "A800_CAPACITY_BLOCKED" in launcher
     assert "formalTrainingGate" in launcher
+
+    transition_launcher = (
+        ROOT / "scripts" / "run_a800_h1_transition_calibration.sh"
+    ).read_text(encoding="utf-8")
+    assert "WORLD_SPEC_CCD_SPIKE_REPORT" in transition_launcher
+    assert 'report.get("status") != "passed"' in transition_launcher
+    assert 'report.get("logDiagnostics", {}).get("clean") is not True' in (
+        transition_launcher
+    )
+    assert "run_a800_h1_locomotion_midterm.sh" in transition_launcher
 
 
 def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> None:

@@ -3,7 +3,7 @@ status: Normative
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../en/decisions/README.md
-last-verified: 2026-07-28
+last-verified: 2026-07-29
 ---
 
 # ADR 目录
@@ -22,5 +22,6 @@ last-verified: 2026-07-28
 - [ADR-0012 H1 与 Robotiq 的可追溯组合](0012-h1-robotiq-composition.md)
 - [ADR-0013 H1 目标动力学重训路线](0013-h1-target-dynamics-retraining.md)
 - [ADR-0014 H1 MuJoCo Playground PPO 训练引擎](0014-h1-mujoco-playground-ppo-engine.md)
+- [ADR-0015 H1 过渡制动课程与 CCD 单候选探针](0015-h1-transition-braking-calibration.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

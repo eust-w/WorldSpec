@@ -3,7 +3,7 @@ status: Official Translation
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../zh-CN/decision-register.md
-last-verified: 2026-07-28
+last-verified: 2026-07-29
 ---
 
 # Decision register
@@ -40,5 +40,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-026 | H1/Robotiq composition uses a separate profile, complete namespacing, and immutable native payloads; the first L3 case locks one right gripper | Accepted Design | [ADR-0012](decisions/0012-h1-robotiq-composition.md) |
 | D-027 | Select A+R: adapt/retrain Menagerie H1 plus one right Robotiq; reject hybrid-model and kinematic-switch routes | Accepted Design | [ADR-0013](decisions/0013-h1-target-dynamics-retraining.md) |
 | D-028 | Use MuJoCo Playground v0.2.0, MuJoCo/MJX, Warp, and Brax JAX PPO for H1 retraining; adapt the target composition and retain Orbax as the native output | Accepted Design | [ADR-0014](decisions/0014-h1-mujoco-playground-ppo-engine.md) |
+| D-029 | Keep the original midterm gates; add a move-to-zero curriculum and settling rewards, gated by one CCD 35→50 numerical spike before A800 calibration | Accepted Design | [ADR-0015](decisions/0015-h1-transition-braking-calibration.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

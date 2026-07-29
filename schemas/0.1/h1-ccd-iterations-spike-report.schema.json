@@ -1,0 +1,392 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-ccd-iterations-spike-report.schema.json",
+  "title": "WorldSpec H1 A800 CCD Iterations Numeric Spike Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "canonicalTrainingStatus",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "profileDigest",
+    "transitionProfileDigest",
+    "candidate",
+    "logDiagnostics",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "batchedRollout",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "reportVersion": {
+      "const": "0.1.0"
+    },
+    "status": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "scope": {
+      "const": "h1_ccd_iterations_numeric_spike"
+    },
+    "executionEvidence": {
+      "const": "executed"
+    },
+    "runtimeAcceptance": {
+      "const": "numeric_spike"
+    },
+    "canonicalTrainingStatus": {
+      "const": "not_executed"
+    },
+    "probeDefinition": {
+      "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit"
+    },
+    "imageSource": {
+      "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit"
+    },
+    "probeInput": {
+      "allOf": [
+        {
+          "$ref": "h1-locked-runtime-report.schema.json#/$defs/sourceCommit"
+        },
+        {
+          "type": "object",
+          "required": [
+            "materialization",
+            "archiveDigest"
+          ],
+          "properties": {
+            "materialization": {
+              "const": "verified_git_archive"
+            },
+            "archiveDigest": {
+              "$ref": "common.schema.json#/$defs/digest"
+            }
+          }
+        }
+      ]
+    },
+    "container": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/container"
+    },
+    "platform": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/platform"
+    },
+    "gpu": {
+      "$ref": "h1-runtime-spike-report.schema.json#/properties/gpu"
+    },
+    "packages": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/packages"
+    },
+    "packageLockDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "profileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "transitionProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "candidate": {
+      "type": "object",
+      "required": [
+        "baselineIterations",
+        "candidateIterations",
+        "numEnvs",
+        "rolloutSteps",
+        "selectionPolicy"
+      ],
+      "properties": {
+        "baselineIterations": {
+          "const": 35
+        },
+        "candidateIterations": {
+          "const": 50
+        },
+        "numEnvs": {
+          "const": 4096
+        },
+        "rolloutSteps": {
+          "const": 200
+        },
+        "selectionPolicy": {
+          "const": "single_predeclared_candidate"
+        }
+      },
+      "additionalProperties": false
+    },
+    "logDiagnostics": {
+      "type": "object",
+      "required": [
+        "iterationAdvisoryCount",
+        "ccdOverflowCount",
+        "capacityOverflowCount",
+        "clean"
+      ],
+      "properties": {
+        "iterationAdvisoryCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "ccdOverflowCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "capacityOverflowCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "clean": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "staticPreflight": {
+      "$ref": "h1-locked-runtime-report.schema.json#/properties/staticPreflight"
+    },
+    "runtimePreflight": {
+      "type": "object",
+      "required": [
+        "status",
+        "executionEvidence",
+        "jaxBackend",
+        "devices",
+        "versions",
+        "physicsImplementation",
+        "ccdIterations"
+      ],
+      "properties": {
+        "status": {
+          "const": "pass"
+        },
+        "executionEvidence": {
+          "const": "executed"
+        },
+        "jaxBackend": {
+          "const": "gpu"
+        },
+        "devices": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "versions": {
+          "type": "object",
+          "required": [
+            "brax",
+            "jax",
+            "mujoco",
+            "mujoco-mjx",
+            "playground",
+            "warp-lang"
+          ],
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "physicsImplementation": {
+          "const": "warp"
+        },
+        "ccdIterations": {
+          "const": 50
+        }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "sourceBundleDigest",
+        "derivedModelDigest",
+        "singleEnvironmentQposSize",
+        "singleEnvironmentQvelSize",
+        "actuatorCount",
+        "appliedCcdIterations"
+      ],
+      "properties": {
+        "sourceBundleDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "derivedModelDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "singleEnvironmentQposSize": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "singleEnvironmentQvelSize": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "actuatorCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "appliedCcdIterations": {
+          "const": 50
+        }
+      },
+      "additionalProperties": false
+    },
+    "batchedRollout": {
+      "type": "object",
+      "required": [
+        "numEnvs",
+        "rolloutSteps",
+        "observationShape",
+        "qposShape",
+        "qvelShape",
+        "rewardShape",
+        "doneShape",
+        "resetElapsedSeconds",
+        "rolloutElapsedSeconds",
+        "meanStepElapsedSeconds",
+        "observationFinite",
+        "qposFinite",
+        "qvelFinite",
+        "rewardFinite"
+      ],
+      "properties": {
+        "numEnvs": {
+          "const": 4096
+        },
+        "rolloutSteps": {
+          "const": 200
+        },
+        "observationShape": {
+          "$ref": "#/$defs/batchedShape"
+        },
+        "qposShape": {
+          "$ref": "#/$defs/batchedShape"
+        },
+        "qvelShape": {
+          "$ref": "#/$defs/batchedShape"
+        },
+        "rewardShape": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": 4096
+            }
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "doneShape": {
+          "type": "array",
+          "prefixItems": [
+            {
+              "const": 4096
+            }
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
+        },
+        "resetElapsedSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rolloutElapsedSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "meanStepElapsedSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "observationFinite": {
+          "const": true
+        },
+        "qposFinite": {
+          "const": true
+        },
+        "qvelFinite": {
+          "const": true
+        },
+        "rewardFinite": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "batchedShape": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "const": 4096
+        },
+        {
+          "type": "integer",
+          "minimum": 1
+        }
+      ],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "passed"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "logDiagnostics": {
+            "properties": {
+              "iterationAdvisoryCount": {
+                "const": 0
+              },
+              "ccdOverflowCount": {
+                "const": 0
+              },
+              "capacityOverflowCount": {
+                "const": 0
+              },
+              "clean": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

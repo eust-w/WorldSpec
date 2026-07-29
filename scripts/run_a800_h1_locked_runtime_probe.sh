@@ -16,6 +16,15 @@ if [[ "${PROBE_MODE}" == "capacity_scale" ]]; then
   RESULT_MARKER="WORLDSPEC_A800_CAPACITY_SCALE_RESULT"
   RESULT_FILE="capacity-scale-report.json"
   ACCEPTANCE="capacity_scale_preflight"
+elif [[ "${PROBE_MODE}" == "ccd_iterations" ]]; then
+  DEFAULT_JOB_TEMPLATE="${ROOT_DIR}/ops/a800/h1-ccd-iterations-probe-job.yaml"
+  APP_LABEL="worldspec-h1-ccd-iterations-probe"
+  CONFIG_PREFIX="worldspec-h1-ccd"
+  TEMP_PREFIX="worldspec-h1-ccd"
+  STAGE_MARKER="WORLDSPEC_A800_CCD_ITERATIONS_STAGE"
+  RESULT_MARKER="WORLDSPEC_A800_CCD_ITERATIONS_RESULT"
+  RESULT_FILE="ccd-iterations-spike-report.json"
+  ACCEPTANCE="numeric_spike"
 else
   DEFAULT_JOB_TEMPLATE="${ROOT_DIR}/ops/a800/h1-locked-runtime-probe-job.yaml"
   APP_LABEL="worldspec-h1-locked-runtime-probe"
@@ -36,7 +45,8 @@ PROBE_REVISION="${WORLD_SPEC_PROBE_DEFINITION_REVISION:-$(git -C "${ROOT_DIR}" r
 TIMEOUT_SECONDS="${WORLD_SPEC_A800_TIMEOUT_SECONDS:-3600}"
 
 if [[ "${PROBE_MODE}" != "locked_runtime" ]] &&
-  [[ "${PROBE_MODE}" != "capacity_scale" ]]; then
+  [[ "${PROBE_MODE}" != "capacity_scale" ]] &&
+  [[ "${PROBE_MODE}" != "ccd_iterations" ]]; then
   printf 'ERROR: unsupported WORLD_SPEC_PROBE_MODE: %s\n' "${PROBE_MODE}" >&2
   exit 2
 fi
@@ -274,6 +284,35 @@ if sys.argv[8] == "capacity_scale":
         raise SystemExit(
             "capacity scale probe emitted overflow diagnostics: "
             + json.dumps(report["logDiagnostics"], sort_keys=True)
+        )
+elif sys.argv[8] == "ccd_iterations":
+    log_lines = log_path.read_text(encoding="utf-8").splitlines()
+    iteration_advisory_count = sum(
+        "ccd_iterations, currently set" in line
+        and "needs to be increased" in line
+        for line in log_lines
+    )
+    ccd_overflow_count = sum("CCD overflow" in line for line in log_lines)
+    capacity_overflow_count = sum(
+        "overflow" in line.lower() and "CCD overflow" not in line
+        for line in log_lines
+    )
+    report["logDiagnostics"] = {
+        "iterationAdvisoryCount": iteration_advisory_count,
+        "ccdOverflowCount": ccd_overflow_count,
+        "capacityOverflowCount": capacity_overflow_count,
+        "clean": (
+            iteration_advisory_count
+            == ccd_overflow_count
+            == capacity_overflow_count
+            == 0
+        ),
+    }
+    report["status"] = "passed" if report["logDiagnostics"]["clean"] else "failed"
+    if report["status"] == "failed":
+        report_path.write_text(
+            json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
         )
 if report.get("status") != "passed" or report.get("runtimeAcceptance") != sys.argv[7]:
     raise SystemExit(f"{sys.argv[8]} probe did not pass")

@@ -1,0 +1,126 @@
+{
+  "id": "transitionprofile://worldspec/h1-menagerie-right-robotiq/transition-brake-v2",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "loaded_track_settle_transition",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:962feb4a81136909df73882beb6fadc0f5929c458578d084bc8fb5a5e5aa6424",
+    "containerDigest": "sha256:962feb4a81136909df73882beb6fadc0f5929c458578d084bc8fb5a5e5aa6424",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50
+  },
+  "warmStart": {
+    "sourceStage": "loaded-track-settle-v1-failed",
+    "sourceReportDigest": "sha256:961ab5fa5c5f70482f46c8751496f3806f2377654d75d5bba4e6a9d7491a1e39",
+    "checkpointDigest": "sha256:86d8e0de7c900fdbbf945cca1160518f4e27bf7735f40323de7ffadbf07d2c6a",
+    "checkpointSizeBytes": 8821958,
+    "distribution": "internal_only",
+    "restore": {
+      "normalizer": true,
+      "policy": true,
+      "value": true
+    },
+    "optimizerState": "reset"
+  },
+  "trainingOverrides": {
+    "numTimesteps": 16777216,
+    "numEnvs": 4096,
+    "numEvals": 8,
+    "episodeLength": 1000,
+    "unrollLength": 20,
+    "numMinibatches": 16,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256
+  },
+  "environment": {
+    "commandDistribution": {
+      "linearVelocityX": [
+        0.0,
+        0.6
+      ],
+      "linearVelocityY": [
+        -0.1,
+        0.1
+      ],
+      "angularVelocityYaw": [
+        -0.25,
+        0.25
+      ],
+      "zeroCommandProbability": 0.2
+    },
+    "transitionCurriculum": {
+      "mode": "move_then_zero",
+      "transitionCycleProbability": 0.75,
+      "moveSteps": 150,
+      "settleSteps": 50,
+      "motionCommandDistribution": {
+        "linearVelocityX": [
+          0.4,
+          0.6
+        ],
+        "linearVelocityY": [
+          -0.05,
+          0.05
+        ],
+        "angularVelocityYaw": [
+          -0.1,
+          0.1
+        ]
+      }
+    },
+    "termination": {
+      "minimumBaseHeight": 0.5,
+      "minimumUprightCosine": 0.25,
+      "jointLimitToleranceRadians": 0.02
+    },
+    "reward": {
+      "survival": 3.0,
+      "trackingLinear": 6.0,
+      "trackingYaw": 2.0,
+      "upright": 3.0,
+      "baseHeight": 2.0,
+      "pose": 0.5,
+      "verticalVelocityCost": 1.0,
+      "angularVelocityXYCost": 0.5,
+      "torqueCost": 0.000002,
+      "actionRateCost": 0.03,
+      "settleLinear": 8.0,
+      "settleYaw": 3.0,
+      "settleActionRateScale": 0.25
+    },
+    "targets": {
+      "baseHeight": 0.98
+    },
+    "sigmas": {
+      "tracking": 0.2,
+      "upright": 0.05,
+      "baseHeight": 0.02,
+      "pose": 0.2,
+      "settleTracking": 0.05
+    },
+    "commandResampleSteps": 200
+  },
+  "qualityGates": {
+    "minimumFinalMeanEpisodeLength": 900.0,
+    "nominalDurationSeconds": 4.0,
+    "moveDurationSeconds": 3.0,
+    "settleWindowSeconds": 1.0,
+    "requiredConsecutivePasses": 5,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "maximumLateralDrift": 0.2,
+    "maximumTrackingRmse": 0.25,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "maximumSettleLinearSpeed": 0.2,
+    "maximumSettleAngularSpeed": 0.4,
+    "maximumStandPlanarDrift": 0.2,
+    "maximumNonFiniteSamples": 0
+  },
+  "artifactPolicy": {
+    "checkpoint": "research_only",
+    "distribution": "internal_only"
+  },
+  "evidenceStatus": "derived"
+}

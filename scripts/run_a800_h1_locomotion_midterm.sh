@@ -11,9 +11,11 @@ PREPULL_TEMPLATE="${ROOT_DIR}/ops/a800/h1-training-image-prepull-job.yaml"
 ENTRYPOINT="${ROOT_DIR}/ops/a800/h1-locomotion-midterm-entrypoint.sh"
 CHUNK_UPLOAD="${ROOT_DIR}/scripts/upload_kubernetes_file.py"
 CHUNK_COPY="${ROOT_DIR}/scripts/copy_kubernetes_file.py"
-MIDTERM_PROFILE="${ROOT_DIR}/examples/h1-kitchen/locomotion-midterm-profile.json"
-STAND_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json"
-STAND_CHECKPOINT="${WORLD_SPEC_STAND_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-calibration-4mklr/calibration-checkpoint.zip}"
+MIDTERM_PROFILE="${WORLD_SPEC_MIDTERM_PROFILE:-${ROOT_DIR}/examples/h1-kitchen/locomotion-midterm-profile.json}"
+STAND_REPORT="${WORLD_SPEC_WARM_START_REPORT:-${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json}"
+STAND_CHECKPOINT="${WORLD_SPEC_WARM_START_CHECKPOINT:-${WORLD_SPEC_STAND_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-calibration-4mklr/calibration-checkpoint.zip}}"
+MIDTERM_PROFILE_FILENAME="$(basename "${MIDTERM_PROFILE}")"
+WARM_START_REPORT_FILENAME="$(basename "${STAND_REPORT}")"
 RUNTIME_IMAGE="${WORLD_SPEC_H1_RUNTIME_IMAGE:-}"
 IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-}"
 PACKAGE_LOCK_DIGEST="${WORLD_SPEC_PACKAGE_LOCK_DIGEST:-sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41}"
@@ -206,6 +208,8 @@ sed \
   -e "s|__PROBE_INPUT_REVISION__|${PROBE_REVISION}|g" \
   -e "s|__PACKAGE_LOCK_DIGEST__|${PACKAGE_LOCK_DIGEST}|g" \
   -e "s|__SOURCE_ARCHIVE_DIGEST__|${source_archive_digest}|g" \
+  -e "s|__MIDTERM_PROFILE_FILENAME__|${MIDTERM_PROFILE_FILENAME}|g" \
+  -e "s|__WARM_START_REPORT_FILENAME__|${WARM_START_REPORT_FILENAME}|g" \
   -e "s|__SCRIPT_CONFIGMAP__|${script_configmap}|g" \
   -e "s|__SOURCE_CONFIGMAP__|${source_configmap}|g" \
   "${JOB_TEMPLATE}" >"${temporary_manifest}"

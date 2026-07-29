@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .errors import TrainingError
+from .transition import transition_phase_masks
 
 
 def _preserving_update(
@@ -58,6 +59,12 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             self._xml_path = str(training_model)
             self._mj_model = mujoco.MjModel.from_xml_path(self._xml_path)
             self._mj_model.opt.timestep = config.sim_dt
+            self._mj_model.opt.ccd_iterations = int(
+                profile["runtime"].get(
+                    "ccdIterations",
+                    self._mj_model.opt.ccd_iterations,
+                )
+            )
             self._mjx_model = mjx.put_model(self._mj_model, impl=config.impl)
 
             def object_id(kind, name: str) -> int:
@@ -146,6 +153,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             )
             self._zero_command_probability = float(command["zeroCommandProbability"])
             self._calibration_enabled = isinstance(training_environment, dict)
+            self._transition_curriculum = None
             if self._calibration_enabled:
                 termination = training_environment["termination"]
                 self._minimum_height = float(termination["minimumBaseHeight"])
@@ -155,6 +163,32 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 self._reward_targets = training_environment["targets"]
                 self._reward_sigmas = training_environment["sigmas"]
                 self._command_resample_steps = int(training_environment["commandResampleSteps"])
+                transition = training_environment.get("transitionCurriculum")
+                if isinstance(transition, dict):
+                    self._transition_curriculum = transition
+                    motion = transition["motionCommandDistribution"]
+                    self._motion_command_low = jp.asarray(
+                        [
+                            motion["linearVelocityX"][0],
+                            motion["linearVelocityY"][0],
+                            motion["angularVelocityYaw"][0],
+                        ]
+                    )
+                    self._motion_command_high = jp.asarray(
+                        [
+                            motion["linearVelocityX"][1],
+                            motion["linearVelocityY"][1],
+                            motion["angularVelocityYaw"][1],
+                        ]
+                    )
+                    self._transition_probability = float(
+                        transition["transitionCycleProbability"]
+                    )
+                    self._transition_move_steps = int(transition["moveSteps"])
+                    self._transition_settle_steps = int(transition["settleSteps"])
+                    self._transition_cycle_steps = (
+                        self._transition_move_steps + self._transition_settle_steps
+                    )
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
                 self._minimum_upright = float(validation["minimumUprightCosine"])
@@ -178,6 +212,29 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             use_zero = jax.random.bernoulli(zero_rng, self._zero_command_probability)
             return jp.where(use_zero, jp.zeros(3), value)
 
+        def sample_motion_command(self, rng):
+            return jax.random.uniform(
+                rng,
+                shape=(3,),
+                minval=self._motion_command_low,
+                maxval=self._motion_command_high,
+            )
+
+        def sample_cycle(self, rng):
+            if self._transition_curriculum is None:
+                return self.sample_command(rng), jp.asarray(False)
+            mode_rng, motion_rng, baseline_rng = jax.random.split(rng, 3)
+            transition_active = jax.random.bernoulli(
+                mode_rng,
+                self._transition_probability,
+            )
+            motion_command = self.sample_motion_command(motion_rng)
+            baseline_command = self.sample_command(baseline_rng)
+            return (
+                jp.where(transition_active, motion_command, baseline_command),
+                transition_active,
+            )
+
         def _observation(self, data, last_action, command):
             return jp.concatenate(
                 [
@@ -193,6 +250,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
 
         def reset(self, rng):
             rng, command_rng = jax.random.split(rng)
+            command, transition_active = self.sample_cycle(command_rng)
             data = mjx_env.make_data(
                 self.mj_model,
                 qpos=self._initial_qpos,
@@ -206,7 +264,8 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             data = mjx.forward(self.mjx_model, data)
             info = {
                 "rng": rng,
-                "command": self.sample_command(command_rng),
+                "command": command,
+                "transition_active": transition_active,
                 "last_action": jp.zeros(self.action_size),
                 "step": jp.zeros((), dtype=jp.int32),
                 "termination": {
@@ -223,6 +282,8 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 "reward/upright": jp.zeros(()),
                 "reward/base_height": jp.zeros(()),
                 "reward/pose": jp.zeros(()),
+                "reward/settle_linear": jp.zeros(()),
+                "reward/settle_yaw": jp.zeros(()),
                 "cost/upright": jp.zeros(()),
                 "cost/vertical_velocity": jp.zeros(()),
                 "cost/angular_velocity_xy": jp.zeros(()),
@@ -235,6 +296,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 "termination/nonfinite": jp.zeros(()),
                 "state/base_height": jp.zeros(()),
                 "state/upright_cosine": jp.zeros(()),
+                "state/transition_settle": jp.zeros(()),
             }
             observation = {"state": self._observation(data, info["last_action"], info["command"])}
             return mjx_env.State(
@@ -281,6 +343,18 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             angular_velocity_xy_cost = jp.sum(jp.square(gyro[:2]))
             raw_torque_cost = jp.sum(jp.square(policy_torque))
             raw_action_rate_cost = jp.sum(jp.square(action - state.info["last_action"]))
+            transition_active = state.info.get("transition_active", jp.asarray(False))
+            if self._transition_curriculum is not None:
+                _, settle_phase, _ = transition_phase_masks(
+                    state.info["step"],
+                    self._transition_move_steps,
+                    self._transition_cycle_steps,
+                )
+                transition_settle = transition_active & settle_phase
+            else:
+                transition_settle = jp.asarray(False)
+            settle_linear_reward = jp.zeros(())
+            settle_yaw_reward = jp.zeros(())
             if self._calibration_enabled:
                 base_height = data.xpos[self._pelvis_body, 2]
                 survival_reward = jp.ones(())
@@ -290,6 +364,23 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     -height_error / float(self._reward_sigmas["baseHeight"])
                 )
                 pose_reward = jp.exp(-pose_cost / float(self._reward_sigmas["pose"]))
+                if self._transition_curriculum is not None:
+                    settle_sigma = float(self._reward_sigmas["settleTracking"])
+                    settle_linear_reward = (
+                        jp.exp(-jp.sum(jp.square(local_velocity[:2])) / settle_sigma)
+                        * transition_settle
+                    )
+                    settle_yaw_reward = (
+                        jp.exp(-jp.square(gyro[2]) / settle_sigma)
+                        * transition_settle
+                    )
+                    action_rate_scale = jp.where(
+                        transition_settle,
+                        float(self._reward_config["settleActionRateScale"]),
+                        1.0,
+                    )
+                else:
+                    action_rate_scale = 1.0
                 reward = jp.clip(
                     (
                         float(self._reward_config["survival"]) * survival_reward
@@ -298,11 +389,17 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                         + float(self._reward_config["upright"]) * upright_reward
                         + float(self._reward_config["baseHeight"]) * base_height_reward
                         + float(self._reward_config["pose"]) * pose_reward
+                        + float(self._reward_config.get("settleLinear", 0.0))
+                        * settle_linear_reward
+                        + float(self._reward_config.get("settleYaw", 0.0))
+                        * settle_yaw_reward
                         - float(self._reward_config["verticalVelocityCost"]) * vertical_cost
                         - float(self._reward_config["angularVelocityXYCost"])
                         * angular_velocity_xy_cost
                         - float(self._reward_config["torqueCost"]) * raw_torque_cost
-                        - float(self._reward_config["actionRateCost"]) * raw_action_rate_cost
+                        - float(self._reward_config["actionRateCost"])
+                        * action_rate_scale
+                        * raw_action_rate_cost
                     )
                     * self.dt,
                     0.0,
@@ -310,7 +407,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 torque_cost = raw_torque_cost * float(self._reward_config["torqueCost"])
                 action_rate_cost = raw_action_rate_cost * float(
                     self._reward_config["actionRateCost"]
-                )
+                ) * action_rate_scale
             else:
                 survival_reward = jp.zeros(())
                 upright_reward = jp.zeros(())
@@ -345,14 +442,34 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             nonfinite = ~finite
             done = (joint_violation | fall_height | fall_upright | nonfinite).astype(reward.dtype)
             step = state.info["step"] + 1
-            resample = step >= self._command_resample_steps
-            next_command = jp.where(resample, self.sample_command(command_rng), command)
+            if self._transition_curriculum is not None:
+                sampled_command, sampled_transition_active = self.sample_cycle(command_rng)
+                _, begin_settle_phase, resample = transition_phase_masks(
+                    step,
+                    self._transition_move_steps,
+                    self._transition_cycle_steps,
+                )
+                begin_settle = transition_active & begin_settle_phase & (
+                    step == self._transition_move_steps
+                )
+                next_command = jp.where(begin_settle, jp.zeros(3), command)
+                next_command = jp.where(resample, sampled_command, next_command)
+                next_transition_active = jp.where(
+                    resample,
+                    sampled_transition_active,
+                    transition_active,
+                )
+            else:
+                resample = step >= self._command_resample_steps
+                next_command = jp.where(resample, self.sample_command(command_rng), command)
+                next_transition_active = transition_active
             next_step = jp.where(resample | done.astype(bool), 0, step)
             info = _preserving_update(
                 state.info,
                 {
                     "rng": rng,
                     "command": next_command,
+                    "transition_active": next_transition_active,
                     "last_action": action,
                     "step": next_step,
                     "termination": {
@@ -372,6 +489,8 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     "reward/upright": upright_reward,
                     "reward/base_height": base_height_reward,
                     "reward/pose": pose_reward,
+                    "reward/settle_linear": settle_linear_reward,
+                    "reward/settle_yaw": settle_yaw_reward,
                     "cost/upright": upright_cost,
                     "cost/vertical_velocity": vertical_cost,
                     "cost/angular_velocity_xy": angular_velocity_xy_cost,
@@ -384,6 +503,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     "termination/nonfinite": nonfinite.astype(reward.dtype),
                     "state/base_height": base_height,
                     "state/upright_cosine": upvector[2],
+                    "state/transition_settle": transition_settle.astype(reward.dtype),
                 },
             )
             observation = {"state": self._observation(data, action, next_command)}
@@ -415,6 +535,10 @@ def make_environment(profile: dict[str, Any], training_model: Path):
         @property
         def pelvis_body_id(self) -> int:
             return self._pelvis_body
+
+        @property
+        def ccd_iterations(self) -> int:
+            return int(self._mj_model.opt.ccd_iterations)
 
         def upvector(self, data):
             return self._sensor(data, "upvector")

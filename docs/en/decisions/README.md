@@ -3,7 +3,7 @@ status: Official Translation
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../zh-CN/decisions/README.md
-last-verified: 2026-07-28
+last-verified: 2026-07-29
 ---
 
 # ADR index
@@ -24,5 +24,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0012 Traceable H1/Robotiq composition](0012-h1-robotiq-composition.md)
 - [ADR-0013 H1 target-dynamics retraining route](0013-h1-target-dynamics-retraining.md)
 - [ADR-0014 H1 MuJoCo Playground PPO training engine](0014-h1-mujoco-playground-ppo-engine.md)
+- [ADR-0015 H1 transition-braking curriculum and single-candidate CCD spike](0015-h1-transition-braking-calibration.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

@@ -211,7 +211,11 @@ See the normalized failure evidence in
 [`locomotion-midterm.a800.failed.json`](../../../examples/h1-kitchen/locomotion-midterm.a800.failed.json).
 The complete checkpoint, trace, and raw report remain in the ignored local
 `runs/a800/` directory. The frozen plan prohibited automatic tuning or retry
-after a failed calibration, so the next Profile still requires an explicit
-decision: add a move-to-zero transition curriculum and braking/settling
-objective, or choose another declared strategy. The result must not be turned
-into a pass by silently relaxing the gate.
+after a failed calibration.
+[ADR-0015](../decisions/0015-h1-transition-braking-calibration.md) then selected
+option A: retain every original gate, add an explicit 150-step-motion to
+50-step-zero-command curriculum and settling rewards, and first run the single
+CCD `35 → 50` numerical candidate. The spike must emit no iteration advisory
+or capacity overflow over a 4,096-environment, 200-step trace; otherwise
+calibration does not start. This remains an implemented, not-yet-run experiment
+and is not improvement evidence.

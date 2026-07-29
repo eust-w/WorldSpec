@@ -3,7 +3,7 @@ status: Normative
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../en/decision-register.md
-last-verified: 2026-07-28
+last-verified: 2026-07-29
 ---
 
 # 决策登记
@@ -38,5 +38,6 @@ last-verified: 2026-07-28
 | D-026 | H1/Robotiq 通过独立 Profile、完整命名空间和不可变原生载荷组合；首个 L3 锁定右手单夹爪 | Accepted Design | [ADR-0012](decisions/0012-h1-robotiq-composition.md) |
 | D-027 | 采用 A+R：为 Menagerie H1 + 右手单 Robotiq 适配/重训步态，拒绝混合模型和运动学切换 | Accepted Design | [ADR-0013](decisions/0013-h1-target-dynamics-retraining.md) |
 | D-028 | H1 重训采用 MuJoCo Playground v0.2.0、MuJoCo/MJX、Warp 与 Brax JAX PPO；目标组合使用专用适配器，训练产物为 Orbax | Accepted Design | [ADR-0014](decisions/0014-h1-mujoco-playground-ppo-engine.md) |
+| D-029 | 保持原中期门槛；增加移动到零命令课程和停稳奖励，先以 CCD 35→50 单候选数值探针门控 A800 校准 | Accepted Design | [ADR-0015](decisions/0015-h1-transition-braking-calibration.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。
