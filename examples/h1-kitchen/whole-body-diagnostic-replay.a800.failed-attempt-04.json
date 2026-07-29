@@ -1,0 +1,91 @@
+{
+  "id": "conformance://worldspec/h1/a5ci/a5-ci-20260730-termination-replay-04/trace-schema-audit",
+  "reportVersion": "0.1.0",
+  "status": "failed",
+  "scope": "h1_whole_body_task_space_control_diagnostic_replay_trace_schema_audit",
+  "executionEvidence": "executed_incomplete",
+  "attemptId": "a5-ci-20260730-termination-replay-04",
+  "formalDiagnosticReplayGate": "failed",
+  "reportedDiagnosticGate": "passed",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "job": {
+    "namespace": "worldspec-a800-poc",
+    "name": "worldspec-h1-a5ci-1220fb1c90c5",
+    "podName": "worldspec-h1-a5ci-1220fb1c90c5-x2vkc",
+    "podPhase": "Succeeded",
+    "probeCommit": "852ead7d8032dec11204e663c10c2aabbae7b728",
+    "imageSourceCommit": "5e2aed6e9273422b0a6c8f2d86376c24e07bd5c9",
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:21b38cd178eb8a55ddece5c3438a0f85bb4fbbc759fd53bc47626e2d16f83961",
+    "gpu": "NVIDIA A800-SXM4-80GB",
+    "backoffLimit": 0,
+    "restartCount": 0
+  },
+  "failure": {
+    "stage": "local_trace_schema_validation",
+    "category": "trace_schema_contract_mismatch",
+    "line": 181,
+    "message": "'blend' is not one of ['motion', 'capture', 'stand']",
+    "artifactReceiptCreated": true
+  },
+  "diagnosticEvidence": {
+    "diagnosticCompleteness": "passed",
+    "staticEquivalence": "passed",
+    "replayTerminationReasons": [
+      "joint_limit"
+    ],
+    "terminalJoints": [
+      "right_hip_yaw"
+    ],
+    "originalTerminationReason": "unknown"
+  },
+  "recoveredEvidence": {
+    "report": {
+      "digest": "sha256:55b58de9c45682ed48feae63541cf55e7534aa09c8c29744a5fa26b5b5e9fba9",
+      "sizeBytes": 13414
+    },
+    "controller": {
+      "digest": "sha256:fdcb0557e0509174eff8cec7b629cf5e846931efb1d805f5df3647bc456274fb",
+      "sizeBytes": 2005
+    },
+    "trace": {
+      "digest": "sha256:26d40b9d072302b28ccd08f879617f37d50afb81286842c31a0ccd7dfb2fb1ef",
+      "sizeBytes": 1610239
+    },
+    "equivalence": {
+      "digest": "sha256:cad0d0704cb2ddb8adc9bdaed4433f0b752bc6e37f7ffb207dfb0db50a56b16d",
+      "sizeBytes": 4960
+    },
+    "receipt": {
+      "digest": "sha256:5311e9b4fd8e9e2fb575114429c41531f1206c08b761f07dbc721aeeb96386af",
+      "sizeBytes": 1030
+    },
+    "jobLog": {
+      "digest": "sha256:3f89f6fa3c92dc4b358f31db24d25aeb6e031df3f204b826ce033f63e48a318b",
+      "sizeBytes": 28954
+    },
+    "jobManifest": {
+      "digest": "sha256:9a3c4cb31b54a4012d7f7ff832f78d3c3d2a6dd158e2c0ac552791b2cf1b30e3",
+      "sizeBytes": 5780
+    },
+    "podManifest": {
+      "digest": "sha256:d9021ece1722d28b239d197d527762f0c1ba785764f77d252fae12492140d86c",
+      "sizeBytes": 7950
+    },
+    "podDescription": {
+      "digest": "sha256:67a62997291049da963b0d632a9829c5ea99175516283723eb89c72d7a41a710",
+      "sizeBytes": 5635
+    }
+  },
+  "claimBoundary": {
+    "diagnosticClaim": "failed_trace_schema_audit",
+    "controlClaim": "failed",
+    "controllerCandidate": "forbidden",
+    "a5": "not_executed",
+    "fiveRunGate": "not_executed",
+    "formalTraining": "not_started",
+    "l3Claim": "forbidden",
+    "automaticRetry": "not_executed"
+  },
+  "generatedAt": "2026-07-29T22:22:21Z"
+}

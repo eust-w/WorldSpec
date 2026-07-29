@@ -80,3 +80,18 @@ remains failed; the Schema is not relaxed. The corrected shape has been
 validated locally against the Report, Equivalence, and Receipt Schemas using
 Attempt-03's real artifacts. The next run still uses a new commit, image, and
 Attempt.
+
+## Attempt-04 result
+
+Attempt-04 completed the A800 replay, all four artifact transfers, Receipt,
+diagnostic-completeness checks, and static-equivalence checks. The replay again
+terminated on `joint_limit` at `right_hip_yaw`; the formal control gate failed.
+
+Local per-record Trace Schema validation found `activePolicy=blend` on line 181,
+while the diagnostic Schema listed only `motion/capture/stand`. `blend` is an
+existing five-step policy-handoff state in the frozen A4 Supervisor, not a
+control change introduced by this correction. Attempt-04 is therefore archived
+with a failed formal diagnostic gate. The correction only adds `blend` to the
+diagnostic Trace active-policy enumeration; controller, gates, policies, scene,
+seed, and runtime parameters remain unchanged. A later replay still uses a new
+commit, image, and Attempt.

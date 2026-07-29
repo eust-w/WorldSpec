@@ -65,3 +65,15 @@ Attempt-03 的 A800 重放、四类产物回传、Receipt 生成和摘要交叉�
 修正后的结构已经使用 Attempt-03 的真实产物在本地完成 Report、
 Equivalence 和 Receipt 三份 Schema 验证；下一次仍使用新提交、镜像和
 Attempt。
+
+## Attempt-04 结果
+
+Attempt-04 的 A800 重放、四类产物回传、Receipt、诊断完备性和静态等价性
+均完成；重放仍终止于 `right_hip_yaw` 的 `joint_limit`，正式控制门失败。
+
+本地逐行 Trace Schema 审计在第 181 行发现 `activePolicy=blend`，而诊断
+Schema 只列出 `motion/capture/stand`。`blend` 是冻结 A4 Supervisor 已有的
+五步策略混合状态，不是本轮引入的控制变化，因此这是诊断契约枚举遗漏。
+Attempt-04 正式诊断门仍按失败归档。修正只把 `blend` 加入诊断 Trace 的
+活动策略枚举，不修改控制器、门槛、策略、场景、种子或运行参数；后续使用
+新提交、新镜像和新 Attempt。

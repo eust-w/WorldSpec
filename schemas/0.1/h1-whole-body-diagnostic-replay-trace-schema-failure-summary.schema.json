@@ -1,0 +1,132 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-diagnostic-replay-trace-schema-failure-summary.schema.json",
+  "title": "WorldSpec H1 A5-CI Trace Schema Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "attemptId",
+    "formalDiagnosticReplayGate",
+    "reportedDiagnosticGate",
+    "formalControlGate",
+    "controllerStatus",
+    "job",
+    "failure",
+    "diagnosticEvidence",
+    "recoveredEvidence",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "failed" },
+    "scope": {
+      "const": "h1_whole_body_task_space_control_diagnostic_replay_trace_schema_audit"
+    },
+    "executionEvidence": { "const": "executed_incomplete" },
+    "attemptId": {
+      "const": "a5-ci-20260730-termination-replay-04"
+    },
+    "formalDiagnosticReplayGate": { "const": "failed" },
+    "reportedDiagnosticGate": { "const": "passed" },
+    "formalControlGate": { "const": "failed" },
+    "controllerStatus": { "const": "non_publishable" },
+    "job": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "name",
+        "podName",
+        "podPhase",
+        "probeCommit",
+        "imageSourceCommit",
+        "image",
+        "gpu",
+        "backoffLimit",
+        "restartCount"
+      ],
+      "properties": {
+        "namespace": { "const": "worldspec-a800-poc" },
+        "name": { "const": "worldspec-h1-a5ci-1220fb1c90c5" },
+        "podName": { "const": "worldspec-h1-a5ci-1220fb1c90c5-x2vkc" },
+        "podPhase": { "const": "Succeeded" },
+        "probeCommit": {
+          "const": "852ead7d8032dec11204e663c10c2aabbae7b728"
+        },
+        "imageSourceCommit": {
+          "const": "5e2aed6e9273422b0a6c8f2d86376c24e07bd5c9"
+        },
+        "image": {
+          "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:21b38cd178eb8a55ddece5c3438a0f85bb4fbbc759fd53bc47626e2d16f83961"
+        },
+        "gpu": { "const": "NVIDIA A800-SXM4-80GB" },
+        "backoffLimit": { "const": 0 },
+        "restartCount": { "const": 0 }
+      },
+      "additionalProperties": false
+    },
+    "failure": {
+      "const": {
+        "stage": "local_trace_schema_validation",
+        "category": "trace_schema_contract_mismatch",
+        "line": 181,
+        "message": "'blend' is not one of ['motion', 'capture', 'stand']",
+        "artifactReceiptCreated": true
+      }
+    },
+    "diagnosticEvidence": {
+      "const": {
+        "diagnosticCompleteness": "passed",
+        "staticEquivalence": "passed",
+        "replayTerminationReasons": ["joint_limit"],
+        "terminalJoints": ["right_hip_yaw"],
+        "originalTerminationReason": "unknown"
+      }
+    },
+    "recoveredEvidence": {
+      "type": "object",
+      "required": [
+        "report",
+        "controller",
+        "trace",
+        "equivalence",
+        "receipt",
+        "jobLog",
+        "jobManifest",
+        "podManifest",
+        "podDescription"
+      ],
+      "additionalProperties": { "$ref": "#/$defs/artifact" }
+    },
+    "claimBoundary": {
+      "const": {
+        "diagnosticClaim": "failed_trace_schema_audit",
+        "controlClaim": "failed",
+        "controllerCandidate": "forbidden",
+        "a5": "not_executed",
+        "fiveRunGate": "not_executed",
+        "formalTraining": "not_started",
+        "l3Claim": "forbidden",
+        "automaticRetry": "not_executed"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["digest", "sizeBytes"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

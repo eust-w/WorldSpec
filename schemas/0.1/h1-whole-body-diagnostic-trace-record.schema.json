@@ -32,7 +32,7 @@
         "track_handle"
       ]
     },
-    "activePolicy": { "enum": ["motion", "capture", "stand"] },
+    "activePolicy": { "enum": ["motion", "capture", "blend", "stand"] },
     "command": { "$ref": "#/$defs/nullableVector3" },
     "basePosition": { "$ref": "#/$defs/nullableVector3" },
     "baseState": {

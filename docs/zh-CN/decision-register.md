@@ -51,5 +51,6 @@ last-verified: 2026-07-29
 | D-039 | 用户重新授权 A5-CI 修正重放，目标仅为 `formalDiagnosticReplayGate=passed`；每次使用新 Attempt 且不自动重试，后处理失败必须先交接可用产物，诊断通过后停在 A5/100M 之前 | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
 | D-040 | Attempt-02 完成 A800 重放并定位 `right_hip_yaw` 关节限位，但本地 Receipt 因 `datetime` 未导入而未生成，正式诊断交接仍失败；Receipt 逻辑改为独立、可单测并验证产物身份的 Finalizer 后使用新 Attempt | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
 | D-041 | Attempt-03 完成 GPU 重放、产物与 Receipt 交接，但 Report 的 `equivalenceAssessment` 与冻结 Schema 不一致，正式诊断门仍失败；保持 Schema 不变，修正实现并以真实产物预验证后使用新 Attempt | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
+| D-042 | Attempt-04 完成 GPU 重放、产物、Receipt、诊断完备与静态等价检查，但 Trace 的既有 `activePolicy=blend` 未纳入诊断枚举，正式诊断门仍失败；仅补齐诊断 Schema 枚举并以新 Attempt 重放 | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

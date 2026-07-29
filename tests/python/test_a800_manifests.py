@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 import yaml
+from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[2]
 A800 = ROOT / "ops" / "a800"
@@ -506,6 +507,28 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert "worldspec-h1-midterm-d5z6c/evaluation-traces.jsonl" in wrapper
     assert "WORLD_SPEC_IMAGE_SOURCE_REVISION" in wrapper
     assert "run_a800_h1_locomotion_midterm.sh" in wrapper
+
+
+def test_a5ci_trace_schema_accepts_the_existing_blend_policy_phase() -> None:
+    schema = json.loads(
+        (
+            ROOT
+            / "schemas"
+            / "0.1"
+            / "h1-whole-body-diagnostic-trace-record.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    record = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "whole-body-diagnostic-trace-record.example.json"
+        ).read_text(encoding="utf-8")
+    )
+    record["activePolicy"] = "blend"
+
+    Draft202012Validator(schema).validate(record)
 
 
 def test_a5ci_attempt_04_locks_the_corrected_immutable_runtime() -> None:
