@@ -72,8 +72,8 @@
     "minimumStandDwellSteps": 10
   },
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:8089b8ecd6eba3afa11e89ab1daa8ddb18282539d56ba95536a0b933622f0c08",
-    "containerDigest": "sha256:8089b8ecd6eba3afa11e89ab1daa8ddb18282539d56ba95536a0b933622f0c08",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:a89268bd611d8ae707e22142a4f68c29173c3ef9843176993d99112ecf0d4ed7",
+    "containerDigest": "sha256:a89268bd611d8ae707e22142a4f68c29173c3ef9843176993d99112ecf0d4ed7",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50,
     "evaluationEnvironments": 1
