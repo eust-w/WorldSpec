@@ -1011,6 +1011,111 @@ PY
       artifact_copied=true
       printf 'artifact_copied=true\n'
     fi
+    if [[ "${current_stage}" == "artifact_failure_ready" ]] &&
+      [[ "${A5CI_MODE}" == "true" ]] &&
+      [[ "${artifact_copied}" != "true" ]]; then
+      "${kubectl_cmd[@]}" logs "${pod_name}" \
+        >"${local_result_dir}/job.log"
+      read -r failure_size failure_digest < <(
+        "${kubectl_cmd[@]}" exec "${pod_name}" -c midterm -- \
+          python - /scratch/results/diagnostic-failure.json <<'PY'
+import hashlib
+import pathlib
+import sys
+
+payload = pathlib.Path(sys.argv[1]).read_bytes()
+print(len(payload), f"sha256:{hashlib.sha256(payload).hexdigest()}")
+PY
+      )
+      python3 "${CHUNK_COPY}" \
+        --kubeconfig "${KUBECONFIG_PATH}" \
+        --namespace "${K8S_NAMESPACE}" \
+        --pod "${pod_name}" \
+        --container midterm \
+        --remote-path /scratch/results/diagnostic-failure.json \
+        --destination "${local_result_dir}/diagnostic-failure.json" \
+        --expected-size "${failure_size}" \
+        --expected-digest "${failure_digest}" \
+        --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+        --retries "${OUTPUT_COPY_RETRIES}"
+      while read -r artifact_name artifact_size artifact_digest; do
+        [[ -n "${artifact_name}" ]] || continue
+        python3 "${CHUNK_COPY}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --remote-path "/scratch/results/artifacts/${artifact_name}" \
+          --destination "${local_result_dir}/${artifact_name}" \
+          --expected-size "${artifact_size}" \
+          --expected-digest "${artifact_digest}" \
+          --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+          --retries "${OUTPUT_COPY_RETRIES}"
+      done < <(
+        python3 - \
+          "${local_result_dir}/diagnostic-failure.json" \
+          "${A5CI_ATTEMPT_ID}" <<'PY'
+import json
+import pathlib
+import re
+import sys
+
+allowed = {
+    "whole-body-controller.json",
+    "evaluation-traces.jsonl",
+    "equivalence-report.json",
+}
+failure = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+expected_fields = {
+    "failureVersion",
+    "status",
+    "attemptId",
+    "stage",
+    "exitCode",
+    "artifacts",
+    "generatedAt",
+}
+if set(failure) != expected_fields:
+    raise SystemExit("diagnostic failure handoff field drift")
+if failure["failureVersion"] != "0.1.0":
+    raise SystemExit("diagnostic failure handoff version mismatch")
+if failure["status"] != "failed":
+    raise SystemExit("diagnostic failure handoff did not report failed status")
+if failure["attemptId"] != sys.argv[2]:
+    raise SystemExit("diagnostic failure handoff attempt mismatch")
+if not isinstance(failure["stage"], str) or not failure["stage"]:
+    raise SystemExit("diagnostic failure handoff stage is invalid")
+if (
+    isinstance(failure["exitCode"], bool)
+    or not isinstance(failure["exitCode"], int)
+    or not 1 <= failure["exitCode"] <= 255
+):
+    raise SystemExit("diagnostic failure handoff exit code is invalid")
+artifacts = failure["artifacts"]
+if not isinstance(artifacts, dict) or any(name not in allowed for name in artifacts):
+    raise SystemExit("diagnostic failure handoff artifact allowlist violation")
+for name, identity in sorted(artifacts.items()):
+    if set(identity) != {"digest", "sizeBytes"}:
+        raise SystemExit("diagnostic failure handoff artifact identity field drift")
+    if (
+        isinstance(identity["sizeBytes"], bool)
+        or not isinstance(identity["sizeBytes"], int)
+        or identity["sizeBytes"] < 0
+    ):
+        raise SystemExit("diagnostic failure handoff artifact size is invalid")
+    if not isinstance(identity["digest"], str) or re.fullmatch(
+        r"sha256:[0-9a-f]{64}", identity["digest"]
+    ) is None:
+        raise SystemExit("diagnostic failure handoff artifact digest is invalid")
+    print(name, identity["sizeBytes"], identity["digest"])
+PY
+      )
+      "${kubectl_cmd[@]}" exec "${pod_name}" -c midterm -- \
+        touch /scratch/results/artifact-copied
+      touch "${local_result_dir}/failure-artifacts-copied"
+      artifact_copied=true
+      printf 'failure_artifacts_copied=true\n'
+    fi
     if [[ "${phase}" == "Succeeded" ]] || [[ "${phase}" == "Failed" ]]; then
       break
     fi

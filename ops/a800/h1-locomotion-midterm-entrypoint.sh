@@ -18,7 +18,76 @@ stage() {
 
 fail() {
   local exit_code=$?
+  local failed_stage="${CURRENT_STAGE}"
+  trap - ERR
+  set +e
   printf 'WORLDSPEC_A800_MIDTERM_FAILED=%s\n' "${CURRENT_STAGE}"
+  if [[ -n "${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE_FILENAME:-}" ]] &&
+    [[ -d "${RESULT_DIR}" ]] &&
+    [[ -d "${ARTIFACT_DIR}" ]]; then
+    python - \
+      "${RESULT_DIR}/diagnostic-failure.json" \
+      "${SOURCE_DIR}/examples/h1-kitchen/${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE_FILENAME}" \
+      "${ARTIFACT_DIR}" \
+      "${failed_stage}" \
+      "${exit_code}" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+from datetime import datetime, timezone
+
+output_path = pathlib.Path(sys.argv[1])
+profile_path = pathlib.Path(sys.argv[2])
+artifact_dir = pathlib.Path(sys.argv[3])
+allowed_artifacts = (
+    "whole-body-controller.json",
+    "evaluation-traces.jsonl",
+    "equivalence-report.json",
+)
+artifacts = {}
+for name in allowed_artifacts:
+    path = artifact_dir / name
+    if not path.is_file():
+        continue
+    payload = path.read_bytes()
+    artifacts[name] = {
+        "digest": f"sha256:{hashlib.sha256(payload).hexdigest()}",
+        "sizeBytes": len(payload),
+    }
+attempt_id = "unknown"
+if profile_path.is_file():
+    try:
+        attempt_id = json.loads(profile_path.read_text(encoding="utf-8"))["attemptId"]
+    except (KeyError, TypeError, ValueError):
+        pass
+failure = {
+    "failureVersion": "0.1.0",
+    "status": "failed",
+    "attemptId": attempt_id,
+    "stage": sys.argv[4],
+    "exitCode": int(sys.argv[5]),
+    "artifacts": artifacts,
+    "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+}
+payload = json.dumps(failure, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+output_path.write_text(payload, encoding="utf-8")
+print(
+    "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_FAILURE="
+    + json.dumps(failure, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+)
+PY
+    stage artifact_failure_ready
+    for ((attempt = 0; attempt < 1800; attempt++)); do
+      if [[ -f "${RESULT_DIR}/artifact-copied" ]]; then
+        break
+      fi
+      sleep 1
+    done
+    if [[ ! -f "${RESULT_DIR}/artifact-copied" ]]; then
+      echo "ERROR: launcher did not acknowledge diagnostic failure artifacts" >&2
+    fi
+  fi
   exit "${exit_code}"
 }
 

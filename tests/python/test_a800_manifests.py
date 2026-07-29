@@ -465,6 +465,9 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_REPLAY_RESULT=" in entrypoint
     assert '"controllerStatus": "non_publishable"' in entrypoint
     assert '"originalTerminationReason": "unknown"' in entrypoint
+    assert "artifact_failure_ready" in entrypoint
+    assert "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_FAILURE=" in entrypoint
+    assert "diagnostic-failure.json" in entrypoint
     assert "run_training" not in entrypoint
 
     launcher = (
@@ -479,6 +482,9 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert "formalDiagnosticReplayGate" in launcher
     assert "artifact-receipt.json" in launcher
     assert "equivalence-report.json" in launcher
+    assert "artifact_failure_ready" in launcher
+    assert "failure-artifacts-copied" in launcher
+    assert "diagnostic failure handoff artifact allowlist violation" in launcher
     assert "A5-CI deterministic attempt already has local evidence" in launcher
     assert "worldspec-h1-a5ci-" in launcher
     assert "backoffLimit" not in launcher

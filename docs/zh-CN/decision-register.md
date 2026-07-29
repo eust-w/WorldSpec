@@ -48,5 +48,6 @@ last-verified: 2026-07-29
 | D-036 | 选择 A5-C：冻结 A4 腿部策略，以底座平面速度、躯干和右臂为 QP 变量并显式加入 MuJoCo 偏置力前馈；先做 CPU/A800 把手跟踪 Spike，通过后才可重跑 A5 | Accepted Design | [ADR-0022](decisions/0022-h1-a5r-dynamic-control-failure.md) |
 | D-037 | 选择 A5-CI：控制器、门槛、策略和场景保持不变，补齐终止子通道、关节状态、控制利用率/饱和与活动策略后只做一次 A800 等价诊断重放；失败即归档并停止 | Accepted | [ADR-0023](decisions/0023-h1-a5c-control-spike-failure.md) |
 | D-038 | A5-CI 唯一 Attempt 因诊断后处理 `KeyError: control` 失败；正式诊断/控制门均未通过，旧/新控制终止根因保持 unknown；修复仅具本地/CI 证据，不重放、不启动 A5/5-of-5/100M | Accepted | [ADR-0023](decisions/0023-h1-a5c-control-spike-failure.md) |
+| D-039 | 用户重新授权 A5-CI 修正重放，目标仅为 `formalDiagnosticReplayGate=passed`；每次使用新 Attempt 且不自动重试，后处理失败必须先交接可用产物，诊断通过后停在 A5/100M 之前 | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。
