@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import yaml
@@ -500,6 +501,49 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert "worldspec-h1-midterm-d5z6c/evaluation-traces.jsonl" in wrapper
     assert "WORLD_SPEC_IMAGE_SOURCE_REVISION" in wrapper
     assert "run_a800_h1_locomotion_midterm.sh" in wrapper
+
+
+def test_a5ci_attempt_02_locks_the_corrected_immutable_runtime() -> None:
+    example_dir = ROOT / "examples" / "h1-kitchen"
+    current = json.loads(
+        (example_dir / "whole-body-diagnostic-replay-profile.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    attempt_01 = json.loads(
+        (
+            example_dir
+            / "whole-body-diagnostic-replay-profile.attempt-01.json"
+        ).read_text(encoding="utf-8")
+    )
+    build = json.loads(
+        (
+            example_dir
+            / "diagnostic-replay-image-build.a800.passed.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert attempt_01["attemptId"].endswith("replay-01")
+    assert current["attemptId"].endswith("replay-02")
+    assert current["baseControlProfileDigest"] == (
+        attempt_01["baseControlProfileDigest"]
+    )
+    assert current["baselineEvidence"] == attempt_01["baselineEvidence"]
+    assert current["baselineBindings"] == attempt_01["baselineBindings"]
+    assert current["semanticProfileProjectionDigest"] == (
+        attempt_01["semanticProfileProjectionDigest"]
+    )
+    assert current["controllerSemanticProjectionDigest"] == (
+        attempt_01["controllerSemanticProjectionDigest"]
+    )
+    assert current["runtime"]["containerImage"] == build["image"]
+    assert current["runtime"]["containerDigest"] == (
+        build["image"].rsplit("@", 1)[1]
+    )
+    assert current["runtime"]["imageSourceRevision"] == build["sourceCommit"]
+    assert current["runtime"]["imageSourceRevision"] == (
+        "2107e21a29ac20ff3fcb7dba6b77fdd8ec84c446"
+    )
 
 
 def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> None:
