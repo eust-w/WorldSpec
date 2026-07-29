@@ -854,19 +854,8 @@ if diagnostic_replay_profile is not None:
         "diagnosticCompleteness": diagnostic_completeness,
         "equivalenceAssessment": {
             "status": equivalence_status,
-            "basis": "static_semantic_projection",
-            "failedChecks": sorted(
-                [
-                    key
-                    for key, passed in {
-                        **static_checks,
-                        **binding_checks,
-                    }.items()
-                    if not passed
-                ]
-            ),
-            "dynamicComparisonIsInformational": True,
             "reportDigest": digest_bytes(equivalence_path.read_bytes()),
+            "staticSemanticEquivalent": equivalence_status == "passed",
         },
         "equivalenceArtifact": {
             "path": equivalence_path.name,

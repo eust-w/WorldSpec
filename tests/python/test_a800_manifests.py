@@ -463,6 +463,10 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert 'midterm_profile["control"]' not in entrypoint
     assert "whole_body_profile_semantic_projection" in entrypoint
     assert '"role": "report_only_not_equivalence_proof"' in entrypoint
+    assert '"staticSemanticEquivalent": equivalence_status == "passed"' in (
+        entrypoint
+    )
+    assert '"basis": "static_semantic_projection"' not in entrypoint
     assert "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_REPLAY_RESULT=" in entrypoint
     assert '"controllerStatus": "non_publishable"' in entrypoint
     assert '"originalTerminationReason": "unknown"' in entrypoint

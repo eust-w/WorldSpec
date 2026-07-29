@@ -53,3 +53,15 @@ Attempt-02 的正式诊断门按失败处理，不能仅凭 Pod Report 中的 `p
 修正方案不再使用内嵌 Receipt Python 片段，改为独立、可单测、先验证产物
 身份再原子写入的 Finalizer。Attempt-02 仍保持不可变，修正使用新提交、新
 镜像和新 Attempt。
+
+## Attempt-03 结果
+
+Attempt-03 的 A800 重放、四类产物回传、Receipt 生成和摘要交叉校验均已
+完成；诊断仍稳定定位为 `right_hip_yaw` 的 `joint_limit`，正式控制门失败。
+
+最后的离线 Schema 审计发现 Report 实现使用
+`basis/failedChecks/dynamicComparisonIsInformational`，而冻结 Schema 要求
+`staticSemanticEquivalent`。因此正式诊断门仍按失败处理，不放宽 Schema。
+修正后的结构已经使用 Attempt-03 的真实产物在本地完成 Report、
+Equivalence 和 Receipt 三份 Schema 验证；下一次仍使用新提交、镜像和
+Attempt。

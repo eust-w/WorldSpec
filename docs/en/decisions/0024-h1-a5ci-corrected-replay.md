@@ -66,3 +66,17 @@ The correction replaces the embedded Receipt Python fragment with a standalone,
 unit-tested Finalizer that verifies artifact identities before atomic writes.
 Attempt-02 remains immutable, and the correction uses a new commit, image, and
 Attempt.
+
+## Attempt-03 result
+
+Attempt-03 completed the A800 replay, all four artifact transfers, Receipt
+creation, and cross-digest checks. The diagnostic again identified
+`right_hip_yaw` `joint_limit`; the formal control gate failed.
+
+The final offline Schema audit found that the Report implementation emitted
+`basis/failedChecks/dynamicComparisonIsInformational`, while the frozen Schema
+requires `staticSemanticEquivalent`. The formal diagnostic gate therefore
+remains failed; the Schema is not relaxed. The corrected shape has been
+validated locally against the Report, Equivalence, and Receipt Schemas using
+Attempt-03's real artifacts. The next run still uses a new commit, image, and
+Attempt.
