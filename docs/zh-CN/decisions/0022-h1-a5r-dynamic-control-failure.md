@@ -1,5 +1,5 @@
 ---
-status: Pending Decision
+status: Accepted Design
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../en/decisions/0022-h1-a5r-dynamic-control-failure.md
@@ -39,7 +39,7 @@ H1 仍然完成 1.4032 米行走，最低基座高度为 0.9883 米，最低直�
 [`kitchen-task.a5r.a800.failed.json`](../../../examples/h1-kitchen/kitchen-task.a5r.a800.failed.json)。
 完整内部 Trace Digest 为 `sha256:f9680841...e907a`。
 
-## 需要选择
+## 备选路线
 
 ### A5-CG（推荐）：加入模型重力补偿和动态跟踪门
 
@@ -62,4 +62,19 @@ H1 仍然完成 1.4032 米行走，最低基座高度为 0.9883 米，最低直�
 保留 A5-R 为 `non_publishable` 研究证据，停止 A800 消耗。等有经验证的操作
 控制器、真实安装位姿或外部任务策略后再恢复。
 
-在用户选择前，禁止自动调增益、自动重试、继续 5/5 或启动任务训练。
+## 决策
+
+用户于 2026-07-30 选择 **A5-C**。实施采用分层全身任务空间控制，而不是把
+腿部直接交给一个新的未验证控制器：
+
+- 冻结 A4 的 Motion、Capture、Stand 腿部策略和 Supervisor；
+- QP 决策变量仅包含底座平面速度、底座偏航速度、躯干和四个右臂关节速度；
+- 使用规范 MuJoCo `qfrc_bias` 作为显式、可追踪的逆动力学前馈，PD 仍提供局部
+  反馈；禁止隐藏约束、mocap 牵引和运动学瞬移；
+- 首个 `whole_body_task_space_control_spike` 仅认证“行走、站稳、跟踪抽屉把手”，
+  不认证抓取、完整厨房任务或 L3；
+- CPU 固定基座预检和真实 A800 MJX Spike 必须先通过，之后才能重新运行 A5；
+- Spike 失败即保存报告并停止，不自动调参，不继续 5/5，不启动 100M。
+
+该选择扩大了控制范围，但证据与声明范围保持收缩：通过 Spike 只能得到
+`control_candidate`，不能得到 `integration_candidate` 或 L3。

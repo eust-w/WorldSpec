@@ -120,6 +120,7 @@ def make_environment(
             self._policy_kds = jp.asarray(control["policyKds"])
             self._default_angles = jp.asarray(control["defaultAngles"])
             self._held_targets = jp.asarray(control["heldTargets"])
+            self._held_feedforward = jp.zeros_like(self._held_targets)
             self._held_kps = jp.asarray(control["heldKps"])
             self._held_kds = jp.asarray(control["heldKds"])
             self._gripper_commands = jp.asarray(control["gripperCommands"])
@@ -340,6 +341,7 @@ def make_environment(
                 "rng": rng,
                 "command": command,
                 "held_targets": self._held_targets,
+                "held_feedforward": self._held_feedforward,
                 "gripper_commands": self._gripper_commands,
                 "transition_active": transition_active,
                 "stand_replay_active": stand_replay_active,
@@ -399,11 +401,16 @@ def make_environment(
             held_q = state.data.qpos[self._held_qpos]
             held_dq = state.data.qvel[self._held_dof]
             held_targets = state.info.get("held_targets", self._held_targets)
+            held_feedforward = state.info.get(
+                "held_feedforward",
+                self._held_feedforward,
+            )
             gripper_commands = state.info.get(
                 "gripper_commands",
                 self._gripper_commands,
             )
-            held_torque = (held_targets - held_q) * self._held_kps - held_dq * self._held_kds
+            held_feedback = (held_targets - held_q) * self._held_kps - held_dq * self._held_kds
+            held_torque = held_feedback + held_feedforward
             ctrl = jp.zeros(self.mjx_model.nu)
             ctrl = ctrl.at[self._policy_actuators].set(policy_torque)
             ctrl = ctrl.at[self._held_actuators].set(held_torque)
@@ -595,6 +602,7 @@ def make_environment(
                     "rng": rng,
                     "command": next_command,
                     "held_targets": held_targets,
+                    "held_feedforward": held_feedforward,
                     "gripper_commands": gripper_commands,
                     "transition_active": next_transition_active,
                     "stand_replay_active": next_stand_replay_active,

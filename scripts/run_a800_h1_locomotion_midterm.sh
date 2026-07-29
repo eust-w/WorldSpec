@@ -86,12 +86,18 @@ elif [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_KITCHEN_TASK_RESULT=
   REPORT_SCHEMA=h1-kitchen-task-report.schema.json
   GATE_FIELD=formalTaskGate
+elif [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
+  REPORT_FILENAME=whole-body-control-report.json
+  REPORT_MARKER=WORLDSPEC_A800_WHOLE_BODY_RESULT=
+  REPORT_SCHEMA=h1-whole-body-control-report.schema.json
+  GATE_FIELD=formalControlGate
 fi
 if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
   [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
-  [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+  [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+  [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: retention teacher input is not readable: %s\n' \
@@ -102,7 +108,8 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
 fi
 if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
-  [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+  [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+  [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   for required in "${SUPERVISOR_STAND_REPORT}" "${SUPERVISOR_STAND_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: supervisor stand input is not readable: %s\n' \
@@ -168,6 +175,7 @@ source = (
         "dual_policy_switch_probe",
         "phase_aware_supervisor_probe",
         "fixed_kitchen_full_loop_probe",
+        "whole_body_task_space_control_spike",
     }
     else profile["warmStart"]
 )
@@ -185,6 +193,7 @@ if profile["stage"] in {
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
+    "whole_body_task_space_control_spike",
 }:
     teacher_report_payload = pathlib.Path(sys.argv[4]).read_bytes()
     teacher_checkpoint_payload = pathlib.Path(sys.argv[5]).read_bytes()
@@ -196,6 +205,7 @@ if profile["stage"] in {
             if profile["stage"] in {
                 "phase_aware_supervisor_probe",
                 "fixed_kitchen_full_loop_probe",
+                "whole_body_task_space_control_spike",
             }
             else (
                 profile["motionTeacher"]
@@ -215,7 +225,11 @@ if profile["stage"] in {
         or len(teacher_checkpoint_payload) != teacher["checkpointSizeBytes"]
     ):
         raise SystemExit("retention teacher checkpoint identity mismatch")
-if profile["stage"] in {"phase_aware_supervisor_probe", "fixed_kitchen_full_loop_probe"}:
+if profile["stage"] in {
+    "phase_aware_supervisor_probe",
+    "fixed_kitchen_full_loop_probe",
+    "whole_body_task_space_control_spike",
+}:
     stand_report_payload = pathlib.Path(sys.argv[6]).read_bytes()
     stand_checkpoint_payload = pathlib.Path(sys.argv[7]).read_bytes()
     stand = profile["standPolicy"]
@@ -419,7 +433,8 @@ PY
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
-        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+        [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r teacher_report_size teacher_report_digest \
           teacher_checkpoint_size teacher_checkpoint_digest < <(
           python3 - \
@@ -455,7 +470,8 @@ PY
           --expected-digest "${teacher_checkpoint_digest}"
       fi
       if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
-        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+        [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r supervisor_stand_report_size supervisor_stand_report_digest \
           supervisor_stand_checkpoint_size supervisor_stand_checkpoint_digest < <(
           python3 - \
@@ -565,6 +581,12 @@ elif gate_field == "formalTaskGate":
         if report[gate_field] == "passed"
         else "non_publishable"
     )
+elif gate_field == "formalControlGate":
+    report["controllerStatus"] = (
+        "control_candidate"
+        if report[gate_field] == "passed"
+        else "non_publishable"
+    )
 report_path.write_text(
     json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
@@ -572,7 +594,8 @@ report_path.write_text(
 PY
       if [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
-        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+        [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r controller_size controller_digest trace_size trace_digest < <(
           python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
 import json
@@ -592,6 +615,8 @@ PY
           --remote-path "$(
             if [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
               printf '/scratch/results/artifacts/kitchen-task-controller.json'
+            elif [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
+              printf '/scratch/results/artifacts/whole-body-controller.json'
             elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
               printf '/scratch/results/artifacts/phase-aware-supervisor.json'
             else
@@ -601,6 +626,8 @@ PY
           --destination "$(
             if [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
               printf '%s/kitchen-task-controller.json' "${local_result_dir}"
+            elif [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
+              printf '%s/whole-body-controller.json' "${local_result_dir}"
             elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
               printf '%s/phase-aware-supervisor.json' "${local_result_dir}"
             else

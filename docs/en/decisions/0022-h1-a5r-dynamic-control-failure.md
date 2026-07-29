@@ -49,7 +49,7 @@ The normalized report is
 [`kitchen-task.a5r.a800.failed.json`](../../../examples/h1-kitchen/kitchen-task.a5r.a800.failed.json).
 The complete internal trace digest is `sha256:f9680841...e907a`.
 
-## Decision required
+## Candidate routes
 
 ### A5-CG (recommended): add model gravity compensation and a dynamic tracking gate
 
@@ -79,5 +79,26 @@ Keep A5-R as `non_publishable` research evidence and spend no further A800
 resources until a validated manipulation controller, real mount transform, or
 external task policy becomes available.
 
-Until the user decides, automatic gain tuning, retrying, proceeding to 5/5,
-and task training are forbidden.
+## Decision
+
+The user selected **A5-C** on 2026-07-30. Implementation uses hierarchical
+whole-body task-space control rather than replacing the leg controller with a
+new unvalidated controller:
+
+- keep the A4 Motion, Capture, and Stand leg policies and Supervisor frozen;
+- limit QP decisions to planar base velocity, base yaw rate, torso velocity,
+  and four right-arm joint velocities;
+- use canonical MuJoCo `qfrc_bias` as explicit and traceable inverse-dynamics
+  feed-forward while local PD remains the feedback term; hidden constraints,
+  mocap pulling, and kinematic teleportation remain forbidden;
+- the first `whole_body_task_space_control_spike` certifies only walking,
+  settling, and handle tracking, not grasping, the complete kitchen task, or
+  L3;
+- a fixed-base CPU preflight and real A800 MJX Spike must pass before A5 may be
+  rerun;
+- a failed Spike is archived and stopped without automatic tuning, 5/5, or
+  100M training.
+
+This route expands the controller scope while keeping the claim scope narrow:
+a passing Spike may produce only `control_candidate`, not
+`integration_candidate` or L3.

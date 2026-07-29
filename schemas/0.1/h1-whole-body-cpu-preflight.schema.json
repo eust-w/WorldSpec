@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-cpu-preflight.schema.json",
+  "title": "WorldSpec H1 A5-C Fixed-Base CPU Preflight Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "formalPreflightGate",
+    "controlProfileDigest",
+    "sourceModel",
+    "platform",
+    "method",
+    "metrics",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": { "const": "h1_whole_body_fixed_base_cpu_preflight" },
+    "executionEvidence": { "const": "executed" },
+    "formalPreflightGate": { "enum": ["passed", "failed"] },
+    "controlProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "sourceModel": {
+      "type": "object",
+      "required": ["path", "digest"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
+    "platform": {
+      "type": "object",
+      "required": ["system", "machine", "python", "mujoco"],
+      "additionalProperties": { "type": "string", "minLength": 1 }
+    },
+    "method": {
+      "const": {
+        "base": "explicit_mujoco_weld",
+        "controller": "hierarchical_box_qp_with_inverse_dynamics_feedforward",
+        "feedforward": "mujoco_qfrc_bias",
+        "hiddenGraspConstraint": false
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "steps",
+        "initialTargetErrorMeters",
+        "minimumTargetErrorMeters",
+        "finalTargetErrorMeters",
+        "holdMaximumTargetErrorMeters",
+        "holdMaximumTcpSpeed",
+        "maximumProjectedGradient",
+        "nonFiniteSamples"
+      ],
+      "additionalProperties": { "type": "number", "minimum": 0 }
+    },
+    "claimBoundary": {
+      "const": {
+        "status": "fixed_base_cpu_preflight_only",
+        "a800Claim": "forbidden",
+        "fullTaskClaim": "forbidden",
+        "l3Claim": "forbidden"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "formalPreflightGate": { "const": "passed" } },
+        "required": ["formalPreflightGate"]
+      },
+      "then": {
+        "properties": {
+          "metrics": {
+            "properties": {
+              "holdMaximumTargetErrorMeters": { "maximum": 0.035 },
+              "holdMaximumTcpSpeed": { "maximum": 0.15 },
+              "maximumProjectedGradient": { "maximum": 0.00001 },
+              "nonFiniteSamples": { "const": 0 }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

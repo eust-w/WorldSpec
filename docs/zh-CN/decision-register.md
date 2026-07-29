@@ -45,6 +45,6 @@ last-verified: 2026-07-29
 | D-033 | A4 用速度连续稳定门控串联 Motion、Capture、Stand 三策略；Capture 最多 40 步、交接混合 5 步、纯 Stand 至少 10 步，探针不启动 100M | Accepted Design | [ADR-0019](decisions/0019-h1-phase-aware-supervisor.md) |
 | D-034 | A5 冻结 A4 腿部 Supervisor，以右臂 Jacobian/阻抗和物理接触完成固定 primitive 厨房闭环；先单次再 5/5，禁止隐藏抓取约束和 L3 声明 | Accepted Design | [ADR-0020](decisions/0020-h1-fixed-kitchen-integration.md) |
 | D-035 | 选择 A5-R：修复杯托、容量和单步 IK 实现，增加固定基座可达性预检；不扩大到全身 MPC/QP，单次通过后才继续 5/5 | Accepted Design | [ADR-0021](decisions/0021-h1-a5-failure-response.md) |
-| D-036 | A5-R 已证明基准修复有效，但四关节 PD/阻抗无法动态跟踪可达 IK 目标；重力补偿、全身控制或停止等待用户选择 | Pending Decision | [ADR-0022](decisions/0022-h1-a5r-dynamic-control-failure.md) |
+| D-036 | 选择 A5-C：冻结 A4 腿部策略，以底座平面速度、躯干和右臂为 QP 变量并显式加入 MuJoCo 偏置力前馈；先做 CPU/A800 把手跟踪 Spike，通过后才可重跑 A5 | Accepted Design | [ADR-0022](decisions/0022-h1-a5r-dynamic-control-failure.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

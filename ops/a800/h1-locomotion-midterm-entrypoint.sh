@@ -134,6 +134,7 @@ source = (
         "dual_policy_switch_probe",
         "phase_aware_supervisor_probe",
         "fixed_kitchen_full_loop_probe",
+        "whole_body_task_space_control_spike",
     }
     else profile["warmStart"]
 )
@@ -180,13 +181,18 @@ if stage in {
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
+    "whole_body_task_space_control_spike",
 }:
     teacher = (
         profile["standPolicy"]
         if stage == "dual_policy_switch_probe"
         else (
             profile["capturePolicy"]
-            if stage in {"phase_aware_supervisor_probe", "fixed_kitchen_full_loop_probe"}
+            if stage in {
+                "phase_aware_supervisor_probe",
+                "fixed_kitchen_full_loop_probe",
+                "whole_body_task_space_control_spike",
+            }
             else (
                 profile["motionTeacher"]
                 if stage == "loaded_track_settle_capture"
@@ -247,7 +253,11 @@ if stage in {
             raise SystemExit("capture policy is not the frozen passing A3 evidence")
     else:
         raise SystemExit("unsupported auxiliary policy source stage")
-if stage in {"phase_aware_supervisor_probe", "fixed_kitchen_full_loop_probe"}:
+if stage in {
+    "phase_aware_supervisor_probe",
+    "fixed_kitchen_full_loop_probe",
+    "whole_body_task_space_control_spike",
+}:
     stand = profile["standPolicy"]
     stand_filename = sys.argv[11]
     if not stand_filename:
@@ -280,6 +290,16 @@ if stage in {"phase_aware_supervisor_probe", "fixed_kitchen_full_loop_probe"}:
         or stand_report["researchCheckpoint"]["digest"] != stand_checkpoint_digest
     ):
         raise SystemExit("supervisor stand policy lineage is not passing")
+if stage == "whole_body_task_space_control_spike":
+    a5r_path = (
+        pathlib.Path(sys.argv[7])
+        / "examples"
+        / "h1-kitchen"
+        / "kitchen-task.a5r.a800.failed.json"
+    )
+    a5r_digest = f"sha256:{hashlib.sha256(a5r_path.read_bytes()).hexdigest()}"
+    if a5r_digest != profile["failedA5RReportDigest"]:
+        raise SystemExit("whole-body Spike A5-R failure lineage mismatch")
 PY
 
 stage installed_runtime
@@ -341,6 +361,7 @@ from worldspec_h1_training.dual_policy import run_dual_policy_probe
 from worldspec_h1_training.kitchen_task import run_fixed_kitchen_task_probe
 from worldspec_h1_training.midterm import run_midterm_calibration
 from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
+from worldspec_h1_training.whole_body import run_whole_body_control_spike
 
 source_dir = Path(os.environ["SOURCE_DIR"])
 result_dir = Path(os.environ["RESULT_DIR"])
@@ -393,6 +414,24 @@ elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
         / "locomotion-supervisor-profile.json"
     )
     result = run_fixed_kitchen_task_probe(
+        base_profile,
+        supervisor_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "supervisor-stand-checkpoint.zip",
+    )
+elif midterm_profile["stage"] == "whole_body_task_space_control_spike":
+    supervisor_profile = read_json(
+        source_dir
+        / "examples"
+        / "h1-kitchen"
+        / "locomotion-supervisor-profile.json"
+    )
+    result = run_whole_body_control_spike(
         base_profile,
         supervisor_profile,
         midterm_profile,
@@ -580,6 +619,33 @@ elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
     }
     print(
         "WORLDSPEC_A800_KITCHEN_TASK_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "whole_body_task_space_control_spike":
+    report = {
+        "id": (
+            "whole-body-control-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_whole_body_task_space_control_spike",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_control_spike",
+        "controllerStatus": (
+            "control_candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalControlGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_WHOLE_BODY_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 else:

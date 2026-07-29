@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-control-profile.schema.json",
+  "title": "WorldSpec H1 Whole-Body Task-Space Control Spike Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "seed",
+    "baseTrainingProfileDigest",
+    "supervisorProfileDigest",
+    "failedA5RReportDigest",
+    "motionPolicy",
+    "capturePolicy",
+    "standPolicy",
+    "scene",
+    "controller",
+    "qualityGates",
+    "runtime",
+    "artifactPolicy"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "stage": { "const": "whole_body_task_space_control_spike" },
+    "seed": { "const": 41 },
+    "baseTrainingProfileDigest": {
+      "const": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6"
+    },
+    "supervisorProfileDigest": {
+      "const": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355"
+    },
+    "failedA5RReportDigest": {
+      "const": "sha256:c55d67244d28d3abdfef787b7858fceabea61a534fe1beb674fdc3bad7a67da0"
+    },
+    "motionPolicy": {
+      "$ref": "h1-locomotion-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "capturePolicy": {
+      "$ref": "h1-locomotion-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "standPolicy": {
+      "$ref": "h1-locomotion-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "scene": {
+      "$ref": "h1-kitchen-task-profile.schema.json#/properties/scene"
+    },
+    "controller": {
+      "const": {
+        "mode": "hierarchical_box_qp_with_inverse_dynamics_feedforward",
+        "decisionVariables": [
+          "base_velocity_x",
+          "base_velocity_y",
+          "base_yaw_rate",
+          "torso_velocity",
+          "right_shoulder_pitch_velocity",
+          "right_shoulder_roll_velocity",
+          "right_shoulder_yaw_velocity",
+          "right_elbow_velocity"
+        ],
+        "controlledJoints": [
+          "torso",
+          "right_shoulder_pitch",
+          "right_shoulder_roll",
+          "right_shoulder_yaw",
+          "right_elbow"
+        ],
+        "qpIterations": 48,
+        "cartesianGain": 4.0,
+        "maximumCartesianSpeed": 0.35,
+        "velocityLowerBounds": [-0.08, -0.06, -0.15, -0.5, -0.8, -0.8, -0.8, -0.8],
+        "velocityUpperBounds": [0.08, 0.06, 0.15, 0.5, 0.8, 0.8, 0.8, 0.8],
+        "regularization": [2.0, 2.0, 3.0, 0.35, 0.15, 0.15, 0.15, 0.15],
+        "targetHorizonSeconds": 0.4,
+        "maximumJointTargetStep": 0.3,
+        "jointLimitMarginRadians": 0.05,
+        "feedforwardScale": 1.0,
+        "feedforwardControlReserve": 0.2
+      }
+    },
+    "qualityGates": {
+      "const": {
+        "settleSteps": 25,
+        "trackingSteps": 180,
+        "positionToleranceMeters": 0.035,
+        "holdSteps": 20,
+        "maximumTcpSpeed": 0.15,
+        "maximumBaseTranslation": 0.2,
+        "maximumBaseLateralDrift": 0.12,
+        "minimumBaseHeight": 0.8,
+        "minimumUprightCosine": 0.8,
+        "maximumProjectedGradient": 0.00001,
+        "maximumNonFiniteSamples": 0
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations",
+        "evaluationEnvironments",
+        "mjxCapacity"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": {
+          "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+        },
+        "ccdIterations": { "const": 50 },
+        "evaluationEnvironments": { "const": 1 },
+        "mjxCapacity": {
+          "const": {
+            "activeContactsPerEnvironment": 32,
+            "ccdContactsPerEnvironment": 16,
+            "njmax": 128
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifactPolicy": {
+      "const": {
+        "controller": "research_only",
+        "distribution": "internal_only",
+        "fullTaskClaim": "forbidden",
+        "l3Claim": "forbidden"
+      }
+    }
+  },
+  "additionalProperties": false
+}
