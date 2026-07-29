@@ -27,6 +27,8 @@ def test_a800_namespace_is_isolated_and_gpu_bounded() -> None:
     quota = by_kind["ResourceQuota"]
     assert quota["metadata"]["namespace"] == "worldspec-a800-poc"
     assert quota["spec"]["hard"]["count/jobs.batch"] == "1"
+    assert quota["spec"]["hard"]["requests.memory"] == "64Gi"
+    assert quota["spec"]["hard"]["limits.memory"] == "64Gi"
     assert quota["spec"]["hard"]["requests.nvidia.com/gpu"] == "1"
     assert quota["spec"]["hard"]["limits.nvidia.com/gpu"] == "1"
 
