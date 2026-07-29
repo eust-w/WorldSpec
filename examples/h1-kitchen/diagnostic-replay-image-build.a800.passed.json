@@ -1,13 +1,13 @@
 {
-  "id": "build-report://worldspec/h1-training-image/a800-2107e21a29ac",
+  "id": "build-report://worldspec/h1-training-image/a800-ffd45112e9f3",
   "reportVersion": "0.1.0",
   "status": "passed",
   "executionEvidence": "executed",
-  "sourceCommit": "2107e21a29ac20ff3fcb7dba6b77fdd8ec84c446",
-  "contextDigest": "sha256:a06be2a239ba207c70160e271030dd6b4f45519512c416bb17b9074cce40916a",
+  "sourceCommit": "ffd45112e9f36e782a29bae5b18c7e3c1fbe9782",
+  "contextDigest": "sha256:ae4c1e19999856f01401d63c23d3b978a1e516a602b4b35fb71e418755ba7d69",
   "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
   "baseImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/real2sim-worker@sha256:d37f7e8a483518bdb447cd460b8c6dfb4407e385c1715b32a9d7f193a11dcdee",
-  "destinationTag": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training:2107e21a29ac-20260729211410",
-  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:cb672082c9771c29f8e51c054a7e8b52361e2ac2a6c029a2dbdb009ecc2be272",
-  "generatedAt": "2026-07-29T21:25:16.118151Z"
+  "destinationTag": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training:ffd45112e9f3-20260729213829",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:a8fbc6804e21db35f5c0b55ccd2eebb9407a8a08199a36e7194949f11a997d4e",
+  "generatedAt": "2026-07-29T21:49:12.291699Z"
 }

@@ -504,17 +504,17 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert "run_a800_h1_locomotion_midterm.sh" in wrapper
 
 
-def test_a5ci_attempt_02_locks_the_corrected_immutable_runtime() -> None:
+def test_a5ci_attempt_03_locks_the_corrected_immutable_runtime() -> None:
     example_dir = ROOT / "examples" / "h1-kitchen"
     current = json.loads(
         (example_dir / "whole-body-diagnostic-replay-profile.json").read_text(
             encoding="utf-8"
         )
     )
-    attempt_01 = json.loads(
+    attempt_02 = json.loads(
         (
             example_dir
-            / "whole-body-diagnostic-replay-profile.attempt-01.json"
+            / "whole-body-diagnostic-replay-profile.attempt-02.json"
         ).read_text(encoding="utf-8")
     )
     build = json.loads(
@@ -524,18 +524,18 @@ def test_a5ci_attempt_02_locks_the_corrected_immutable_runtime() -> None:
         ).read_text(encoding="utf-8")
     )
 
-    assert attempt_01["attemptId"].endswith("replay-01")
-    assert current["attemptId"].endswith("replay-02")
+    assert attempt_02["attemptId"].endswith("replay-02")
+    assert current["attemptId"].endswith("replay-03")
     assert current["baseControlProfileDigest"] == (
-        attempt_01["baseControlProfileDigest"]
+        attempt_02["baseControlProfileDigest"]
     )
-    assert current["baselineEvidence"] == attempt_01["baselineEvidence"]
-    assert current["baselineBindings"] == attempt_01["baselineBindings"]
+    assert current["baselineEvidence"] == attempt_02["baselineEvidence"]
+    assert current["baselineBindings"] == attempt_02["baselineBindings"]
     assert current["semanticProfileProjectionDigest"] == (
-        attempt_01["semanticProfileProjectionDigest"]
+        attempt_02["semanticProfileProjectionDigest"]
     )
     assert current["controllerSemanticProjectionDigest"] == (
-        attempt_01["controllerSemanticProjectionDigest"]
+        attempt_02["controllerSemanticProjectionDigest"]
     )
     assert current["runtime"]["containerImage"] == build["image"]
     assert current["runtime"]["containerDigest"] == (
@@ -543,7 +543,7 @@ def test_a5ci_attempt_02_locks_the_corrected_immutable_runtime() -> None:
     )
     assert current["runtime"]["imageSourceRevision"] == build["sourceCommit"]
     assert current["runtime"]["imageSourceRevision"] == (
-        "2107e21a29ac20ff3fcb7dba6b77fdd8ec84c446"
+        "ffd45112e9f36e782a29bae5b18c7e3c1fbe9782"
     )
 
 

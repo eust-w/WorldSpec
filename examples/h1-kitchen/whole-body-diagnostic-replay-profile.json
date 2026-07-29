@@ -1,9 +1,9 @@
 {
-  "id": "diagnosticreplayprofile://worldspec/h1-kitchen/a5-ci-20260730-termination-replay-02",
+  "id": "diagnosticreplayprofile://worldspec/h1-kitchen/a5-ci-20260730-termination-replay-03",
   "profileVersion": "0.1.0",
   "status": "locked",
   "stage": "whole_body_task_space_control_diagnostic_replay",
-  "attemptId": "a5-ci-20260730-termination-replay-02",
+  "attemptId": "a5-ci-20260730-termination-replay-03",
   "baseControlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
   "baselineEvidence": {
     "summary": {
@@ -55,9 +55,9 @@
   "semanticProfileProjectionDigest": "sha256:062a738a01798c6395ac4d7e5a17254d1b94773ff1906ca536bf5f2b6969fb97",
   "controllerSemanticProjectionDigest": "sha256:0d8e93af55d4fe7a938ef32994312250192ea637a608d49d7f887f72303be817",
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:cb672082c9771c29f8e51c054a7e8b52361e2ac2a6c029a2dbdb009ecc2be272",
-    "containerDigest": "sha256:cb672082c9771c29f8e51c054a7e8b52361e2ac2a6c029a2dbdb009ecc2be272",
-    "imageSourceRevision": "2107e21a29ac20ff3fcb7dba6b77fdd8ec84c446",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:a8fbc6804e21db35f5c0b55ccd2eebb9407a8a08199a36e7194949f11a997d4e",
+    "containerDigest": "sha256:a8fbc6804e21db35f5c0b55ccd2eebb9407a8a08199a36e7194949f11a997d4e",
+    "imageSourceRevision": "ffd45112e9f36e782a29bae5b18c7e3c1fbe9782",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
   },
   "allowedChanges": [
