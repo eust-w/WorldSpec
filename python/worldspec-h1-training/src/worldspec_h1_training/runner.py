@@ -64,10 +64,8 @@ def run_training(
             checkpoint = initialization_report.get("researchCheckpoint", {})
             if (
                 initialization_report.get("formalTrainingGate") != "passed"
-                or initialization_report.get("qualityAssessment", {}).get("status")
-                != "passed"
-                or initialization_report.get("midtermProfileDigest")
-                != source_profile_digest
+                or initialization_report.get("qualityAssessment", {}).get("status") != "passed"
+                or initialization_report.get("midtermProfileDigest") != source_profile_digest
                 or checkpoint.get("distribution") != "internal_only"
             ):
                 raise TrainingError(
@@ -82,9 +80,7 @@ def run_training(
             )
             validate_network_compatibility(
                 initialization,
-                observation_size=_flat_observation_size(
-                    env.observation_size["state"]
-                ),
+                observation_size=_flat_observation_size(env.observation_size["state"]),
                 action_size=int(env.action_size),
             )
             initialization["sourceProfileDigest"] = source_profile_digest

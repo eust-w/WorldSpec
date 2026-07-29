@@ -14,8 +14,11 @@ CHUNK_COPY="${ROOT_DIR}/scripts/copy_kubernetes_file.py"
 MIDTERM_PROFILE="${WORLD_SPEC_MIDTERM_PROFILE:-${ROOT_DIR}/examples/h1-kitchen/locomotion-midterm-profile.json}"
 STAND_REPORT="${WORLD_SPEC_WARM_START_REPORT:-${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json}"
 STAND_CHECKPOINT="${WORLD_SPEC_WARM_START_CHECKPOINT:-${WORLD_SPEC_STAND_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-calibration-4mklr/calibration-checkpoint.zip}}"
+RETENTION_TEACHER_REPORT="${WORLD_SPEC_RETENTION_TEACHER_REPORT:-}"
+RETENTION_TEACHER_CHECKPOINT="${WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT:-}"
 MIDTERM_PROFILE_FILENAME="$(basename "${MIDTERM_PROFILE}")"
 WARM_START_REPORT_FILENAME="$(basename "${STAND_REPORT}")"
+RETENTION_TEACHER_REPORT_FILENAME=""
 RUNTIME_IMAGE="${WORLD_SPEC_H1_RUNTIME_IMAGE:-}"
 IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-}"
 PACKAGE_LOCK_DIGEST="${WORLD_SPEC_PACKAGE_LOCK_DIGEST:-sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41}"
@@ -39,16 +42,30 @@ for required in \
   fi
 done
 
-read -r profile_image profile_lock < <(
+read -r profile_image profile_lock profile_stage < <(
   python3 - "${MIDTERM_PROFILE}" <<'PY'
 import json
 import pathlib
 import sys
 
 profile = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
-print(profile["runtime"]["containerImage"], profile["runtime"]["packageLockDigest"])
+print(
+    profile["runtime"]["containerImage"],
+    profile["runtime"]["packageLockDigest"],
+    profile["stage"],
+)
 PY
 )
+if [[ "${profile_stage}" == "loaded_track_settle_retention" ]]; then
+  for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
+    if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
+      printf 'ERROR: retention teacher input is not readable: %s\n' \
+        "${required:-unset}" >&2
+      exit 2
+    fi
+  done
+  RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
+fi
 if [[ -z "${RUNTIME_IMAGE}" ]]; then
   RUNTIME_IMAGE="${profile_image}"
 fi
@@ -83,7 +100,12 @@ if [[ "${remote_revision}" != "${PROBE_REVISION}" ]]; then
   exit 2
 fi
 
-python3 - "${MIDTERM_PROFILE}" "${STAND_REPORT}" "${STAND_CHECKPOINT}" <<'PY'
+python3 - \
+  "${MIDTERM_PROFILE}" \
+  "${STAND_REPORT}" \
+  "${STAND_CHECKPOINT}" \
+  "${RETENTION_TEACHER_REPORT}" \
+  "${RETENTION_TEACHER_CHECKPOINT}" <<'PY'
 import hashlib
 import json
 import pathlib
@@ -101,6 +123,21 @@ if (
     or len(checkpoint_payload) != source["checkpointSizeBytes"]
 ):
     raise SystemExit("stand checkpoint identity mismatch")
+if profile["stage"] == "loaded_track_settle_retention":
+    teacher_report_payload = pathlib.Path(sys.argv[4]).read_bytes()
+    teacher_checkpoint_payload = pathlib.Path(sys.argv[5]).read_bytes()
+    teacher = profile["retentionTeacher"]
+    if (
+        f"sha256:{hashlib.sha256(teacher_report_payload).hexdigest()}"
+        != teacher["sourceReportDigest"]
+    ):
+        raise SystemExit("retention teacher report digest mismatch")
+    if (
+        f"sha256:{hashlib.sha256(teacher_checkpoint_payload).hexdigest()}"
+        != teacher["checkpointDigest"]
+        or len(teacher_checkpoint_payload) != teacher["checkpointSizeBytes"]
+    ):
+        raise SystemExit("retention teacher checkpoint identity mismatch")
 PY
 
 kubectl_cmd=(kubectl --kubeconfig "${KUBECONFIG_PATH}" -n "${K8S_NAMESPACE}")
@@ -210,6 +247,7 @@ sed \
   -e "s|__SOURCE_ARCHIVE_DIGEST__|${source_archive_digest}|g" \
   -e "s|__MIDTERM_PROFILE_FILENAME__|${MIDTERM_PROFILE_FILENAME}|g" \
   -e "s|__WARM_START_REPORT_FILENAME__|${WARM_START_REPORT_FILENAME}|g" \
+  -e "s|__RETENTION_TEACHER_REPORT_FILENAME__|${RETENTION_TEACHER_REPORT_FILENAME}|g" \
   -e "s|__SCRIPT_CONFIGMAP__|${script_configmap}|g" \
   -e "s|__SOURCE_CONFIGMAP__|${source_configmap}|g" \
   "${JOB_TEMPLATE}" >"${temporary_manifest}"
@@ -271,6 +309,41 @@ PY
         --remote-path /scratch/inputs/stand-checkpoint.zip \
         --expected-size "${checkpoint_size}" \
         --expected-digest "${checkpoint_digest}"
+      if [[ "${profile_stage}" == "loaded_track_settle_retention" ]]; then
+        read -r teacher_report_size teacher_report_digest \
+          teacher_checkpoint_size teacher_checkpoint_digest < <(
+          python3 - \
+            "${RETENTION_TEACHER_REPORT}" \
+            "${RETENTION_TEACHER_CHECKPOINT}" <<'PY'
+import hashlib
+import pathlib
+import sys
+values = []
+for value in sys.argv[1:]:
+    payload = pathlib.Path(value).read_bytes()
+    values.extend((str(len(payload)), f"sha256:{hashlib.sha256(payload).hexdigest()}"))
+print(*values)
+PY
+        )
+        python3 "${CHUNK_UPLOAD}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --source "${RETENTION_TEACHER_REPORT}" \
+          --remote-path /scratch/inputs/stand-teacher-report.json \
+          --expected-size "${teacher_report_size}" \
+          --expected-digest "${teacher_report_digest}"
+        python3 "${CHUNK_UPLOAD}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --source "${RETENTION_TEACHER_CHECKPOINT}" \
+          --remote-path /scratch/inputs/stand-teacher-checkpoint.zip \
+          --expected-size "${teacher_checkpoint_size}" \
+          --expected-digest "${teacher_checkpoint_digest}"
+      fi
       "${kubectl_cmd[@]}" exec "${pod_name}" -c midterm -- \
         touch /scratch/inputs/input-ready
       touch "${local_result_dir}/input-uploaded"

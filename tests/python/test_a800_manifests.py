@@ -319,6 +319,9 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert environment["WORLD_SPEC_WARM_START_REPORT_FILENAME"] == (
         "__WARM_START_REPORT_FILENAME__"
     )
+    assert environment["WORLD_SPEC_RETENTION_TEACHER_REPORT_FILENAME"] == (
+        "__RETENTION_TEACHER_REPORT_FILENAME__"
+    )
     assert container["name"] == "midterm"
     assert container["image"] == "__RUNTIME_IMAGE__"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
@@ -348,6 +351,7 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "copy_kubernetes_file.py" in launcher
     assert "A800_CAPACITY_BLOCKED" in launcher
     assert "formalTrainingGate" in launcher
+    assert "/scratch/inputs/stand-teacher-checkpoint.zip" in launcher
 
     transition_launcher = (
         ROOT / "scripts" / "run_a800_h1_transition_calibration.sh"
@@ -365,6 +369,15 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
         transition_launcher
     )
     assert "run_a800_h1_locomotion_midterm.sh" in transition_launcher
+
+    retention_launcher = (
+        ROOT / "scripts" / "run_a800_h1_retention_calibration.sh"
+    ).read_text(encoding="utf-8")
+    assert "locomotion-transition.a800.failed.json" in retention_launcher
+    assert "locomotion-calibration.a800.passed.json" in retention_launcher
+    assert "WORLD_SPEC_RETENTION_TEACHER_REPORT" in retention_launcher
+    assert "WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT" in retention_launcher
+    assert "run_a800_h1_locomotion_midterm.sh" in retention_launcher
 
 
 def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> None:

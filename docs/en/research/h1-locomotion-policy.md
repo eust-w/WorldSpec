@@ -241,3 +241,15 @@ failed, no 100M Job was created, and no automatic tuning or retry followed.
 See the normalized
 [`locomotion-transition.a800.failed.json`](../../../examples/h1-kitchen/locomotion-transition.a800.failed.json)
 report.
+
+### A1: stand replay and teacher-action distillation
+
+The next experiment relaxes none of the original gates. It initializes from
+the failed transition checkpoint, rebalances sampling to 60% walk/settle
+cycles and 40% all-zero-command stand cycles, and uses the passing
+`stand-v2.1` deterministic teacher action only during stand replay. The
+constraint is implemented as an action-MSE distillation reward and is not
+claimed to be strict policy KL. The experiment budget, teacher source, student
+source, and reward parameters are locked by
+[`locomotion-retention-profile.json`](../../../examples/h1-kitchen/locomotion-retention-profile.json);
+the design remains unverified until a real A800 execution.

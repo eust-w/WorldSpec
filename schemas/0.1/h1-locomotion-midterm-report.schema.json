@@ -103,6 +103,68 @@
       },
       "additionalProperties": false
     },
+    "retentionTeacher": {
+      "type": "object",
+      "required": [
+        "archiveDigest",
+        "archiveSizeBytes",
+        "selectedStep",
+        "networkConfig",
+        "restored",
+        "optimizerState",
+        "mode",
+        "scope"
+      ],
+      "properties": {
+        "archiveDigest": {
+          "const": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c"
+        },
+        "archiveSizeBytes": {
+          "const": 6280684
+        },
+        "selectedStep": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "networkConfig": {
+          "type": "object"
+        },
+        "restored": {
+          "type": "object",
+          "required": [
+            "normalizer",
+            "policy",
+            "value",
+            "optimizer"
+          ],
+          "properties": {
+            "normalizer": {
+              "const": true
+            },
+            "policy": {
+              "const": true
+            },
+            "value": {
+              "const": true
+            },
+            "optimizer": {
+              "const": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": {
+          "const": "reset"
+        },
+        "mode": {
+          "const": "deterministic_action_distillation"
+        },
+        "scope": {
+          "const": "stand_replay_only"
+        }
+      },
+      "additionalProperties": false
+    },
     "runtimeCapacity": { "type": "object" },
     "staticPreflight": { "type": "object" },
     "runtimePreflight": { "type": "object" },
@@ -123,7 +185,16 @@
         "elapsedSeconds",
         "firstProgress",
         "finalProgress"
-      ]
+      ],
+      "properties": {
+        "profileStage": {
+          "enum": [
+            "loaded_track_settle",
+            "loaded_track_settle_transition",
+            "loaded_track_settle_retention"
+          ]
+        }
+      }
     },
     "qualityAssessment": {
       "type": "object",
@@ -234,6 +305,27 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "training": {
+            "properties": {
+              "profileStage": {
+                "const": "loaded_track_settle_retention"
+              }
+            },
+            "required": [
+              "profileStage"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "retentionTeacher"
+        ]
+      }
+    },
     {
       "if": {
         "properties": { "formalTrainingGate": { "const": "passed" } },

@@ -209,8 +209,7 @@ def validate_profile(profile: dict[str, Any]) -> None:
             initialization.get("method") != "warm_start"
             or initialization.get("requiredReportStatus") != "passed"
             or initialization.get("requiredCheckpointDistribution") != "internal_only"
-            or initialization.get("restore")
-            != {"normalizer": True, "policy": True, "value": True}
+            or initialization.get("restore") != {"normalizer": True, "policy": True, "value": True}
             or initialization.get("optimizerState") != "reset"
         ):
             raise TrainingError(

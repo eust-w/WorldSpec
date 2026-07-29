@@ -58,6 +58,8 @@ spec:
               value: __MIDTERM_PROFILE_FILENAME__
             - name: WORLD_SPEC_WARM_START_REPORT_FILENAME
               value: __WARM_START_REPORT_FILENAME__
+            - name: WORLD_SPEC_RETENTION_TEACHER_REPORT_FILENAME
+              value: __RETENTION_TEACHER_REPORT_FILENAME__
             - name: HOME
               value: /scratch/home
             - name: XDG_CACHE_HOME

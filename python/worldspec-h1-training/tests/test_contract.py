@@ -10,9 +10,7 @@ from worldspec_h1_training.errors import TrainingError
 
 ROOT = Path(__file__).resolve().parents[3]
 PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
-TASK_PROFILE = (
-    ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.task-v1.json"
-)
+TASK_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.task-v1.json"
 
 
 def profile() -> dict:

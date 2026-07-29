@@ -18,10 +18,7 @@ ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 CALIBRATION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-calibration-profile.json"
 INVALID_BATCH_PROFILE = (
-    ROOT
-    / "examples"
-    / "h1-kitchen"
-    / "locomotion-calibration-profile.stand-v2-invalid.json"
+    ROOT / "examples" / "h1-kitchen" / "locomotion-calibration-profile.stand-v2-invalid.json"
 )
 
 

@@ -25,5 +25,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0013 H1 target-dynamics retraining route](0013-h1-target-dynamics-retraining.md)
 - [ADR-0014 H1 MuJoCo Playground PPO training engine](0014-h1-mujoco-playground-ppo-engine.md)
 - [ADR-0015 H1 transition-braking curriculum and single-candidate CCD spike](0015-h1-transition-braking-calibration.md)
+- [ADR-0016 H1 stand replay and teacher-action distillation](0016-h1-stand-retention-distillation.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

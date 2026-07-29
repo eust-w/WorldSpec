@@ -21,9 +21,7 @@ def evaluate_policy_suite(
     reset = jax.jit(env.reset)
     step = jax.jit(env.step)
     validation = profile["validation"]
-    dt = profile["training"]["simulationTimestepSeconds"] * profile["control"][
-        "controlDecimation"
-    ]
+    dt = profile["training"]["simulationTimestepSeconds"] * profile["control"]["controlDecimation"]
     duration_steps = max(1, round(validation["nominalDurationSeconds"] / dt))
     move_steps = max(1, round(validation["moveDurationSeconds"] / dt))
     settle_steps = max(1, round(validation["settleWindowSeconds"] / dt))
@@ -40,6 +38,7 @@ def evaluate_policy_suite(
         maximum_planar_drift = 0.0
         maximum_settle_linear_speed = 0.0
         maximum_settle_angular_speed = 0.0
+        maximum_teacher_action_mse = 0.0
         squared_tracking_error = 0.0
         tracking_samples = 0
         nonfinite = 0
@@ -51,6 +50,8 @@ def evaluate_policy_suite(
             command = jp.asarray([0.5, 0.0, 0.0]) if moving else jp.zeros(3)
             info = dict(state.info)
             info["command"] = command
+            info["transition_active"] = jp.asarray(mode == "walk_settle")
+            info["stand_replay_active"] = jp.asarray(mode == "stand_regression")
             state = state.replace(info=info)
             rng, action_rng = jax.random.split(rng)
             action, _ = inference(state.obs, action_rng)
@@ -64,12 +65,19 @@ def evaluate_policy_suite(
             upright = float(np.asarray(env.upvector(state.data)[2]))
             finite = bool(np.isfinite(qpos).all() and np.isfinite(qvel).all())
             done = bool(np.asarray(state.done))
+            teacher_action_mse = float(
+                np.asarray(state.metrics.get("cost/teacher_action_mse", 0.0))
+            )
             position = np.asarray(qpos[:2], dtype=float)
             minimum_height = min(minimum_height, height)
             minimum_upright = min(minimum_upright, upright)
             maximum_planar_drift = max(
                 maximum_planar_drift,
                 float(np.linalg.norm(position - start_xy)),
+            )
+            maximum_teacher_action_mse = max(
+                maximum_teacher_action_mse,
+                teacher_action_mse,
             )
             nonfinite += 0 if finite else 1
             completed_steps += 1
@@ -96,6 +104,7 @@ def evaluate_policy_suite(
                     "uprightCosine": upright,
                     "localVelocity": [float(value) for value in local_velocity],
                     "angularVelocity": [float(value) for value in angular_velocity],
+                    "teacherActionMse": teacher_action_mse,
                     "done": done,
                     "finite": finite,
                 }
@@ -112,9 +121,7 @@ def evaluate_policy_suite(
         displacement = float(final_xy[0] - start_xy[0])
         lateral = abs(float(final_xy[1] - start_xy[1]))
         tracking_rmse = (
-            float(np.sqrt(squared_tracking_error / tracking_samples))
-            if tracking_samples
-            else 0.0
+            float(np.sqrt(squared_tracking_error / tracking_samples)) if tracking_samples else 0.0
         )
         common = (
             not done_seen
@@ -130,21 +137,13 @@ def evaluate_policy_suite(
                 and displacement <= validation["maximumForwardDisplacement"]
                 and lateral <= validation["maximumLateralDrift"]
                 and tracking_rmse <= validation["maximumTrackingRmse"]
-                and maximum_settle_linear_speed
-                <= validation["maximumSettleLinearSpeed"]
-                and maximum_settle_angular_speed
-                <= validation["maximumSettleAngularSpeed"]
+                and maximum_settle_linear_speed <= validation["maximumSettleLinearSpeed"]
+                and maximum_settle_angular_speed <= validation["maximumSettleAngularSpeed"]
             )
         else:
-            passed = (
-                common
-                and maximum_planar_drift <= validation["maximumStandPlanarDrift"]
-            )
+            passed = common and maximum_planar_drift <= validation["maximumStandPlanarDrift"]
         return {
-            "id": (
-                f"test://worldspec/h1-policy/{mode}/"
-                f"{run_index + 1}"
-            ),
+            "id": (f"test://worldspec/h1-policy/{mode}/{run_index + 1}"),
             "suite": mode,
             "result": "pass" if passed else "fail",
             "metrics": {
@@ -158,6 +157,7 @@ def evaluate_policy_suite(
                 "minimumUprightCosine": minimum_upright,
                 "maximumSettleLinearSpeed": maximum_settle_linear_speed,
                 "maximumSettleAngularSpeed": maximum_settle_angular_speed,
+                "maximumTeacherActionMse": maximum_teacher_action_mse,
                 "nonFiniteSamples": nonfinite,
                 "doneSeen": done_seen,
                 "terminalReasons": sorted(terminal_reasons),

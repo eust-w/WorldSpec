@@ -23,5 +23,6 @@ last-verified: 2026-07-29
 - [ADR-0013 H1 目标动力学重训路线](0013-h1-target-dynamics-retraining.md)
 - [ADR-0014 H1 MuJoCo Playground PPO 训练引擎](0014-h1-mujoco-playground-ppo-engine.md)
 - [ADR-0015 H1 过渡制动课程与 CCD 单候选探针](0015-h1-transition-braking-calibration.md)
+- [ADR-0016 H1 站立回放与教师动作蒸馏](0016-h1-stand-retention-distillation.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

@@ -10,17 +10,18 @@ from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.midterm import (
     make_midterm_training_profile,
+    make_retention_training_profile,
     make_transition_training_profile,
     validate_midterm_profile,
+    validate_retention_profile,
     validate_transition_profile,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 MIDTERM_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-midterm-profile.json"
-TRANSITION_PROFILE = (
-    ROOT / "examples" / "h1-kitchen" / "locomotion-transition-profile.json"
-)
+TRANSITION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-transition-profile.json"
+RETENTION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-retention-profile.json"
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -115,3 +116,57 @@ def test_transition_rejects_unbound_failed_checkpoint() -> None:
 
     with pytest.raises(TrainingError, match="failed v1 report"):
         validate_transition_profile(base, transition)
+
+
+def test_retention_contract_replays_stand_and_binds_teacher() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    retention = json.loads(RETENTION_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_retention_training_profile(base, retention)
+
+    assert effective["training"]["hyperparameterStatus"] == "research_retention_override"
+    assert effective["training"]["numTimesteps"] == 8_388_608
+    assert effective["training"]["learningRate"] == 0.0001
+    assert effective["training"]["entropyCost"] == 0.003
+    assert effective["trainingEnvironment"]["transitionCurriculum"] == {
+        "mode": "move_then_zero_with_stand_replay",
+        "transitionCycleProbability": 0.6,
+        "standReplayProbability": 0.4,
+        "moveSteps": 150,
+        "settleSteps": 50,
+        "motionCommandDistribution": {
+            "linearVelocityX": [0.4, 0.6],
+            "linearVelocityY": [-0.05, 0.05],
+            "angularVelocityYaw": [-0.1, 0.1],
+        },
+    }
+    assert effective["trainingEnvironment"]["reward"]["standDistillation"] == 4.0
+    assert retention["retentionTeacher"]["scope"] == "stand_replay_only"
+    assert effective["validation"]["maximumStandPlanarDrift"] == 0.2
+
+
+def test_retention_rejects_changed_replay_ratio() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    retention = json.loads(RETENTION_PROFILE.read_text(encoding="utf-8"))
+    retention["environment"]["transitionCurriculum"]["standReplayProbability"] = 0.3
+
+    with pytest.raises(TrainingError, match="60% transition and 40% stand replay"):
+        validate_retention_profile(base, retention)
+
+
+def test_retention_rejects_unbound_teacher_checkpoint() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    retention = json.loads(RETENTION_PROFILE.read_text(encoding="utf-8"))
+    retention["retentionTeacher"]["checkpointDigest"] = "sha256:" + ("0" * 64)
+
+    with pytest.raises(TrainingError, match="read-only teacher"):
+        validate_retention_profile(base, retention)
+
+
+def test_retention_rejects_relaxed_original_gate() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    retention = json.loads(RETENTION_PROFILE.read_text(encoding="utf-8"))
+    retention["qualityGates"]["maximumStandPlanarDrift"] = 0.6
+
+    with pytest.raises(TrainingError, match="quality gates"):
+        validate_retention_profile(base, retention)

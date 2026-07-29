@@ -106,7 +106,11 @@ python - \
   "${INPUT_DIR}/stand-report.json" \
   "${INPUT_DIR}/stand-checkpoint.zip" \
   "${WORLD_SPEC_RUNTIME_IMAGE}" \
-  "${WORLD_SPEC_PACKAGE_LOCK_DIGEST}" <<'PY'
+  "${WORLD_SPEC_PACKAGE_LOCK_DIGEST}" \
+  "${SOURCE_DIR}" \
+  "${WORLD_SPEC_RETENTION_TEACHER_REPORT_FILENAME:-}" \
+  "${INPUT_DIR}/stand-teacher-report.json" \
+  "${INPUT_DIR}/stand-teacher-checkpoint.zip" <<'PY'
 import hashlib
 import json
 import pathlib
@@ -142,6 +146,14 @@ elif source["sourceStage"] == "loaded-track-settle-v1-failed":
         or report["policyStatus"] != "non_publishable"
     ):
         raise SystemExit("transition source report is not the frozen failed evidence")
+elif source["sourceStage"] == "loaded-track-settle-transition-v2-failed":
+    if (
+        report["qualityAssessment"]["status"] != "failed"
+        or report["formalTrainingGate"] != "failed"
+        or report["policyStatus"] != "non_publishable"
+        or report["training"]["profileStage"] != "loaded_track_settle_transition"
+    ):
+        raise SystemExit("retention source report is not the frozen failed evidence")
 else:
     raise SystemExit("unsupported warm-start source stage")
 if report["researchCheckpoint"]["digest"] != checkpoint_digest:
@@ -150,6 +162,44 @@ if profile["runtime"]["containerImage"] != sys.argv[5]:
     raise SystemExit("midterm Profile container image mismatch")
 if profile["runtime"]["packageLockDigest"] != sys.argv[6]:
     raise SystemExit("midterm Profile package lock mismatch")
+if profile["stage"] == "loaded_track_settle_retention":
+    teacher = profile["retentionTeacher"]
+    teacher_filename = sys.argv[8]
+    if not teacher_filename:
+        raise SystemExit("retention teacher report filename is missing")
+    teacher_checked_path = (
+        pathlib.Path(sys.argv[7])
+        / "examples"
+        / "h1-kitchen"
+        / teacher_filename
+    )
+    teacher_input_report_path = pathlib.Path(sys.argv[9])
+    teacher_checkpoint_path = pathlib.Path(sys.argv[10])
+    teacher_checked = teacher_checked_path.read_bytes()
+    teacher_input_report = teacher_input_report_path.read_bytes()
+    if teacher_input_report != teacher_checked:
+        raise SystemExit("uploaded retention teacher report differs from repository evidence")
+    teacher_report_digest = (
+        f"sha256:{hashlib.sha256(teacher_input_report).hexdigest()}"
+    )
+    teacher_checkpoint = teacher_checkpoint_path.read_bytes()
+    teacher_checkpoint_digest = (
+        f"sha256:{hashlib.sha256(teacher_checkpoint).hexdigest()}"
+    )
+    if teacher_report_digest != teacher["sourceReportDigest"]:
+        raise SystemExit("retention teacher report digest mismatch")
+    if (
+        teacher_checkpoint_digest != teacher["checkpointDigest"]
+        or len(teacher_checkpoint) != teacher["checkpointSizeBytes"]
+    ):
+        raise SystemExit("retention teacher checkpoint identity mismatch")
+    teacher_report = json.loads(teacher_input_report)
+    if (
+        teacher_report["qualityAssessment"]["status"] != "passed"
+        or teacher_report["researchCheckpoint"]["digest"]
+        != teacher_checkpoint_digest
+    ):
+        raise SystemExit("retention teacher evidence is not the passing stand-v2.1 source")
 PY
 
 stage installed_runtime
@@ -227,6 +277,11 @@ result = run_midterm_calibration(
     Path(os.environ["MODEL_DIR"]),
     artifact_dir,
     Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+    (
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip"
+        if midterm_profile["stage"] == "loaded_track_settle_retention"
+        else None
+    ),
 )
 result["training"]["profileStage"] = midterm_profile["stage"]
 with (result_dir / "gpu.csv").open(encoding="utf-8") as stream:

@@ -191,3 +191,12 @@ CCD 容量溢出，但下一次校准前需要单独评估数值影响。
 
 规范化失败报告见
 [`locomotion-transition.a800.failed.json`](../../../examples/h1-kitchen/locomotion-transition.a800.failed.json)。
+
+### A1：站立回放与教师动作蒸馏
+
+下一次实验不放宽任何原始门槛。它从过渡失败 Checkpoint 初始化，以 60% 行走停稳
+周期和 40% 全零命令站立周期重新平衡采样，并只在站立回放阶段引入通过的
+`stand-v2.1` 确定性教师动作。该约束实现为动作均方误差蒸馏奖励，不宣称为严格
+策略 KL。实验预算、教师来源、学生来源和奖励参数由
+[`locomotion-retention-profile.json`](../../../examples/h1-kitchen/locomotion-retention-profile.json)
+锁定；真实 A800 运行前仍属于待验证设计。

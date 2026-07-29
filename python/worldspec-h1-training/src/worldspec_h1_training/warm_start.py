@@ -126,11 +126,7 @@ def materialize_warm_start(
         ) from error
 
     steps = sorted(
-        (
-            path
-            for path in destination.iterdir()
-            if path.is_dir() and path.name.isdigit()
-        ),
+        (path for path in destination.iterdir() if path.is_dir() and path.name.isdigit()),
         key=lambda path: int(path.name),
     )
     if not steps:

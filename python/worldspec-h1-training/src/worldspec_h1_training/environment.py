@@ -24,7 +24,11 @@ def _preserving_update(
     return result
 
 
-def make_environment(profile: dict[str, Any], training_model: Path):
+def make_environment(
+    profile: dict[str, Any],
+    training_model: Path,
+    stand_teacher_policy: Any | None = None,
+):
     """Create an MJX environment bound to the derived composition model."""
 
     import jax
@@ -154,6 +158,9 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             self._zero_command_probability = float(command["zeroCommandProbability"])
             self._calibration_enabled = isinstance(training_environment, dict)
             self._transition_curriculum = None
+            self._stand_teacher_policy = stand_teacher_policy
+            self._stand_replay_probability = 0.0
+            self._stand_distillation_sigma = 1.0
             if self._calibration_enabled:
                 termination = training_environment["termination"]
                 self._minimum_height = float(termination["minimumBaseHeight"])
@@ -181,14 +188,25 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                             motion["angularVelocityYaw"][1],
                         ]
                     )
-                    self._transition_probability = float(
-                        transition["transitionCycleProbability"]
+                    self._transition_probability = float(transition["transitionCycleProbability"])
+                    self._stand_replay_probability = float(
+                        transition.get("standReplayProbability", 0.0)
                     )
                     self._transition_move_steps = int(transition["moveSteps"])
                     self._transition_settle_steps = int(transition["settleSteps"])
                     self._transition_cycle_steps = (
                         self._transition_move_steps + self._transition_settle_steps
                     )
+                    self._stand_distillation_sigma = float(
+                        self._reward_sigmas.get("standDistillation", 1.0)
+                    )
+                    if self._stand_replay_probability > 0.0 and (
+                        self._stand_teacher_policy is None
+                    ):
+                        raise TrainingError(
+                            "TRAINING_STAND_TEACHER_MISSING",
+                            "Stand replay with distillation requires a bound teacher policy.",
+                        )
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
                 self._minimum_upright = float(validation["minimumUprightCosine"])
@@ -222,7 +240,19 @@ def make_environment(profile: dict[str, Any], training_model: Path):
 
         def sample_cycle(self, rng):
             if self._transition_curriculum is None:
-                return self.sample_command(rng), jp.asarray(False)
+                return self.sample_command(rng), jp.asarray(False), jp.asarray(False)
+            if self._stand_replay_probability > 0.0:
+                mode_rng, motion_rng, baseline_rng = jax.random.split(rng, 3)
+                selector = jax.random.uniform(mode_rng)
+                transition_active = selector < self._transition_probability
+                stand_replay_active = (selector >= self._transition_probability) & (
+                    selector < self._transition_probability + self._stand_replay_probability
+                )
+                motion_command = self.sample_motion_command(motion_rng)
+                baseline_command = self.sample_command(baseline_rng)
+                command = jp.where(transition_active, motion_command, baseline_command)
+                command = jp.where(stand_replay_active, jp.zeros(3), command)
+                return command, transition_active, stand_replay_active
             mode_rng, motion_rng, baseline_rng = jax.random.split(rng, 3)
             transition_active = jax.random.bernoulli(
                 mode_rng,
@@ -233,6 +263,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             return (
                 jp.where(transition_active, motion_command, baseline_command),
                 transition_active,
+                jp.asarray(False),
             )
 
         def _observation(self, data, last_action, command):
@@ -250,7 +281,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
 
         def reset(self, rng):
             rng, command_rng = jax.random.split(rng)
-            command, transition_active = self.sample_cycle(command_rng)
+            command, transition_active, stand_replay_active = self.sample_cycle(command_rng)
             data = mjx_env.make_data(
                 self.mj_model,
                 qpos=self._initial_qpos,
@@ -266,6 +297,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 "rng": rng,
                 "command": command,
                 "transition_active": transition_active,
+                "stand_replay_active": stand_replay_active,
                 "last_action": jp.zeros(self.action_size),
                 "step": jp.zeros((), dtype=jp.int32),
                 "termination": {
@@ -284,12 +316,14 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 "reward/pose": jp.zeros(()),
                 "reward/settle_linear": jp.zeros(()),
                 "reward/settle_yaw": jp.zeros(()),
+                "reward/stand_distillation": jp.zeros(()),
                 "cost/upright": jp.zeros(()),
                 "cost/vertical_velocity": jp.zeros(()),
                 "cost/angular_velocity_xy": jp.zeros(()),
                 "cost/pose": jp.zeros(()),
                 "cost/torque": jp.zeros(()),
                 "cost/action_rate": jp.zeros(()),
+                "cost/teacher_action_mse": jp.zeros(()),
                 "termination/joint_limit": jp.zeros(()),
                 "termination/fall_height": jp.zeros(()),
                 "termination/fall_upright": jp.zeros(()),
@@ -297,6 +331,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 "state/base_height": jp.zeros(()),
                 "state/upright_cosine": jp.zeros(()),
                 "state/transition_settle": jp.zeros(()),
+                "state/stand_replay": jp.zeros(()),
             }
             observation = {"state": self._observation(data, info["last_action"], info["command"])}
             return mjx_env.State(
@@ -344,6 +379,10 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             raw_torque_cost = jp.sum(jp.square(policy_torque))
             raw_action_rate_cost = jp.sum(jp.square(action - state.info["last_action"]))
             transition_active = state.info.get("transition_active", jp.asarray(False))
+            stand_replay_active = state.info.get(
+                "stand_replay_active",
+                jp.asarray(False),
+            )
             if self._transition_curriculum is not None:
                 _, settle_phase, _ = transition_phase_masks(
                     state.info["step"],
@@ -355,6 +394,8 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                 transition_settle = jp.asarray(False)
             settle_linear_reward = jp.zeros(())
             settle_yaw_reward = jp.zeros(())
+            stand_distillation_reward = jp.zeros(())
+            teacher_action_mse = jp.zeros(())
             if self._calibration_enabled:
                 base_height = data.xpos[self._pelvis_body, 2]
                 survival_reward = jp.ones(())
@@ -371,14 +412,25 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                         * transition_settle
                     )
                     settle_yaw_reward = (
-                        jp.exp(-jp.square(gyro[2]) / settle_sigma)
-                        * transition_settle
+                        jp.exp(-jp.square(gyro[2]) / settle_sigma) * transition_settle
                     )
                     action_rate_scale = jp.where(
                         transition_settle,
                         float(self._reward_config["settleActionRateScale"]),
                         1.0,
                     )
+                    if self._stand_teacher_policy is not None:
+                        teacher_observation = dict(state.obs)
+                        teacher_observation["state"] = teacher_observation["state"].at[-3:].set(0.0)
+                        teacher_action, _ = self._stand_teacher_policy(
+                            teacher_observation,
+                            state.info["rng"],
+                        )
+                        teacher_action_mse = jp.mean(jp.square(action - teacher_action))
+                        stand_distillation_reward = (
+                            jp.exp(-teacher_action_mse / self._stand_distillation_sigma)
+                            * stand_replay_active
+                        )
                 else:
                     action_rate_scale = 1.0
                 reward = jp.clip(
@@ -389,10 +441,10 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                         + float(self._reward_config["upright"]) * upright_reward
                         + float(self._reward_config["baseHeight"]) * base_height_reward
                         + float(self._reward_config["pose"]) * pose_reward
-                        + float(self._reward_config.get("settleLinear", 0.0))
-                        * settle_linear_reward
-                        + float(self._reward_config.get("settleYaw", 0.0))
-                        * settle_yaw_reward
+                        + float(self._reward_config.get("settleLinear", 0.0)) * settle_linear_reward
+                        + float(self._reward_config.get("settleYaw", 0.0)) * settle_yaw_reward
+                        + float(self._reward_config.get("standDistillation", 0.0))
+                        * stand_distillation_reward
                         - float(self._reward_config["verticalVelocityCost"]) * vertical_cost
                         - float(self._reward_config["angularVelocityXYCost"])
                         * angular_velocity_xy_cost
@@ -405,9 +457,11 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     0.0,
                 )
                 torque_cost = raw_torque_cost * float(self._reward_config["torqueCost"])
-                action_rate_cost = raw_action_rate_cost * float(
-                    self._reward_config["actionRateCost"]
-                ) * action_rate_scale
+                action_rate_cost = (
+                    raw_action_rate_cost
+                    * float(self._reward_config["actionRateCost"])
+                    * action_rate_scale
+                )
             else:
                 survival_reward = jp.zeros(())
                 upright_reward = jp.zeros(())
@@ -443,14 +497,18 @@ def make_environment(profile: dict[str, Any], training_model: Path):
             done = (joint_violation | fall_height | fall_upright | nonfinite).astype(reward.dtype)
             step = state.info["step"] + 1
             if self._transition_curriculum is not None:
-                sampled_command, sampled_transition_active = self.sample_cycle(command_rng)
+                (
+                    sampled_command,
+                    sampled_transition_active,
+                    sampled_stand_replay_active,
+                ) = self.sample_cycle(command_rng)
                 _, begin_settle_phase, resample = transition_phase_masks(
                     step,
                     self._transition_move_steps,
                     self._transition_cycle_steps,
                 )
-                begin_settle = transition_active & begin_settle_phase & (
-                    step == self._transition_move_steps
+                begin_settle = (
+                    transition_active & begin_settle_phase & (step == self._transition_move_steps)
                 )
                 next_command = jp.where(begin_settle, jp.zeros(3), command)
                 next_command = jp.where(resample, sampled_command, next_command)
@@ -459,10 +517,16 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     sampled_transition_active,
                     transition_active,
                 )
+                next_stand_replay_active = jp.where(
+                    resample,
+                    sampled_stand_replay_active,
+                    stand_replay_active,
+                )
             else:
                 resample = step >= self._command_resample_steps
                 next_command = jp.where(resample, self.sample_command(command_rng), command)
                 next_transition_active = transition_active
+                next_stand_replay_active = stand_replay_active
             next_step = jp.where(resample | done.astype(bool), 0, step)
             info = _preserving_update(
                 state.info,
@@ -470,6 +534,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     "rng": rng,
                     "command": next_command,
                     "transition_active": next_transition_active,
+                    "stand_replay_active": next_stand_replay_active,
                     "last_action": action,
                     "step": next_step,
                     "termination": {
@@ -491,12 +556,14 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     "reward/pose": pose_reward,
                     "reward/settle_linear": settle_linear_reward,
                     "reward/settle_yaw": settle_yaw_reward,
+                    "reward/stand_distillation": stand_distillation_reward,
                     "cost/upright": upright_cost,
                     "cost/vertical_velocity": vertical_cost,
                     "cost/angular_velocity_xy": angular_velocity_xy_cost,
                     "cost/pose": pose_cost,
                     "cost/torque": torque_cost,
                     "cost/action_rate": action_rate_cost,
+                    "cost/teacher_action_mse": teacher_action_mse,
                     "termination/joint_limit": joint_violation.astype(reward.dtype),
                     "termination/fall_height": fall_height.astype(reward.dtype),
                     "termination/fall_upright": fall_upright.astype(reward.dtype),
@@ -504,6 +571,7 @@ def make_environment(profile: dict[str, Any], training_model: Path):
                     "state/base_height": base_height,
                     "state/upright_cosine": upvector[2],
                     "state/transition_settle": transition_settle.astype(reward.dtype),
+                    "state/stand_replay": stand_replay_active.astype(reward.dtype),
                 },
             )
             observation = {"state": self._observation(data, action, next_command)}

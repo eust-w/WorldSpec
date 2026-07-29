@@ -17,12 +17,8 @@ from .preflight import runtime_preflight, static_preflight
 from .trainer import _deterministic_zip, _flat_observation_size, _host_float
 from .warm_start import materialize_warm_start, validate_network_compatibility
 
-STAND_REPORT_DIGEST = (
-    "sha256:8a92a910ca52540fff50bab37e20e7e28d4ea06ae0acd20d0079e8b45e65f660"
-)
-STAND_CHECKPOINT_DIGEST = (
-    "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c"
-)
+STAND_REPORT_DIGEST = "sha256:8a92a910ca52540fff50bab37e20e7e28d4ea06ae0acd20d0079e8b45e65f660"
+STAND_CHECKPOINT_DIGEST = "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c"
 STAND_CHECKPOINT_SIZE = 6_280_684
 FAILED_MIDTERM_REPORT_DIGEST = (
     "sha256:961ab5fa5c5f70482f46c8751496f3806f2377654d75d5bba4e6a9d7491a1e39"
@@ -31,6 +27,13 @@ FAILED_MIDTERM_CHECKPOINT_DIGEST = (
     "sha256:86d8e0de7c900fdbbf945cca1160518f4e27bf7735f40323de7ffadbf07d2c6a"
 )
 FAILED_MIDTERM_CHECKPOINT_SIZE = 8_821_958
+FAILED_TRANSITION_REPORT_DIGEST = (
+    "sha256:1d7310274a58e78e21570fe0916c23af49573f41d769037393967d41ce89705d"
+)
+FAILED_TRANSITION_CHECKPOINT_DIGEST = (
+    "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356"
+)
+FAILED_TRANSITION_CHECKPOINT_SIZE = 8_838_595
 
 TRANSITION_COMMAND = {
     "linearVelocityX": [0.0, 0.6],
@@ -71,6 +74,43 @@ TRANSITION_QUALITY_GATES = {
     "maximumStandPlanarDrift": 0.2,
     "maximumNonFiniteSamples": 0,
 }
+RETENTION_TRAINING_OVERRIDES = {
+    "numTimesteps": 8_388_608,
+    "numEnvs": 4096,
+    "numEvals": 6,
+    "episodeLength": 1000,
+    "unrollLength": 20,
+    "numMinibatches": 16,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256,
+    "learningRate": 0.0001,
+    "entropyCost": 0.003,
+}
+RETENTION_CURRICULUM = {
+    "mode": "move_then_zero_with_stand_replay",
+    "transitionCycleProbability": 0.6,
+    "standReplayProbability": 0.4,
+    "moveSteps": 150,
+    "settleSteps": 50,
+    "motionCommandDistribution": {
+        "linearVelocityX": [0.4, 0.6],
+        "linearVelocityY": [-0.05, 0.05],
+        "angularVelocityYaw": [-0.1, 0.1],
+    },
+}
+RETENTION_REWARD_ADDITIONS = {
+    **TRANSITION_REWARD_ADDITIONS,
+    "standDistillation": 4.0,
+}
+RETENTION_TEACHER = {
+    "sourceStage": "stand-v2.1",
+    "sourceReportDigest": STAND_REPORT_DIGEST,
+    "checkpointDigest": STAND_CHECKPOINT_DIGEST,
+    "checkpointSizeBytes": STAND_CHECKPOINT_SIZE,
+    "distribution": "internal_only",
+    "mode": "deterministic_action_distillation",
+    "scope": "stand_replay_only",
+}
 
 
 def validate_midterm_profile(
@@ -85,9 +125,7 @@ def validate_midterm_profile(
             "MIDTERM_PROFILE_UNSUPPORTED",
             "Midterm profileVersion must be 0.1.0.",
         )
-    if profile.get("status") != "research" or profile.get("stage") != (
-        "loaded_track_settle"
-    ):
+    if profile.get("status") != "research" or profile.get("stage") != ("loaded_track_settle"):
         raise TrainingError(
             "MIDTERM_STAGE_INVALID",
             "Midterm calibration must be the loaded_track_settle research stage.",
@@ -139,9 +177,7 @@ def validate_midterm_profile(
             "Midterm calibration budget and topology are frozen.",
             {"expected": expected, "actual": overrides},
         )
-    if (overrides["batchSize"] * overrides["numMinibatches"]) % overrides[
-        "numEnvs"
-    ]:
+    if (overrides["batchSize"] * overrides["numMinibatches"]) % overrides["numEnvs"]:
         raise TrainingError(
             "MIDTERM_BATCH_TOPOLOGY_INVALID",
             "batchSize times numMinibatches must be divisible by numEnvs.",
@@ -158,8 +194,9 @@ def validate_midterm_profile(
             "Midterm command distribution is not the approved kitchen range.",
         )
     runtime = profile.get("runtime", {})
-    if runtime.get("containerDigest") != (
-        runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1]
+    if (
+        runtime.get("containerDigest")
+        != (runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1])
     ):
         raise TrainingError(
             "MIDTERM_CONTAINER_BINDING_MISMATCH",
@@ -311,8 +348,9 @@ def validate_transition_profile(
             "TRANSITION_CCD_ITERATIONS_INVALID",
             "Transition calibration requires the bounded CCD candidate of 50 iterations.",
         )
-    if runtime.get("containerDigest") != (
-        runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1]
+    if (
+        runtime.get("containerDigest")
+        != (runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1])
     ):
         raise TrainingError(
             "TRANSITION_CONTAINER_BINDING_MISMATCH",
@@ -330,6 +368,149 @@ def validate_transition_profile(
         raise TrainingError(
             "TRANSITION_ARTIFACT_POLICY_INVALID",
             "Transition outputs must remain internal research artifacts.",
+        )
+
+
+def validate_retention_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> None:
+    """Validate the stand-replay and teacher-distillation calibration contract."""
+
+    validate_profile(base_profile)
+    if (
+        profile.get("profileVersion") != "0.1.0"
+        or profile.get("status") != "research"
+        or profile.get("stage") != "loaded_track_settle_retention"
+    ):
+        raise TrainingError(
+            "RETENTION_PROFILE_UNSUPPORTED",
+            "Retention calibration must use loaded_track_settle_retention v0.1.",
+        )
+    if profile.get("baseTrainingProfileDigest") != digest_json(base_profile):
+        raise TrainingError(
+            "RETENTION_BASE_PROFILE_MISMATCH",
+            "Retention calibration is not bound to the exact base training Profile.",
+        )
+    source = profile.get("warmStart", {})
+    if (
+        source.get("sourceStage") != "loaded-track-settle-transition-v2-failed"
+        or source.get("sourceReportDigest") != FAILED_TRANSITION_REPORT_DIGEST
+        or source.get("checkpointDigest") != FAILED_TRANSITION_CHECKPOINT_DIGEST
+        or source.get("checkpointSizeBytes") != FAILED_TRANSITION_CHECKPOINT_SIZE
+    ):
+        raise TrainingError(
+            "RETENTION_SOURCE_EVIDENCE_MISMATCH",
+            "Retention calibration must bind the failed transition report and checkpoint.",
+        )
+    if source.get("optimizerState") != "reset" or source.get("restore") != {
+        "normalizer": True,
+        "policy": True,
+        "value": True,
+    }:
+        raise TrainingError(
+            "RETENTION_WARM_START_INVALID",
+            "Retention calibration must restore normalizer/policy/value and reset optimizer.",
+        )
+    if source.get("distribution") != "internal_only":
+        raise TrainingError(
+            "RETENTION_WARM_START_DISTRIBUTION_INVALID",
+            "Retention warm-start input must remain internal-only.",
+        )
+    if profile.get("retentionTeacher") != RETENTION_TEACHER:
+        raise TrainingError(
+            "RETENTION_TEACHER_INVALID",
+            "Retention calibration must bind stand-v2.1 as the read-only teacher.",
+        )
+    if profile.get("trainingOverrides") != RETENTION_TRAINING_OVERRIDES:
+        raise TrainingError(
+            "RETENTION_TRAINING_OVERRIDES_INVALID",
+            "Retention calibration budget, optimizer, and topology are frozen.",
+        )
+    environment = profile.get("environment", {})
+    if environment.get("commandDistribution") != TRANSITION_COMMAND:
+        raise TrainingError(
+            "RETENTION_COMMAND_INVALID",
+            "Retention calibration must retain the accepted kitchen command range.",
+        )
+    if environment.get("transitionCurriculum") != RETENTION_CURRICULUM:
+        raise TrainingError(
+            "RETENTION_CURRICULUM_INVALID",
+            "Retention calibration must use 60% transition and 40% stand replay.",
+        )
+    reward = environment.get("reward", {})
+    expected_reward = {
+        "survival": 3.0,
+        "trackingLinear": 6.0,
+        "trackingYaw": 2.0,
+        "upright": 3.0,
+        "baseHeight": 2.0,
+        "pose": 0.5,
+        "verticalVelocityCost": 1.0,
+        "angularVelocityXYCost": 0.5,
+        "torqueCost": 0.000002,
+        "actionRateCost": 0.03,
+        **RETENTION_REWARD_ADDITIONS,
+    }
+    if reward != expected_reward:
+        raise TrainingError(
+            "RETENTION_REWARD_INVALID",
+            "Retention calibration must retain braking plus teacher distillation rewards.",
+        )
+    if (
+        environment.get("termination")
+        != {
+            "minimumBaseHeight": 0.5,
+            "minimumUprightCosine": 0.25,
+            "jointLimitToleranceRadians": 0.02,
+        }
+        or environment.get("targets") != {"baseHeight": 0.98}
+        or environment.get("sigmas")
+        != {
+            "tracking": 0.2,
+            "upright": 0.05,
+            "baseHeight": 0.02,
+            "pose": 0.2,
+            "settleTracking": 0.05,
+            "standDistillation": 0.05,
+        }
+        or environment.get("commandResampleSteps") != 200
+    ):
+        raise TrainingError(
+            "RETENTION_TIMING_INVALID",
+            "Retention timing, replay cycle, and distillation sigma are frozen.",
+        )
+    if profile.get("qualityGates") != TRANSITION_QUALITY_GATES:
+        raise TrainingError(
+            "RETENTION_QUALITY_GATES_INVALID",
+            "Retention quality gates must remain identical to the prior contract.",
+        )
+    runtime = profile.get("runtime", {})
+    if runtime.get("ccdIterations") != 50:
+        raise TrainingError(
+            "RETENTION_CCD_ITERATIONS_INVALID",
+            "Retention calibration must retain the passing CCD=50 candidate.",
+        )
+    if (
+        runtime.get("containerDigest")
+        != (runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1])
+    ):
+        raise TrainingError(
+            "RETENTION_CONTAINER_BINDING_MISMATCH",
+            "Retention containerImage and containerDigest must identify one OCI image.",
+        )
+    if runtime.get("packageLockDigest") != base_profile["runtime"]["packageLockDigest"]:
+        raise TrainingError(
+            "RETENTION_PACKAGE_LOCK_MISMATCH",
+            "Retention calibration must use the base Profile package lock.",
+        )
+    if profile.get("artifactPolicy") != {
+        "checkpoint": "research_only",
+        "distribution": "internal_only",
+    }:
+        raise TrainingError(
+            "RETENTION_ARTIFACT_POLICY_INVALID",
+            "Retention outputs must remain internal research artifacts.",
         )
 
 
@@ -370,6 +551,25 @@ def make_transition_training_profile(
     return effective
 
 
+def make_retention_training_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    validate_retention_profile(base_profile, profile)
+    effective = copy.deepcopy(base_profile)
+    effective["runtime"]["containerDigest"] = profile["runtime"]["containerDigest"]
+    effective["runtime"]["packageLockDigest"] = profile["runtime"]["packageLockDigest"]
+    effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
+    effective["training"].update(profile["trainingOverrides"])
+    effective["training"]["hyperparameterStatus"] = "research_retention_override"
+    effective["training"]["commandDistribution"] = copy.deepcopy(
+        profile["environment"]["commandDistribution"]
+    )
+    effective["trainingEnvironment"] = copy.deepcopy(profile["environment"])
+    effective["validation"] = copy.deepcopy(profile["qualityGates"])
+    return effective
+
+
 def run_midterm_calibration(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
@@ -377,16 +577,25 @@ def run_midterm_calibration(
     model_dir: Path,
     output_dir: Path,
     warm_start_archive: Path,
+    retention_teacher_archive: Path | None = None,
 ) -> dict[str, Any]:
     """Warm-start, train, evaluate, and retain a midterm checkpoint."""
 
     import numpy as np
+    from brax.training.agents.ppo import checkpoint as ppo_checkpoint
     from brax.training.agents.ppo import networks as ppo_networks
     from brax.training.agents.ppo import train as ppo
     from mujoco_playground import wrapper
 
     if profile.get("stage") == "loaded_track_settle_transition":
         effective = make_transition_training_profile(base_profile, profile)
+    elif profile.get("stage") == "loaded_track_settle_retention":
+        effective = make_retention_training_profile(base_profile, profile)
+        if retention_teacher_archive is None:
+            raise TrainingError(
+                "RETENTION_TEACHER_ARCHIVE_MISSING",
+                "Retention calibration requires the stand-v2.1 teacher archive.",
+            )
     else:
         effective = make_midterm_training_profile(base_profile, profile)
     static = static_preflight(base_profile, bundle_dir)
@@ -394,7 +603,6 @@ def run_midterm_calibration(
     runtime = runtime_preflight(effective, training_model)
     from .environment import make_environment
 
-    environment = make_environment(effective, training_model)
     output_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_dir = output_dir / "checkpoints"
     checkpoint_dir.mkdir()
@@ -429,6 +637,7 @@ def run_midterm_calibration(
         policy_obs_key="state",
         value_obs_key="state",
     )
+    teacher_initialization: dict[str, Any] | None = None
     with tempfile.TemporaryDirectory(prefix="worldspec-h1-warm-start-") as temporary:
         selected_step, initialization = materialize_warm_start(
             warm_start_archive,
@@ -436,9 +645,38 @@ def run_midterm_calibration(
             profile["warmStart"]["checkpointDigest"],
             profile["warmStart"]["checkpointSizeBytes"],
         )
+        teacher_policy = None
+        if retention_teacher_archive is not None:
+            teacher_spec = profile["retentionTeacher"]
+            teacher_step, teacher_initialization = materialize_warm_start(
+                retention_teacher_archive,
+                Path(temporary) / "stand-teacher",
+                teacher_spec["checkpointDigest"],
+                teacher_spec["checkpointSizeBytes"],
+            )
+            teacher_policy = ppo_checkpoint.load_policy(
+                teacher_step,
+                deterministic=True,
+            )
+            teacher_initialization = {
+                **teacher_initialization,
+                "mode": teacher_spec["mode"],
+                "scope": teacher_spec["scope"],
+            }
+        environment = make_environment(
+            effective,
+            training_model,
+            stand_teacher_policy=teacher_policy,
+        )
         observation_size = _flat_observation_size(environment.observation_size["state"])
         action_size = int(environment.action_size)
         validate_network_compatibility(initialization, observation_size, action_size)
+        if teacher_initialization is not None:
+            validate_network_compatibility(
+                teacher_initialization,
+                observation_size,
+                action_size,
+            )
         make_inference_fn, params, _ = ppo.train(
             environment=environment,
             progress_fn=progress,
@@ -492,15 +730,12 @@ def run_midterm_calibration(
         for record in traces:
             stream.write(json.dumps(record, sort_keys=True) + "\n")
     expected_tests = profile["qualityGates"]["requiredConsecutivePasses"] * 2
-    tests_gate = len(tests) == expected_tests and all(
-        item["result"] == "pass" for item in tests
-    )
+    tests_gate = len(tests) == expected_tests and all(item["result"] == "pass" for item in tests)
     episode_gate = (
-        float(final_mean_episode_length)
-        >= profile["qualityGates"]["minimumFinalMeanEpisodeLength"]
+        float(final_mean_episode_length) >= profile["qualityGates"]["minimumFinalMeanEpisodeLength"]
     )
     quality_passed = tests_gate and episode_gate
-    return {
+    result = {
         "baseTrainingProfileDigest": digest_json(base_profile),
         "midtermProfileDigest": digest_json(profile),
         "effectiveTrainingProfileDigest": digest_json(effective),
@@ -553,3 +788,6 @@ def run_midterm_calibration(
             "sizeBytes": (output_dir / "evaluation-traces.jsonl").stat().st_size,
         },
     }
+    if teacher_initialization is not None:
+        result["retentionTeacher"] = teacher_initialization
+    return result
