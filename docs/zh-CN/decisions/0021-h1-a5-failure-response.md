@@ -87,5 +87,9 @@ A5-R 固定以下变化：
 结构化证据见
 [`kitchen-task-preflight.darwin-arm64.passed.json`](../../../examples/h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json)。
 
-下一项放行证据仍必须来自锁定新镜像的 A800 单次门控。只有单次通过才自动继续
-其余四次；任何行为失败都停止，不启动 100M。
+## A800 结果
+
+锁定新镜像的 A800 单次门控已经执行，A5-R 的杯托、容量和 IK 预检均按预期
+通过，但右臂动态跟踪仍在 `reach_handle` 超时。因此其余四次没有执行，也没有
+启动 100M。控制边界的下一项选择见
+[ADR-0022](0022-h1-a5r-dynamic-control-failure.md)。

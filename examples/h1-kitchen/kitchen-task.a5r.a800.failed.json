@@ -1,0 +1,548 @@
+{
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "claimBoundary": {
+    "l3Claim": "forbidden",
+    "reasons": [
+      "right_gripper_mount_evidence_is_estimated_and_unvalidated",
+      "task_scene_is_self_authored_primitive_proxy_not_real_kitchen_evidence",
+      "randomized_robustness_not_evaluated"
+    ],
+    "status": "research_integration_only"
+  },
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:da616cd9b9fecaadaa7f0c17ef67fd68395fc465ff2e97dba5be4b6269b4def3",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "controller": {
+    "closedGripperCommand": 255.0,
+    "controlledJoints": [
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "damping": 0.04,
+    "ikIterations": 96,
+    "jointLimitMarginRadians": 0.05,
+    "maximumJointTargetStep": 0.04,
+    "mode": "frozen_locomotion_plus_jacobian_impedance",
+    "openGripperCommand": 0.0,
+    "phaseMaximumSteps": {
+      "close_cup": 40,
+      "close_handle": 30,
+      "final_hold": 25,
+      "insert_cup": 140,
+      "lift_cup": 120,
+      "pull_drawer": 120,
+      "push_drawer": 140,
+      "reach_cup": 120,
+      "reach_handle": 100,
+      "release_cup": 30,
+      "release_handle": 20,
+      "retract": 100,
+      "stand_ready": 25
+    },
+    "phaseMinimumSteps": {
+      "close_cup": 40,
+      "close_handle": 30,
+      "final_hold": 25,
+      "insert_cup": 5,
+      "lift_cup": 5,
+      "pull_drawer": 5,
+      "push_drawer": 5,
+      "reach_cup": 5,
+      "reach_handle": 5,
+      "release_cup": 30,
+      "release_handle": 20,
+      "retract": 5,
+      "stand_ready": 25
+    },
+    "positionToleranceMeters": 0.035,
+    "preflightToleranceMeters": 0.015
+  },
+  "controllerArtifact": {
+    "digest": "sha256:2ee892ca383033cf6ae65a64fbb3d29fe01c11fb339c7a0f8f06b67f84de866c",
+    "distribution": "internal_only",
+    "path": "kitchen-task-controller.json",
+    "sizeBytes": 3967
+  },
+  "controllerStatus": "non_publishable",
+  "executionEvidence": "executed",
+  "formalTaskGate": "failed",
+  "generatedAt": "2026-07-29T17:47:32.529730Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "kitchen-task-report://worldspec/h1/a800-8a1702766a7d",
+  "imageSource": {
+    "commit": "f8e0bdca3b417b390b48c3397bce5de72a88590a",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "abnormalContactCount": 0,
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "clean": true,
+    "jointLimitViolationCount": 0,
+    "nonFiniteCount": 0
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "policies": {
+    "capture": {
+      "archiveDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+      "archiveSizeBytes": 6280278,
+      "networkConfig": {
+        "action_size": 10,
+        "network_factory_kwargs": {
+          "activation": "silu",
+          "distribution_type": "tanh_normal",
+          "init_noise_std": 1.0,
+          "mean_clip_scale": null,
+          "mean_kernel_init_fn": null,
+          "mean_kernel_init_kwargs": null,
+          "noise_std_type": "scalar",
+          "num_quantiles": 32,
+          "policy_hidden_layer_sizes": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "policy_network_kernel_init_fn": "lecun_uniform",
+          "policy_network_kernel_init_kwargs": null,
+          "policy_obs_key": "state",
+          "state_dependent_std": false,
+          "use_distributional_critic": false,
+          "value_hidden_layer_sizes": [
+            256,
+            256,
+            256,
+            256,
+            256
+          ],
+          "value_network_kernel_init_fn": "lecun_uniform",
+          "value_network_kernel_init_kwargs": null,
+          "value_obs_key": "state"
+        },
+        "normalize_observations": true,
+        "observation_size": {
+          "state": {
+            "dtype": "unserializable object: float32",
+            "shape": [
+              42
+            ]
+          }
+        }
+      },
+      "optimizerState": "reset",
+      "restored": {
+        "normalizer": true,
+        "optimizer": false,
+        "policy": true,
+        "value": true
+      },
+      "role": "motion_state_capture",
+      "selectedStep": 8601600
+    },
+    "motion": {
+      "archiveDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+      "archiveSizeBytes": 8838595,
+      "networkConfig": {
+        "action_size": 10,
+        "network_factory_kwargs": {
+          "activation": "silu",
+          "distribution_type": "tanh_normal",
+          "init_noise_std": 1.0,
+          "mean_clip_scale": null,
+          "mean_kernel_init_fn": null,
+          "mean_kernel_init_kwargs": null,
+          "noise_std_type": "scalar",
+          "num_quantiles": 32,
+          "policy_hidden_layer_sizes": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "policy_network_kernel_init_fn": "lecun_uniform",
+          "policy_network_kernel_init_kwargs": null,
+          "policy_obs_key": "state",
+          "state_dependent_std": false,
+          "use_distributional_critic": false,
+          "value_hidden_layer_sizes": [
+            256,
+            256,
+            256,
+            256,
+            256
+          ],
+          "value_network_kernel_init_fn": "lecun_uniform",
+          "value_network_kernel_init_kwargs": null,
+          "value_obs_key": "state"
+        },
+        "normalize_observations": true,
+        "observation_size": {
+          "state": {
+            "dtype": "unserializable object: float32",
+            "shape": [
+              42
+            ]
+          }
+        }
+      },
+      "optimizerState": "reset",
+      "restored": {
+        "normalizer": true,
+        "optimizer": false,
+        "policy": true,
+        "value": true
+      },
+      "role": "motion",
+      "selectedStep": 17203200
+    },
+    "stand": {
+      "archiveDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+      "archiveSizeBytes": 6280684,
+      "networkConfig": {
+        "action_size": 10,
+        "network_factory_kwargs": {
+          "activation": "silu",
+          "distribution_type": "tanh_normal",
+          "init_noise_std": 1.0,
+          "mean_clip_scale": null,
+          "mean_kernel_init_fn": null,
+          "mean_kernel_init_kwargs": null,
+          "noise_std_type": "scalar",
+          "num_quantiles": 32,
+          "policy_hidden_layer_sizes": [
+            128,
+            128,
+            128,
+            128
+          ],
+          "policy_network_kernel_init_fn": "lecun_uniform",
+          "policy_network_kernel_init_kwargs": null,
+          "policy_obs_key": "state",
+          "state_dependent_std": false,
+          "use_distributional_critic": false,
+          "value_hidden_layer_sizes": [
+            256,
+            256,
+            256,
+            256,
+            256
+          ],
+          "value_network_kernel_init_fn": "lecun_uniform",
+          "value_network_kernel_init_kwargs": null,
+          "value_obs_key": "state"
+        },
+        "normalize_observations": true,
+        "observation_size": {
+          "state": {
+            "dtype": "unserializable object: float32",
+            "shape": [
+              42
+            ]
+          }
+        }
+      },
+      "optimizerState": "reset",
+      "restored": {
+        "normalizer": true,
+        "optimizer": false,
+        "policy": true,
+        "value": true
+      },
+      "role": "zero_velocity_and_stand",
+      "selectedStep": 4505600
+    }
+  },
+  "probeDefinition": {
+    "commit": "8a1702766a7d278380680a6d92f5f548307e41a1",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:54553a4b7b16fc6ab73f99bc523f69a4de5ae7322e1e2804d3ceb8f4c2a04efc",
+    "commit": "8a1702766a7d278380680a6d92f5f548307e41a1",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "qualityAssessment": {
+    "fixedSceneFiveRunGate": false,
+    "singleRunGate": false,
+    "status": "failed",
+    "tests": [
+      {
+        "id": "test://worldspec/h1-kitchen/full-loop/1",
+        "metrics": {
+          "completedPhase": "reach_handle",
+          "cupAngularSpeed": 0.6387522220611572,
+          "cupInside": false,
+          "cupLinearSpeed": 0.015518966130912304,
+          "cupReleased": true,
+          "doneSeen": false,
+          "failedReason": "reach_handle_timeout",
+          "finalDrawerPosition": 0.0,
+          "forwardDisplacement": 1.403210997581482,
+          "ikMaximumResidualMeters": 0.013819379020445607,
+          "ikMinimumJointLimitMarginRadians": 0.30761869644109424,
+          "ikPreflightStatus": "passed",
+          "maximumDrawerOpening": 0.0,
+          "minimumBaseHeight": 0.9883298277854919,
+          "minimumUprightCosine": 0.9936822652816772,
+          "nonFiniteSamples": 0
+        },
+        "result": "fail"
+      }
+    ]
+  },
+  "reachabilityPreflight": [
+    {
+      "maximumResidualMeters": 0.013819379020445607,
+      "method": "fixed_base_four_joint_iterative_dls",
+      "minimumJointLimitMarginRadians": 0.30761869644109424,
+      "status": "passed",
+      "targets": [
+        {
+          "iterations": 15,
+          "jointLimitMarginRadians": 0.30761869644109424,
+          "phase": "stand_ready",
+          "residualMeters": 0.010420900573167495,
+          "status": "passed",
+          "target": [
+            1.72,
+            -0.21,
+            1.16
+          ]
+        },
+        {
+          "iterations": 7,
+          "jointLimitMarginRadians": 0.3903373524340688,
+          "phase": "reach_handle",
+          "residualMeters": 0.0004340082679553369,
+          "status": "passed",
+          "target": [
+            1.87,
+            -0.21,
+            1.075
+          ]
+        },
+        {
+          "iterations": 14,
+          "jointLimitMarginRadians": 0.48668380917234616,
+          "phase": "pull_drawer",
+          "residualMeters": 0.013819379020445607,
+          "status": "passed",
+          "target": [
+            1.63,
+            -0.21,
+            1.075
+          ]
+        },
+        {
+          "iterations": 20,
+          "jointLimitMarginRadians": 0.60712826214619,
+          "phase": "release_handle",
+          "residualMeters": 0.00027856078695930053,
+          "status": "passed",
+          "target": [
+            1.58,
+            -0.21,
+            1.12
+          ]
+        },
+        {
+          "iterations": 7,
+          "jointLimitMarginRadians": 0.3966275635169339,
+          "phase": "reach_cup",
+          "residualMeters": 0.00461422415561731,
+          "status": "passed",
+          "target": [
+            1.8799636363983154,
+            -0.20996659994125366,
+            1.1938813924789429
+          ]
+        },
+        {
+          "iterations": 15,
+          "jointLimitMarginRadians": 0.312321532697296,
+          "phase": "lift_cup",
+          "residualMeters": 0.010112919149485236,
+          "status": "passed",
+          "target": [
+            1.8,
+            -0.21,
+            1.27
+          ]
+        },
+        {
+          "iterations": 6,
+          "jointLimitMarginRadians": 0.3212044381476169,
+          "phase": "insert_cup",
+          "residualMeters": 0.00019001224033074867,
+          "status": "passed",
+          "target": [
+            1.78,
+            -0.21,
+            1.065
+          ]
+        },
+        {
+          "iterations": 26,
+          "jointLimitMarginRadians": 0.4878323674201963,
+          "phase": "retract",
+          "residualMeters": 0.004515792923795222,
+          "status": "passed",
+          "target": [
+            1.58,
+            -0.21,
+            1.22
+          ]
+        },
+        {
+          "iterations": 10,
+          "jointLimitMarginRadians": 0.43214805968905107,
+          "phase": "push_drawer",
+          "residualMeters": 0.0012411293128176146,
+          "status": "passed",
+          "target": [
+            1.91,
+            -0.21,
+            1.075
+          ]
+        },
+        {
+          "iterations": 15,
+          "jointLimitMarginRadians": 0.30761869644109424,
+          "phase": "final_hold",
+          "residualMeters": 0.010420900573167495,
+          "status": "passed",
+          "target": [
+            1.72,
+            -0.21,
+            1.16
+          ]
+        }
+      ]
+    }
+  ],
+  "reportVersion": "0.1.0",
+  "runtimeAcceptance": "research_integration",
+  "runtimePreflight": {
+    "ccdIterations": 50,
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scene": {
+    "cup": {
+      "initialCenter": [
+        1.88,
+        -0.21,
+        1.195
+      ],
+      "massKg": 0.18,
+      "proxy": "short_cylinder"
+    },
+    "distribution": "internal_only",
+    "drawer": {
+      "closedCenter": [
+        2.06,
+        -0.21,
+        1.02
+      ],
+      "closedThreshold": 0.03,
+      "openThreshold": 0.18,
+      "range": [
+        0.0,
+        0.24
+      ],
+      "slideAxis": [
+        -1.0,
+        0.0,
+        0.0
+      ]
+    },
+    "evidenceStatus": "generated",
+    "graspModel": "physical_contact_only",
+    "hiddenAttachment": false,
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v2",
+    "support": {
+      "center": [
+        1.88,
+        -0.21,
+        1.155
+      ],
+      "halfSize": [
+        0.1,
+        0.09,
+        0.015
+      ],
+      "type": "fixed_box"
+    }
+  },
+  "scope": "h1_fixed_kitchen_full_loop_probe",
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "completed",
+  "supervisorProfileDigest": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355",
+  "target": {
+    "actionSize": 10,
+    "derivedModelDigest": "sha256:e43323d01a65d22d937d6d908222db7e13d4f4ef432564f4b129d949d5d6b43b",
+    "observationSize": 42,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "taskProfileDigest": "sha256:a582f02f4c7a3cc1ad0d992eefaa73d9b9a5ff08cad73a46cf987f1179883a19",
+  "traceArtifact": {
+    "digest": "sha256:f96808416225d870a9859ecfc2002172d0ec2cd5c91a771e06b4898c1ebe907a",
+    "distribution": "internal_only",
+    "path": "evaluation-traces.jsonl",
+    "sizeBytes": 176886
+  }
+}

@@ -103,6 +103,10 @@ preflight:
 The structured evidence is
 [`kitchen-task-preflight.darwin-arm64.passed.json`](../../../examples/h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json).
 
-The next release gate remains one A800 run with the newly pinned image. Only a
-passing first run may proceed to the remaining four. Any behavioral failure
-stops the run and does not start 100M.
+## A800 result
+
+The one-run A800 gate with the newly pinned image has completed. The A5-R mug
+support, capacity, and IK preflight all behaved as intended, but right-arm
+dynamic tracking still timed out in `reach_handle`. The remaining four runs
+were not executed and 100M was not started. The next control-boundary choice
+is recorded in [ADR-0022](0022-h1-a5r-dynamic-control-failure.md).
