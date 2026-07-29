@@ -57,27 +57,36 @@ def upload_to_pod(
         )
     if chunk_size < 1 or retries < 1:
         raise ChunkUploadError("chunk size and retries must be positive")
-    truncate = run(
-        [
-            *command_prefix,
-            "exec",
-            pod,
-            "-c",
-            container,
-            "--",
-            "truncate",
-            "-s",
-            "0",
-            remote_path,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if truncate.returncode != 0:
+    truncate_command = [
+        *command_prefix,
+        "exec",
+        pod,
+        "-c",
+        container,
+        "--",
+        "truncate",
+        "-s",
+        "0",
+        remote_path,
+    ]
+    truncate_error = ""
+    for _ in range(retries):
+        truncate = run(
+            truncate_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if truncate.returncode == 0:
+            break
+        truncate_error = (
+            f"returncode={truncate.returncode} "
+            f"stderr={truncate.stderr.decode(errors='replace').strip()}"
+        )
+    else:
         raise ChunkUploadError(
-            "cannot initialize remote file: "
-            + truncate.stderr.decode(errors="replace").strip()
+            f"cannot initialize remote file after {retries} attempts: "
+            + truncate_error
         )
 
     chunk_count = (expected_size + chunk_size - 1) // chunk_size
@@ -133,28 +142,37 @@ def upload_to_pod(
                 f"{retries} attempts: {last_error}"
             )
 
-    verify = run(
-        [
-            *command_prefix,
-            "exec",
-            pod,
-            "-c",
-            container,
-            "--",
-            "sh",
-            "-ceu",
-            'printf "%s %s\\n" "$(stat -c %s "$1")" "$(sha256sum "$1" | cut -d " " -f 1)"',
-            "worldspec-upload-verify",
-            remote_path,
-        ],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        check=False,
-    )
-    if verify.returncode != 0:
+    verify_command = [
+        *command_prefix,
+        "exec",
+        pod,
+        "-c",
+        container,
+        "--",
+        "sh",
+        "-ceu",
+        'printf "%s %s\\n" "$(stat -c %s "$1")" "$(sha256sum "$1" | cut -d " " -f 1)"',
+        "worldspec-upload-verify",
+        remote_path,
+    ]
+    verify_error = ""
+    for _ in range(retries):
+        verify = run(
+            verify_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False,
+        )
+        if verify.returncode == 0:
+            break
+        verify_error = (
+            f"returncode={verify.returncode} "
+            f"stderr={verify.stderr.decode(errors='replace').strip()}"
+        )
+    else:
         raise ChunkUploadError(
-            "cannot verify remote file: "
-            + verify.stderr.decode(errors="replace").strip()
+            f"cannot verify remote file after {retries} attempts: "
+            + verify_error
         )
     try:
         remote_size_text, remote_digest = verify.stdout.decode().strip().split()

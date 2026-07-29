@@ -22,12 +22,16 @@ def test_chunk_upload_retries_and_verifies_identity(tmp_path: Path) -> None:
     source = tmp_path / "checkpoint.zip"
     source.write_bytes(payload)
     calls: dict[int, int] = {}
+    phase_calls = {"truncate": 0, "verify": 0}
 
     def fake_run(
         command: list[str],
         **kwargs: object,
     ) -> subprocess.CompletedProcess[bytes]:
         if "truncate" in command:
+            phase_calls["truncate"] += 1
+            if phase_calls["truncate"] == 1:
+                return subprocess.CompletedProcess(command, 1, b"", b"error: EOF")
             return subprocess.CompletedProcess(command, 0, b"", b"")
         if "worldspec-upload-chunk" in command:
             marker = command.index("worldspec-upload-chunk")
@@ -42,6 +46,9 @@ def test_chunk_upload_retries_and_verifies_identity(tmp_path: Path) -> None:
             assert declared_size == len(chunk)
             assert declared_digest == hashlib.sha256(chunk).hexdigest()
             return subprocess.CompletedProcess(command, 0, b"", b"")
+        phase_calls["verify"] += 1
+        if phase_calls["verify"] == 1:
+            return subprocess.CompletedProcess(command, 1, b"", b"temporary EOF")
         return subprocess.CompletedProcess(
             command,
             0,
@@ -62,6 +69,7 @@ def test_chunk_upload_retries_and_verifies_identity(tmp_path: Path) -> None:
 
     assert result["chunkCount"] == 3
     assert calls[1] == 2
+    assert phase_calls == {"truncate": 2, "verify": 2}
 
 
 def test_chunk_upload_rejects_wrong_local_digest(tmp_path: Path) -> None:
