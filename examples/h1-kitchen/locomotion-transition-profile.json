@@ -5,8 +5,8 @@
   "stage": "loaded_track_settle_transition",
   "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:962feb4a81136909df73882beb6fadc0f5929c458578d084bc8fb5a5e5aa6424",
-    "containerDigest": "sha256:962feb4a81136909df73882beb6fadc0f5929c458578d084bc8fb5a5e5aa6424",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:889511061b5ae1b88382051f8bd2419197de5198ab397d8719cc391c56662c5c",
+    "containerDigest": "sha256:889511061b5ae1b88382051f8bd2419197de5198ab397d8719cc391c56662c5c",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50
   },
