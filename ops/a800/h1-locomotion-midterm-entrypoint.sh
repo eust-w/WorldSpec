@@ -110,7 +110,10 @@ python - \
   "${SOURCE_DIR}" \
   "${WORLD_SPEC_RETENTION_TEACHER_REPORT_FILENAME:-}" \
   "${INPUT_DIR}/stand-teacher-report.json" \
-  "${INPUT_DIR}/stand-teacher-checkpoint.zip" <<'PY'
+  "${INPUT_DIR}/stand-teacher-checkpoint.zip" \
+  "${WORLD_SPEC_SUPERVISOR_STAND_REPORT_FILENAME:-}" \
+  "${INPUT_DIR}/supervisor-stand-report.json" \
+  "${INPUT_DIR}/supervisor-stand-checkpoint.zip" <<'PY'
 import hashlib
 import json
 import pathlib
@@ -125,7 +128,11 @@ checked_report = checked_report_path.read_bytes()
 input_report = input_report_path.read_bytes()
 if input_report != checked_report:
     raise SystemExit("uploaded warm-start report differs from the repository-bound report")
-source = profile["motionPolicy"] if stage == "dual_policy_switch_probe" else profile["warmStart"]
+source = (
+    profile["motionPolicy"]
+    if stage in {"dual_policy_switch_probe", "phase_aware_supervisor_probe"}
+    else profile["warmStart"]
+)
 report_digest = f"sha256:{hashlib.sha256(input_report).hexdigest()}"
 checkpoint_payload = checkpoint_path.read_bytes()
 checkpoint_digest = f"sha256:{hashlib.sha256(checkpoint_payload).hexdigest()}"
@@ -167,14 +174,19 @@ if stage in {
     "loaded_track_settle_retention",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
+    "phase_aware_supervisor_probe",
 }:
     teacher = (
         profile["standPolicy"]
         if stage == "dual_policy_switch_probe"
         else (
-            profile["motionTeacher"]
-            if stage == "loaded_track_settle_capture"
-            else profile["retentionTeacher"]
+            profile["capturePolicy"]
+            if stage == "phase_aware_supervisor_probe"
+            else (
+                profile["motionTeacher"]
+                if stage == "loaded_track_settle_capture"
+                else profile["retentionTeacher"]
+            )
         )
     )
     teacher_filename = sys.argv[8]
@@ -221,8 +233,48 @@ if stage in {
             != "loaded_track_settle_transition"
         ):
             raise SystemExit("motion teacher is not the frozen transition-v2 evidence")
+    elif teacher["sourceStage"] == "loaded-track-settle-capture-v1-passed":
+        if (
+            teacher_report["qualityAssessment"]["status"] != "passed"
+            or teacher_report["formalCaptureGate"] != "passed"
+            or teacher_report["policyStatus"] != "capture_candidate"
+        ):
+            raise SystemExit("capture policy is not the frozen passing A3 evidence")
     else:
         raise SystemExit("unsupported auxiliary policy source stage")
+if stage == "phase_aware_supervisor_probe":
+    stand = profile["standPolicy"]
+    stand_filename = sys.argv[11]
+    if not stand_filename:
+        raise SystemExit("supervisor stand report filename is missing")
+    checked_stand_path = (
+        pathlib.Path(sys.argv[7])
+        / "examples"
+        / "h1-kitchen"
+        / stand_filename
+    )
+    input_stand_report_path = pathlib.Path(sys.argv[12])
+    stand_checkpoint_path = pathlib.Path(sys.argv[13])
+    checked_stand = checked_stand_path.read_bytes()
+    input_stand_report = input_stand_report_path.read_bytes()
+    if input_stand_report != checked_stand:
+        raise SystemExit("uploaded supervisor stand report differs from repository evidence")
+    stand_report_digest = f"sha256:{hashlib.sha256(input_stand_report).hexdigest()}"
+    stand_checkpoint = stand_checkpoint_path.read_bytes()
+    stand_checkpoint_digest = f"sha256:{hashlib.sha256(stand_checkpoint).hexdigest()}"
+    if stand_report_digest != stand["sourceReportDigest"]:
+        raise SystemExit("supervisor stand report digest mismatch")
+    if (
+        stand_checkpoint_digest != stand["checkpointDigest"]
+        or len(stand_checkpoint) != stand["checkpointSizeBytes"]
+    ):
+        raise SystemExit("supervisor stand checkpoint identity mismatch")
+    stand_report = json.loads(input_stand_report)
+    if (
+        stand_report["qualityAssessment"]["status"] != "passed"
+        or stand_report["researchCheckpoint"]["digest"] != stand_checkpoint_digest
+    ):
+        raise SystemExit("supervisor stand policy lineage is not passing")
 PY
 
 stage installed_runtime
@@ -282,6 +334,7 @@ from worldspec_h1_training.contract import read_json
 from worldspec_h1_training.capture import run_capture_calibration
 from worldspec_h1_training.dual_policy import run_dual_policy_probe
 from worldspec_h1_training.midterm import run_midterm_calibration
+from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
 
 source_dir = Path(os.environ["SOURCE_DIR"])
 result_dir = Path(os.environ["RESULT_DIR"])
@@ -314,6 +367,17 @@ elif midterm_profile["stage"] == "loaded_track_settle_capture":
         artifact_dir,
         Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
         Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+    )
+elif midterm_profile["stage"] == "phase_aware_supervisor_probe":
+    result = run_phase_aware_supervisor_probe(
+        base_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "supervisor-stand-checkpoint.zip",
     )
 else:
     result = run_midterm_calibration(
@@ -438,6 +502,33 @@ elif midterm_profile["stage"] == "loaded_track_settle_capture":
     }
     print(
         "WORLDSPEC_A800_CAPTURE_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "phase_aware_supervisor_probe":
+    report = {
+        "id": (
+            "supervisor-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_phase_aware_supervisor_probe",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_supervisor",
+        "controllerStatus": (
+            "supervisor_candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalSupervisorGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_SUPERVISOR_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 else:

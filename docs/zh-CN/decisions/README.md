@@ -26,5 +26,6 @@ last-verified: 2026-07-29
 - [ADR-0016 H1 站立回放与教师动作蒸馏](0016-h1-stand-retention-distillation.md)
 - [ADR-0017 H1 行走与站立双策略 Supervisor](0017-h1-dual-policy-supervisor.md)
 - [ADR-0018 H1 运动状态 Capture Policy](0018-h1-motion-state-capture-policy.md)
+- [ADR-0019 H1 相位感知三策略 Supervisor](0019-h1-phase-aware-supervisor.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

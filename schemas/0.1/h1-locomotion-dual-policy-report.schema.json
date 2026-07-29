@@ -110,7 +110,9 @@
           "additionalProperties": false
         },
         "optimizerState": { "const": "reset" },
-        "role": { "enum": ["motion", "zero_velocity_and_stand"] }
+        "role": {
+          "enum": ["motion", "motion_state_capture", "zero_velocity_and_stand"]
+        }
       },
       "additionalProperties": false
     },

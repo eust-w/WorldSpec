@@ -190,3 +190,18 @@ that report is `passed` and clean. It warm-starts from the frozen failed
 midterm checkpoint, uses a 150-step move plus 50-step zero-command curriculum,
 and retains every original quality gate. Neither command retries or adjusts
 parameters automatically.
+
+After the passing A3 Capture Policy is available, run the evaluation-only A4
+phase-aware supervisor probe:
+
+```bash
+./scripts/run_a800_h1_phase_aware_supervisor_probe.sh
+```
+
+The probe loads the frozen transition-v2 motion checkpoint, the passing A3
+capture checkpoint, and the passing `stand-v2.1` checkpoint. It allows the
+Capture Policy at most 40 control steps and requires five consecutive samples
+below the `0.12 m/s` linear and `0.20 rad/s` angular stability thresholds
+before a five-step Capture-to-Stand blend. A passing walk test must contain at
+least ten pure Stand steps. The job performs no PPO update and never starts
+the 100M run; even a pass is only an internal `supervisor_candidate`, not L3.

@@ -44,5 +44,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-030 | A1 uses 60% walk/settle, 40% stand replay, and stand-v2.1 teacher-action distillation; run a small A800 calibration without relaxing gates | Accepted Design | [ADR-0016](decisions/0016-h1-stand-retention-distillation.md) |
 | D-031 | A2 separates motion and zero-velocity/stand into two frozen policies with a deterministic five-step linear-action-blend supervisor; first run a zero-training A800 probe | Accepted Design | [ADR-0017](decisions/0017-h1-dual-policy-supervisor.md) |
 | D-032 | A3 samples real handoff states from the frozen motion policy and trains a separate capture policy; the settle gate measures the final 0.2-second static hold, and failure triggers neither automatic tuning nor a 100M run | Accepted Design | [ADR-0018](decisions/0018-h1-motion-state-capture-policy.md) |
+| D-033 | A4 connects frozen Motion, Capture, and Stand policies through a consecutive velocity-stability gate; Capture is capped at 40 steps, handoff blends for five steps, and pure Stand must last at least ten steps; the probe does not start 100M | Accepted Design | [ADR-0019](decisions/0019-h1-phase-aware-supervisor.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

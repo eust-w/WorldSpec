@@ -16,9 +16,12 @@ STAND_REPORT="${WORLD_SPEC_WARM_START_REPORT:-${ROOT_DIR}/examples/h1-kitchen/lo
 STAND_CHECKPOINT="${WORLD_SPEC_WARM_START_CHECKPOINT:-${WORLD_SPEC_STAND_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-calibration-4mklr/calibration-checkpoint.zip}}"
 RETENTION_TEACHER_REPORT="${WORLD_SPEC_RETENTION_TEACHER_REPORT:-}"
 RETENTION_TEACHER_CHECKPOINT="${WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT:-}"
+SUPERVISOR_STAND_REPORT="${WORLD_SPEC_SUPERVISOR_STAND_REPORT:-}"
+SUPERVISOR_STAND_CHECKPOINT="${WORLD_SPEC_SUPERVISOR_STAND_CHECKPOINT:-}"
 MIDTERM_PROFILE_FILENAME="$(basename "${MIDTERM_PROFILE}")"
 WARM_START_REPORT_FILENAME="$(basename "${STAND_REPORT}")"
 RETENTION_TEACHER_REPORT_FILENAME=""
+SUPERVISOR_STAND_REPORT_FILENAME=""
 RUNTIME_IMAGE="${WORLD_SPEC_H1_RUNTIME_IMAGE:-}"
 IMAGE_SOURCE_REVISION="${WORLD_SPEC_IMAGE_SOURCE_REVISION:-}"
 PACKAGE_LOCK_DIGEST="${WORLD_SPEC_PACKAGE_LOCK_DIGEST:-sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41}"
@@ -70,10 +73,16 @@ elif [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_CAPTURE_RESULT=
   REPORT_SCHEMA=h1-locomotion-capture-report.schema.json
   GATE_FIELD=formalCaptureGate
+elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+  REPORT_FILENAME=supervisor-report.json
+  REPORT_MARKER=WORLDSPEC_A800_SUPERVISOR_RESULT=
+  REPORT_SCHEMA=h1-locomotion-supervisor-report.schema.json
+  GATE_FIELD=formalSupervisorGate
 fi
 if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
-  [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
+  [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
+  [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
   for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: retention teacher input is not readable: %s\n' \
@@ -82,6 +91,16 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
     fi
   done
   RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
+fi
+if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+  for required in "${SUPERVISOR_STAND_REPORT}" "${SUPERVISOR_STAND_CHECKPOINT}"; do
+    if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
+      printf 'ERROR: supervisor stand input is not readable: %s\n' \
+        "${required:-unset}" >&2
+      exit 2
+    fi
+  done
+  SUPERVISOR_STAND_REPORT_FILENAME="$(basename "${SUPERVISOR_STAND_REPORT}")"
 fi
 if [[ -z "${RUNTIME_IMAGE}" ]]; then
   RUNTIME_IMAGE="${profile_image}"
@@ -122,7 +141,9 @@ python3 - \
   "${STAND_REPORT}" \
   "${STAND_CHECKPOINT}" \
   "${RETENTION_TEACHER_REPORT}" \
-  "${RETENTION_TEACHER_CHECKPOINT}" <<'PY'
+  "${RETENTION_TEACHER_CHECKPOINT}" \
+  "${SUPERVISOR_STAND_REPORT}" \
+  "${SUPERVISOR_STAND_CHECKPOINT}" <<'PY'
 import hashlib
 import json
 import pathlib
@@ -133,7 +154,7 @@ report_payload = pathlib.Path(sys.argv[2]).read_bytes()
 checkpoint_payload = pathlib.Path(sys.argv[3]).read_bytes()
 source = (
     profile["motionPolicy"]
-    if profile["stage"] == "dual_policy_switch_probe"
+    if profile["stage"] in {"dual_policy_switch_probe", "phase_aware_supervisor_probe"}
     else profile["warmStart"]
 )
 if f"sha256:{hashlib.sha256(report_payload).hexdigest()}" != source["sourceReportDigest"]:
@@ -148,6 +169,7 @@ if profile["stage"] in {
     "loaded_track_settle_retention",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
+    "phase_aware_supervisor_probe",
 }:
     teacher_report_payload = pathlib.Path(sys.argv[4]).read_bytes()
     teacher_checkpoint_payload = pathlib.Path(sys.argv[5]).read_bytes()
@@ -155,9 +177,13 @@ if profile["stage"] in {
         profile["standPolicy"]
         if profile["stage"] == "dual_policy_switch_probe"
         else (
-            profile["motionTeacher"]
-            if profile["stage"] == "loaded_track_settle_capture"
-            else profile["retentionTeacher"]
+            profile["capturePolicy"]
+            if profile["stage"] == "phase_aware_supervisor_probe"
+            else (
+                profile["motionTeacher"]
+                if profile["stage"] == "loaded_track_settle_capture"
+                else profile["retentionTeacher"]
+            )
         )
     )
     if (
@@ -171,6 +197,21 @@ if profile["stage"] in {
         or len(teacher_checkpoint_payload) != teacher["checkpointSizeBytes"]
     ):
         raise SystemExit("retention teacher checkpoint identity mismatch")
+if profile["stage"] == "phase_aware_supervisor_probe":
+    stand_report_payload = pathlib.Path(sys.argv[6]).read_bytes()
+    stand_checkpoint_payload = pathlib.Path(sys.argv[7]).read_bytes()
+    stand = profile["standPolicy"]
+    if (
+        f"sha256:{hashlib.sha256(stand_report_payload).hexdigest()}"
+        != stand["sourceReportDigest"]
+    ):
+        raise SystemExit("supervisor stand report digest mismatch")
+    if (
+        f"sha256:{hashlib.sha256(stand_checkpoint_payload).hexdigest()}"
+        != stand["checkpointDigest"]
+        or len(stand_checkpoint_payload) != stand["checkpointSizeBytes"]
+    ):
+        raise SystemExit("supervisor stand checkpoint identity mismatch")
 PY
 
 kubectl_cmd=(kubectl --kubeconfig "${KUBECONFIG_PATH}" -n "${K8S_NAMESPACE}")
@@ -281,6 +322,7 @@ sed \
   -e "s|__MIDTERM_PROFILE_FILENAME__|${MIDTERM_PROFILE_FILENAME}|g" \
   -e "s|__WARM_START_REPORT_FILENAME__|${WARM_START_REPORT_FILENAME}|g" \
   -e "s|__RETENTION_TEACHER_REPORT_FILENAME__|${RETENTION_TEACHER_REPORT_FILENAME}|g" \
+  -e "s|__SUPERVISOR_STAND_REPORT_FILENAME__|${SUPERVISOR_STAND_REPORT_FILENAME}|g" \
   -e "s|__SCRIPT_CONFIGMAP__|${script_configmap}|g" \
   -e "s|__SOURCE_CONFIGMAP__|${source_configmap}|g" \
   "${JOB_TEMPLATE}" >"${temporary_manifest}"
@@ -344,7 +386,8 @@ PY
         --expected-digest "${checkpoint_digest}"
       if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
-        [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
+        [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
+        [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
         read -r teacher_report_size teacher_report_digest \
           teacher_checkpoint_size teacher_checkpoint_digest < <(
           python3 - \
@@ -378,6 +421,41 @@ PY
           --remote-path /scratch/inputs/stand-teacher-checkpoint.zip \
           --expected-size "${teacher_checkpoint_size}" \
           --expected-digest "${teacher_checkpoint_digest}"
+      fi
+      if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+        read -r supervisor_stand_report_size supervisor_stand_report_digest \
+          supervisor_stand_checkpoint_size supervisor_stand_checkpoint_digest < <(
+          python3 - \
+            "${SUPERVISOR_STAND_REPORT}" \
+            "${SUPERVISOR_STAND_CHECKPOINT}" <<'PY'
+import hashlib
+import pathlib
+import sys
+values = []
+for value in sys.argv[1:]:
+    payload = pathlib.Path(value).read_bytes()
+    values.extend((str(len(payload)), f"sha256:{hashlib.sha256(payload).hexdigest()}"))
+print(*values)
+PY
+        )
+        python3 "${CHUNK_UPLOAD}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --source "${SUPERVISOR_STAND_REPORT}" \
+          --remote-path /scratch/inputs/supervisor-stand-report.json \
+          --expected-size "${supervisor_stand_report_size}" \
+          --expected-digest "${supervisor_stand_report_digest}"
+        python3 "${CHUNK_UPLOAD}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --source "${SUPERVISOR_STAND_CHECKPOINT}" \
+          --remote-path /scratch/inputs/supervisor-stand-checkpoint.zip \
+          --expected-size "${supervisor_stand_checkpoint_size}" \
+          --expected-digest "${supervisor_stand_checkpoint_digest}"
       fi
       "${kubectl_cmd[@]}" exec "${pod_name}" -c midterm -- \
         touch /scratch/inputs/input-ready
@@ -439,12 +517,19 @@ elif gate_field == "formalCaptureGate":
     report["policyStatus"] = (
         "capture_candidate" if report[gate_field] == "passed" else "non_publishable"
     )
+elif gate_field == "formalSupervisorGate":
+    report["controllerStatus"] = (
+        "supervisor_candidate"
+        if report[gate_field] == "passed"
+        else "non_publishable"
+    )
 report_path.write_text(
     json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
 )
 PY
-      if [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
+      if [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
+        [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
         read -r controller_size controller_digest trace_size trace_digest < <(
           python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
 import json
@@ -461,8 +546,20 @@ PY
           --namespace "${K8S_NAMESPACE}" \
           --pod "${pod_name}" \
           --container midterm \
-          --remote-path /scratch/results/artifacts/dual-policy-controller.json \
-          --destination "${local_result_dir}/dual-policy-controller.json" \
+          --remote-path "$(
+            if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+              printf '/scratch/results/artifacts/phase-aware-supervisor.json'
+            else
+              printf '/scratch/results/artifacts/dual-policy-controller.json'
+            fi
+          )" \
+          --destination "$(
+            if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+              printf '%s/phase-aware-supervisor.json' "${local_result_dir}"
+            else
+              printf '%s/dual-policy-controller.json' "${local_result_dir}"
+            fi
+          )" \
           --expected-size "${controller_size}" \
           --expected-digest "${controller_digest}"
       else

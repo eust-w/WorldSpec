@@ -28,5 +28,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0016 H1 stand replay and teacher-action distillation](0016-h1-stand-retention-distillation.md)
 - [ADR-0017 H1 motion/stand dual-policy supervisor](0017-h1-dual-policy-supervisor.md)
 - [ADR-0018 H1 motion-state capture policy](0018-h1-motion-state-capture-policy.md)
+- [ADR-0019 H1 phase-aware three-policy supervisor](0019-h1-phase-aware-supervisor.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

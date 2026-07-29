@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-supervisor-profile.schema.json",
+  "title": "WorldSpec H1 Phase-Aware Supervisor Probe Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "baseTrainingProfileDigest",
+    "motionPolicy",
+    "capturePolicy",
+    "standPolicy",
+    "supervisor",
+    "qualityGates",
+    "runtime",
+    "artifactPolicy"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "stage": { "const": "phase_aware_supervisor_probe" },
+    "baseTrainingProfileDigest": {
+      "const": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6"
+    },
+    "motionPolicy": {
+      "allOf": [
+        { "$ref": "#/$defs/policySource" },
+        {
+          "properties": {
+            "sourceStage": { "const": "loaded-track-settle-transition-v2-failed" },
+            "selectedRole": { "const": "motion" }
+          }
+        }
+      ]
+    },
+    "capturePolicy": {
+      "allOf": [
+        { "$ref": "#/$defs/policySource" },
+        {
+          "properties": {
+            "sourceStage": { "const": "loaded-track-settle-capture-v1-passed" },
+            "selectedRole": { "const": "motion_state_capture" }
+          }
+        }
+      ]
+    },
+    "standPolicy": {
+      "allOf": [
+        { "$ref": "#/$defs/policySource" },
+        {
+          "properties": {
+            "sourceStage": { "const": "stand-v2.1" },
+            "selectedRole": { "const": "zero_velocity_and_stand" }
+          }
+        }
+      ]
+    },
+    "supervisor": { "const": {
+      "mode": "phase_aware_velocity_stability_gate",
+      "motionCommandThreshold": 0.05,
+      "moveSteps": 150,
+      "settleSteps": 50,
+      "captureGate": {
+        "minimumSteps": 20,
+        "maximumSteps": 40,
+        "maximumLinearSpeed": 0.12,
+        "maximumAngularSpeed": 0.2,
+        "requiredConsecutiveStableSteps": 5
+      },
+      "handoff": {
+        "mode": "linear_action_blend",
+        "blendSteps": 5,
+        "durationSeconds": 0.1,
+        "observationCommand": [0.0, 0.0, 0.0]
+      },
+      "minimumStandDwellSteps": 10,
+      "standRegressionPolicy": "standPolicy"
+    } },
+    "qualityGates": { "const": {
+      "nominalDurationSeconds": 4.0,
+      "moveDurationSeconds": 3.0,
+      "settleWindowSeconds": 1.0,
+      "settleMeasurementWindowSeconds": 0.2,
+      "requiredConsecutivePasses": 5,
+      "minimumForwardDisplacement": 1.0,
+      "maximumForwardDisplacement": 2.2,
+      "maximumLateralDrift": 0.2,
+      "maximumTrackingRmse": 0.25,
+      "minimumBaseHeight": 0.8,
+      "minimumUprightCosine": 0.8,
+      "maximumSettleLinearSpeed": 0.2,
+      "maximumSettleAngularSpeed": 0.4,
+      "maximumStandPlanarDrift": 0.2,
+      "maximumNonFiniteSamples": 0,
+      "minimumStandDwellSteps": 10
+    } },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations",
+        "evaluationEnvironments"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": {
+          "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+        },
+        "ccdIterations": { "const": 50 },
+        "evaluationEnvironments": { "const": 1 }
+      },
+      "additionalProperties": false
+    },
+    "artifactPolicy": {
+      "const": {
+        "controller": "research_only",
+        "distribution": "internal_only"
+      }
+    }
+  },
+  "$defs": {
+    "policySource": {
+      "type": "object",
+      "required": [
+        "sourceStage",
+        "sourceReportDigest",
+        "checkpointDigest",
+        "checkpointSizeBytes",
+        "distribution",
+        "selectedRole"
+      ],
+      "properties": {
+        "sourceStage": { "type": "string", "minLength": 1 },
+        "sourceReportDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "checkpointDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "checkpointSizeBytes": { "type": "integer", "minimum": 1 },
+        "distribution": { "const": "internal_only" },
+        "selectedRole": {
+          "enum": ["motion", "motion_state_capture", "zero_velocity_and_stand"]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
