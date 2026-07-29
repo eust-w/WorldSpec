@@ -484,7 +484,8 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     wrapper = (
         ROOT / "scripts" / "run_a800_h1_whole_body_diagnostic_replay.sh"
     ).read_text(encoding="utf-8")
-    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE must name" in wrapper
+    assert "whole-body-diagnostic-replay-profile.json" in wrapper
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE must name a readable" in wrapper
     assert "whole-body-control-profile.json" in wrapper
     assert "worldspec-h1-midterm-d5z6c/whole-body-control-report.json" in wrapper
     assert "worldspec-h1-midterm-d5z6c/evaluation-traces.jsonl" in wrapper

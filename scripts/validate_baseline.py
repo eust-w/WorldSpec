@@ -235,6 +235,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/whole-body-control.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-control.a800.failed-summary.json": "h1-whole-body-control-failure-summary.schema.json",
         "h1-kitchen/whole-body-diagnostic-replay-profile.template.json": "h1-whole-body-diagnostic-replay-profile.schema.json",
+        "h1-kitchen/whole-body-diagnostic-replay-profile.json": "h1-whole-body-diagnostic-replay-profile.schema.json",
         "h1-kitchen/whole-body-diagnostic-trace-record.example.json": "h1-whole-body-diagnostic-trace-record.schema.json",
         "h1-kitchen/whole-body-equivalence-report.example.json": "h1-whole-body-equivalence-report.schema.json",
         "h1-kitchen/whole-body-diagnostic-replay-report.example.json": "h1-whole-body-diagnostic-replay-report.schema.json",

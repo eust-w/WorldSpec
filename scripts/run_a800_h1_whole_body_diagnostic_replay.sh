@@ -2,9 +2,11 @@
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE="${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE:-${ROOT_DIR}/examples/h1-kitchen/whole-body-diagnostic-replay-profile.json}"
+export WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE
 
-if [[ -z "${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE:-}" ]]; then
-  echo "ERROR: WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE must name the C2 replay-lock Profile" >&2
+if [[ ! -r "${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE}" ]]; then
+  echo "ERROR: WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE must name a readable C2 replay-lock Profile" >&2
   exit 2
 fi
 
