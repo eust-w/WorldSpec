@@ -240,6 +240,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/training-image-build.a5.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/training-image-build.a5-seed-fix.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/training-image-build.a5r.a800.passed.json": "h1-image-build-report.schema.json",
+        "h1-kitchen/whole-body-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/kitchen-task.a800.failed.json": "h1-kitchen-task-report.schema.json",
         "h1-kitchen/kitchen-task.a5r.a800.failed.json": "h1-kitchen-task-report.schema.json",
         "h1-kitchen/transition-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
