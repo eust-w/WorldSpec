@@ -13,6 +13,41 @@ SOURCE_COMMIT = "124a73fa3303f75a62f8fe04d329b829ed0ebdfb"
 SOURCE_LOCK_DIGEST = "sha256:af7152dbf8334361cd06ba5c27367dd0cee14c5500f3218cae7bfa0497cbb3aa"
 REFERENCE_ENVIRONMENT = "H1JoystickGaitTracking"
 TARGET_ENVIRONMENT = "worldspec_h1_loaded_velocity_v1"
+TASK_COMMAND_DISTRIBUTION = {
+    "linearVelocityX": [0.0, 0.8],
+    "linearVelocityY": [-0.15, 0.15],
+    "angularVelocityYaw": [-0.35, 0.35],
+    "zeroCommandProbability": 0.2,
+}
+TASK_REWARD = {
+    "survival": 3.0,
+    "trackingLinear": 6.0,
+    "trackingYaw": 2.0,
+    "upright": 3.0,
+    "baseHeight": 2.0,
+    "pose": 0.5,
+    "verticalVelocityCost": 1.0,
+    "angularVelocityXYCost": 0.5,
+    "torqueCost": 0.000002,
+    "actionRateCost": 0.03,
+}
+TASK_VALIDATION = {
+    "nominalDurationSeconds": 4.0,
+    "moveDurationSeconds": 3.0,
+    "settleWindowSeconds": 1.0,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "maximumLateralDrift": 0.2,
+    "maximumTrackingRmse": 0.25,
+    "maximumSettleLinearSpeed": 0.2,
+    "maximumSettleAngularSpeed": 0.4,
+    "maximumStandPlanarDrift": 0.2,
+    "maximumJointLimitViolations": 0,
+    "maximumNonFiniteSamples": 0,
+    "requiredConsecutivePasses": 5,
+}
 
 
 def canonical_bytes(value: object) -> bytes:
@@ -147,7 +182,67 @@ def validate_profile(profile: dict[str, Any]) -> None:
             "TRAINING_PRECISION_INVALID",
             "Ampere reference training requires highest JAX matmul precision.",
         )
+    if training.get("hyperparameterStatus") == "calibrated_task_profile":
+        expected_training = {
+            "numTimesteps": 100_000_000,
+            "numEnvs": 8192,
+            "numEvals": 10,
+            "episodeLength": 1000,
+            "unrollLength": 20,
+            "numMinibatches": 32,
+            "numUpdatesPerBatch": 4,
+            "batchSize": 256,
+            "learningRate": 0.0003,
+            "discounting": 0.97,
+            "entropyCost": 0.01,
+            "commandDistribution": TASK_COMMAND_DISTRIBUTION,
+        }
+        actual_training = {key: training.get(key) for key in expected_training}
+        if actual_training != expected_training:
+            raise TrainingError(
+                "TRAINING_TASK_PROFILE_INVALID",
+                "The formal task-training budget and command range are frozen.",
+                {"expected": expected_training, "actual": actual_training},
+            )
+        initialization = profile.get("initialization", {})
+        if (
+            initialization.get("method") != "warm_start"
+            or initialization.get("requiredReportStatus") != "passed"
+            or initialization.get("requiredCheckpointDistribution") != "internal_only"
+            or initialization.get("restore")
+            != {"normalizer": True, "policy": True, "value": True}
+            or initialization.get("optimizerState") != "reset"
+        ):
+            raise TrainingError(
+                "TRAINING_INITIALIZATION_INVALID",
+                "Formal training must warm-start policy/value/normalizer and reset optimizer.",
+            )
+        environment = profile.get("trainingEnvironment", {})
+        if (
+            environment.get("commandDistribution") != TASK_COMMAND_DISTRIBUTION
+            or environment.get("reward") != TASK_REWARD
+        ):
+            raise TrainingError(
+                "TRAINING_ENVIRONMENT_INVALID",
+                "Formal training must retain the approved kitchen command and reward contract.",
+            )
+        if profile.get("curriculum", {}).get("randomizationPolicy") != (
+            "disabled_until_nominal_pass"
+        ):
+            raise TrainingError(
+                "TRAINING_RANDOMIZATION_FORBIDDEN",
+                "Domain randomization is disabled for the formal 100M run.",
+            )
     validation = profile.get("validation", {})
+    if (
+        training.get("hyperparameterStatus") == "calibrated_task_profile"
+        and validation != TASK_VALIDATION
+    ):
+        raise TrainingError(
+            "TRAINING_TASK_VALIDATION_INVALID",
+            "The formal 100M quality gates must match the approved ten-test suite.",
+            {"expected": TASK_VALIDATION, "actual": validation},
+        )
     duration = validation.get("nominalDurationSeconds")
     settle_window = validation.get("settleWindowSeconds")
     settle_linear = validation.get("maximumSettleLinearSpeed")

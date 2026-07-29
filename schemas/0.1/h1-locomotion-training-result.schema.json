@@ -22,6 +22,7 @@
     "targetBundleDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "status": { "enum": ["succeeded", "failed", "blocked"] },
     "executionEvidence": { "enum": ["executed", "not_executed"] },
+    "policyStatus": { "enum": ["policy_candidate", "non_publishable"] },
     "runtime": {
       "type": "object",
       "required": [
@@ -61,6 +62,7 @@
       "type": "array",
       "items": { "$ref": "common.schema.json#/$defs/diagnostic" }
     },
+    "executionContext": { "type": "object" },
     "generatedAt": { "type": "string", "format": "date-time" }
   },
   "allOf": [
@@ -115,9 +117,44 @@
               }
             ]
           },
-          "tests": { "minItems": 5, "maxItems": 5 }
+          "tests": {
+            "minItems": 5,
+            "maxItems": 10,
+            "items": {
+              "properties": { "result": { "const": "pass" } }
+            }
+          },
+          "policyStatus": { "const": "policy_candidate" }
         },
-        "required": ["runtime"]
+        "required": ["runtime", "policyStatus"]
+      }
+    },
+    {
+      "if": {
+        "properties": { "executionEvidence": { "const": "executed" } },
+        "required": ["executionEvidence"]
+      },
+      "then": {
+        "properties": {
+          "artifacts": { "minItems": 4 },
+          "tests": { "minItems": 5, "maxItems": 10 }
+        },
+        "required": ["runtime", "policyStatus"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": { "const": "failed" },
+          "executionEvidence": { "const": "executed" }
+        },
+        "required": ["status", "executionEvidence"]
+      },
+      "then": {
+        "properties": {
+          "policyStatus": { "const": "non_publishable" }
+        },
+        "required": ["runtime", "policyStatus"]
       }
     },
     {

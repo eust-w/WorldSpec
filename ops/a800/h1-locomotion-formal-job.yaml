@@ -1,0 +1,109 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: worldspec-h1-formal-
+  namespace: worldspec-a800-poc
+  labels:
+    app.kubernetes.io/name: worldspec-h1-locomotion-formal
+    app.kubernetes.io/part-of: worldspec
+    app.kubernetes.io/managed-by: worldspec
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 86400
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: worldspec-h1-locomotion-formal
+        app.kubernetes.io/part-of: worldspec
+    spec:
+      restartPolicy: Never
+      serviceAccountName: worldspec-a800-runner
+      automountServiceAccountToken: false
+      nodeSelector:
+        node.kubernetes.io/cce-instance-type: ehc.lgn5.c128m1024.8a800.8re.4d
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: formal
+          image: __RUNTIME_IMAGE__
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          env:
+            - name: WORLD_SPEC_REPOSITORY
+              value: https://github.com/eust-w/WorldSpec.git
+            - name: WORLD_SPEC_PROBE_DEFINITION_REVISION
+              value: __PROBE_DEFINITION_REVISION__
+            - name: WORLD_SPEC_IMAGE_SOURCE_REVISION
+              value: __IMAGE_SOURCE_REVISION__
+            - name: WORLD_SPEC_PROBE_INPUT_REVISION
+              value: __PROBE_INPUT_REVISION__
+            - name: WORLD_SPEC_RUNTIME_IMAGE
+              value: __RUNTIME_IMAGE__
+            - name: WORLD_SPEC_PACKAGE_LOCK_DIGEST
+              value: __PACKAGE_LOCK_DIGEST__
+            - name: WORLD_SPEC_SOURCE_ARCHIVE_DIGEST
+              value: __SOURCE_ARCHIVE_DIGEST__
+            - name: HOME
+              value: /scratch/home
+            - name: XDG_CACHE_HOME
+              value: /scratch/cache
+            - name: TMPDIR
+              value: /scratch/tmp
+            - name: JAX_DEFAULT_MATMUL_PRECISION
+              value: highest
+            - name: JAX_PLATFORMS
+              value: cuda
+            - name: CUDA_VISIBLE_DEVICES
+              value: "0"
+          resources:
+            requests:
+              cpu: "8"
+              memory: 64Gi
+              ephemeral-storage: 120Gi
+              nvidia.com/gpu: "1"
+            limits:
+              cpu: "8"
+              memory: 64Gi
+              ephemeral-storage: 120Gi
+              nvidia.com/gpu: "1"
+          command:
+            - /bin/bash
+            - /opt/worldspec-probe/run.sh
+          volumeMounts:
+            - name: scratch
+              mountPath: /scratch
+            - name: dshm
+              mountPath: /dev/shm
+            - name: probe-script
+              mountPath: /opt/worldspec-probe
+              readOnly: true
+            - name: worldspec-source
+              mountPath: /opt/worldspec-source
+              readOnly: true
+      volumes:
+        - name: scratch
+          emptyDir:
+            sizeLimit: 120Gi
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 24Gi
+        - name: probe-script
+          configMap:
+            name: __SCRIPT_CONFIGMAP__
+            defaultMode: 0555
+        - name: worldspec-source
+          configMap:
+            name: __SOURCE_CONFIGMAP__
+            defaultMode: 0444

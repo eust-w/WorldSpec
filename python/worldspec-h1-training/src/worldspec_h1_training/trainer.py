@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import zipfile
 from pathlib import Path
@@ -9,6 +10,7 @@ from typing import Any
 
 from .contract import digest_bytes, digest_json
 from .errors import TrainingError
+from .evaluation import evaluate_policy_suite
 
 
 def _host_float(value: Any) -> float:
@@ -73,115 +75,13 @@ def _deterministic_zip(source: Path, destination: Path) -> None:
             archive.writestr(info, path.read_bytes())
 
 
-def _evaluate(
-    profile: dict[str, Any],
-    env,
-    make_inference_fn,
-    params,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    import jax
-    import jax.numpy as jp
-    import numpy as np
-
-    inference = jax.jit(make_inference_fn(params, deterministic=True))
-    reset = jax.jit(env.reset)
-    step = jax.jit(env.step)
-    validation = profile["validation"]
-    dt = profile["training"]["simulationTimestepSeconds"] * profile["control"]["controlDecimation"]
-    steps = max(1, round(validation["nominalDurationSeconds"] / dt))
-    command_steps = max(1, int(steps * 0.75))
-    settle_steps = max(1, round(validation["settleWindowSeconds"] / dt))
-    traces: list[dict[str, Any]] = []
-    tests: list[dict[str, Any]] = []
-    for run_index in range(validation["requiredConsecutivePasses"]):
-        rng = jax.random.PRNGKey(profile["training"]["seed"] + run_index)
-        state = reset(rng)
-        start_x = float(np.asarray(state.data.qpos[0]))
-        start_y = float(np.asarray(state.data.qpos[1]))
-        minimum_height = float("inf")
-        minimum_upright = float("inf")
-        nonfinite = 0
-        done_seen = False
-        maximum_settle_linear_speed = 0.0
-        maximum_settle_angular_speed = 0.0
-        for index in range(steps):
-            command = jp.asarray([0.5, 0.0, 0.0]) if index < command_steps else jp.zeros(3)
-            info = dict(state.info)
-            info["command"] = command
-            state = state.replace(info=info)
-            rng, action_rng = jax.random.split(rng)
-            action, _ = inference(state.obs, action_rng)
-            state = step(state, action)
-            qpos = np.asarray(state.data.qpos)
-            qvel = np.asarray(state.data.qvel)
-            height = float(np.asarray(state.data.xpos[env.pelvis_body_id, 2]))
-            upright = float(np.asarray(env.upvector(state.data)[2]))
-            finite = bool(np.isfinite(qpos).all() and np.isfinite(qvel).all())
-            minimum_height = min(minimum_height, height)
-            minimum_upright = min(minimum_upright, upright)
-            nonfinite += 0 if finite else 1
-            done_seen |= bool(np.asarray(state.done))
-            local_velocity = np.asarray(env.local_velocity(state.data))
-            angular_velocity = np.asarray(env.angular_velocity(state.data))
-            if index >= steps - settle_steps:
-                maximum_settle_linear_speed = max(
-                    maximum_settle_linear_speed,
-                    float(np.linalg.norm(local_velocity)),
-                )
-                maximum_settle_angular_speed = max(
-                    maximum_settle_angular_speed,
-                    float(np.linalg.norm(angular_velocity)),
-                )
-            traces.append(
-                {
-                    "run": run_index,
-                    "step": index,
-                    "timeSeconds": (index + 1) * dt,
-                    "basePosition": [float(qpos[0]), float(qpos[1]), height],
-                    "uprightCosine": upright,
-                    "localVelocity": [float(value) for value in local_velocity],
-                    "angularVelocity": [float(value) for value in angular_velocity],
-                    "done": bool(np.asarray(state.done)),
-                    "finite": finite,
-                }
-            )
-        final_qpos = np.asarray(state.data.qpos)
-        displacement = float(final_qpos[0] - start_x)
-        lateral = abs(float(final_qpos[1] - start_y))
-        passed = (
-            displacement >= validation["minimumForwardDisplacement"]
-            and lateral <= validation["maximumLateralDrift"]
-            and minimum_height >= validation["minimumBaseHeight"]
-            and minimum_upright >= validation["minimumUprightCosine"]
-            and maximum_settle_linear_speed <= validation["maximumSettleLinearSpeed"]
-            and maximum_settle_angular_speed <= validation["maximumSettleAngularSpeed"]
-            and nonfinite <= validation["maximumNonFiniteSamples"]
-            and not done_seen
-        )
-        tests.append(
-            {
-                "id": f"test://worldspec/h1-training/nominal-run-{run_index + 1}",
-                "result": "pass" if passed else "fail",
-                "metrics": {
-                    "forwardDisplacement": displacement,
-                    "lateralDrift": lateral,
-                    "minimumBaseHeight": minimum_height,
-                    "minimumUprightCosine": minimum_upright,
-                    "maximumSettleLinearSpeed": maximum_settle_linear_speed,
-                    "maximumSettleAngularSpeed": maximum_settle_angular_speed,
-                    "nonFiniteSamples": nonfinite,
-                    "doneSeen": done_seen,
-                },
-            }
-        )
-    return tests, traces
-
-
 def train_and_evaluate(
     profile: dict[str, Any],
     env,
     output_dir: Path,
     model_derivation: dict[str, Any],
+    restore_checkpoint_path: Path | None = None,
+    initialization: dict[str, Any] | None = None,
 ) -> None:
     """Run PPO and materialize the strict output contract."""
 
@@ -240,16 +140,41 @@ def train_and_evaluate(
         network_factory=network_factory,
         seed=training["seed"],
         save_checkpoint_path=checkpoint_dir,
+        restore_checkpoint_path=(
+            str(restore_checkpoint_path) if restore_checkpoint_path is not None else None
+        ),
+        restore_value_fn=restore_checkpoint_path is not None,
         wrap_env_fn=wrapper.wrap_for_brax_training,
         num_eval_envs=min(128, training["numEnvs"]),
     )
-    tests, traces = _evaluate(profile, env, make_inference_fn, params)
-    if any(test["result"] != "pass" for test in tests):
-        raise TrainingError(
-            "TRAINING_NOMINAL_EVALUATION_FAILED",
-            "The trained policy failed one or more required nominal runs.",
-            {"tests": tests},
+    evaluation_profile = profile
+    expected_test_count = 10
+    if training["hyperparameterStatus"] != "calibrated_task_profile":
+        evaluation_profile = copy.deepcopy(profile)
+        validation = evaluation_profile["validation"]
+        validation.setdefault(
+            "moveDurationSeconds",
+            validation["nominalDurationSeconds"] * 0.75,
         )
+        validation.setdefault("maximumForwardDisplacement", 1.0e9)
+        validation.setdefault("maximumTrackingRmse", 1.0e9)
+        validation.setdefault(
+            "maximumStandPlanarDrift",
+            validation["maximumLateralDrift"],
+        )
+        expected_test_count = 5
+    tests, traces = evaluate_policy_suite(
+        evaluation_profile,
+        env,
+        make_inference_fn,
+        params,
+    )
+    if expected_test_count == 5:
+        tests = [test for test in tests if test["suite"] == "walk_settle"]
+        traces = [trace for trace in traces if trace["suite"] == "walk_settle"]
+    quality_passed = len(tests) == expected_test_count and all(
+        test["result"] == "pass" for test in tests
+    )
     checkpoint_archive = output_dir / "policy-checkpoint.zip"
     _deterministic_zip(checkpoint_dir, checkpoint_archive)
     checkpoint_digest = digest_bytes(checkpoint_archive.read_bytes())
@@ -267,6 +192,8 @@ def train_and_evaluate(
         "observationSize": _flat_observation_size(env.observation_size["state"]),
         "actionSize": int(env.action_size),
         "modelDerivation": model_derivation,
+        "initialization": initialization,
+        "policyStatus": "policy_candidate" if quality_passed else "non_publishable",
         "evidenceStatus": "executed",
     }
     (output_dir / "policy-manifest.json").write_text(
@@ -285,6 +212,7 @@ def train_and_evaluate(
         "frameworkSourceLockDigest": profile["framework"]["sourceLockDigest"],
         "frameworkSourceCommit": profile["framework"]["sourceCommit"],
         "jaxMatmulPrecision": training["matmulPrecision"],
+        "initialization": initialization,
     }
     (output_dir / "environment-lock.json").write_text(
         json.dumps(environment_lock, sort_keys=True, indent=2) + "\n",
@@ -295,6 +223,8 @@ def train_and_evaluate(
         "diagnostics": [],
         "trainingProgress": progress_records,
         "checkpointDigest": checkpoint_digest,
+        "qualityStatus": "passed" if quality_passed else "failed",
+        "policyStatus": "policy_candidate" if quality_passed else "non_publishable",
     }
     (output_dir / "metrics.json").write_text(
         json.dumps(metrics, sort_keys=True, indent=2) + "\n",

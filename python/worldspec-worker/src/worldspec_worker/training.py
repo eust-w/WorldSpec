@@ -124,16 +124,56 @@ def _profile(job: dict[str, Any], cas: FileCas) -> tuple[dict[str, Any], str]:
     return profile, profiles[0]
 
 
+def _role_inputs(job: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    inputs = job.get("inputs", [])
+    roles: dict[str, dict[str, Any]] = {}
+    for item in inputs:
+        if not isinstance(item, dict):
+            raise WorkerFailure(
+                "WORKER_INPUT_INVALID",
+                "Every H1 training input must be an artifact object.",
+            )
+        role = item.get("role")
+        if isinstance(role, str):
+            if role in roles:
+                raise WorkerFailure(
+                    "WORKER_INPUT_ROLE_DUPLICATE",
+                    "H1 training input roles must be unique.",
+                    {"role": role},
+                )
+            roles[role] = item
+    return roles
+
+
 def _conformance(job: dict[str, Any], cas: FileCas, profile: dict[str, Any]) -> dict[str, Any]:
     inputs = job.get("inputs", [])
-    if len(inputs) != 1:
+    role_inputs = _role_inputs(job)
+    if profile.get("initialization"):
+        input_item = role_inputs.get("composition_conformance")
+        required_roles = {
+            "composition_conformance",
+            "warm_start_report",
+            "warm_start_checkpoint",
+        }
+        if set(role_inputs) != required_roles or len(inputs) != 3:
+            raise WorkerFailure(
+                "WORKER_INPUT_CARDINALITY_INVALID",
+                "Initialized H1 training requires conformance, report, and checkpoint roles.",
+                {
+                    "actualRoles": sorted(role_inputs),
+                    "requiredRoles": sorted(required_roles),
+                },
+            )
+    elif len(inputs) == 1:
+        input_item = inputs[0]
+    else:
         raise WorkerFailure(
             "WORKER_INPUT_CARDINALITY_INVALID",
             "H1 training requires exactly one executed composition conformance input.",
             {"actual": len(inputs), "required": 1},
         )
     try:
-        report = json.loads(cas.read(inputs[0]["digest"]))
+        report = json.loads(cas.read(input_item["digest"]))
     except json.JSONDecodeError as error:
         raise WorkerFailure(
             "TRAINING_CONFORMANCE_INVALID",
@@ -161,6 +201,54 @@ def _conformance(job: dict[str, Any], cas: FileCas, profile: dict[str, Any]) -> 
             "Training requires an executed, passing native-load conformance report.",
         )
     return report
+
+
+def _initialization(
+    job: dict[str, Any],
+    cas: FileCas,
+    profile: dict[str, Any],
+) -> tuple[dict[str, Any], bytes] | None:
+    initialization = profile.get("initialization")
+    if not initialization:
+        return None
+    inputs = _role_inputs(job)
+    report_input = inputs["warm_start_report"]
+    checkpoint_input = inputs["warm_start_checkpoint"]
+    try:
+        report = json.loads(cas.read(report_input["digest"]))
+    except json.JSONDecodeError as error:
+        raise WorkerFailure(
+            "TRAINING_WARM_START_REPORT_INVALID",
+            "Warm-start report input is not valid JSON.",
+        ) from error
+    checkpoint_payload = cas.read(checkpoint_input["digest"])
+    checkpoint = report.get("researchCheckpoint", {})
+    expected = {
+        "midtermProfileDigest": initialization["sourceProfileDigest"],
+        "formalTrainingGate": initialization["requiredReportStatus"],
+        "qualityStatus": initialization["requiredReportStatus"],
+        "checkpointDigest": checkpoint_input["digest"],
+        "checkpointSizeBytes": len(checkpoint_payload),
+        "checkpointDistribution": initialization[
+            "requiredCheckpointDistribution"
+        ],
+    }
+    actual = {
+        "midtermProfileDigest": report.get("midtermProfileDigest"),
+        "formalTrainingGate": report.get("formalTrainingGate"),
+        "qualityStatus": report.get("qualityAssessment", {}).get("status"),
+        "checkpointDigest": checkpoint.get("digest"),
+        "checkpointSizeBytes": checkpoint.get("sizeBytes"),
+        "checkpointDistribution": checkpoint.get("distribution"),
+    }
+    if actual != expected:
+        raise WorkerFailure(
+            "TRAINING_WARM_START_BINDING_MISMATCH",
+            "Warm-start report, checkpoint, and formal Profile lineage do not match.",
+            {"expected": expected, "actual": actual},
+        )
+    _validate_checkpoint_archive(checkpoint_payload)
+    return report, checkpoint_payload
 
 
 def _verify_runtime(profile: dict[str, Any], job: dict[str, Any]) -> Any:
@@ -425,8 +513,13 @@ def _validate_checkpoint_archive(payload: bytes) -> None:
         ) from error
 
 
-def _validate_evaluation_traces(payload: bytes, required_runs: int) -> None:
-    seen_runs: set[int] = set()
+def _validate_evaluation_traces(
+    payload: bytes,
+    required_runs: int,
+    expected_suites: set[str],
+    require_clean: bool,
+) -> None:
+    seen_runs: set[tuple[str, int]] = set()
     for line_number, line in enumerate(payload.splitlines(), start=1):
         if not line.strip():
             continue
@@ -438,24 +531,39 @@ def _validate_evaluation_traces(payload: bytes, required_runs: int) -> None:
                 "Evaluation traces must be newline-delimited JSON.",
                 {"line": line_number},
             ) from error
-        if not isinstance(record, dict) or not isinstance(record.get("run"), int):
+        if (
+            not isinstance(record, dict)
+            or not isinstance(record.get("run"), int)
+            or record.get("suite") not in expected_suites
+        ):
             raise WorkerFailure(
                 "TRAINING_TRACE_INVALID",
-                "Every evaluation trace record must identify its nominal run.",
+                "Every trace must identify a declared suite and nominal run.",
                 {"line": line_number},
             )
-        if record.get("finite") is not True or record.get("done") is not False:
+        if require_clean and (
+            record.get("finite") is not True or record.get("done") is not False
+        ):
             raise WorkerFailure(
                 "TRAINING_TRACE_FAILED",
                 "A nominal evaluation trace contains a non-finite or terminated state.",
-                {"line": line_number, "run": record.get("run")},
+                {
+                    "line": line_number,
+                    "suite": record.get("suite"),
+                    "run": record.get("run"),
+                },
             )
-        seen_runs.add(record["run"])
-    if seen_runs != set(range(required_runs)):
+        seen_runs.add((record["suite"], record["run"]))
+    expected = {
+        (suite, run)
+        for suite in expected_suites
+        for run in range(required_runs)
+    }
+    if seen_runs != expected:
         raise WorkerFailure(
             "TRAINING_TRACE_RUNS_INCOMPLETE",
-            "Evaluation traces do not cover all required consecutive runs.",
-            {"expected": list(range(required_runs)), "actual": sorted(seen_runs)},
+            "Evaluation traces do not cover all declared suites and runs.",
+            {"expected": sorted(expected), "actual": sorted(seen_runs)},
         )
 
 
@@ -467,12 +575,27 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
         )
     profile, profile_digest = _profile(job, cas)
     _conformance(job, cas, profile)
+    initialization_input = _initialization(job, cas, profile)
     jax, backend = _verify_runtime(profile, job)
     bundle = _bundle(profile)
 
     with tempfile.TemporaryDirectory(prefix="worldspec-h1-training-") as temporary:
         output = Path(temporary)
-        backend.run_training(profile=profile, bundle_dir=bundle, output_dir=output)
+        if initialization_input is None:
+            backend.run_training(profile=profile, bundle_dir=bundle, output_dir=output)
+        else:
+            initialization_report, checkpoint_payload = initialization_input
+            checkpoint_path = output / "warm-start-checkpoint.zip"
+            checkpoint_path.write_bytes(checkpoint_payload)
+            backend_output = output / "backend-output"
+            backend.run_training(
+                profile=profile,
+                bundle_dir=bundle,
+                output_dir=backend_output,
+                warm_start_archive=checkpoint_path,
+                initialization_report=initialization_report,
+            )
+            output = backend_output
         required = {
             "policy-checkpoint.zip": (
                 "orbax_checkpoint_archive",
@@ -515,16 +638,36 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
         policy_manifest = _json_object(payloads["policy-manifest.json"], "policy-manifest.json")
         tests = metrics.get("tests")
         required_runs = profile["validation"]["requiredConsecutivePasses"]
+        initialized = profile.get("initialization") is not None
+        expected_test_count = required_runs * (2 if initialized else 1)
+        expected_suites = (
+            {"walk_settle", "stand_regression"}
+            if initialized
+            else {"walk_settle"}
+        )
+        all_passed = (
+            isinstance(tests, list)
+            and len(tests) == expected_test_count
+            and all(
+                isinstance(test, dict) and test.get("result") == "pass"
+                for test in tests
+            )
+        )
         if (
             not isinstance(tests, list)
-            or len(tests) != required_runs
-            or any(not isinstance(test, dict) or test.get("result") != "pass" for test in tests)
+            or len(tests) != expected_test_count
+            or any(not isinstance(test, dict) for test in tests)
         ):
             raise WorkerFailure(
-                "TRAINING_VALIDATION_FAILED",
-                "A policy is publishable only when every declared nominal test passes.",
+                "TRAINING_VALIDATION_OUTPUT_INVALID",
+                "Training metrics must contain the complete declared evaluation suite.",
             )
-        _validate_evaluation_traces(payloads["evaluation-traces.jsonl"], required_runs)
+        _validate_evaluation_traces(
+            payloads["evaluation-traces.jsonl"],
+            required_runs,
+            expected_suites,
+            require_clean=all_passed,
+        )
         runtime = profile["runtime"]
         expected_lock = {
             "containerDigest": runtime["containerDigest"],
@@ -561,6 +704,32 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
                 "The policy manifest is not bound to the checkpoint, target, and runtime source.",
                 {"expected": expected_policy, "actual": actual_policy},
             )
+        expected_policy_status = (
+            "policy_candidate" if all_passed and initialized else (
+                "non_publishable" if initialized else (
+                    "policy_candidate" if all_passed else "non_publishable"
+                )
+            )
+        )
+        if (
+            policy_manifest.get("policyStatus") != expected_policy_status
+            or metrics.get("policyStatus") != expected_policy_status
+            or metrics.get("qualityStatus")
+            != ("passed" if all_passed else "failed")
+        ):
+            raise WorkerFailure(
+                "TRAINING_QUALITY_CLASSIFICATION_INVALID",
+                "Policy and metrics quality classifications do not match the tests.",
+            )
+        if initialized:
+            policy_initialization = policy_manifest.get("initialization", {})
+            if policy_initialization.get("sourceProfileDigest") != (
+                profile["initialization"]["sourceProfileDigest"]
+            ) or policy_initialization.get("optimizerState") != "reset":
+                raise WorkerFailure(
+                    "TRAINING_POLICY_INITIALIZATION_MISMATCH",
+                    "Policy manifest does not preserve its warm-start lineage.",
+                )
 
         outputs = [
             _artifact(cas, payloads[name], role, media_type, suffix)
@@ -572,8 +741,9 @@ def h1_training_handler(job: dict[str, Any], cas: FileCas) -> list[dict[str, Any
             "resultVersion": "0.1.0",
             "trainingProfileDigest": profile_digest,
             "targetBundleDigest": profile["target"]["bundleDigest"],
-            "status": "succeeded",
+            "status": "succeeded" if all_passed else "failed",
             "executionEvidence": "executed",
+            "policyStatus": expected_policy_status,
             "runtime": {
                 **expected_lock,
                 "device": str(jax.devices()[0]),

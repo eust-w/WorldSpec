@@ -92,7 +92,10 @@
       ],
       "properties": {
         "hyperparameterStatus": {
-          "const": "imported_baseline_unvalidated"
+          "enum": [
+            "imported_baseline_unvalidated",
+            "calibrated_task_profile"
+          ]
         },
         "seed": { "type": "integer", "minimum": 0 },
         "numTimesteps": { "type": "integer", "minimum": 1 },
@@ -213,6 +216,38 @@
       },
       "additionalProperties": false
     },
+    "initialization": {
+      "type": "object",
+      "required": [
+        "method",
+        "sourceProfileDigest",
+        "requiredReportStatus",
+        "requiredCheckpointDistribution",
+        "restore",
+        "optimizerState"
+      ],
+      "properties": {
+        "method": { "const": "warm_start" },
+        "sourceProfileDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "requiredReportStatus": { "const": "passed" },
+        "requiredCheckpointDistribution": { "const": "internal_only" },
+        "restore": {
+          "type": "object",
+          "required": ["normalizer", "policy", "value"],
+          "properties": {
+            "normalizer": { "const": true },
+            "policy": { "const": true },
+            "value": { "const": true }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": { "const": "reset" }
+      },
+      "additionalProperties": false
+    },
+    "trainingEnvironment": { "$ref": "#/$defs/trainingEnvironment" },
     "control": {
       "type": "object",
       "required": [
@@ -355,10 +390,14 @@
         "minimumBaseHeight": { "type": "number", "minimum": 0 },
         "minimumUprightCosine": { "type": "number", "minimum": -1, "maximum": 1 },
         "minimumForwardDisplacement": { "type": "number", "minimum": 0 },
+        "maximumForwardDisplacement": { "type": "number", "minimum": 0 },
         "maximumLateralDrift": { "type": "number", "minimum": 0 },
+        "maximumTrackingRmse": { "type": "number", "minimum": 0 },
+        "moveDurationSeconds": { "type": "number", "exclusiveMinimum": 0 },
         "settleWindowSeconds": { "type": "number", "exclusiveMinimum": 0 },
         "maximumSettleLinearSpeed": { "type": "number", "minimum": 0 },
         "maximumSettleAngularSpeed": { "type": "number", "minimum": 0 },
+        "maximumStandPlanarDrift": { "type": "number", "minimum": 0 },
         "maximumJointLimitViolations": { "type": "integer", "minimum": 0 },
         "maximumNonFiniteSamples": { "type": "integer", "minimum": 0 },
         "requiredConsecutivePasses": { "type": "integer", "minimum": 1 }
@@ -406,7 +445,138 @@
       ],
       "minItems": 2,
       "maxItems": 2
+    },
+    "trainingEnvironment": {
+      "type": "object",
+      "required": [
+        "commandDistribution",
+        "termination",
+        "reward",
+        "targets",
+        "sigmas",
+        "commandResampleSteps"
+      ],
+      "properties": {
+        "commandDistribution": {
+          "type": "object",
+          "required": [
+            "linearVelocityX",
+            "linearVelocityY",
+            "angularVelocityYaw",
+            "zeroCommandProbability"
+          ],
+          "properties": {
+            "linearVelocityX": { "$ref": "#/$defs/range2" },
+            "linearVelocityY": { "$ref": "#/$defs/range2" },
+            "angularVelocityYaw": { "$ref": "#/$defs/range2" },
+            "zeroCommandProbability": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          },
+          "additionalProperties": false
+        },
+        "termination": {
+          "type": "object",
+          "required": [
+            "minimumBaseHeight",
+            "minimumUprightCosine",
+            "jointLimitToleranceRadians"
+          ],
+          "properties": {
+            "minimumBaseHeight": { "type": "number", "minimum": 0 },
+            "minimumUprightCosine": {
+              "type": "number",
+              "minimum": -1,
+              "maximum": 1
+            },
+            "jointLimitToleranceRadians": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "reward": {
+          "type": "object",
+          "required": [
+            "survival",
+            "trackingLinear",
+            "trackingYaw",
+            "upright",
+            "baseHeight",
+            "pose",
+            "verticalVelocityCost",
+            "angularVelocityXYCost",
+            "torqueCost",
+            "actionRateCost"
+          ],
+          "properties": {
+            "survival": { "const": 3.0 },
+            "trackingLinear": { "const": 6.0 },
+            "trackingYaw": { "const": 2.0 },
+            "upright": { "const": 3.0 },
+            "baseHeight": { "const": 2.0 },
+            "pose": { "const": 0.5 },
+            "verticalVelocityCost": { "const": 1.0 },
+            "angularVelocityXYCost": { "const": 0.5 },
+            "torqueCost": { "const": 0.000002 },
+            "actionRateCost": { "const": 0.03 }
+          },
+          "additionalProperties": false
+        },
+        "targets": {
+          "type": "object",
+          "required": ["baseHeight"],
+          "properties": {
+            "baseHeight": { "type": "number", "minimum": 0.8, "maximum": 1.2 }
+          },
+          "additionalProperties": false
+        },
+        "sigmas": {
+          "type": "object",
+          "required": ["tracking", "upright", "baseHeight", "pose"],
+          "properties": {
+            "tracking": { "type": "number", "exclusiveMinimum": 0 },
+            "upright": { "type": "number", "exclusiveMinimum": 0 },
+            "baseHeight": { "type": "number", "exclusiveMinimum": 0 },
+            "pose": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "commandResampleSteps": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
     }
   },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "training": {
+            "properties": {
+              "hyperparameterStatus": { "const": "calibrated_task_profile" }
+            },
+            "required": ["hyperparameterStatus"]
+          }
+        },
+        "required": ["training"]
+      },
+      "then": {
+        "required": ["initialization", "trainingEnvironment"],
+        "properties": {
+          "validation": {
+            "required": [
+              "maximumForwardDisplacement",
+              "maximumTrackingRmse",
+              "moveDurationSeconds",
+              "maximumStandPlanarDrift"
+            ]
+          }
+        }
+      }
+    }
+  ],
   "additionalProperties": false
 }

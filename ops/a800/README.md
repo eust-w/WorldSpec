@@ -151,3 +151,24 @@ The result and checkpoint remain
 permits the next curriculum experiment but does not establish canonical
 training or L3. The launcher acknowledges the Pod only after checking the
 reported digest and fails closed on collision-capacity overflows.
+
+The gated next stage is launched with:
+
+```bash
+./scripts/run_a800_h1_midterm_then_training.sh
+```
+
+The launcher first uploads the digest-bound stand report and checkpoint in
+independent 512-KiB chunks. The `loaded-track-settle-v1` Job trains for
+16,777,216 steps and evaluates five walk/settle plus five stand-regression
+runs. A failed gate returns evidence and exits without creating the formal
+Job. A passing gate automatically starts the 100-million-step, 8,192-
+environment Job with the midterm checkpoint as a warm start. Both Jobs use the
+same `input_ready -> running -> artifact_ready -> artifact_copied` contract,
+one GPU, no runtime Secret or PVC, a non-root user, and a read-only root
+filesystem.
+
+The formal result is evidence-first: checkpoint, policy manifest, traces,
+environment lock, and report are copied and digest-verified even when the ten
+final tests fail. Only ten passing tests produce `policy_candidate`; the
+artifact remains internal and does not claim the full kitchen L3 task.

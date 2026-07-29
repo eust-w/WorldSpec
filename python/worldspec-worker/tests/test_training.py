@@ -104,6 +104,68 @@ def job(cas: FileCas, training_profile: dict, report: dict) -> dict:
     }
 
 
+def initialized_job(cas: FileCas, training_profile: dict, report: dict) -> dict:
+    checkpoint = io.BytesIO()
+    with zipfile.ZipFile(checkpoint, mode="w") as archive:
+        archive.writestr("000000000100/_CHECKPOINT_METADATA", b"checkpoint")
+        archive.writestr("000000000100/ppo_network_config.json", b"{}")
+    checkpoint_payload = checkpoint.getvalue()
+    checkpoint_digest = cas.put(checkpoint_payload)
+    midterm_profile_digest = f"sha256:{'9' * 64}"
+    training_profile["initialization"] = {
+        "method": "warm_start",
+        "sourceProfileDigest": midterm_profile_digest,
+        "requiredReportStatus": "passed",
+        "requiredCheckpointDistribution": "internal_only",
+        "restore": {"normalizer": True, "policy": True, "value": True},
+        "optimizerState": "reset",
+    }
+    midterm_report = {
+        "midtermProfileDigest": midterm_profile_digest,
+        "formalTrainingGate": "passed",
+        "qualityAssessment": {"status": "passed"},
+        "researchCheckpoint": {
+            "digest": checkpoint_digest,
+            "sizeBytes": len(checkpoint_payload),
+            "distribution": "internal_only",
+        },
+    }
+    profile_digest = cas.put(json.dumps(training_profile).encode())
+    conformance_digest = cas.put(json.dumps(report).encode())
+    midterm_report_digest = cas.put(json.dumps(midterm_report).encode())
+    return {
+        "id": "job://test/h1-train-initialized",
+        "protocolVersion": "0.1.0",
+        "operation": "train",
+        "inputs": [
+            {
+                "id": "artifact://test/h1-conformance",
+                "digest": conformance_digest,
+                "mediaType": "application/json",
+                "path": "native-load-conformance.json",
+                "role": "composition_conformance",
+            },
+            {
+                "id": "artifact://test/midterm-report",
+                "digest": midterm_report_digest,
+                "mediaType": "application/json",
+                "path": "midterm-report.json",
+                "role": "warm_start_report",
+            },
+            {
+                "id": "artifact://test/midterm-checkpoint",
+                "digest": checkpoint_digest,
+                "mediaType": "application/zip",
+                "path": "midterm-checkpoint.zip",
+                "role": "warm_start_checkpoint",
+            },
+        ],
+        "profileDigests": [profile_digest],
+        "limits": {"timeoutSeconds": 10, "memoryBytes": 1024, "gpuCount": 1},
+        "submittedAt": "2026-07-28T00:00:00Z",
+    }
+
+
 def test_planned_training_profile_fails_closed(tmp_path: Path) -> None:
     cas = FileCas(tmp_path)
     with pytest.raises(WorkerFailure) as captured:
@@ -145,6 +207,37 @@ def test_training_is_locked_to_right_single_gripper(tmp_path: Path) -> None:
     assert captured.value.code == "TRAINING_TARGET_MISMATCH"
 
 
+def test_initialized_training_requires_all_three_roles(tmp_path: Path) -> None:
+    cas = FileCas(tmp_path)
+    locked = profile("locked")
+    training_job = initialized_job(cas, locked, conformance())
+    training_job["inputs"].pop()
+
+    with pytest.raises(WorkerFailure) as captured:
+        h1_training_handler(training_job, cas)
+
+    assert captured.value.code == "WORKER_INPUT_CARDINALITY_INVALID"
+
+
+def test_initialized_training_rejects_checkpoint_lineage_mismatch(
+    tmp_path: Path,
+) -> None:
+    cas = FileCas(tmp_path)
+    locked = profile("locked")
+    training_job = initialized_job(cas, locked, conformance())
+    checkpoint_input = next(
+        item
+        for item in training_job["inputs"]
+        if item["role"] == "warm_start_checkpoint"
+    )
+    checkpoint_input["digest"] = cas.put(b"replacement")
+
+    with pytest.raises(WorkerFailure) as captured:
+        training._initialization(training_job, cas, locked)
+
+    assert captured.value.code == "TRAINING_WARM_START_BINDING_MISMATCH"
+
+
 def test_locked_backend_output_contract_is_digest_addressed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -181,6 +274,7 @@ def test_locked_backend_output_contract_is_digest_addressed(
                         "physicsImplementation": "warp",
                         "trainer": "brax_jax_ppo",
                         "targetEnvironmentAdapter": ("worldspec_h1_loaded_velocity_v1"),
+                        "policyStatus": "policy_candidate",
                         "evidenceStatus": "executed",
                     }
                 ),
@@ -188,7 +282,16 @@ def test_locked_backend_output_contract_is_digest_addressed(
             )
             (output_dir / "evaluation-traces.jsonl").write_text(
                 "".join(
-                    json.dumps({"run": index, "step": 0, "finite": True, "done": False}) + "\n"
+                    json.dumps(
+                        {
+                            "suite": "walk_settle",
+                            "run": index,
+                            "step": 0,
+                            "finite": True,
+                            "done": False,
+                        }
+                    )
+                    + "\n"
                     for index in range(5)
                 ),
                 encoding="utf-8",
@@ -216,6 +319,8 @@ def test_locked_backend_output_contract_is_digest_addressed(
                             for index in range(5)
                         ],
                         "diagnostics": [],
+                        "qualityStatus": "passed",
+                        "policyStatus": "policy_candidate",
                     }
                 ),
                 encoding="utf-8",

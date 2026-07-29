@@ -229,6 +229,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-adapter-profile.json": "h1-locomotion-adapter.schema.json",
         "h1-kitchen/locomotion-conformance.darwin-arm64.failed.json": "h1-locomotion-conformance.schema.json",
         "h1-kitchen/locomotion-training-profile.json": "h1-locomotion-training-profile.schema.json",
+        "h1-kitchen/locomotion-training-profile.task-v1.json": "h1-locomotion-training-profile.schema.json",
         "h1-kitchen/locomotion-training-result.blocked.json": "h1-locomotion-training-result.schema.json",
         "h1-kitchen/runtime-spike.a800.passed.json": "h1-runtime-spike-report.schema.json",
         "h1-kitchen/training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
@@ -241,6 +242,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-calibration.a800.configuration-failed.json": "h1-locomotion-calibration-attempt.schema.json",
         "h1-kitchen/locomotion-calibration.a800.quality-failed.json": "h1-locomotion-calibration-attempt.schema.json",
         "h1-kitchen/locomotion-calibration.a800.passed.json": "h1-locomotion-calibration-report.schema.json",
+        "h1-kitchen/locomotion-midterm-profile.json": "h1-locomotion-midterm-profile.schema.json",
         "../third_party/h1-training.lock.json": "h1-training-source-lock.schema.json",
     }
     for relative, schema_name in positive.items():

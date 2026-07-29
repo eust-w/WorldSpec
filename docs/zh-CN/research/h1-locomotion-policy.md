@@ -3,7 +3,7 @@ status: Research
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../en/research/h1-locomotion-policy.md
-last-verified: 2026-07-28
+last-verified: 2026-07-29
 ---
 
 # H1 步态策略动力学域不匹配
@@ -130,3 +130,24 @@ Checkpoint 已生成，但旧 Launcher 在 Pod 完成后才调用 `kubectl cp`�
 [`locomotion-calibration.a800.passed.json`](../../../examples/h1-kitchen/locomotion-calibration.a800.passed.json)。
 该证据仍明确为 `research_calibration / non_publishable / internal_only`：它只放行
 下一步行走课程实验，不等于规范 1 亿步训练完成，更不等于厨房任务 L3。
+
+## 中期校准与正式训练门控
+
+下一阶段已冻结为 `loaded-track-settle-v1`。它从上述内部 Checkpoint Warm Start，
+只恢复观察归一化、Policy 和 Value 网络；Brax 0.14.2 不恢复优化器状态，因此新运行
+明确记录 `optimizerState=reset`，不能称为无缝续训。
+
+中期训练使用最终 Menagerie H1 + 右手 Robotiq 2F-85，预算为 16,777,216 步、
+4,096 环境。门控包含五次“3 秒 `0.5 m/s` 前进 + 1 秒停稳”和五次零命令站立回归。
+只有平均 Episode 长度不少于 900，且全部十项行为、有限值、关节、接触和容量诊断
+通过，才允许创建 1 亿步 Job。任何失败仍必须回传 Checkpoint、Trace 和报告，但固定
+为 `non_publishable`，不自动重试或调参。
+
+正式任务型 Profile 使用 100,000,000 步、8,192 环境和厨房短距命令范围，并从通过的
+中期 Checkpoint 再次 Warm Start。最终十项测试全部通过时，只能标记
+`policy_candidate / internal_only`；这仍不证明“行走—开抽屉—抓杯—放置—关抽屉”
+完整任务 5/5，也不构成厨房 L3 证据。
+
+当前仓库已经包含上述 Schema、Warm Start 安全校验、十项评测、Worker 血缘门控、
+512 KiB 双向分块传输和两个隔离 A800 Job 的实现。此段描述的是待执行设计；在真实
+A800 报告回传前，不应把中期或正式训练写成已通过。

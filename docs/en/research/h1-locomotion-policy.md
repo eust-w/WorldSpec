@@ -3,7 +3,7 @@ status: Research
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../zh-CN/research/h1-locomotion-policy.md
-last-verified: 2026-07-28
+last-verified: 2026-07-29
 ---
 
 # H1 locomotion policy dynamics-domain mismatch
@@ -162,3 +162,30 @@ report. This evidence remains explicitly
 `research_calibration / non_publishable / internal_only`: it permits the next
 walking-curriculum experiment, but it is neither canonical 100-million-step
 training nor the kitchen-task L3 witness.
+
+## Midterm calibration and formal-training gate
+
+The next stage is frozen as `loaded-track-settle-v1`. It warm-starts from the
+internal checkpoint above and restores only observation normalization, policy,
+and value networks. Brax 0.14.2 does not restore optimizer state, so the new run
+records `optimizerState=reset` and is not described as seamless continuation.
+
+Midterm training uses the final Menagerie H1 plus one right Robotiq 2F-85 for
+16,777,216 steps and 4,096 environments. Its gate contains five runs of three
+seconds at `0.5 m/s` followed by one second of settling, plus five zero-command
+stand regressions. A 100-million-step Job may be created only if mean episode
+length is at least 900 and all ten behavior, finite-state, joint, contact, and
+capacity checks pass. Any failed run must still return its checkpoint, traces,
+and report as `non_publishable`; there is no automatic retry or tuning.
+
+The formal task Profile uses 100,000,000 steps, 8,192 environments, and the
+kitchen short-range command distribution, warm-started from the passing
+midterm checkpoint. Passing all final ten tests establishes only an internal
+`policy_candidate`; it does not prove the complete
+walk-open-grasp-place-release-close task at 5/5 and is not kitchen L3 evidence.
+
+The repository now contains the Schema, safe warm-start validation, ten-test
+evaluation, Worker lineage gates, bidirectional 512-KiB chunk transport, and
+two isolated A800 Job definitions. This paragraph describes implementation
+awaiting execution. Midterm or formal-training success must not be claimed
+until a real A800 report is returned.

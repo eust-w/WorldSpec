@@ -1,0 +1,270 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-midterm-profile.schema.json",
+  "title": "WorldSpec H1 Locomotion Midterm Calibration Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "baseTrainingProfileDigest",
+    "runtime",
+    "warmStart",
+    "trainingOverrides",
+    "environment",
+    "qualityGates",
+    "artifactPolicy",
+    "evidenceStatus"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "stage": { "const": "loaded_track_settle" },
+    "baseTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" }
+      },
+      "additionalProperties": false
+    },
+    "warmStart": {
+      "type": "object",
+      "required": [
+        "sourceStage",
+        "sourceReportDigest",
+        "checkpointDigest",
+        "checkpointSizeBytes",
+        "distribution",
+        "restore",
+        "optimizerState"
+      ],
+      "properties": {
+        "sourceStage": { "const": "stand-v2.1" },
+        "sourceReportDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "checkpointDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "checkpointSizeBytes": { "type": "integer", "minimum": 1 },
+        "distribution": { "const": "internal_only" },
+        "restore": {
+          "type": "object",
+          "required": ["normalizer", "policy", "value"],
+          "properties": {
+            "normalizer": { "const": true },
+            "policy": { "const": true },
+            "value": { "const": true }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": { "const": "reset" }
+      },
+      "additionalProperties": false
+    },
+    "trainingOverrides": {
+      "type": "object",
+      "required": [
+        "numTimesteps",
+        "numEnvs",
+        "numEvals",
+        "episodeLength",
+        "unrollLength",
+        "numMinibatches",
+        "numUpdatesPerBatch",
+        "batchSize"
+      ],
+      "properties": {
+        "numTimesteps": { "const": 16777216 },
+        "numEnvs": { "const": 4096 },
+        "numEvals": { "const": 8 },
+        "episodeLength": { "const": 1000 },
+        "unrollLength": { "const": 20 },
+        "numMinibatches": { "const": 16 },
+        "numUpdatesPerBatch": { "const": 4 },
+        "batchSize": { "const": 256 }
+      },
+      "additionalProperties": false
+    },
+    "environment": { "$ref": "#/$defs/environment" },
+    "qualityGates": { "$ref": "#/$defs/qualityGates" },
+    "artifactPolicy": {
+      "type": "object",
+      "required": ["checkpoint", "distribution"],
+      "properties": {
+        "checkpoint": { "const": "research_only" },
+        "distribution": { "const": "internal_only" }
+      },
+      "additionalProperties": false
+    },
+    "evidenceStatus": { "const": "derived" }
+  },
+  "$defs": {
+    "range2": {
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "items": false
+    },
+    "nonNegative": { "type": "number", "minimum": 0 },
+    "environment": {
+      "type": "object",
+      "required": [
+        "commandDistribution",
+        "termination",
+        "reward",
+        "targets",
+        "sigmas",
+        "commandResampleSteps"
+      ],
+      "properties": {
+        "commandDistribution": {
+          "type": "object",
+          "required": [
+            "linearVelocityX",
+            "linearVelocityY",
+            "angularVelocityYaw",
+            "zeroCommandProbability"
+          ],
+          "properties": {
+            "linearVelocityX": {
+              "prefixItems": [{ "const": 0.0 }, { "const": 0.6 }],
+              "items": false
+            },
+            "linearVelocityY": {
+              "prefixItems": [{ "const": -0.1 }, { "const": 0.1 }],
+              "items": false
+            },
+            "angularVelocityYaw": {
+              "prefixItems": [{ "const": -0.25 }, { "const": 0.25 }],
+              "items": false
+            },
+            "zeroCommandProbability": { "const": 0.2 }
+          },
+          "additionalProperties": false
+        },
+        "termination": {
+          "type": "object",
+          "required": [
+            "minimumBaseHeight",
+            "minimumUprightCosine",
+            "jointLimitToleranceRadians"
+          ],
+          "properties": {
+            "minimumBaseHeight": { "type": "number", "minimum": 0.4 },
+            "minimumUprightCosine": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "jointLimitToleranceRadians": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "additionalProperties": false
+        },
+        "reward": {
+          "type": "object",
+          "required": [
+            "survival",
+            "trackingLinear",
+            "trackingYaw",
+            "upright",
+            "baseHeight",
+            "pose",
+            "verticalVelocityCost",
+            "angularVelocityXYCost",
+            "torqueCost",
+            "actionRateCost"
+          ],
+          "properties": {
+            "survival": { "const": 3.0 },
+            "trackingLinear": { "const": 6.0 },
+            "trackingYaw": { "const": 2.0 },
+            "upright": { "const": 3.0 },
+            "baseHeight": { "const": 2.0 },
+            "pose": { "const": 0.5 },
+            "verticalVelocityCost": { "const": 1.0 },
+            "angularVelocityXYCost": { "const": 0.5 },
+            "torqueCost": { "const": 0.000002 },
+            "actionRateCost": { "const": 0.03 }
+          },
+          "additionalProperties": false
+        },
+        "targets": {
+          "type": "object",
+          "required": ["baseHeight"],
+          "properties": {
+            "baseHeight": { "type": "number", "minimum": 0.8, "maximum": 1.2 }
+          },
+          "additionalProperties": false
+        },
+        "sigmas": {
+          "type": "object",
+          "required": ["tracking", "upright", "baseHeight", "pose"],
+          "properties": {
+            "tracking": { "type": "number", "exclusiveMinimum": 0 },
+            "upright": { "type": "number", "exclusiveMinimum": 0 },
+            "baseHeight": { "type": "number", "exclusiveMinimum": 0 },
+            "pose": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "commandResampleSteps": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "qualityGates": {
+      "type": "object",
+      "required": [
+        "minimumFinalMeanEpisodeLength",
+        "nominalDurationSeconds",
+        "moveDurationSeconds",
+        "settleWindowSeconds",
+        "requiredConsecutivePasses",
+        "minimumForwardDisplacement",
+        "maximumForwardDisplacement",
+        "maximumLateralDrift",
+        "maximumTrackingRmse",
+        "minimumBaseHeight",
+        "minimumUprightCosine",
+        "maximumSettleLinearSpeed",
+        "maximumSettleAngularSpeed",
+        "maximumStandPlanarDrift",
+        "maximumNonFiniteSamples"
+      ],
+      "properties": {
+        "minimumFinalMeanEpisodeLength": { "const": 900.0 },
+        "nominalDurationSeconds": { "const": 4.0 },
+        "moveDurationSeconds": { "const": 3.0 },
+        "settleWindowSeconds": { "const": 1.0 },
+        "requiredConsecutivePasses": { "const": 5 },
+        "minimumForwardDisplacement": { "const": 1.0 },
+        "maximumForwardDisplacement": { "const": 2.2 },
+        "maximumLateralDrift": { "const": 0.2 },
+        "maximumTrackingRmse": { "const": 0.25 },
+        "minimumBaseHeight": { "const": 0.8 },
+        "minimumUprightCosine": { "const": 0.8 },
+        "maximumSettleLinearSpeed": { "const": 0.2 },
+        "maximumSettleAngularSpeed": { "const": 0.4 },
+        "maximumStandPlanarDrift": { "const": 0.2 },
+        "maximumNonFiniteSamples": { "const": 0 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

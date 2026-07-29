@@ -60,3 +60,16 @@ The committed report remains `research_calibration / non_publishable`. It
 permits the next walking-curriculum experiment, but canonical 100-million-step
 training, publishable policy quality, and five-run H1 kitchen L3 evidence
 remain unexecuted.
+
+The backend additionally implements the frozen `loaded-track-settle-v1`
+midterm and task-focused 100-million-step Profiles. Checkpoint archives are
+verified before extraction, unsafe members are rejected, the greatest numeric
+Orbax step is selected, and observation/action ABI metadata must match the
+final H1+Robotiq environment. Warm start restores the normalizer, policy, and
+value network while resetting the optimizer.
+
+Both stages evaluate five walk/settle and five zero-command regression runs.
+The trainer always packages the checkpoint, policy manifest, traces,
+environment lock, and metrics before classifying behavior quality. Only ten
+passing tests yield `policy_candidate`; failed quality remains recoverable
+`non_publishable` evidence.

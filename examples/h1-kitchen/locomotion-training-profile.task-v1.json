@@ -1,0 +1,224 @@
+{
+  "id": "trainingprofile://worldspec/h1-menagerie-right-robotiq/kitchen-task-v1",
+  "profileVersion": "0.1.0",
+  "route": "target_dynamics_retraining",
+  "decisionRef": "decision://worldspec/D-028",
+  "framework": {
+    "name": "mujoco_playground",
+    "sourceLockDigest": "sha256:af7152dbf8334361cd06ba5c27367dd0cee14c5500f3218cae7bfa0497cbb3aa",
+    "sourceCommit": "124a73fa3303f75a62f8fe04d329b829ed0ebdfb",
+    "physicsImplementation": "warp",
+    "trainer": "brax_jax_ppo",
+    "referenceEnvironment": "H1JoystickGaitTracking",
+    "targetEnvironmentAdapter": "worldspec_h1_loaded_velocity_v1",
+    "decisionStatus": "accepted"
+  },
+  "target": {
+    "sourceLockDigest": "sha256:a4b8db2384b2c6466339f006206147eae45bb248545cddedc0b2bc44c7d598cd",
+    "compositionProfileDigest": "sha256:f1296bdcc67e718cf7235cb1eb9cfec02a5b434c4fef191b4bc63b2698673732",
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "baseRobotComponent": "component://third-party/unitree-h1",
+    "effector": "effector://h1/right-robotiq-2f85",
+    "gripperCount": 1
+  },
+  "runtime": {
+    "engine": "mujoco_mjx",
+    "algorithm": "ppo",
+    "status": "locked",
+    "targetPlatform": "linux_x86_64_nvidia",
+    "minimumGpuCount": 1,
+    "backendPackage": "worldspec_h1_training",
+    "backendVersion": "0.1.0",
+    "containerDigest": "sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "mjxCapacity": {
+      "activeContactsPerEnvironment": 16,
+      "ccdContactsPerEnvironment": 8,
+      "njmax": 128
+    }
+  },
+  "training": {
+    "hyperparameterStatus": "calibrated_task_profile",
+    "seed": 1,
+    "numTimesteps": 100000000,
+    "numEnvs": 8192,
+    "numEvals": 10,
+    "episodeLength": 1000,
+    "simulationTimestepSeconds": 0.002,
+    "unrollLength": 20,
+    "numMinibatches": 32,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256,
+    "learningRate": 0.0003,
+    "discounting": 0.97,
+    "entropyCost": 0.01,
+    "matmulPrecision": "highest",
+    "commandDistribution": {
+      "linearVelocityX": [0.0, 0.8],
+      "linearVelocityY": [-0.15, 0.15],
+      "angularVelocityYaw": [-0.35, 0.35],
+      "zeroCommandProbability": 0.2
+    }
+  },
+  "teacherPolicy": {
+    "digest": "sha256:44a0fbceb81f3877833ae9a398d039bea1759cb0d3c8188181013885f70589eb",
+    "usage": "interface_reference",
+    "behaviorOnTarget": "failed"
+  },
+  "initialization": {
+    "method": "warm_start",
+    "sourceProfileDigest": "sha256:e7dcc0c264128fa6508ed5f033b1f061db4b007a0975d9c0b99b886e4788476f",
+    "requiredReportStatus": "passed",
+    "requiredCheckpointDistribution": "internal_only",
+    "restore": {
+      "normalizer": true,
+      "policy": true,
+      "value": true
+    },
+    "optimizerState": "reset"
+  },
+  "trainingEnvironment": {
+    "commandDistribution": {
+      "linearVelocityX": [0.0, 0.8],
+      "linearVelocityY": [-0.15, 0.15],
+      "angularVelocityYaw": [-0.35, 0.35],
+      "zeroCommandProbability": 0.2
+    },
+    "termination": {
+      "minimumBaseHeight": 0.5,
+      "minimumUprightCosine": 0.25,
+      "jointLimitToleranceRadians": 0.02
+    },
+    "reward": {
+      "survival": 3.0,
+      "trackingLinear": 6.0,
+      "trackingYaw": 2.0,
+      "upright": 3.0,
+      "baseHeight": 2.0,
+      "pose": 0.5,
+      "verticalVelocityCost": 1.0,
+      "angularVelocityXYCost": 0.5,
+      "torqueCost": 0.000002,
+      "actionRateCost": 0.03
+    },
+    "targets": {
+      "baseHeight": 0.98
+    },
+    "sigmas": {
+      "tracking": 0.2,
+      "upright": 0.05,
+      "baseHeight": 0.02,
+      "pose": 0.2
+    },
+    "commandResampleSteps": 250
+  },
+  "control": {
+    "baselineProfileDigest": "sha256:c19a8de255f84e66fc0bf166889f89ae9b8016b6e50e0840de35d489e8fc0e75",
+    "policyJoints": [
+      "left_hip_yaw",
+      "left_hip_roll",
+      "left_hip_pitch",
+      "left_knee",
+      "left_ankle",
+      "right_hip_yaw",
+      "right_hip_roll",
+      "right_hip_pitch",
+      "right_knee",
+      "right_ankle"
+    ],
+    "policyActuators": [
+      "left_hip_yaw",
+      "left_hip_roll",
+      "left_hip_pitch",
+      "left_knee",
+      "left_ankle",
+      "right_hip_yaw",
+      "right_hip_roll",
+      "right_hip_pitch",
+      "right_knee",
+      "right_ankle"
+    ],
+    "policyKps": [150, 150, 150, 200, 40, 150, 150, 150, 200, 40],
+    "policyKds": [2, 2, 2, 4, 2, 2, 2, 2, 4, 2],
+    "defaultAngles": [0, 0, -0.1, 0.3, -0.2, 0, 0, -0.1, 0.3, -0.2],
+    "actionScale": 0.25,
+    "heldJoints": [
+      "torso",
+      "left_shoulder_pitch",
+      "left_shoulder_roll",
+      "left_shoulder_yaw",
+      "left_elbow",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "heldActuators": [
+      "torso",
+      "left_shoulder_pitch",
+      "left_shoulder_roll",
+      "left_shoulder_yaw",
+      "left_elbow",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "heldTargets": [0, 0, 0, 0, 0, 0, 0, 0, 0],
+    "heldKps": [100, 40, 40, 18, 18, 40, 40, 18, 18],
+    "heldKds": [5, 2, 2, 1, 1, 2, 2, 1, 1],
+    "gripperActuators": ["right_gripper_fingers_actuator"],
+    "gripperCommands": [0],
+    "controlDecimation": 10
+  },
+  "curriculum": {
+    "stages": [
+      {
+        "id": "stage://worldspec/h1-locomotion/stand",
+        "objective": "stand",
+        "exitGate": "The accepted stand-v2.1 report is digest-bound."
+      },
+      {
+        "id": "stage://worldspec/h1-locomotion/track",
+        "objective": "velocity_tracking",
+        "exitGate": "The loaded-track-settle midterm report passes all gates."
+      },
+      {
+        "id": "stage://worldspec/h1-locomotion/loaded-track",
+        "objective": "loaded_velocity_tracking",
+        "exitGate": "Five task-range walk and settle runs pass."
+      },
+      {
+        "id": "stage://worldspec/h1-locomotion/settle",
+        "objective": "stop_and_settle",
+        "exitGate": "Five zero-command stand regression runs pass."
+      }
+    ],
+    "randomizationPolicy": "disabled_until_nominal_pass"
+  },
+  "validation": {
+    "nominalDurationSeconds": 4.0,
+    "moveDurationSeconds": 3.0,
+    "settleWindowSeconds": 1.0,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "maximumLateralDrift": 0.2,
+    "maximumTrackingRmse": 0.25,
+    "maximumSettleLinearSpeed": 0.2,
+    "maximumSettleAngularSpeed": 0.4,
+    "maximumStandPlanarDrift": 0.2,
+    "maximumJointLimitViolations": 0,
+    "maximumNonFiniteSamples": 0,
+    "requiredConsecutivePasses": 5
+  },
+  "outputs": [
+    "orbax_checkpoint_archive",
+    "policy_manifest",
+    "training_result",
+    "evaluation_traces",
+    "environment_lock"
+  ],
+  "evidenceStatus": "derived"
+}

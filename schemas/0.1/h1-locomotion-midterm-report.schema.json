@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-midterm-report.schema.json",
+  "title": "WorldSpec H1 Locomotion Midterm Calibration Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "policyStatus",
+    "formalTrainingGate",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "baseTrainingProfileDigest",
+    "midtermProfileDigest",
+    "effectiveTrainingProfileDigest",
+    "warmStart",
+    "runtimeCapacity",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "training",
+    "qualityAssessment",
+    "researchCheckpoint",
+    "traceArtifact",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": { "const": "h1_loaded_track_settle_midterm" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "research_midterm" },
+    "policyStatus": { "const": "non_publishable" },
+    "formalTrainingGate": { "enum": ["passed", "failed"] },
+    "probeDefinition": { "$ref": "#/$defs/revision" },
+    "imageSource": { "$ref": "#/$defs/revision" },
+    "probeInput": {
+      "allOf": [
+        { "$ref": "#/$defs/revision" },
+        {
+          "type": "object",
+          "required": ["materialization", "archiveDigest"],
+          "properties": {
+            "materialization": { "const": "verified_git_archive" },
+            "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" }
+          }
+        }
+      ]
+    },
+    "container": { "type": "object" },
+    "platform": { "type": "object" },
+    "gpu": { "type": "object" },
+    "packages": { "type": "object" },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "baseTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "midtermProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "effectiveTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "warmStart": {
+      "type": "object",
+      "required": [
+        "archiveDigest",
+        "archiveSizeBytes",
+        "selectedStep",
+        "networkConfig",
+        "restored",
+        "optimizerState"
+      ],
+      "properties": {
+        "archiveDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "archiveSizeBytes": { "type": "integer", "minimum": 1 },
+        "selectedStep": { "type": "integer", "minimum": 0 },
+        "networkConfig": { "type": "object" },
+        "restored": {
+          "type": "object",
+          "required": ["normalizer", "policy", "value", "optimizer"],
+          "properties": {
+            "normalizer": { "const": true },
+            "policy": { "const": true },
+            "value": { "const": true },
+            "optimizer": { "const": false }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": { "const": "reset" }
+      },
+      "additionalProperties": false
+    },
+    "runtimeCapacity": { "type": "object" },
+    "staticPreflight": { "type": "object" },
+    "runtimePreflight": { "type": "object" },
+    "target": {
+      "type": "object",
+      "required": [
+        "sourceBundleDigest",
+        "derivedModelDigest",
+        "observationSize",
+        "actionSize"
+      ]
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "progressRecordCount",
+        "maximumReportedStep",
+        "elapsedSeconds",
+        "firstProgress",
+        "finalProgress"
+      ]
+    },
+    "qualityAssessment": {
+      "type": "object",
+      "required": [
+        "status",
+        "finalMeanEpisodeLength",
+        "minimumFinalMeanEpisodeLength",
+        "meanEpisodeLengthGate",
+        "deterministicSuiteGate",
+        "tests"
+      ],
+      "properties": {
+        "status": { "enum": ["passed", "failed"] },
+        "finalMeanEpisodeLength": { "type": "number" },
+        "minimumFinalMeanEpisodeLength": { "const": 900.0 },
+        "meanEpisodeLengthGate": { "type": "boolean" },
+        "deterministicSuiteGate": { "type": "boolean" },
+        "tests": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": { "$ref": "#/$defs/test" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "researchCheckpoint": {
+      "allOf": [
+        { "$ref": "#/$defs/artifact" },
+        {
+          "type": "object",
+          "properties": {
+            "path": { "const": "midterm-checkpoint.zip" },
+            "distribution": { "const": "internal_only" }
+          },
+          "required": ["distribution"]
+        }
+      ]
+    },
+    "traceArtifact": {
+      "allOf": [
+        { "$ref": "#/$defs/artifact" },
+        {
+          "type": "object",
+          "properties": {
+            "path": { "const": "evaluation-traces.jsonl" }
+          }
+        }
+      ]
+    },
+    "logDiagnostics": {
+      "type": "object",
+      "required": [
+        "ccdOverflowCount",
+        "capacityOverflowCount",
+        "abnormalContactCount",
+        "jointLimitViolationCount",
+        "nonFiniteCount",
+        "clean"
+      ],
+      "properties": {
+        "ccdOverflowCount": { "type": "integer", "minimum": 0 },
+        "capacityOverflowCount": { "type": "integer", "minimum": 0 },
+        "abnormalContactCount": { "type": "integer", "minimum": 0 },
+        "jointLimitViolationCount": { "type": "integer", "minimum": 0 },
+        "nonFiniteCount": { "type": "integer", "minimum": 0 },
+        "clean": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "revision": {
+      "type": "object",
+      "required": ["repository", "commit"],
+      "properties": {
+        "repository": { "type": "string", "minLength": 1 },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+      },
+      "additionalProperties": true
+    },
+    "test": {
+      "type": "object",
+      "required": ["id", "suite", "result", "metrics"],
+      "properties": {
+        "id": { "$ref": "common.schema.json#/$defs/id" },
+        "suite": { "enum": ["walk_settle", "stand_regression"] },
+        "result": { "enum": ["pass", "fail"] },
+        "metrics": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["path", "digest", "sizeBytes"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "not": { "pattern": "(^/|(^|/)\\.\\.(/|$))" }
+        },
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 },
+        "distribution": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "formalTrainingGate": { "const": "passed" } },
+        "required": ["formalTrainingGate"]
+      },
+      "then": {
+        "properties": {
+          "qualityAssessment": {
+            "properties": {
+              "status": { "const": "passed" },
+              "meanEpisodeLengthGate": { "const": true },
+              "deterministicSuiteGate": { "const": true },
+              "tests": {
+                "items": {
+                  "properties": { "result": { "const": "pass" } }
+                }
+              }
+            }
+          },
+          "logDiagnostics": {
+            "properties": {
+              "ccdOverflowCount": { "const": 0 },
+              "capacityOverflowCount": { "const": 0 },
+              "abnormalContactCount": { "const": 0 },
+              "jointLimitViolationCount": { "const": 0 },
+              "nonFiniteCount": { "const": 0 },
+              "clean": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

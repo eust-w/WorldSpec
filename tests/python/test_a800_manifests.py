@@ -254,3 +254,94 @@ def test_locomotion_calibration_is_isolated_and_research_only() -> None:
         "calibration batchSize times numMinibatches must be divisible by numEnvs"
         in launcher
     )
+
+
+def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> None:
+    (job,) = _documents("h1-locomotion-midterm-job.yaml")
+    assert job["metadata"]["namespace"] == "worldspec-a800-poc"
+    assert job["metadata"]["labels"]["app.kubernetes.io/name"] == (
+        "worldspec-h1-locomotion-midterm"
+    )
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["securityContext"]["runAsUser"] == 10001
+    assert pod["securityContext"]["runAsGroup"] == 10001
+    (container,) = pod["containers"]
+    assert container["name"] == "midterm"
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
+    assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all(
+        "persistentVolumeClaim" not in volume
+        for volume in pod["volumes"]
+    )
+
+    entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "stage waiting_for_input" in entrypoint
+    assert "input-ready" in entrypoint
+    assert "stage artifact_ready" in entrypoint
+    assert "artifact-copied" in entrypoint
+    assert "run_midterm_calibration" in entrypoint
+    assert '"policyStatus": "non_publishable"' in entrypoint
+
+    launcher = (
+        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
+    ).read_text(encoding="utf-8")
+    assert "upload_kubernetes_file.py" in launcher
+    assert "copy_kubernetes_file.py" in launcher
+    assert "A800_CAPACITY_BLOCKED" in launcher
+    assert "formalTrainingGate" in launcher
+
+
+def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> None:
+    (job,) = _documents("h1-locomotion-formal-job.yaml")
+    assert job["metadata"]["namespace"] == "worldspec-a800-poc"
+    assert job["metadata"]["labels"]["app.kubernetes.io/name"] == (
+        "worldspec-h1-locomotion-formal"
+    )
+    pod = job["spec"]["template"]["spec"]
+    assert pod["automountServiceAccountToken"] is False
+    assert pod["securityContext"]["runAsUser"] == 10001
+    assert pod["securityContext"]["runAsGroup"] == 10001
+    (container,) = pod["containers"]
+    assert container["name"] == "formal"
+    assert container["image"] == "__RUNTIME_IMAGE__"
+    assert container["securityContext"]["readOnlyRootFilesystem"] is True
+    assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
+    assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
+    assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all(
+        "persistentVolumeClaim" not in volume
+        for volume in pod["volumes"]
+    )
+
+    entrypoint = (A800 / "h1-locomotion-formal-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "stage waiting_for_input" in entrypoint
+    assert "input-ready" in entrypoint
+    assert "stage artifact_ready" in entrypoint
+    assert "artifact-copied" in entrypoint
+    assert "run_training" in entrypoint
+    assert '"policy_candidate" if all_passed' in entrypoint
+
+    orchestrator = (
+        ROOT / "scripts" / "run_a800_h1_midterm_then_training.sh"
+    ).read_text(encoding="utf-8")
+    assert "run_a800_h1_locomotion_midterm.sh" in orchestrator
+    assert 'formalTrainingGate") != "passed"' in orchestrator
+    assert "run_a800_h1_locomotion_formal.py" in orchestrator
+
+    formal_launcher = (
+        ROOT / "scripts" / "run_a800_h1_locomotion_formal.py"
+    ).read_text(encoding="utf-8")
+    assert "CCD_OVERFLOW" in formal_launcher
+    assert "CAPACITY_OR_BUFFER_OVERFLOW" in formal_launcher
+    assert "ABNORMAL_CONTACT" in formal_launcher
+    assert 'result["policyStatus"] = "non_publishable"' in formal_launcher
