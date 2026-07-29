@@ -33,5 +33,6 @@ last-verified: 2026-07-29
 - [ADR-0023 H1 A5-C 控制 Spike 失败](0023-h1-a5c-control-spike-failure.md)
 - [ADR-0024 H1 A5-CI 修正重放](0024-h1-a5ci-corrected-replay.md)
 - [ADR-0025 H1 任务阶段腿部策略安全交接](0025-h1-task-policy-handoff-fix.md)
+- [ADR-0026 H1 固定底座四关节动态右臂跟踪](0026-h1-dynamic-arm-tracking.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

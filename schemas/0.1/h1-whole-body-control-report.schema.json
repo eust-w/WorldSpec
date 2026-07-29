@@ -77,6 +77,9 @@
     "taskPolicyHandoff": {
       "$ref": "h1-whole-body-control-profile.schema.json#/properties/taskPolicyHandoff"
     },
+    "dynamicArmTracking": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/dynamicArmTracking"
+    },
     "qualityAssessment": {
       "type": "object",
       "required": ["status", "tests"],

@@ -35,5 +35,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0023 H1 A5-C control-spike failure](0023-h1-a5c-control-spike-failure.md)
 - [ADR-0024 H1 A5-CI corrected replay](0024-h1-a5ci-corrected-replay.md)
 - [ADR-0025 H1 task-phase leg-policy safe handoff](0025-h1-task-policy-handoff-fix.md)
+- [ADR-0026 H1 fixed-base four-joint dynamic arm tracking](0026-h1-dynamic-arm-tracking.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

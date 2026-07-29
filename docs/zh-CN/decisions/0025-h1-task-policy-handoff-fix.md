@@ -39,6 +39,20 @@ A5-CI Attempt-05 的正式诊断门通过，但控制门因 `right_hip_yaw`
    一次单 GPU A5-CF Spike。失败即回传 Report、Controller 和 Trace 后停止，
    不自动调参。
 
+## A800 结果
+
+Job `worldspec-h1-midterm-45v9r` 已在一张 Drobodata A800 上完成。镜像、
+三份策略和 Profile 均通过 Digest 校验，Report、Controller 和 307 条 Trace
+已完整回传。
+
+`formalControlGate=failed`，但原 `right_hip_yaw` 交接越限未复现；本次精确
+终止原因为 `fall_height`。任务阶段 QP 继续改变躯干和右臂，基座逐步向后失稳，
+最低高度为 `0.777434 m`。没有关节越限、NaN、容量溢出或异常接触。
+
+因此 A5-CF 只完成了交接修复，未成为 `control_candidate`。规范化摘要见
+[`whole-body-policy-handoff.a800.failed-summary.json`](../../../examples/h1-kitchen/whole-body-policy-handoff.a800.failed-summary.json)，
+后续控制决策见 [ADR-0026](0026-h1-dynamic-arm-tracking.md)。
+
 ## 放行边界
 
 - A5-CF 通过只产生 `control_candidate`，不证明完整抽屉任务、5/5 或 L3；

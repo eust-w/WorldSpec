@@ -115,6 +115,36 @@ A5CI_DIAGNOSTIC_EVIDENCE = {
     "formalControlGate": "failed",
 }
 
+A5CF_FAILURE_EVIDENCE = {
+    "job": "worldspec-h1-midterm-45v9r",
+    "controlProfileDigest": (
+        "sha256:2fd53b32393025124967288f39419980f2c1b0b5a46140f91284e86c30202a54"
+    ),
+    "reportDigest": ("sha256:5de85648bc2fcd12a47b402628e7072f295ea4a95426c65ecaa71edaed51f012"),
+    "controllerDigest": ("sha256:c723dfc437f4f4b2ba1f1952e04f93ae82ab8fc0039249cce604484dff8524e4"),
+    "traceDigest": ("sha256:6c98416d60bf36e78cf29d4043d16ecebb04bfbe862012b49ef4ab171b7a91b1"),
+    "traceRecordCount": 307,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "motion",
+    "taskPolicyHandoffFailed": False,
+    "formalControlGate": "failed",
+}
+
+DYNAMIC_ARM_TRACKING = {
+    "mode": "fixed_base_four_joint_qp_with_bias_feedforward",
+    "controlledJoints": [
+        "right_shoulder_pitch",
+        "right_shoulder_roll",
+        "right_shoulder_yaw",
+        "right_elbow",
+    ],
+    "baseCommand": "locked_zero",
+    "torsoTargetRadians": 0.0,
+    "uncontrolledHeldTargets": "profile_defaults",
+    "legPolicy": "stand",
+    "feedforward": "mujoco_qfrc_bias",
+}
+
 DIAGNOSTIC_TERMINATION_CHANNELS = (
     "joint_limit",
     "fall_height",
@@ -828,7 +858,12 @@ def solve_box_qp(
 class WholeBodyTaskSpaceController:
     """Host-side task allocator and inverse-dynamics feed-forward generator."""
 
-    def __init__(self, model, control_profile: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        model,
+        control_profile: dict[str, Any],
+        dynamic_arm_tracking: Mapping[str, Any] | None = None,
+    ) -> None:
         import mujoco
         import numpy as np
 
@@ -836,6 +871,9 @@ class WholeBodyTaskSpaceController:
         self._np = np
         self._model = model
         self._data = mujoco.MjData(model)
+        self._dynamic_arm_tracking = (
+            copy.deepcopy(dynamic_arm_tracking) if dynamic_arm_tracking is not None else None
+        )
         self._site = mujoco.mj_name2id(
             model,
             mujoco.mjtObj.mjOBJ_SITE,
@@ -917,6 +955,7 @@ class WholeBodyTaskSpaceController:
         self._held_qpos = model.jnt_qposadr[self._held_joint_ids]
         self._held_dofs = model.jnt_dofadr[self._held_joint_ids]
         self._held_ranges = model.jnt_range[self._held_joint_ids]
+        self._held_reference_targets = np.asarray(control_profile["heldTargets"], dtype=float)
         self._held_index = {name: index for index, name in enumerate(self._held_joint_names)}
         self._actuator_names = (
             self._policy_actuator_names + self._held_actuator_names + self._gripper_actuator_names
@@ -971,6 +1010,11 @@ class WholeBodyTaskSpaceController:
             upper = upper.copy()
             lower[:3] = 0.0
             upper[:3] = 0.0
+        if self._dynamic_arm_tracking is not None:
+            lower = lower.copy()
+            upper = upper.copy()
+            lower[:4] = 0.0
+            upper[:4] = 0.0
         decision, objective, projected_gradient = solve_box_qp(
             hessian,
             gradient,
@@ -978,7 +1022,11 @@ class WholeBodyTaskSpaceController:
             upper,
             iterations=int(WHOLE_BODY_CONTROLLER["qpIterations"]),
         )
-        held_targets = qpos_value[self._held_qpos].copy()
+        held_targets = (
+            self._held_reference_targets.copy()
+            if self._dynamic_arm_tracking is not None
+            else qpos_value[self._held_qpos].copy()
+        )
         horizon = float(WHOLE_BODY_CONTROLLER["targetHorizonSeconds"])
         maximum_step = float(WHOLE_BODY_CONTROLLER["maximumJointTargetStep"])
         margin = float(WHOLE_BODY_CONTROLLER["jointLimitMarginRadians"])
@@ -989,6 +1037,11 @@ class WholeBodyTaskSpaceController:
             self._joint_ranges[:, 1] - margin,
         )
         for name, value in zip(self._joint_names, joint_targets, strict=True):
+            if (
+                self._dynamic_arm_tracking is not None
+                and name not in self._dynamic_arm_tracking["controlledJoints"]
+            ):
+                continue
             held_targets[self._held_index[name]] = value
         feedforward = (
             float(WHOLE_BODY_CONTROLLER["feedforwardScale"]) * self._data.qfrc_bias[self._held_dofs]
@@ -1200,6 +1253,29 @@ def validate_whole_body_profile(
                 "WHOLE_BODY_HANDOFF_EVIDENCE_MISMATCH",
                 "A5-CF must remain bound to the passing A5-CI failure evidence.",
             )
+    dynamic_arm_tracking = profile.get("dynamicArmTracking")
+    a5cf_evidence = profile.get("a5cfEvidence")
+    if (dynamic_arm_tracking is None) != (a5cf_evidence is None):
+        raise TrainingError(
+            "WHOLE_BODY_DYNAMIC_ARM_LINEAGE_INCOMPLETE",
+            "A5-CG requires both the dynamic arm contract and A5-CF failure evidence.",
+        )
+    if dynamic_arm_tracking is not None:
+        if task_policy_handoff is None:
+            raise TrainingError(
+                "WHOLE_BODY_DYNAMIC_ARM_HANDOFF_MISSING",
+                "A5-CG must preserve the passing A5-CF task policy handoff contract.",
+            )
+        if dynamic_arm_tracking != DYNAMIC_ARM_TRACKING:
+            raise TrainingError(
+                "WHOLE_BODY_DYNAMIC_ARM_INVALID",
+                "A5-CG must lock the base and torso while controlling only the right arm.",
+            )
+        if a5cf_evidence != A5CF_FAILURE_EVIDENCE:
+            raise TrainingError(
+                "WHOLE_BODY_DYNAMIC_ARM_EVIDENCE_MISMATCH",
+                "A5-CG must remain bound to the archived A5-CF fall-height evidence.",
+            )
     runtime = profile.get("runtime", {})
     if (
         runtime.get("ccdIterations") != 50
@@ -1252,6 +1328,7 @@ def evaluate_whole_body_control_spike(
     capture_policy,
     stand_policy,
     task_policy_handoff: Mapping[str, Any] | None = None,
+    dynamic_arm_tracking: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     import jax
     import jax.numpy as jp
@@ -1262,7 +1339,11 @@ def evaluate_whole_body_control_spike(
     stand_inference = jax.jit(stand_policy)
     reset = jax.jit(env.reset)
     step = jax.jit(env.step)
-    controller = WholeBodyTaskSpaceController(env.mj_model, profile["control"])
+    controller = WholeBodyTaskSpaceController(
+        env.mj_model,
+        profile["control"],
+        dynamic_arm_tracking,
+    )
     rng = jax.random.PRNGKey(profile["training"]["seed"])
     state = reset(rng)
     supervisor = SupervisorState()
@@ -1528,6 +1609,7 @@ def evaluate_whole_body_control_spike(
                 "taskPolicyHandoffFailed": (
                     task_supervisor.handoff_failed if task_supervisor is not None else False
                 ),
+                "dynamicArmTrackingEnabled": dynamic_arm_tracking is not None,
             },
         },
         traces,
@@ -1598,6 +1680,7 @@ def run_whole_body_control_spike(
             policies["capture"],
             policies["stand"],
             profile.get("taskPolicyHandoff"),
+            profile.get("dynamicArmTracking"),
         )
     trace_path = output_dir / "evaluation-traces.jsonl"
     with trace_path.open("w", encoding="utf-8") as stream:
@@ -1612,6 +1695,11 @@ def run_whole_body_control_spike(
         **(
             {"taskPolicyHandoff": copy.deepcopy(profile["taskPolicyHandoff"])}
             if "taskPolicyHandoff" in profile
+            else {}
+        ),
+        **(
+            {"dynamicArmTracking": copy.deepcopy(profile["dynamicArmTracking"])}
+            if "dynamicArmTracking" in profile
             else {}
         ),
         "scene": copy.deepcopy(TASK_SCENE),
@@ -1647,6 +1735,11 @@ def run_whole_body_control_spike(
         **(
             {"taskPolicyHandoff": copy.deepcopy(profile["taskPolicyHandoff"])}
             if "taskPolicyHandoff" in profile
+            else {}
+        ),
+        **(
+            {"dynamicArmTracking": copy.deepcopy(profile["dynamicArmTracking"])}
+            if "dynamicArmTracking" in profile
             else {}
         ),
         "qualityAssessment": {

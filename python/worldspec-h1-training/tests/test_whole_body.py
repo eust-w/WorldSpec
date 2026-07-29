@@ -10,8 +10,10 @@ import pytest
 from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.whole_body import (
+    A5CF_FAILURE_EVIDENCE,
     A5CI_DIAGNOSTIC_EVIDENCE,
     A5R_FAILED_REPORT_DIGEST,
+    DYNAMIC_ARM_TRACKING,
     TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
     WHOLE_BODY_GATES,
@@ -32,6 +34,7 @@ BASE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 SUPERVISOR = ROOT / "examples" / "h1-kitchen" / "locomotion-supervisor-profile.json"
 CONTROL = ROOT / "examples" / "h1-kitchen" / "whole-body-control-profile.json"
 HANDOFF = ROOT / "examples" / "h1-kitchen" / "whole-body-policy-handoff-profile.json"
+DYNAMIC_ARM = ROOT / "examples" / "h1-kitchen" / "whole-body-dynamic-arm-profile.json"
 
 
 def _profiles() -> tuple[dict, dict, dict]:
@@ -86,6 +89,48 @@ def test_a5cf_rejects_partial_handoff_lineage(missing: str) -> None:
         validate_whole_body_profile(base, supervisor, handoff)
 
     assert captured.value.code == "WHOLE_BODY_HANDOFF_LINEAGE_INCOMPLETE"
+
+
+def test_a5cg_profile_binds_exact_a5cf_evidence_and_dynamic_arm_contract() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(DYNAMIC_ARM.read_text(encoding="utf-8"))
+
+    validate_whole_body_profile(base, supervisor, profile)
+
+    assert profile["a5cfEvidence"] == A5CF_FAILURE_EVIDENCE
+    assert profile["dynamicArmTracking"] == DYNAMIC_ARM_TRACKING
+    assert profile["taskPolicyHandoff"] == TASK_POLICY_HANDOFF
+
+
+@pytest.mark.parametrize("missing", ["a5cfEvidence", "dynamicArmTracking"])
+def test_a5cg_rejects_partial_dynamic_arm_lineage(missing: str) -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(DYNAMIC_ARM.read_text(encoding="utf-8"))
+    profile.pop(missing)
+
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+
+    assert captured.value.code == "WHOLE_BODY_DYNAMIC_ARM_LINEAGE_INCOMPLETE"
+
+
+def test_a5cg_rejects_missing_handoff_and_contract_drift() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(DYNAMIC_ARM.read_text(encoding="utf-8"))
+    profile.pop("taskPolicyHandoff")
+    profile.pop("diagnosticEvidence")
+
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+
+    assert captured.value.code == "WHOLE_BODY_DYNAMIC_ARM_HANDOFF_MISSING"
+
+    profile = json.loads(DYNAMIC_ARM.read_text(encoding="utf-8"))
+    profile["dynamicArmTracking"]["baseCommand"] = "qp"
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+
+    assert captured.value.code == "WHOLE_BODY_DYNAMIC_ARM_INVALID"
 
 
 def test_task_policy_handoff_uses_hysteresis_capture_and_blend() -> None:
@@ -514,3 +559,10 @@ def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
     assert "whole-body-policy-handoff-profile.json" in handoff_wrapper
     assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in handoff_wrapper
     assert "100000000" not in handoff_wrapper
+
+    dynamic_arm_wrapper = (
+        ROOT / "scripts" / "run_a800_h1_whole_body_dynamic_arm_spike.sh"
+    ).read_text(encoding="utf-8")
+    assert "whole-body-dynamic-arm-profile.json" in dynamic_arm_wrapper
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in dynamic_arm_wrapper
+    assert "100000000" not in dynamic_arm_wrapper

@@ -47,6 +47,23 @@ this ADR decides only the new A5-CF control variant.
    A5-C regression, and local CPU/MJX preflight. On failure, transfer Report,
    Controller, and Trace, then stop without automatic tuning.
 
+## A800 result
+
+Job `worldspec-h1-midterm-45v9r` completed on one Drobodata A800. The image,
+three policies, and Profile passed digest checks, and the Report, Controller,
+and all 307 Trace records were transferred completely.
+
+`formalControlGate=failed`, but the original `right_hip_yaw` handoff violation
+did not recur. The exact termination was `fall_height`. During the task phase,
+the QP continued moving the torso and right arm while the base destabilized
+backward and reached a minimum height of `0.777434 m`. There was no joint-limit
+violation, NaN, capacity overflow, or abnormal contact.
+
+A5-CF therefore repaired handoff but did not become a `control_candidate`. See
+the normalized
+[`whole-body-policy-handoff.a800.failed-summary.json`](../../../examples/h1-kitchen/whole-body-policy-handoff.a800.failed-summary.json)
+and the next decision in [ADR-0026](0026-h1-dynamic-arm-tracking.md).
+
 ## Release boundary
 
 - An A5-CF pass yields only a `control_candidate`; it does not prove the full

@@ -54,5 +54,6 @@ last-verified: 2026-07-29
 | D-042 | Attempt-04 完成 GPU 重放、产物、Receipt、诊断完备与静态等价检查，但 Trace 的既有 `activePolicy=blend` 未纳入诊断枚举，正式诊断门仍失败；仅补齐诊断 Schema 枚举并以新 Attempt 重放 | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
 | D-043 | Attempt-05 在 Drobodata A800 完成单次等价诊断重放和完整产物交接，`formalDiagnosticReplayGate=passed`；控制门仍因 `right_hip_yaw` 关节限位失败，Controller 保持 `non_publishable`，停止在 A5/5-of-5/100M 之前 | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
 | D-044 | 选择 A5-CF：保持 A5-C 的 QP、策略、场景、范围、终止条件和质量门不变；任务阶段用 `0.05/0.02` 迟滞触发 Motion，并复用已验证的 Capture 稳定门和 5 步 Blend 完成 Motion→Stand 交接；先单次 A800 Spike，不自动调参或启动 A5/100M | Accepted Design | [ADR-0025](decisions/0025-h1-task-policy-handoff-fix.md) |
+| D-045 | A5-CF 在 A800 上消除了 `right_hip_yaw` 交接越限，但任务阶段因躯干/右臂运动导致 `fall_height`，未成为控制候选；选择 A5-CG，锁定底座和躯干，只用四个右臂关节 QP 与显式偏置力前馈做一次门控 | Accepted Design | [ADR-0026](decisions/0026-h1-dynamic-arm-tracking.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

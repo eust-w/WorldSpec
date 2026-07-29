@@ -90,7 +90,11 @@ def run(args: argparse.Namespace) -> dict:
         data.qpos[policy_qpos] = np.asarray(control["defaultAngles"])
         data.qpos[held_qpos] = np.asarray(control["heldTargets"])
         mujoco.mj_forward(model, data)
-        controller = WholeBodyTaskSpaceController(model, control)
+        controller = WholeBodyTaskSpaceController(
+            model,
+            control,
+            profile.get("dynamicArmTracking"),
+        )
         settled_base = np.asarray(args.settled_base, dtype=float)
         target = (
             np.asarray([1.87, -0.21, 1.075], dtype=float)
