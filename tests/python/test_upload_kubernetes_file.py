@@ -29,12 +29,18 @@ def test_chunk_upload_retries_and_verifies_identity(tmp_path: Path) -> None:
     ) -> subprocess.CompletedProcess[bytes]:
         if "truncate" in command:
             return subprocess.CompletedProcess(command, 0, b"", b"")
-        if "dd" in command:
-            index = int(next(item[5:] for item in command if item.startswith("seek=")))
+        if "worldspec-upload-chunk" in command:
+            marker = command.index("worldspec-upload-chunk")
+            declared_size = int(command[marker + 2])
+            declared_digest = command[marker + 3]
+            index = int(command[marker + 5])
             calls[index] = calls.get(index, 0) + 1
             if index == 1 and calls[index] == 1:
                 return subprocess.CompletedProcess(command, 1, b"", b"temporary EOF")
-            assert kwargs["input"] == payload[index * 512 * 1024 : (index + 1) * 512 * 1024]
+            chunk = payload[index * 512 * 1024 : (index + 1) * 512 * 1024]
+            assert kwargs["input"] == chunk
+            assert declared_size == len(chunk)
+            assert declared_digest == hashlib.sha256(chunk).hexdigest()
             return subprocess.CompletedProcess(command, 0, b"", b"")
         return subprocess.CompletedProcess(
             command,

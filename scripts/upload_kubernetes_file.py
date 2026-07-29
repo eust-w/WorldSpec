@@ -83,6 +83,7 @@ def upload_to_pod(
     chunk_count = (expected_size + chunk_size - 1) // chunk_size
     for index in range(chunk_count):
         chunk = payload[index * chunk_size : (index + 1) * chunk_size]
+        chunk_digest = hashlib.sha256(chunk).hexdigest()
         command = [
             *command_prefix,
             "exec",
@@ -91,13 +92,25 @@ def upload_to_pod(
             "-c",
             container,
             "--",
-            "dd",
-            f"of={remote_path}",
-            f"bs={chunk_size}",
-            f"seek={index}",
-            "count=1",
-            "conv=notrunc",
-            "status=none",
+            "sh",
+            "-ceu",
+            (
+                'temporary="$(mktemp "$1.worldspec-upload.XXXXXX")"\n'
+                "trap 'rm -f \"$temporary\"' EXIT HUP INT TERM\n"
+                'cat >"$temporary"\n'
+                'actual_size="$(stat -c %s "$temporary")"\n'
+                'actual_digest="$(sha256sum "$temporary" | cut -d " " -f 1)"\n'
+                'test "$actual_size" = "$2"\n'
+                'test "$actual_digest" = "$3"\n'
+                'dd if="$temporary" of="$1" bs="$4" seek="$5" '
+                "count=1 conv=notrunc status=none"
+            ),
+            "worldspec-upload-chunk",
+            remote_path,
+            str(len(chunk)),
+            chunk_digest,
+            str(chunk_size),
+            str(index),
         ]
         last_error = ""
         for _ in range(retries):
