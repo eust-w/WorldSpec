@@ -1,0 +1,294 @@
+{
+  "id": "midterm-report://worldspec/h1-loaded-track-settle/a800-fa8abbe0eb64",
+  "reportVersion": "0.1.0",
+  "status": "completed",
+  "scope": "h1_loaded_track_settle_midterm",
+  "executionEvidence": "executed",
+  "runtimeAcceptance": "research_midterm",
+  "policyStatus": "non_publishable",
+  "formalTrainingGate": "failed",
+  "probeDefinition": {
+    "repository": "https://github.com/eust-w/WorldSpec.git",
+    "commit": "fa8abbe0eb64939f090c0b3448ea6816d33e7be0"
+  },
+  "imageSource": {
+    "repository": "https://github.com/eust-w/WorldSpec.git",
+    "commit": "90622d34583a9fd5ead600dc12b3f6d7f95ef8be"
+  },
+  "probeInput": {
+    "repository": "https://github.com/eust-w/WorldSpec.git",
+    "commit": "fa8abbe0eb64939f090c0b3448ea6816d33e7be0",
+    "materialization": "verified_git_archive",
+    "archiveDigest": "sha256:4a27af8d8e6bd865c3d445b2fa875c2df6019ef3a91d45348754cb872a508932"
+  },
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:962feb4a81136909df73882beb6fadc0f5929c458578d084bc8fb5a5e5aa6424",
+    "runAsUser": 10001,
+    "runAsGroup": 10001,
+    "readOnlyRootFilesystem": true,
+    "serviceAccountTokenMounted": false,
+    "secretMountCount": 0
+  },
+  "platform": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "python": "3.12.11"
+  },
+  "gpu": {
+    "name": "NVIDIA A800-SXM4-80GB",
+    "memoryMiB": 81920,
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ]
+  },
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "midtermProfileDigest": "sha256:2ae193b94a3efcd813a610f66f775537cd213941062918ab7fb2aabd7c2174b1",
+  "effectiveTrainingProfileDigest": "sha256:8fa470cb36993d9d9060269ca318d0f80cfbc98992f9f96054d11b61a7a1b1b3",
+  "warmStart": {
+    "archiveDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "archiveSizeBytes": 6280684,
+    "selectedStep": 4505600,
+    "networkConfig": {
+      "action_size": 10,
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "restored": {
+      "normalizer": true,
+      "policy": true,
+      "value": true,
+      "optimizer": false
+    },
+    "optimizerState": "reset"
+  },
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "ccdContactsPerEnvironment": 8,
+    "effectiveNaccdmax": 32768,
+    "effectiveNaconmax": 65536,
+    "njmax": 128
+  },
+  "staticPreflight": {
+    "status": "pass",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "runtimePreflight": {
+    "status": "pass",
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "devices": [
+      "cuda:0"
+    ],
+    "physicsImplementation": "warp",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "target": {
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "observationSize": 42,
+    "actionSize": 10
+  },
+  "training": {
+    "progressRecordCount": 8,
+    "maximumReportedStep": 17203200,
+    "elapsedSeconds": 865.2186828609556,
+    "firstProgress": {
+      "step": 0,
+      "elapsedSeconds": 228.73360863979906,
+      "metrics": {
+        "eval/avg_episode_length": 129.0234375
+      }
+    },
+    "finalProgress": {
+      "step": 17203200,
+      "elapsedSeconds": 804.2507327310741,
+      "metrics": {
+        "eval/avg_episode_length": 972.125,
+        "eval/episode_termination/fall_height": 0.078125,
+        "eval/episode_termination/joint_limit": 0.0,
+        "eval/episode_termination/nonfinite": 0.0,
+        "training/sps": 44837.85305451
+      }
+    }
+  },
+  "qualityAssessment": {
+    "status": "failed",
+    "finalMeanEpisodeLength": 972.125,
+    "minimumFinalMeanEpisodeLength": 900.0,
+    "meanEpisodeLengthGate": true,
+    "deterministicSuiteGate": false,
+    "tests": [
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/1",
+        "suite": "walk_settle",
+        "result": "fail",
+        "metrics": {
+          "forwardDisplacement": 1.4548122882843018,
+          "lateralDrift": 0.06178603693842888,
+          "trackingRmse": 0.14733027792285136,
+          "minimumBaseHeight": 0.9878780245780945,
+          "minimumUprightCosine": 0.9967305064201355,
+          "maximumSettleLinearSpeed": 0.47879452001094164,
+          "maximumSettleAngularSpeed": 0.5940417693982516
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/2",
+        "suite": "walk_settle",
+        "result": "fail",
+        "metrics": {
+          "forwardDisplacement": 1.460025668144226,
+          "lateralDrift": 0.05992346629500389,
+          "trackingRmse": 0.14336705248470635,
+          "minimumBaseHeight": 0.9883643984794617,
+          "minimumUprightCosine": 0.9969764947891235,
+          "maximumSettleLinearSpeed": 0.48550063287480105,
+          "maximumSettleAngularSpeed": 0.5373017777564444
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/3",
+        "suite": "walk_settle",
+        "result": "fail",
+        "metrics": {
+          "forwardDisplacement": 1.4572557210922241,
+          "lateralDrift": 0.05822119489312172,
+          "trackingRmse": 0.1456400546653776,
+          "minimumBaseHeight": 0.9880393147468567,
+          "minimumUprightCosine": 0.9969779849052429,
+          "maximumSettleLinearSpeed": 0.4848143045335485,
+          "maximumSettleAngularSpeed": 0.550231159273015
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/4",
+        "suite": "walk_settle",
+        "result": "fail",
+        "metrics": {
+          "forwardDisplacement": 1.4557329416275024,
+          "lateralDrift": 0.06589117646217346,
+          "trackingRmse": 0.1463716246242208,
+          "minimumBaseHeight": 0.988072395324707,
+          "minimumUprightCosine": 0.9970120787620544,
+          "maximumSettleLinearSpeed": 0.4883255038117146,
+          "maximumSettleAngularSpeed": 0.548247658075338
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/5",
+        "suite": "walk_settle",
+        "result": "fail",
+        "metrics": {
+          "forwardDisplacement": 1.4519126415252686,
+          "lateralDrift": 0.06914389878511429,
+          "trackingRmse": 0.14360978033437735,
+          "minimumBaseHeight": 0.9883989095687866,
+          "minimumUprightCosine": 0.9970018863677979,
+          "maximumSettleLinearSpeed": 0.48403098141477024,
+          "maximumSettleAngularSpeed": 0.5348566067108865
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/1",
+        "suite": "stand_regression",
+        "result": "pass",
+        "metrics": {
+          "maximumPlanarDrift": 0.029679953942232485,
+          "maximumSettleLinearSpeed": 0.000790266306234416,
+          "maximumSettleAngularSpeed": 0.0022379190815963487
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/2",
+        "suite": "stand_regression",
+        "result": "pass",
+        "metrics": {
+          "maximumPlanarDrift": 0.028673414718646012,
+          "maximumSettleLinearSpeed": 0.0013523612566536203,
+          "maximumSettleAngularSpeed": 0.0022696804882696995
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/3",
+        "suite": "stand_regression",
+        "result": "pass",
+        "metrics": {
+          "maximumPlanarDrift": 0.029412216008437016,
+          "maximumSettleLinearSpeed": 0.001079037344078461,
+          "maximumSettleAngularSpeed": 0.0018669029362211552
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/4",
+        "suite": "stand_regression",
+        "result": "pass",
+        "metrics": {
+          "maximumPlanarDrift": 0.028547737557313192,
+          "maximumSettleLinearSpeed": 0.0011968932857626526,
+          "maximumSettleAngularSpeed": 0.0008685482134745611
+        }
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/5",
+        "suite": "stand_regression",
+        "result": "pass",
+        "metrics": {
+          "maximumPlanarDrift": 0.029034530119230524,
+          "maximumSettleLinearSpeed": 0.0015263440849429008,
+          "maximumSettleAngularSpeed": 0.0007610572076055661
+        }
+      }
+    ]
+  },
+  "researchCheckpoint": {
+    "path": "midterm-checkpoint.zip",
+    "digest": "sha256:86d8e0de7c900fdbbf945cca1160518f4e27bf7735f40323de7ffadbf07d2c6a",
+    "sizeBytes": 8821958,
+    "distribution": "internal_only"
+  },
+  "traceArtifact": {
+    "path": "evaluation-traces.jsonl",
+    "digest": "sha256:3cbe9a54f9d2804e481c6c67ce046c30679fac858e54ceb826ccfd08f9a23f41",
+    "sizeBytes": 848535
+  },
+  "logDiagnostics": {
+    "ccdOverflowCount": 0,
+    "capacityOverflowCount": 0,
+    "abnormalContactCount": 0,
+    "jointLimitViolationCount": 0,
+    "nonFiniteCount": 0,
+    "clean": true
+  },
+  "generatedAt": "2026-07-29T07:00:10.861994Z"
+}

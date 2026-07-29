@@ -149,5 +149,25 @@ Checkpoint 已生成，但旧 Launcher 在 Pod 完成后才调用 `kubectl cp`�
 完整任务 5/5，也不构成厨房 L3 证据。
 
 当前仓库已经包含上述 Schema、Warm Start 安全校验、十项评测、Worker 血缘门控、
-512 KiB 双向分块传输和两个隔离 A800 Job 的实现。此段描述的是待执行设计；在真实
-A800 报告回传前，不应把中期或正式训练写成已通过。
+512 KiB 双向分块传输和两个隔离 A800 Job 的实现。
+
+### 2026-07-29 中期实跑结果
+
+`loaded-track-settle-v1` 已在单张 NVIDIA A800-SXM4-80GB 上真实执行。训练达到
+17,203,200 个报告步，最终平均 Episode 长度为 972.125，五次零命令站立回归全部
+通过。五次行走—停稳测试中的前进距离、横向漂移、移动阶段速度跟踪、基座高度和
+直立性也全部通过。
+
+中期门控仍判定为失败：五次行走测试在 1 秒停稳窗口中的最大线速度为
+0.4788–0.4883 m/s，超过 0.20 m/s；最大角速度为 0.5349–0.5940 rad/s，超过
+0.40 rad/s。因此正式 100M Job 没有创建，回传 Checkpoint 固定为
+`non_publishable / internal_only`。运行中没有 NaN、关节越限、容量溢出或异常接触
+诊断；日志另有两条 `ccd_iterations=35` 需要提高的 MuJoCo Warp 建议，它们不是
+CCD 容量溢出，但下一次校准前需要单独评估数值影响。
+
+规范化失败证据见
+[`locomotion-midterm.a800.failed.json`](../../../examples/h1-kitchen/locomotion-midterm.a800.failed.json)。
+完整 Checkpoint、Trace 和原始报告位于忽略提交的本地 `runs/a800/` 目录。按冻结
+计划，本次失败后没有自动调参或重试；下一版 Profile 仍需决定是增加“移动到零命令”
+过渡课程和制动/停稳目标，还是采用其他显式策略。不得通过静默放宽门槛把本结果改写
+为通过。

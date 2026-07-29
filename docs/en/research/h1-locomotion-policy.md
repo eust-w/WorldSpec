@@ -186,6 +186,32 @@ walk-open-grasp-place-release-close task at 5/5 and is not kitchen L3 evidence.
 
 The repository now contains the Schema, safe warm-start validation, ten-test
 evaluation, Worker lineage gates, bidirectional 512-KiB chunk transport, and
-two isolated A800 Job definitions. This paragraph describes implementation
-awaiting execution. Midterm or formal-training success must not be claimed
-until a real A800 report is returned.
+two isolated A800 Job definitions.
+
+### 2026-07-29 midterm execution result
+
+`loaded-track-settle-v1` was executed on one NVIDIA A800-SXM4-80GB. Training
+reached 17,203,200 reported steps, the final mean episode length was 972.125,
+and all five zero-command stand regressions passed. Forward displacement,
+lateral drift, moving-phase velocity tracking, base height, and uprightness
+also passed in all five walk-settle tests.
+
+The midterm gate nevertheless failed. Maximum linear speed during the
+one-second settling window was 0.4788–0.4883 m/s in the five walking tests,
+above the 0.20-m/s limit; maximum angular speed was
+0.5349–0.5940 rad/s, above the 0.40-rad/s limit. The formal 100M Job was
+therefore not created, and the returned checkpoint remains
+`non_publishable / internal_only`. There were no NaNs, joint-limit violations,
+capacity overflows, or abnormal-contact diagnostics. The log also contained
+two MuJoCo Warp recommendations to increase `ccd_iterations=35`. They were
+not CCD-capacity overflows, but their numerical effect must be evaluated
+separately before another calibration.
+
+See the normalized failure evidence in
+[`locomotion-midterm.a800.failed.json`](../../../examples/h1-kitchen/locomotion-midterm.a800.failed.json).
+The complete checkpoint, trace, and raw report remain in the ignored local
+`runs/a800/` directory. The frozen plan prohibited automatic tuning or retry
+after a failed calibration, so the next Profile still requires an explicit
+decision: add a move-to-zero transition curriculum and braking/settling
+objective, or choose another declared strategy. The result must not be turned
+into a pass by silently relaxing the gate.
