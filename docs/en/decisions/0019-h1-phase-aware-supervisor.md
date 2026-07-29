@@ -49,6 +49,44 @@ PPO updates:
   OCI image, package lock, and source commit, while keeping artifacts
   `research_only / internal_only`.
 
+## Execution evidence
+
+On 2026-07-29, A4 ran twice on one NVIDIA A800-SXM4-80GB. The first
+evaluation passed its compute gate, but the Kubernetes stream returned
+`unexpected EOF` while copying the Trace. The old orchestrator then removed
+the Pod, so that attempt established a passing computation but left an
+incomplete evidence bundle. This was an evidence-lifecycle defect, not a
+policy-quality failure.
+
+The orchestrator was changed to 128-KiB output chunks with up to twelve
+attempts per chunk, and to retain the Job, Pod, and ConfigMaps when transport
+fails before `artifact_copied`. After repository-wide tests passed, the
+evaluation was replayed with the same OCI image, three frozen checkpoints,
+Profile, and fixed seeds. Replay Job `worldspec-h1-midterm-bg88v` completed
+successfully and passed all five walk-settle plus all five Stand-regression
+tests:
+
+- forward displacement was 1.3714–1.3770 metres;
+- tracking RMSE was 0.1518–0.1521 m/s;
+- Capture ran for 30–33 control steps followed by 12–15 pure Stand steps;
+- final linear speed was 0.0626–0.0669 m/s and final angular speed was
+  0.0478–0.0531 rad/s; and
+- no NaN, joint-limit, CCD/capacity-overflow, or abnormal-contact diagnostic
+  occurred.
+
+The Controller digest is
+`sha256:0949f073c6f70f945638b485850e0560af4f658cacac69116bb2eba07e6d9e4a`;
+the complete Trace digest is
+`sha256:6503609c7231996f238b6dc0c97b25e8568fd3b1ae31e8141dc43ea3c24ed602`.
+See the normative
+[`locomotion-supervisor.a800.passed.json`](../../../examples/h1-kitchen/locomotion-supervisor.a800.passed.json)
+report.
+
+Both attempts produced the same Controller digest and passed the gate, while
+GPU-dynamics metrics and Trace digests differed slightly. This is therefore
+repeat behavioral evidence under a fixed Profile, not a claim of bytewise or
+framewise determinism across runs.
+
 ## Boundary
 
 This probe proves only three-policy switching for the fixed target model and

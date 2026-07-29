@@ -118,8 +118,8 @@ Checkpoint 已生成，但旧 Launcher 在 Pod 完成后才调用 `kubectl cp`�
 产物交接改为两阶段握手：Pod 写出报告和 Checkpoint 后进入
 `artifact_ready`，Launcher 在 Pod 仍存活时复制产物并写入确认文件，入口收到确认后
 才退出。由于该集群的单流 `kubectl cp` 两次在约 4.7–4.8 MB 处返回
-`unexpected EOF`，最终实现改为 512 KiB 独立分块、逐块重试、原子落盘并按报告
-校验总大小与 SHA-256。
+`unexpected EOF`，实现改为输入使用 512 KiB 独立分块、输出使用 128 KiB 分块，
+逐块重试、原子落盘并按报告校验总大小与 SHA-256。输出未确认时保留远端证据。
 
 `stand-v2.1` 已在真实 A800 上完成并通过全部校准门：最终平均 Episode 为 500 步，
 相对 `stand-v1` 提升 4.02 倍；五次 4 秒确定性站立全部通过，最大平面漂移约
@@ -149,7 +149,7 @@ Checkpoint 已生成，但旧 Launcher 在 Pod 完成后才调用 `kubectl cp`�
 完整任务 5/5，也不构成厨房 L3 证据。
 
 当前仓库已经包含上述 Schema、Warm Start 安全校验、十项评测、Worker 血缘门控、
-512 KiB 双向分块传输和两个隔离 A800 Job 的实现。
+512 KiB 输入与 128 KiB 输出分块传输，以及两个隔离 A800 Job 的实现。
 
 ### 2026-07-29 中期实跑结果
 
@@ -241,3 +241,19 @@ CCD/容量溢出或异常接触。
 随机鲁棒性、完整 Supervisor 或厨房任务。产物保持内部研究级，100M 正式训练没有
 启动。规范报告见
 [`locomotion-capture.a800.passed.json`](../../../examples/h1-kitchen/locomotion-capture.a800.passed.json)。
+
+### 2026-07-29 A4 相位感知 Supervisor 探针
+
+A4 在单张 A800 上把冻结的 Motion、Capture 和 Stand 三策略通过速度连续稳定门控
+串联。完整证据重放的五次行走—停稳和五次 Stand 回归全部通过。行走测试前进
+1.3714–1.3770 米，速度 RMSE 为 0.1518–0.1521 m/s；Capture 在 30–33 步后满足
+连续稳定门，五步混合后保留 12–15 个纯 Stand 步。最终线速度为
+0.0626–0.0669 m/s，最终角速度为 0.0478–0.0531 rad/s，运行日志无异常诊断。
+
+第一次通过计算的运行因 Kubernetes Trace 传输中断留下不完整证据包；修复编排器后
+重放得到完整、摘要校验通过的 Controller、Trace 和报告。两次 Controller Digest
+相同且均通过行为门，但 GPU 轨迹并非逐字节相同。正式通过报告见
+[`locomotion-supervisor.a800.passed.json`](../../../examples/h1-kitchen/locomotion-supervisor.a800.passed.json)。
+
+该结果只把 A4 标记为 `supervisor_candidate / internal_only`。它没有启动 100M，
+也没有证明长时序厨房操作、随机鲁棒性、厨房 L3 或真机安全性。

@@ -146,8 +146,10 @@ report and checkpoint, the Pod enters `artifact_ready`; the launcher copies
 the artifact while the Pod remains alive and writes an acknowledgement; only
 then may the entrypoint exit. Because this cluster returned `unexpected EOF`
 twice for a single `kubectl cp` stream at about 4.7–4.8 MB, the final
-implementation uses independent 512-KiB chunks, per-chunk retries, atomic
-placement, and final size plus SHA-256 verification against the report.
+implementation uses independent 512-KiB input chunks and 128-KiB output
+chunks, per-chunk retries, atomic placement, and final size plus SHA-256
+verification against the report. Remote evidence is retained until output is
+acknowledged.
 
 `stand-v2.1` has now completed on a real A800 and passed every calibration
 gate: final mean episode length was 500, a 4.02-times improvement over
@@ -185,8 +187,8 @@ midterm checkpoint. Passing all final ten tests establishes only an internal
 walk-open-grasp-place-release-close task at 5/5 and is not kitchen L3 evidence.
 
 The repository now contains the Schema, safe warm-start validation, ten-test
-evaluation, Worker lineage gates, bidirectional 512-KiB chunk transport, and
-two isolated A800 Job definitions.
+evaluation, Worker lineage gates, 512-KiB input and 128-KiB output chunk
+transport, and two isolated A800 Job definitions.
 
 ### 2026-07-29 midterm execution result
 
@@ -307,3 +309,24 @@ internal research evidence, and no formal 100M run was started. See the
 normative
 [`locomotion-capture.a800.passed.json`](../../../examples/h1-kitchen/locomotion-capture.a800.passed.json)
 report.
+
+### 2026-07-29 A4 phase-aware supervisor probe
+
+A4 connected the frozen Motion, Capture, and Stand policies through a
+consecutive velocity-stability gate on one A800. The complete evidence replay
+passed all five walk-settle and all five Stand-regression tests. Walk tests
+covered 1.3714–1.3770 metres with tracking RMSE of 0.1518–0.1521 m/s. Capture
+met the consecutive-stability gate after 30–33 steps, and the five-step blend
+left 12–15 pure Stand steps. Final linear speed was 0.0626–0.0669 m/s and
+final angular speed was 0.0478–0.0531 rad/s, with clean runtime diagnostics.
+
+The first passing computation left an incomplete evidence bundle after a
+Kubernetes Trace-transfer interruption. Replaying after the orchestrator fix
+produced complete, digest-verified Controller, Trace, and report artifacts.
+Both attempts had the same Controller digest and passed the behavior gate, but
+their GPU traces were not bytewise identical. See
+[`locomotion-supervisor.a800.passed.json`](../../../examples/h1-kitchen/locomotion-supervisor.a800.passed.json).
+
+This result establishes only an internal `supervisor_candidate`. It did not
+start 100M and does not prove the long-horizon kitchen task, randomized
+robustness, kitchen L3, or real-robot safety.

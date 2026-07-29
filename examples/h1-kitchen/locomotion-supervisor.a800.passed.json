@@ -1,0 +1,641 @@
+{
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "capturePolicy": {
+    "archiveDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "archiveSizeBytes": 6280278,
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "role": "motion_state_capture",
+    "selectedStep": 8601600
+  },
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:a89268bd611d8ae707e22142a4f68c29173c3ef9843176993d99112ecf0d4ed7",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "controllerArtifact": {
+    "digest": "sha256:0949f073c6f70f945638b485850e0560af4f658cacac69116bb2eba07e6d9e4a",
+    "distribution": "internal_only",
+    "path": "phase-aware-supervisor.json",
+    "sizeBytes": 1123
+  },
+  "controllerStatus": "supervisor_candidate",
+  "executionEvidence": "executed",
+  "formalSupervisorGate": "passed",
+  "generatedAt": "2026-07-29T13:46:12.823803Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "supervisor-report://worldspec/h1/a800-8be32deb070c",
+  "imageSource": {
+    "commit": "34b881d918b98c8106fa4c3a602b0376324881a6",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "abnormalContactCount": 0,
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "clean": true,
+    "jointLimitViolationCount": 0,
+    "nonFiniteCount": 0
+  },
+  "motionPolicy": {
+    "archiveDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+    "archiveSizeBytes": 8838595,
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "role": "motion",
+    "selectedStep": 17203200
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "probeDefinition": {
+    "commit": "8be32deb070c9ad7bff4fb0089e3ad22d1aa573f",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:8b26496e3bed254c0377872bd53fa019a5da2628ad4062130efac4b1c47a897b",
+    "commit": "8be32deb070c9ad7bff4fb0089e3ad22d1aa573f",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "qualityAssessment": {
+    "deterministicSuiteGate": true,
+    "status": "passed",
+    "tests": [
+      {
+        "id": "test://worldspec/h1-supervisor/walk_settle/1",
+        "metrics": {
+          "captureStartAngularSpeed": 0.35286994723663706,
+          "captureStartLinearSpeed": 0.37586747966099326,
+          "captureSteps": 33,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.05117299789745628,
+          "finalLinearSpeed": 0.0669289769329854,
+          "forwardDisplacement": 1.3770233392715454,
+          "handoffActivationStep": 183,
+          "handoffFailed": false,
+          "lateralDrift": 0.006593379192054272,
+          "maximumActionJumpNorm": 2.241552057929106,
+          "maximumPlanarDrift": 1.3770391241891886,
+          "maximumTerminalHoldAngularSpeed": 0.20008416385449868,
+          "maximumTerminalHoldLinearSpeed": 0.10000490023069694,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883298277854919,
+          "minimumUprightCosine": 0.9935965538024902,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 5,
+          "standActivationStep": 188,
+          "standDwellSteps": 12,
+          "terminalReasons": [],
+          "trackingRmse": 0.1517745271444612
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/walk_settle/2",
+        "metrics": {
+          "captureStartAngularSpeed": 0.38029785383797116,
+          "captureStartLinearSpeed": 0.3652663590089787,
+          "captureSteps": 32,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.053072736134265115,
+          "finalLinearSpeed": 0.0628459772994373,
+          "forwardDisplacement": 1.3725210428237915,
+          "handoffActivationStep": 182,
+          "handoffFailed": false,
+          "lateralDrift": 0.007929637096822262,
+          "maximumActionJumpNorm": 2.252852108546106,
+          "maximumPlanarDrift": 1.3725439490736153,
+          "maximumTerminalHoldAngularSpeed": 0.17344125016938006,
+          "maximumTerminalHoldLinearSpeed": 0.09083561943199303,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9937058091163635,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 5,
+          "standActivationStep": 187,
+          "standDwellSteps": 13,
+          "terminalReasons": [],
+          "trackingRmse": 0.15190661747444095
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/walk_settle/3",
+        "metrics": {
+          "captureStartAngularSpeed": 0.362523850548542,
+          "captureStartLinearSpeed": 0.37495137408351703,
+          "captureSteps": 32,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.05080444565058115,
+          "finalLinearSpeed": 0.06531834599649662,
+          "forwardDisplacement": 1.3733209371566772,
+          "handoffActivationStep": 182,
+          "handoffFailed": false,
+          "lateralDrift": 0.00829153973609209,
+          "maximumActionJumpNorm": 2.237911006365032,
+          "maximumPlanarDrift": 1.373345967360042,
+          "maximumTerminalHoldAngularSpeed": 0.16817144152397112,
+          "maximumTerminalHoldLinearSpeed": 0.09052841571385828,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9937774538993835,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 5,
+          "standActivationStep": 187,
+          "standDwellSteps": 13,
+          "terminalReasons": [],
+          "trackingRmse": 0.15209615581311886
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/walk_settle/4",
+        "metrics": {
+          "captureStartAngularSpeed": 0.35992271837950074,
+          "captureStartLinearSpeed": 0.3759104866609123,
+          "captureSteps": 30,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.04777449364485878,
+          "finalLinearSpeed": 0.06281043644491234,
+          "forwardDisplacement": 1.3714324235916138,
+          "handoffActivationStep": 180,
+          "handoffFailed": false,
+          "lateralDrift": 0.009595158509910107,
+          "maximumActionJumpNorm": 2.2161524198026665,
+          "maximumPlanarDrift": 1.3714659892046897,
+          "maximumTerminalHoldAngularSpeed": 0.10105135977876654,
+          "maximumTerminalHoldLinearSpeed": 0.07425187743727088,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9941622614860535,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 5,
+          "standActivationStep": 185,
+          "standDwellSteps": 15,
+          "terminalReasons": [],
+          "trackingRmse": 0.1518852235434461
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/walk_settle/5",
+        "metrics": {
+          "captureStartAngularSpeed": 0.35450137034861745,
+          "captureStartLinearSpeed": 0.37835779717518886,
+          "captureSteps": 31,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.04974283394319857,
+          "finalLinearSpeed": 0.06255092900551669,
+          "forwardDisplacement": 1.3729394674301147,
+          "handoffActivationStep": 181,
+          "handoffFailed": false,
+          "lateralDrift": 0.01112462766468525,
+          "maximumActionJumpNorm": 2.2264467414417535,
+          "maximumPlanarDrift": 1.3729845369005307,
+          "maximumTerminalHoldAngularSpeed": 0.12746770787209338,
+          "maximumTerminalHoldLinearSpeed": 0.07985081646519514,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883298277854919,
+          "minimumUprightCosine": 0.9940212368965149,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 5,
+          "standActivationStep": 186,
+          "standDwellSteps": 14,
+          "terminalReasons": [],
+          "trackingRmse": 0.1517658824710748
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/stand_regression/1",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "captureSteps": 0,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0005649981176945706,
+          "finalLinearSpeed": 0.00022755943653269187,
+          "forwardDisplacement": -0.01961568370461464,
+          "handoffActivationStep": null,
+          "handoffFailed": false,
+          "lateralDrift": 0.00022226219880394638,
+          "maximumActionJumpNorm": 1.1293412741557338,
+          "maximumPlanarDrift": 0.02168958988926102,
+          "maximumTerminalHoldAngularSpeed": 0.0005872648495829176,
+          "maximumTerminalHoldLinearSpeed": 0.00024317147739265767,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 0,
+          "standActivationStep": null,
+          "standDwellSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/stand_regression/2",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "captureSteps": 0,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0005640566262932184,
+          "finalLinearSpeed": 0.00022736282628629828,
+          "forwardDisplacement": -0.019615842029452324,
+          "handoffActivationStep": null,
+          "handoffFailed": false,
+          "lateralDrift": 0.00022225068823900074,
+          "maximumActionJumpNorm": 1.1293430561196482,
+          "maximumPlanarDrift": 0.021689952852609853,
+          "maximumTerminalHoldAngularSpeed": 0.0005876651103041386,
+          "maximumTerminalHoldLinearSpeed": 0.00024365172328832735,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 0,
+          "standActivationStep": null,
+          "standDwellSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/stand_regression/3",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "captureSteps": 0,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0005644065273144921,
+          "finalLinearSpeed": 0.00022743423506275823,
+          "forwardDisplacement": -0.019615745171904564,
+          "handoffActivationStep": null,
+          "handoffFailed": false,
+          "lateralDrift": 0.00022222602274268866,
+          "maximumActionJumpNorm": 1.129342733382951,
+          "maximumPlanarDrift": 0.021689641643648398,
+          "maximumTerminalHoldAngularSpeed": 0.0005873920408521849,
+          "maximumTerminalHoldLinearSpeed": 0.00024318443236268737,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 0,
+          "standActivationStep": null,
+          "standDwellSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/stand_regression/4",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "captureSteps": 0,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0005646852082256507,
+          "finalLinearSpeed": 0.00022774092531475343,
+          "forwardDisplacement": -0.01961602084338665,
+          "handoffActivationStep": null,
+          "handoffFailed": false,
+          "lateralDrift": 0.00022224480926524848,
+          "maximumActionJumpNorm": 1.1293414469301997,
+          "maximumPlanarDrift": 0.0216897426111753,
+          "maximumTerminalHoldAngularSpeed": 0.0005878284627788344,
+          "maximumTerminalHoldLinearSpeed": 0.00024352699032553166,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 0,
+          "standActivationStep": null,
+          "standDwellSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-supervisor/stand_regression/5",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "captureSteps": 0,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0005648039525235463,
+          "finalLinearSpeed": 0.00022754044722193847,
+          "forwardDisplacement": -0.019615819677710533,
+          "handoffActivationStep": null,
+          "handoffFailed": false,
+          "lateralDrift": 0.00022221454128157347,
+          "maximumActionJumpNorm": 1.1293434216292004,
+          "maximumPlanarDrift": 0.02168958322462827,
+          "maximumTerminalHoldAngularSpeed": 0.0005873874685651025,
+          "maximumTerminalHoldLinearSpeed": 0.00024321409785966675,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881758689880371,
+          "minimumUprightCosine": 0.9998486042022705,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "stableStepsAtHandoff": 0,
+          "standActivationStep": null,
+          "standDwellSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      }
+    ]
+  },
+  "reportVersion": "0.1.0",
+  "runtimeAcceptance": "research_supervisor",
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "ccdContactsPerEnvironment": 8,
+    "effectiveNaccdmax": 8,
+    "effectiveNaconmax": 16,
+    "njmax": 128
+  },
+  "runtimePreflight": {
+    "ccdIterations": 50,
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scope": "h1_phase_aware_supervisor_probe",
+  "standPolicy": {
+    "archiveDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "archiveSizeBytes": 6280684,
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "role": "zero_velocity_and_stand",
+    "selectedStep": 4505600
+  },
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "completed",
+  "supervisor": {
+    "captureGate": {
+      "maximumAngularSpeed": 0.2,
+      "maximumLinearSpeed": 0.12,
+      "maximumSteps": 40,
+      "minimumSteps": 20,
+      "requiredConsecutiveStableSteps": 5
+    },
+    "handoff": {
+      "blendSteps": 5,
+      "durationSeconds": 0.1,
+      "mode": "linear_action_blend",
+      "observationCommand": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "minimumStandDwellSteps": 10,
+    "mode": "phase_aware_velocity_stability_gate",
+    "motionCommandThreshold": 0.05,
+    "moveSteps": 150,
+    "settleSteps": 50,
+    "standRegressionPolicy": "standPolicy"
+  },
+  "supervisorProfileDigest": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355",
+  "target": {
+    "actionSize": 10,
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "observationSize": 42,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "traceArtifact": {
+    "digest": "sha256:6503609c7231996f238b6dc0c97b25e8568fd3b1ae31e8141dc43ea3c24ed602",
+    "distribution": "internal_only",
+    "path": "evaluation-traces.jsonl",
+    "sizeBytes": 1088697
+  }
+}

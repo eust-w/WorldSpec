@@ -39,6 +39,36 @@ Motion Policy → Capture Policy → Stand Policy
 - Controller、三份 Checkpoint、Trace、目标 Bundle、OCI、包锁和代码提交全部
   绑定 Digest，产物保持 `research_only / internal_only`。
 
+## 执行证据
+
+2026-07-29，A4 在单张 NVIDIA A800-SXM4-80GB 上完成两次真实评测。第一次计算
+门控通过，但 Kubernetes 流在复制 Trace 时发生 `unexpected EOF`，原编排器随后
+清理 Pod，因而该次只能算“计算通过、证据包不完整”。这暴露了证据生命周期缺陷，
+不是策略质量失败。
+
+编排器随后改为 128 KiB 输出分块、每块最多 12 次重试，并在
+`artifact_copied` 前发生传输错误时保留 Job、Pod 和 ConfigMap。修复通过全仓测试
+后，以相同 OCI、三份冻结 Checkpoint、Profile 和固定种子重放评测。重放 Job
+`worldspec-h1-midterm-bg88v` 成功完成，全部五次行走—停稳和五次 Stand 回归通过：
+
+- 前进距离为 1.3714–1.3770 米；
+- 速度跟踪 RMSE 为 0.1518–0.1521 m/s；
+- Capture 使用 30–33 个控制步，随后纯 Stand 驻留 12–15 步；
+- 最终线速度为 0.0626–0.0669 m/s，最终角速度为
+  0.0478–0.0531 rad/s；
+- 无 NaN、关节越限、CCD/容量溢出或异常接触。
+
+Controller Digest 为
+`sha256:0949f073c6f70f945638b485850e0560af4f658cacac69116bb2eba07e6d9e4a`，
+完整 Trace Digest 为
+`sha256:6503609c7231996f238b6dc0c97b25e8568fd3b1ae31e8141dc43ea3c24ed602`。
+规范报告见
+[`locomotion-supervisor.a800.passed.json`](../../../examples/h1-kitchen/locomotion-supervisor.a800.passed.json)。
+
+两次运行的 Controller Digest 相同且两次门控均通过，但 GPU 动力学指标与 Trace
+Digest 有小幅差异。因此这里证明的是固定 Profile 下的重复行为通过，不宣称跨运行
+逐字节或逐帧确定性。
+
 ## 边界
 
 该探针只证明三份冻结策略在固定目标模型和固定 4 秒评测中的监督切换行为。它：

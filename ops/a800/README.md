@@ -140,7 +140,10 @@ local semantic preflight for the constraint. It retains the exact zero command
 and strengthened versioned survival, upright, base-height, pose, torque, and
 action-rate shaping. The launcher copies the checkpoint at the
 `artifact_ready` stage while the Pod is still running, acknowledges the copy,
-and fails closed if the handoff does not complete.
+and fails closed if the handoff does not complete. Inputs use 512-KiB upload
+chunks. Outputs use 128-KiB chunks with up to twelve attempts per chunk; a
+transfer error before `artifact_copied` retains the remote Job, Pod, and
+ConfigMaps so evidence can be resumed without retraining.
 
 `stand-v2.1` completed on a real A800 with final mean episode length 500,
 4.02-times improvement over `stand-v1`, and 5/5 deterministic four-second
@@ -205,3 +208,9 @@ below the `0.12 m/s` linear and `0.20 rad/s` angular stability thresholds
 before a five-step Capture-to-Stand blend. A passing walk test must contain at
 least ten pure Stand steps. The job performs no PPO update and never starts
 the 100M run; even a pass is only an internal `supervisor_candidate`, not L3.
+
+The completed A4 evidence replay is Job `worldspec-h1-midterm-bg88v`. It
+passed all ten tests and copied the Controller and 1,088,697-byte Trace before
+the `artifact_copied` acknowledgement. The first passing computation exposed
+a transfer-lifecycle defect when its Trace copy ended with `unexpected EOF`;
+it was not accepted because the evidence package was incomplete.
