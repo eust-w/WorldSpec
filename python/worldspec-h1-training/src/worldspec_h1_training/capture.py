@@ -307,14 +307,14 @@ def generate_motion_snapshot_bank(
         states,
         commands,
     )
-    captured = states
+    captured_qpos = states.data.qpos
+    captured_qvel = states.data.qvel
+    captured_last_action = states.info["last_action"]
     captured_failure = jp.zeros((count,), dtype=bool)
     failure = jp.zeros((count,), dtype=bool)
     inference = jax.jit(motion_policy)
 
-    def select(mask, old, new):
-        if not hasattr(new, "ndim"):
-            return new
+    def select_rows(mask, old, new):
         expanded = mask.reshape((count,) + (1,) * (new.ndim - 1))
         return jp.where(expanded, new, old)
 
@@ -323,14 +323,16 @@ def generate_motion_snapshot_bank(
         states = step_batch(states, action)
         failure = failure | states.done.astype(bool)
         hit = handoff_steps == index + 1
-        captured = jax.tree_util.tree_map(
-            lambda old, new, mask=hit: select(mask, old, new),
-            captured,
-            states,
+        captured_qpos = select_rows(hit, captured_qpos, states.data.qpos)
+        captured_qvel = select_rows(hit, captured_qvel, states.data.qvel)
+        captured_last_action = select_rows(
+            hit,
+            captured_last_action,
+            states.info["last_action"],
         )
         captured_failure = jp.where(hit, failure, captured_failure)
 
-    jax.block_until_ready(captured.data.qpos)
+    jax.block_until_ready(captured_qpos)
     failed_count = int(np.count_nonzero(np.asarray(captured_failure)))
     if failed_count:
         raise TrainingError(
@@ -339,9 +341,9 @@ def generate_motion_snapshot_bank(
             {"failedCount": failed_count, "snapshotCount": count},
         )
     bank = {
-        "qpos": np.asarray(captured.data.qpos),
-        "qvel": np.asarray(captured.data.qvel),
-        "last_action": np.asarray(captured.info["last_action"]),
+        "qpos": np.asarray(captured_qpos),
+        "qvel": np.asarray(captured_qvel),
+        "last_action": np.asarray(captured_last_action),
     }
     metadata = {
         "snapshotCount": count,

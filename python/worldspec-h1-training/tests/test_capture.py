@@ -82,3 +82,14 @@ def test_capture_effective_profiles_do_not_mutate_base() -> None:
     make_motion_rollout_profile(base, capture)
 
     assert base == original
+
+
+def test_capture_snapshot_code_selects_only_per_environment_state() -> None:
+    source = (
+        ROOT / "python" / "worldspec-h1-training" / "src" / "worldspec_h1_training" / "capture.py"
+    ).read_text(encoding="utf-8")
+
+    assert "jax.tree_util.tree_map" not in source
+    assert "captured_qpos = select_rows" in source
+    assert "captured_qvel = select_rows" in source
+    assert "captured_last_action = select_rows" in source
