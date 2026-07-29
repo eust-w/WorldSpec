@@ -457,6 +457,9 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     )
     assert "assess_diagnostic_trace" in entrypoint
     assert "compare_whole_body_traces" in entrypoint
+    assert "make_whole_body_evaluation_profile" in entrypoint
+    assert 'whole_body_effective_profile["control"]' in entrypoint
+    assert 'midterm_profile["control"]' not in entrypoint
     assert "whole_body_profile_semantic_projection" in entrypoint
     assert '"role": "report_only_not_equivalence_proof"' in entrypoint
     assert "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_REPLAY_RESULT=" in entrypoint

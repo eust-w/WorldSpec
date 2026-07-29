@@ -1,0 +1,145 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-diagnostic-replay-attempt-summary.schema.json",
+  "title": "WorldSpec H1 A5-CI Failed Attempt Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "attemptId",
+    "formalDiagnosticReplayGate",
+    "formalControlGate",
+    "controllerStatus",
+    "job",
+    "failure",
+    "recoveredEvidence",
+    "missingRequiredArtifacts",
+    "diagnosticConclusion",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "failed" },
+    "scope": {
+      "const": "h1_whole_body_task_space_control_diagnostic_replay_attempt"
+    },
+    "executionEvidence": { "const": "executed_incomplete" },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^a5-ci-[a-z0-9][a-z0-9-]{2,63}$"
+    },
+    "formalDiagnosticReplayGate": { "const": "failed" },
+    "formalControlGate": { "const": "not_evaluated" },
+    "controllerStatus": { "const": "non_publishable" },
+    "job": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "name",
+        "podName",
+        "podPhase",
+        "probeCommit",
+        "imageSourceCommit",
+        "image",
+        "gpu",
+        "backoffLimit",
+        "restartCount"
+      ],
+      "properties": {
+        "namespace": { "const": "worldspec-a800-poc" },
+        "name": { "type": "string", "minLength": 1 },
+        "podName": { "type": "string", "minLength": 1 },
+        "podPhase": { "const": "Failed" },
+        "probeCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "imageSourceCommit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "image": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "gpu": { "const": "NVIDIA A800-SXM4-80GB" },
+        "backoffLimit": { "const": 0 },
+        "restartCount": { "const": 0 }
+      },
+      "additionalProperties": false
+    },
+    "failure": {
+      "type": "object",
+      "required": [
+        "stage",
+        "category",
+        "exception",
+        "missingField",
+        "message",
+        "controlExecutionReachedPostprocessing"
+      ],
+      "properties": {
+        "stage": { "const": "loaded_track_settle" },
+        "category": { "const": "diagnostic_postprocessing_error" },
+        "exception": { "const": "KeyError" },
+        "missingField": { "const": "control" },
+        "message": { "const": "KeyError: 'control'" },
+        "controlExecutionReachedPostprocessing": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "recoveredEvidence": {
+      "type": "object",
+      "required": ["jobLog", "jobManifest", "podManifest", "podDescription"],
+      "properties": {
+        "jobLog": { "$ref": "#/$defs/artifact" },
+        "jobManifest": { "$ref": "#/$defs/artifact" },
+        "podManifest": { "$ref": "#/$defs/artifact" },
+        "podDescription": { "$ref": "#/$defs/artifact" }
+      },
+      "additionalProperties": false
+    },
+    "missingRequiredArtifacts": {
+      "const": {
+        "report": "not_copied_before_pod_failure",
+        "controller": "not_copied_before_pod_failure",
+        "trace": "not_copied_before_pod_failure",
+        "equivalence": "not_copied_before_pod_failure"
+      }
+    },
+    "diagnosticConclusion": {
+      "const": {
+        "replayTerminationReason": "unknown",
+        "originalTerminationReason": "unknown",
+        "reason": "diagnostic post-processing failed before the formal report and artifact handoff"
+      }
+    },
+    "claimBoundary": {
+      "const": {
+        "diagnosticClaim": "failed",
+        "controlClaim": "not_evaluated",
+        "controllerCandidate": "forbidden",
+        "a5": "not_executed",
+        "fiveRunGate": "not_executed",
+        "formalTraining": "not_started",
+        "l3Claim": "forbidden",
+        "automaticRetry": "not_executed"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["digest", "sizeBytes"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

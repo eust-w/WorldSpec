@@ -239,6 +239,8 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/whole-body-diagnostic-trace-record.example.json": "h1-whole-body-diagnostic-trace-record.schema.json",
         "h1-kitchen/whole-body-equivalence-report.example.json": "h1-whole-body-equivalence-report.schema.json",
         "h1-kitchen/whole-body-diagnostic-replay-report.example.json": "h1-whole-body-diagnostic-replay-report.schema.json",
+        "h1-kitchen/whole-body-diagnostic-replay.a800.failed-attempt.json": "h1-whole-body-diagnostic-replay-attempt-summary.schema.json",
+        "h1-kitchen/diagnostic-replay-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/whole-body-diagnostic-replay-receipt.example.json": "h1-whole-body-diagnostic-replay-receipt.schema.json",
         "h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json": "h1-kitchen-task-preflight.schema.json",
         "h1-kitchen/locomotion-training-result.blocked.json": "h1-locomotion-training-result.schema.json",

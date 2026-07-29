@@ -86,6 +86,48 @@ termination as a gain-tuning problem.
 - prove only the termination cause of the replay; the original A5-C cause
   remains `unknown`.
 
+## Result of the single A5-CI attempt
+
+On 2026-07-30, fixed Attempt
+`a5-ci-20260730-termination-replay-01` executed on one
+NVIDIA A800-SXM4-80GB in Drobodata. C1 diagnostic image
+`sha256:38b905...fe67f` was bound to source commit
+`3a48bd9f...ad31`; the C2 Replay Profile was bound by commit
+`200afe6a...212e`. All four baseline artifacts and three policies completed
+chunked upload and SHA-256 verification inside the Pod. Job
+`worldspec-h1-a5ci-7e801fef2cbe` used `backoffLimit=0`, and its Pod had
+`restartCount=0`.
+
+This attempt ended with `formalDiagnosticReplayGate=failed`. The failure was
+not a proven control-termination subchannel; it was a diagnostic
+post-processing implementation error:
+
+```text
+KeyError: 'control'
+```
+
+GPU control execution reached diagnostic post-processing, where the entrypoint
+incorrectly read the `control` field from the raw
+`whole-body-control-profile.json`; that field exists only in the effective
+runtime Profile. The formal Report, Controller, diagnostic Trace, and
+Equivalence Report therefore were not handed off before the Pod failed. The
+digests of the recovered Job Log, Job Manifest, Pod Manifest, and Pod
+Description are fixed in
+[`whole-body-diagnostic-replay.a800.failed-attempt.json`](../../../examples/h1-kitchen/whole-body-diagnostic-replay.a800.failed-attempt.json).
+
+The evidence boundary is:
+
+- the replay's control-termination reason remains `unknown`;
+- the original A5-C termination reason remains `unknown`;
+- `formalControlGate` was not evaluated;
+- the Controller remains `non_publishable`;
+- no automatic retry, A5, 5/5, or 100M Job was launched;
+- the bad reference was fixed and covered by regression tests, but that
+  local/CI fix cannot retroactively make this A800 Attempt pass.
+
+The route stops under the frozen one-attempt boundary. Any new diagnostic
+replay or new controller design requires a new ADR and a new Attempt ID.
+
 ## Routes not selected
 
 ### A5-CR: redesign the whole-body controller contract now

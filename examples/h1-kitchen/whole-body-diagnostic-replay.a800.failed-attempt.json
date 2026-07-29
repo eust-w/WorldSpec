@@ -1,0 +1,71 @@
+{
+  "id": "conformance://worldspec/h1/a5ci/a5-ci-20260730-termination-replay-01/attempt",
+  "reportVersion": "0.1.0",
+  "status": "failed",
+  "scope": "h1_whole_body_task_space_control_diagnostic_replay_attempt",
+  "executionEvidence": "executed_incomplete",
+  "attemptId": "a5-ci-20260730-termination-replay-01",
+  "formalDiagnosticReplayGate": "failed",
+  "formalControlGate": "not_evaluated",
+  "controllerStatus": "non_publishable",
+  "job": {
+    "namespace": "worldspec-a800-poc",
+    "name": "worldspec-h1-a5ci-7e801fef2cbe",
+    "podName": "worldspec-h1-a5ci-7e801fef2cbe-cr2z7",
+    "podPhase": "Failed",
+    "probeCommit": "200afe6aa73c31b3084c837be876688832f5212e",
+    "imageSourceCommit": "3a48bd9f8dedeab8a263a0824baa60de2314ad31",
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:38b905640dc4cff1ac1a1c8a319a9ca982b16b705f53b00c8760ada3dabfe67f",
+    "gpu": "NVIDIA A800-SXM4-80GB",
+    "backoffLimit": 0,
+    "restartCount": 0
+  },
+  "failure": {
+    "stage": "loaded_track_settle",
+    "category": "diagnostic_postprocessing_error",
+    "exception": "KeyError",
+    "missingField": "control",
+    "message": "KeyError: 'control'",
+    "controlExecutionReachedPostprocessing": true
+  },
+  "recoveredEvidence": {
+    "jobLog": {
+      "digest": "sha256:6b1d5da53034a77d509eaea2ec71042287251968d975a111fe5652ab8cded0d9",
+      "sizeBytes": 19431
+    },
+    "jobManifest": {
+      "digest": "sha256:067ad57a52b070eaba1ac8127585fa4e48925ec1937c7299598528c429133c2b",
+      "sizeBytes": 5737
+    },
+    "podManifest": {
+      "digest": "sha256:27b4d32aa8e78c90f768659628e47742fcb3776956a4b75a668ad3c1168df9d6",
+      "sizeBytes": 7910
+    },
+    "podDescription": {
+      "digest": "sha256:417f176a444dc29097892eddde6c20e84d01e5e2944b3031094e655b468505cd",
+      "sizeBytes": 5626
+    }
+  },
+  "missingRequiredArtifacts": {
+    "report": "not_copied_before_pod_failure",
+    "controller": "not_copied_before_pod_failure",
+    "trace": "not_copied_before_pod_failure",
+    "equivalence": "not_copied_before_pod_failure"
+  },
+  "diagnosticConclusion": {
+    "replayTerminationReason": "unknown",
+    "originalTerminationReason": "unknown",
+    "reason": "diagnostic post-processing failed before the formal report and artifact handoff"
+  },
+  "claimBoundary": {
+    "diagnosticClaim": "failed",
+    "controlClaim": "not_evaluated",
+    "controllerCandidate": "forbidden",
+    "a5": "not_executed",
+    "fiveRunGate": "not_executed",
+    "formalTraining": "not_started",
+    "l3Claim": "forbidden",
+    "automaticRetry": "not_executed"
+  },
+  "generatedAt": "2026-07-29T20:37:01Z"
+}

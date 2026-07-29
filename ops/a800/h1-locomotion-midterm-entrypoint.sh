@@ -469,6 +469,7 @@ from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
 from worldspec_h1_training.whole_body import (
     assess_diagnostic_trace,
     compare_whole_body_traces,
+    make_whole_body_evaluation_profile,
     run_whole_body_control_spike,
     whole_body_controller_semantic_projection,
     whole_body_profile_semantic_projection,
@@ -555,6 +556,11 @@ elif midterm_profile["stage"] == "whole_body_task_space_control_spike":
         / "h1-kitchen"
         / "locomotion-supervisor-profile.json"
     )
+    whole_body_effective_profile = make_whole_body_evaluation_profile(
+        base_profile,
+        supervisor_profile,
+        midterm_profile,
+    )
     result = run_whole_body_control_spike(
         base_profile,
         supervisor_profile,
@@ -608,7 +614,7 @@ if diagnostic_replay_profile is not None:
     replay_trace = read_jsonl(replay_trace_path)
     diagnostic_completeness = assess_diagnostic_trace(
         replay_trace,
-        midterm_profile["control"],
+        whole_body_effective_profile["control"],
     )
     dynamic_comparison = compare_whole_body_traces(
         baseline_trace,

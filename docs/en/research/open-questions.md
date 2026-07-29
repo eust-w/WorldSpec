@@ -3,7 +3,7 @@ status: Official Translation
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../zh-CN/research/open-questions.md
-last-verified: 2026-07-28
+last-verified: 2026-07-30
 ---
 
 # Open technical questions
@@ -21,5 +21,9 @@ These require spikes or benchmarks and must not be written as solved in normativ
 7. **Predicates**: detection of semantic-truth versus execution-truth divergence.
 8. **Cost**: Time-to-SimReady, Human Minutes, GPU Cost, and Certification Pass Rate.
 9. **CAD/USD**: verifiable round-trip scope for PMI, GD&T, feature history, and proprietary schemas.
+10. **H1 whole-body control**: before a new ADR authorizes any further A800
+    Attempt, make diagnostic artifacts recoverable despite post-processing
+    failure and reacquire real `joint_limit`, `fall_height`, `fall_upright`,
+    and `nonfinite` termination evidence.
 
 Every experiment freezes its input corpus, tool version, hardware, metrics, and failure examples.

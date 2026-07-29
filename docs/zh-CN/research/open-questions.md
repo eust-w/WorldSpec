@@ -3,7 +3,7 @@ status: Research
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../en/research/open-questions.md
-last-verified: 2026-07-28
+last-verified: 2026-07-30
 ---
 
 # 开放技术问题
@@ -19,5 +19,8 @@ last-verified: 2026-07-28
 7. **Predicate**：semantic truth 与 execution truth 的偏差检测。
 8. **成本**：Time-to-SimReady、Human Minutes、GPU Cost、Certification Pass Rate。
 9. **CAD/USD**：PMI、GD&T、特征历史和专有 Schema 的 round-trip 可验证范围。
+10. **H1 全身控制**：在新 ADR 授权任何后续 A800 Attempt 前，如何让诊断产物在
+    运行后处理失败时仍可交接，以及如何重新获得 `joint_limit`、`fall_height`、
+    `fall_upright`、`nonfinite` 的真实终止证据。
 
 每个实验必须冻结输入 Corpus、工具版本、硬件、指标和失败样本。

@@ -64,6 +64,44 @@ last-verified: 2026-07-30
   执行 A5/5-of-5 或启动 100M；
 - 新诊断只证明本次重放的终止原因，旧 A5-C 根因继续保持 `unknown`。
 
+## A5-CI 单次执行结果
+
+2026-07-30，固定 Attempt
+`a5-ci-20260730-termination-replay-01` 在 Drobodata 的一张
+NVIDIA A800-SXM4-80GB 上执行。C1 诊断镜像
+`sha256:38b905...fe67f` 绑定源码提交
+`3a48bd9f...ad31`，C2 Replay Profile 绑定提交为
+`200afe6a...212e`。旧四类证据和三份策略在 Pod 内完成分块上传和
+SHA-256 校验；Job `worldspec-h1-a5ci-7e801fef2cbe` 的
+`backoffLimit=0`，Pod `restartCount=0`。
+
+本次 `formalDiagnosticReplayGate=failed`，原因不是已证明的控制终止通道，
+而是诊断后处理实现错误：
+
+```text
+KeyError: 'control'
+```
+
+GPU 控制执行已到达诊断后处理，但入口脚本错误地从原始
+`whole-body-control-profile.json` 读取只存在于有效运行 Profile 中的
+`control` 字段。因此正式 Report、Controller、诊断 Trace 和 Equivalence Report
+没有在 Pod 失败前完成交接。已回传并固定 Job Log、Job Manifest、Pod Manifest
+和 Pod Description 的摘要；规范化失败摘要见
+[`whole-body-diagnostic-replay.a800.failed-attempt.json`](../../../examples/h1-kitchen/whole-body-diagnostic-replay.a800.failed-attempt.json)。
+
+由此得出的证据边界是：
+
+- 本次重放的控制终止原因仍为 `unknown`；
+- 旧 A5-C 的终止原因仍为 `unknown`；
+- `formalControlGate` 没有完成评估；
+- Controller 保持 `non_publishable`；
+- 没有自动重试、A5、5/5 或 100M Job；
+- 已修复错误引用并加入回归测试，但该修复只有本地/CI 证据，不能追溯性地使
+  本次 A800 Attempt 通过。
+
+按照已冻结的一次执行边界，当前路线停止。任何再次执行诊断重放或进入新的控制器
+设计，都需要新的 ADR 和新的 Attempt ID。
+
 ## 未选择路线
 
 ### A5-CR：直接重做全身控制契约
