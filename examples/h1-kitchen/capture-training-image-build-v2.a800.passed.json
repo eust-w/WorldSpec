@@ -1,0 +1,13 @@
+{
+  "baseImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/real2sim-worker@sha256:d37f7e8a483518bdb447cd460b8c6dfb4407e385c1715b32a9d7f193a11dcdee",
+  "contextDigest": "sha256:1837c8e370b060a02f4f7d8bb57fa87aa2ce29adce684158d4ec7acc93c4ba93",
+  "destinationTag": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training:2e362da9cc16-20260729113201",
+  "executionEvidence": "executed",
+  "generatedAt": "2026-07-29T11:48:08.660472Z",
+  "id": "build-report://worldspec/h1-training-image/a800-2e362da9cc16",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:8089b8ecd6eba3afa11e89ab1daa8ddb18282539d56ba95536a0b933622f0c08",
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "reportVersion": "0.1.0",
+  "sourceCommit": "2e362da9cc1647f7f7dce171364169fb4e4136f2",
+  "status": "passed"
+}

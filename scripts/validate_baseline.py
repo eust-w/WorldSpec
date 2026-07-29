@@ -237,6 +237,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/retention-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/dual-policy-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/capture-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
+        "h1-kitchen/capture-training-image-build-v2.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/ccd-iterations-spike.a800.passed.json": "h1-ccd-iterations-spike-report.schema.json",
         "h1-kitchen/locomotion-transition.a800.failed.json": "h1-locomotion-midterm-report.schema.json",
         "h1-kitchen/locomotion-retention.a800.failed.json": "h1-locomotion-midterm-report.schema.json",
