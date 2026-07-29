@@ -60,3 +60,27 @@ ADR-0017 的真实 A800 结果证明，静态站立策略不能通过五步动�
 即使通过，也只证明 motion-to-zero capture policy 候选。之后仍需单独验证
 motion → capture → stand 的相位感知 Supervisor；不构成厨房 L3，也不自动触发
 100M 正式训练。
+
+## 真实执行记录
+
+首次 A800 作业 `worldspec-h1-midterm-n7ck6` 在 PPO 前生成快照时失败。实现错误把
+MJX State 内按容量分配的 65,536 行数组与 4,096 个环境的选择掩码共同做
+`tree_map`，触发广播维度错误。该结果固定为
+`implementation_failure_before_training`，不包含策略质量证据。修复只选择每环境
+的 `qpos`、`qvel` 与 `last_action`，没有修改训练超参数或质量门槛。
+
+纠正后的作业 `worldspec-h1-midterm-rmnnr` 在单张
+NVIDIA A800-SXM4-80GB 上完成。它生成并校验了 4,096 个真实运动交接快照，在
+8,601,600 个报告步后达到 100/100 的最终平均 Episode 长度，并通过五次
+motion-to-capture 与五次 capture-from-rest 测试。五次行走测试的前进距离为
+1.3686–1.3729 米，移动阶段速度 RMSE 为 0.1516–0.1519 m/s；最后 0.2 秒的最大
+线速度为 0.0535–0.0637 m/s，最大角速度为 0.0623–0.0736 rad/s。运行中没有
+NaN、关节越限、CCD/容量溢出或异常接触。
+
+规范报告见
+[`locomotion-capture.a800.passed.json`](../../../examples/h1-kitchen/locomotion-capture.a800.passed.json)。
+Checkpoint、Snapshot Bank 与 Trace 分别绑定
+`sha256:7f8c45e7…5cfbe`、`sha256:11a93ac2…9870` 和
+`sha256:7ad8ca4d…4734`，并保持 `research_only / internal_only`。本次结果只将
+策略标记为 `capture_candidate`；没有启动 100M 正式训练，也没有形成厨房 L3
+证据。

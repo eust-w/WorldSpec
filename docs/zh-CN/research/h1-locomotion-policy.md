@@ -223,3 +223,21 @@ A2 已在单张 A800 上执行。五次站立回归全部通过，但五次行�
 1.94–1.99 的动作跳变。结果说明 `stand-v2.1` 是可靠的静态平衡策略，但不是从任意
 运动相位接管的 capture policy。正式探针门控失败，控制器保持 `non_publishable`，
 没有启动 100M。
+
+### 2026-07-29 A3 运动状态 Capture Policy
+
+A3 从冻结的 A2 运动策略在最终 H1 + 右手 Robotiq 模型中真实 rollout，采集
+4,096 个第 140–159 步运动状态；Capture Policy 从通过的 `stand-v2.1` Warm Start，
+只训练零命令下的 100 步制动与保持。首次作业因错误选择 MJX 容量数组而在 PPO 前
+失败，属于实现失败，没有策略质量含义；修复没有改动训练参数或质量阈值。
+
+纠正后的单 A800 作业完成 8,601,600 个报告步，最终平均 Episode 长度为 100/100。
+五次 motion-to-capture 和五次 capture-from-rest 全部通过。行走测试前进
+1.3686–1.3729 米、速度 RMSE 0.1516–0.1519 m/s，最后 0.2 秒最大线速度
+0.0535–0.0637 m/s、最大角速度 0.0623–0.0736 rad/s。没有 NaN、关节越限、
+CCD/容量溢出或异常接触。
+
+这证明了已声明分布内的 motion-to-zero Capture Candidate，不证明任意步态相位、
+随机鲁棒性、完整 Supervisor 或厨房任务。产物保持内部研究级，100M 正式训练没有
+启动。规范报告见
+[`locomotion-capture.a800.passed.json`](../../../examples/h1-kitchen/locomotion-capture.a800.passed.json)。

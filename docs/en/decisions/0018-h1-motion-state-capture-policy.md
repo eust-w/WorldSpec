@@ -75,3 +75,33 @@ Even a pass proves only a motion-to-zero capture-policy candidate. A
 phase-aware motion-to-capture-to-stand supervisor still requires a separate
 probe; this is not kitchen L3 evidence and does not automatically trigger the
 100M formal run.
+
+## Real execution record
+
+The first A800 Job, `worldspec-h1-midterm-n7ck6`, failed while generating
+snapshots before PPO. An implementation error applied a 4,096-environment
+selection mask through `tree_map` to MJX State capacity arrays with 65,536
+rows, causing a broadcast-shape failure. This result is fixed as
+`implementation_failure_before_training` and contains no policy-quality
+evidence. The repair selects only per-environment `qpos`, `qvel`, and
+`last_action`; it changes neither training hyperparameters nor quality gates.
+
+The corrected Job, `worldspec-h1-midterm-rmnnr`, completed on one
+NVIDIA A800-SXM4-80GB. It generated and verified 4,096 real motion handoff
+snapshots, reached a final mean episode length of 100/100 after 8,601,600
+reported steps, and passed all five motion-to-capture and all five
+capture-from-rest tests. The five walking tests covered
+1.3686–1.3729 metres with moving-phase velocity RMSE of
+0.1516–0.1519 m/s. During the final 0.2-second measurement interval, maximum
+linear speed was 0.0535–0.0637 m/s and maximum angular speed was
+0.0623–0.0736 rad/s. The run had no NaN, joint-limit violation, CCD/capacity
+overflow, or abnormal contact.
+
+See the normative
+[`locomotion-capture.a800.passed.json`](../../../examples/h1-kitchen/locomotion-capture.a800.passed.json)
+report. The checkpoint, snapshot bank, and trace are bound to
+`sha256:7f8c45e7…5cfbe`, `sha256:11a93ac2…9870`, and
+`sha256:7ad8ca4d…4734`, respectively, and remain
+`research_only / internal_only`. This result marks only a
+`capture_candidate`; it started no formal 100M run and is not kitchen L3
+evidence.

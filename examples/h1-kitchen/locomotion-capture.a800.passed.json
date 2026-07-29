@@ -1,0 +1,670 @@
+{
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "captureProfileDigest": "sha256:2a03575e0f3b6c86058bbc4f6e85d66fd8bbc1950603594407887eef41032349",
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:8089b8ecd6eba3afa11e89ab1daa8ddb18282539d56ba95536a0b933622f0c08",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "effectiveTrainingProfileDigest": "sha256:d18567f2c0eac4ea17249669964760744c48688737be843a11314b394f27fc8e",
+  "executionEvidence": "executed",
+  "formalCaptureGate": "passed",
+  "generatedAt": "2026-07-29T12:00:00.873282Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "capture-report://worldspec/h1/a800-7392f96bcc25",
+  "imageSource": {
+    "commit": "7392f96bcc25dbec32f1688e25659be7836553a8",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "abnormalContactCount": 0,
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "clean": true,
+    "jointLimitViolationCount": 0,
+    "nonFiniteCount": 0
+  },
+  "motionTeacher": {
+    "archiveDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+    "archiveSizeBytes": 8838595,
+    "mode": "deterministic_motion_rollout",
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "scope": "capture_state_generation_and_evaluation",
+    "selectedStep": 17203200
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "policyStatus": "capture_candidate",
+  "probeDefinition": {
+    "commit": "7392f96bcc25dbec32f1688e25659be7836553a8",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:79cfe40b618b34e124081ddc815f941f7aca9680274692f5f4e7a9f417b268bf",
+    "commit": "7392f96bcc25dbec32f1688e25659be7836553a8",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "qualityAssessment": {
+    "deterministicSuiteGate": true,
+    "finalMeanEpisodeLength": 100.0,
+    "meanEpisodeLengthGate": true,
+    "minimumFinalMeanEpisodeLength": 90.0,
+    "status": "passed",
+    "tests": [
+      {
+        "id": "test://worldspec/h1-capture/walk_settle/1",
+        "metrics": {
+          "captureStartAngularSpeed": 0.2941635891557956,
+          "captureStartLinearSpeed": 0.39603119592988395,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.042678194253862774,
+          "finalLinearSpeed": 0.0398883165794146,
+          "forwardDisplacement": 1.3726598024368286,
+          "lateralDrift": 0.008558250963687897,
+          "maximumActionJumpNorm": 2.230425593012705,
+          "maximumPlanarDrift": 1.3726864816430118,
+          "maximumTerminalHoldAngularSpeed": 0.06396309331797033,
+          "maximumTerminalHoldLinearSpeed": 0.055903020877475645,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9940493702888489,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.15157717930651804
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-capture/walk_settle/2",
+        "metrics": {
+          "captureStartAngularSpeed": 0.36621220443797614,
+          "captureStartLinearSpeed": 0.37094796567375693,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.04780647819826674,
+          "finalLinearSpeed": 0.04501919225887636,
+          "forwardDisplacement": 1.3728625774383545,
+          "lateralDrift": 0.008927318267524242,
+          "maximumActionJumpNorm": 2.250042296640726,
+          "maximumPlanarDrift": 1.3728916029833278,
+          "maximumTerminalHoldAngularSpeed": 0.07359360738623472,
+          "maximumTerminalHoldLinearSpeed": 0.06366844221318714,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883298277854919,
+          "minimumUprightCosine": 0.9937739968299866,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.15191767208444917
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-capture/walk_settle/3",
+        "metrics": {
+          "captureStartAngularSpeed": 0.3684420791738426,
+          "captureStartLinearSpeed": 0.3723617458004876,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.047361668614822355,
+          "finalLinearSpeed": 0.044516374708475526,
+          "forwardDisplacement": 1.3724110126495361,
+          "lateralDrift": 0.011167299002408981,
+          "maximumActionJumpNorm": 2.252412176500306,
+          "maximumPlanarDrift": 1.3724564460152222,
+          "maximumTerminalHoldAngularSpeed": 0.07287013495922544,
+          "maximumTerminalHoldLinearSpeed": 0.06285228017726263,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883298277854919,
+          "minimumUprightCosine": 0.9937748908996582,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.15182915354641857
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-capture/walk_settle/4",
+        "metrics": {
+          "captureStartAngularSpeed": 0.312599652901774,
+          "captureStartLinearSpeed": 0.3882426297462066,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.041020031250515974,
+          "finalLinearSpeed": 0.038470097866203104,
+          "forwardDisplacement": 1.3687728643417358,
+          "lateralDrift": 0.00946237426251173,
+          "maximumActionJumpNorm": 2.1980087529610524,
+          "maximumPlanarDrift": 1.3688055708116342,
+          "maximumTerminalHoldAngularSpeed": 0.06233846180436531,
+          "maximumTerminalHoldLinearSpeed": 0.05350039114539483,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883298277854919,
+          "minimumUprightCosine": 0.994282603263855,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.15164851753517838
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-capture/walk_settle/5",
+        "metrics": {
+          "captureStartAngularSpeed": 0.34010904670397635,
+          "captureStartLinearSpeed": 0.3838912220867583,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.04284952900651105,
+          "finalLinearSpeed": 0.04023877365397126,
+          "forwardDisplacement": 1.368597149848938,
+          "lateralDrift": 0.010433468967676163,
+          "maximumActionJumpNorm": 2.204651426950954,
+          "maximumPlanarDrift": 1.3686369189267604,
+          "maximumTerminalHoldAngularSpeed": 0.06495359614015173,
+          "maximumTerminalHoldLinearSpeed": 0.05610073806897678,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9883298277854919,
+          "minimumUprightCosine": 0.9941667914390564,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.1517952778270082
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-capture/stand_regression/1",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0021593857110101776,
+          "finalLinearSpeed": 0.00007659348813803488,
+          "forwardDisplacement": -0.018107673153281212,
+          "lateralDrift": 0.003719779197126627,
+          "maximumActionJumpNorm": 2.191278885655939,
+          "maximumPlanarDrift": 0.018485794121471687,
+          "maximumTerminalHoldAngularSpeed": 0.0021703623310507947,
+          "maximumTerminalHoldLinearSpeed": 0.00007707206544331698,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881320595741272,
+          "minimumUprightCosine": 0.9996803998947144,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-capture/stand_regression/2",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.002159917044237225,
+          "finalLinearSpeed": 0.00007539485712123016,
+          "forwardDisplacement": -0.018107661977410316,
+          "lateralDrift": 0.0037197961937636137,
+          "maximumActionJumpNorm": 2.1912747526499388,
+          "maximumPlanarDrift": 0.018485786594334835,
+          "maximumTerminalHoldAngularSpeed": 0.002169928327455503,
+          "maximumTerminalHoldLinearSpeed": 0.00007557960286326429,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881320595741272,
+          "minimumUprightCosine": 0.9996805191040039,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-capture/stand_regression/3",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0021598257769784965,
+          "finalLinearSpeed": 0.00007613565528010779,
+          "forwardDisplacement": -0.018109336495399475,
+          "lateralDrift": 0.0037197605706751347,
+          "maximumActionJumpNorm": 2.1912759304085077,
+          "maximumPlanarDrift": 0.018487419695748693,
+          "maximumTerminalHoldAngularSpeed": 0.002169845360528574,
+          "maximumTerminalHoldLinearSpeed": 0.00007695223058623166,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881320595741272,
+          "minimumUprightCosine": 0.9996804594993591,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-capture/stand_regression/4",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0021601860733485964,
+          "finalLinearSpeed": 0.00007589512351192252,
+          "forwardDisplacement": -0.018107589334249496,
+          "lateralDrift": 0.003719721222296357,
+          "maximumActionJumpNorm": 2.1912790595570386,
+          "maximumPlanarDrift": 0.018485700351066715,
+          "maximumTerminalHoldAngularSpeed": 0.002170275569578044,
+          "maximumTerminalHoldLinearSpeed": 0.00007641804065004783,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881320595741272,
+          "minimumUprightCosine": 0.9996803998947144,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-capture/stand_regression/5",
+        "metrics": {
+          "captureStartAngularSpeed": null,
+          "captureStartLinearSpeed": null,
+          "completedSteps": 200,
+          "doneSeen": false,
+          "finalAngularSpeed": 0.0021596208664284287,
+          "finalLinearSpeed": 0.00007583415622497101,
+          "forwardDisplacement": -0.018107471987605095,
+          "lateralDrift": 0.003719717962667346,
+          "maximumActionJumpNorm": 2.191277504552704,
+          "maximumPlanarDrift": 0.01848558474876284,
+          "maximumTerminalHoldAngularSpeed": 0.002169934450699071,
+          "maximumTerminalHoldLinearSpeed": 0.00007594607358222927,
+          "measurementWindowSeconds": 0.2,
+          "minimumBaseHeight": 0.9881320595741272,
+          "minimumUprightCosine": 0.9996805191040039,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      }
+    ]
+  },
+  "reportVersion": "0.1.0",
+  "researchCheckpoint": {
+    "digest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "distribution": "internal_only",
+    "path": "midterm-checkpoint.zip",
+    "sizeBytes": 6280278
+  },
+  "runtimeAcceptance": "research_capture",
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "ccdContactsPerEnvironment": 8,
+    "effectiveNaccdmax": 32768,
+    "effectiveNaconmax": 65536,
+    "njmax": 128
+  },
+  "runtimePreflight": {
+    "ccdIterations": 50,
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scope": "h1_motion_state_capture_calibration",
+  "snapshotBank": {
+    "digest": "sha256:11a93ac2ff1f7852bcf3d2754799a30ca3c466e28c24f8557cb5fdda6d629870",
+    "distribution": "internal_only",
+    "handoffStepMaximum": 159,
+    "handoffStepMinimum": 140,
+    "motionCommandMaximum": [
+      0.5999974012374878,
+      0.049959663301706314,
+      0.0999867394566536
+    ],
+    "motionCommandMinimum": [
+      0.4000338017940521,
+      -0.04999283701181412,
+      -0.09996920078992844
+    ],
+    "path": "capture-state-bank.npz",
+    "seed": 10001,
+    "sizeBytes": 1245451,
+    "snapshotCount": 4096,
+    "terminatedSnapshotCount": 0
+  },
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "completed",
+  "target": {
+    "actionSize": 10,
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "observationSize": 42,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "traceArtifact": {
+    "digest": "sha256:7ad8ca4d1d4a193db89aafc7bbb52d4d94fba8ec4f7dd04a8afa05f360294734",
+    "path": "evaluation-traces.jsonl",
+    "sizeBytes": 903929
+  },
+  "training": {
+    "elapsedSeconds": 469.8042352190241,
+    "finalProgress": {
+      "elapsedSeconds": 402.78580002021044,
+      "metrics": {
+        "eval/avg_episode_length": 100.0,
+        "eval/episode_cost/action_rate": 0.4948718547821045,
+        "eval/episode_cost/action_rate_std": 0.03896816819906235,
+        "eval/episode_cost/angular_velocity_xy": 3.4820375442504883,
+        "eval/episode_cost/angular_velocity_xy_std": 0.591622531414032,
+        "eval/episode_cost/pose": 2.375520944595337,
+        "eval/episode_cost/pose_std": 0.32789289951324463,
+        "eval/episode_cost/teacher_action_mse": 0.0,
+        "eval/episode_cost/teacher_action_mse_std": 0.0,
+        "eval/episode_cost/torque": 0.5287069082260132,
+        "eval/episode_cost/torque_std": 0.05416930466890335,
+        "eval/episode_cost/upright": 0.2426861971616745,
+        "eval/episode_cost/upright_std": 0.05182121694087982,
+        "eval/episode_cost/vertical_velocity": 0.21329966187477112,
+        "eval/episode_cost/vertical_velocity_std": 0.06334591656923294,
+        "eval/episode_reward": 60.4492073059082,
+        "eval/episode_reward/base_height": 84.53470611572266,
+        "eval/episode_reward/base_height_std": 0.2903958857059479,
+        "eval/episode_reward/pose": 89.17223358154297,
+        "eval/episode_reward/pose_std": 1.4068306684494019,
+        "eval/episode_reward/settle_linear": 81.40172576904297,
+        "eval/episode_reward/settle_linear_std": 2.8606865406036377,
+        "eval/episode_reward/settle_yaw": 98.90977478027344,
+        "eval/episode_reward/settle_yaw_std": 0.2858213782310486,
+        "eval/episode_reward/stand_distillation": 0.0,
+        "eval/episode_reward/stand_distillation_std": 0.0,
+        "eval/episode_reward/survival": 100.0,
+        "eval/episode_reward/survival_std": 0.0,
+        "eval/episode_reward/tracking_linear": 92.46096801757812,
+        "eval/episode_reward/tracking_linear_std": 1.806396245956421,
+        "eval/episode_reward/tracking_yaw": 99.71944427490234,
+        "eval/episode_reward/tracking_yaw_std": 0.07708440721035004,
+        "eval/episode_reward/upright": 95.40283203125,
+        "eval/episode_reward/upright_std": 0.9316715598106384,
+        "eval/episode_reward_std": 0.946652352809906,
+        "eval/episode_state/base_height": 103.79090881347656,
+        "eval/episode_state/base_height_std": 0.060256294906139374,
+        "eval/episode_state/capture": 100.0,
+        "eval/episode_state/capture_std": 0.0,
+        "eval/episode_state/stand_replay": 0.0,
+        "eval/episode_state/stand_replay_std": 0.0,
+        "eval/episode_state/transition_settle": 100.0,
+        "eval/episode_state/transition_settle_std": 0.0,
+        "eval/episode_state/upright_cosine": 99.87849426269531,
+        "eval/episode_state/upright_cosine_std": 0.0259818397462368,
+        "eval/episode_termination/fall_height": 0.0,
+        "eval/episode_termination/fall_height_std": 0.0,
+        "eval/episode_termination/fall_upright": 0.0,
+        "eval/episode_termination/fall_upright_std": 0.0,
+        "eval/episode_termination/joint_limit": 0.0,
+        "eval/episode_termination/joint_limit_std": 0.0,
+        "eval/episode_termination/nonfinite": 0.0,
+        "eval/episode_termination/nonfinite_std": 0.0,
+        "eval/epoch_eval_time": 1.892366886138916,
+        "eval/sps": 6764.016055108867,
+        "eval/std_episode_length": 0.0,
+        "eval/walltime": 23.234936714172363,
+        "training/entropy_loss": 0.034375470131635666,
+        "training/kl_mean": 0.02662784233689308,
+        "training/learning_rate": 0.0000999999901978299,
+        "training/policy_dist_max_loc": 2.669384479522705,
+        "training/policy_dist_max_std": 0.4839038848876953,
+        "training/policy_dist_mean_loc": -0.11751365661621094,
+        "training/policy_dist_mean_std": 0.11011197417974472,
+        "training/policy_dist_min_loc": -2.524956226348877,
+        "training/policy_dist_min_std": 0.017985504120588303,
+        "training/policy_loss": -0.0031440427992492914,
+        "training/sps": 59696.85338100911,
+        "training/total_loss": 0.03214658796787262,
+        "training/v_loss": 0.0009151619160547853,
+        "training/walltime": 166.4951527118683
+      },
+      "step": 8601600
+    },
+    "firstProgress": {
+      "elapsedSeconds": 220.5585401719436,
+      "metrics": {
+        "eval/avg_episode_length": 92.515625,
+        "eval/episode_cost/action_rate": 2.538106679916382,
+        "eval/episode_cost/action_rate_std": 0.5571909546852112,
+        "eval/episode_cost/angular_velocity_xy": 32.90999984741211,
+        "eval/episode_cost/angular_velocity_xy_std": 33.9732780456543,
+        "eval/episode_cost/pose": 10.611078262329102,
+        "eval/episode_cost/pose_std": 9.798946380615234,
+        "eval/episode_cost/teacher_action_mse": 0.0,
+        "eval/episode_cost/teacher_action_mse_std": 0.0,
+        "eval/episode_cost/torque": 1.035219669342041,
+        "eval/episode_cost/torque_std": 0.20096099376678467,
+        "eval/episode_cost/upright": 1.676343560218811,
+        "eval/episode_cost/upright_std": 2.5069758892059326,
+        "eval/episode_cost/vertical_velocity": 0.6988552808761597,
+        "eval/episode_cost/vertical_velocity_std": 0.4883551001548767,
+        "eval/episode_reward": 28.02117347717285,
+        "eval/episode_reward_std": 11.579010963439941,
+        "eval/episode_reward/base_height": 79.72666931152344,
+        "eval/episode_reward/base_height_std": 16.29744529724121,
+        "eval/episode_reward/pose": 65.36456298828125,
+        "eval/episode_reward/pose_std": 26.04386329650879,
+        "eval/episode_reward/settle_linear": 13.110912322998047,
+        "eval/episode_reward/settle_linear_std": 14.66605281829834,
+        "eval/episode_reward/settle_yaw": 37.16051483154297,
+        "eval/episode_reward/settle_yaw_std": 17.869260787963867,
+        "eval/episode_reward/stand_distillation": 0.0,
+        "eval/episode_reward/stand_distillation_std": 0.0,
+        "eval/episode_reward/survival": 92.515625,
+        "eval/episode_reward/survival_std": 13.542170524597168,
+        "eval/episode_reward/tracking_linear": 40.40605163574219,
+        "eval/episode_reward/tracking_linear_std": 25.206151962280273,
+        "eval/episode_reward/tracking_yaw": 57.06904220581055,
+        "eval/episode_reward/tracking_yaw_std": 22.448314666748047,
+        "eval/episode_reward/upright": 83.88008880615234,
+        "eval/episode_reward/upright_std": 23.550111770629883,
+        "eval/episode_state/base_height": 93.27039337158203,
+        "eval/episode_state/base_height_std": 16.2687931060791,
+        "eval/episode_state/capture": 92.515625,
+        "eval/episode_state/capture_std": 13.542170524597168,
+        "eval/episode_state/stand_replay": 0.0,
+        "eval/episode_state/stand_replay_std": 0.0,
+        "eval/episode_state/transition_settle": 92.515625,
+        "eval/episode_state/transition_settle_std": 13.542170524597168,
+        "eval/episode_state/upright_cosine": 91.59039306640625,
+        "eval/episode_state/upright_cosine_std": 14.76026439666748,
+        "eval/episode_termination/fall_height": 0.2734375,
+        "eval/episode_termination/fall_height_std": 0.4457235038280487,
+        "eval/episode_termination/fall_upright": 0.0,
+        "eval/episode_termination/fall_upright_std": 0.0,
+        "eval/episode_termination/joint_limit": 0.0078125,
+        "eval/episode_termination/joint_limit_std": 0.08804240077733994,
+        "eval/episode_termination/nonfinite": 0.0,
+        "eval/episode_termination/nonfinite_std": 0.0,
+        "eval/epoch_eval_time": 8.271264791488647,
+        "eval/sps": 1547.526324289792,
+        "eval/std_episode_length": 13.542170524597168,
+        "eval/walltime": 8.271264791488647
+      },
+      "step": 0
+    },
+    "maximumReportedStep": 8601600,
+    "profileStage": "loaded_track_settle_capture",
+    "progressRecordCount": 6
+  },
+  "warmStart": {
+    "archiveDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "archiveSizeBytes": 6280684,
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "selectedStep": 4505600
+  }
+}

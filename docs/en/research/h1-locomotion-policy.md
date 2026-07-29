@@ -282,3 +282,28 @@ jump of approximately 1.94–1.99. The result shows that `stand-v2.1` is a
 reliable static-balance policy but not a capture policy from arbitrary gait
 phase. The formal probe gate failed, the controller remains
 `non_publishable`, and no 100M run started.
+
+### 2026-07-29 A3 motion-state capture policy
+
+A3 rolled the frozen A2 motion policy in the final H1 plus right Robotiq model
+and sampled 4,096 moving states at steps 140–159. The capture policy
+warm-started from the passing `stand-v2.1` checkpoint and trained only the
+100-step zero-command braking-and-hold phase. The first Job failed before PPO
+because it incorrectly selected MJX capacity arrays; this was an
+implementation failure with no policy-quality meaning. The repair changed no
+training parameter or quality threshold.
+
+The corrected one-A800 Job completed 8,601,600 reported steps with a final
+mean episode length of 100/100. All five motion-to-capture and all five
+capture-from-rest tests passed. Walking covered 1.3686–1.3729 metres with
+velocity RMSE of 0.1516–0.1519 m/s. Maximum speed in the final 0.2 seconds was
+0.0535–0.0637 m/s linear and 0.0623–0.0736 rad/s angular. There were no NaNs,
+joint-limit violations, CCD/capacity overflows, or abnormal contacts.
+
+This proves a motion-to-zero capture candidate only within the declared
+distribution. It does not prove arbitrary gait-phase capture, randomized
+robustness, the complete supervisor, or the kitchen task. Artifacts remain
+internal research evidence, and no formal 100M run was started. See the
+normative
+[`locomotion-capture.a800.passed.json`](../../../examples/h1-kitchen/locomotion-capture.a800.passed.json)
+report.
