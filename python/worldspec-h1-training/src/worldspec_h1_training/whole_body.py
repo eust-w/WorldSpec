@@ -429,6 +429,7 @@ def evaluate_whole_body_control_spike(
     minimum_height = float("inf")
     minimum_upright = float("inf")
     maximum_projected_gradient = 0.0
+    terminal_reasons: set[str] = set()
 
     def with_inputs(state_value, command, held_targets, feedforward):
         info = dict(state_value.info)
@@ -521,6 +522,13 @@ def evaluate_whole_body_control_spike(
         upright = float(np.asarray(env.upvector(state.data)[2]))
         finite = bool(np.isfinite(qpos).all() and np.isfinite(qvel).all())
         done = bool(np.asarray(state.done))
+        termination = {
+            name: bool(np.asarray(value))
+            for name, value in state.info["termination"].items()
+        }
+        terminal_reasons.update(
+            name for name, active in termination.items() if active
+        )
         minimum_height = min(minimum_height, height)
         minimum_upright = min(minimum_upright, upright)
         nonfinite += 0 if finite else 1
@@ -558,13 +566,15 @@ def evaluate_whole_body_control_spike(
                 "minimumUprightCosine": minimum_upright,
                 "finite": finite,
                 "done": done,
+                "termination": termination,
                 "control": control,
                 "site": site,
             }
         )
         if done:
             done_seen = True
-            failure = failure or "robot_termination"
+            reason = ",".join(sorted(terminal_reasons)) or "unclassified"
+            failure = failure or f"robot_termination:{reason}"
         if failure:
             break
     if initial_task_base is None:
@@ -607,6 +617,7 @@ def evaluate_whole_body_control_spike(
                 "maximumProjectedGradient": maximum_projected_gradient,
                 "nonFiniteSamples": nonfinite,
                 "doneSeen": done_seen,
+                "terminalReasons": sorted(terminal_reasons),
             },
         },
         traces,

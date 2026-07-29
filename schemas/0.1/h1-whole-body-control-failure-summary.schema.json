@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-control-failure-summary.schema.json",
+  "title": "WorldSpec H1 A5-C A800 Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "formalControlGate",
+    "controllerStatus",
+    "job",
+    "profile",
+    "artifacts",
+    "metrics",
+    "evidenceLimit",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": { "const": "h1_whole_body_task_space_control_spike" },
+    "executionEvidence": { "const": "executed" },
+    "formalControlGate": { "const": "failed" },
+    "controllerStatus": { "const": "non_publishable" },
+    "job": {
+      "type": "object",
+      "required": [
+        "namespace",
+        "name",
+        "podPhase",
+        "probeCommit",
+        "imageSourceCommit",
+        "image",
+        "gpu"
+      ],
+      "properties": {
+        "namespace": { "const": "worldspec-a800-poc" },
+        "name": { "type": "string", "minLength": 1 },
+        "podPhase": { "const": "Succeeded" },
+        "probeCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "imageSourceCommit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "image": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "gpu": { "const": "NVIDIA A800-SXM4-80GB" }
+      },
+      "additionalProperties": false
+    },
+    "profile": {
+      "type": "object",
+      "required": ["digest", "failedA5RReportDigest"],
+      "additionalProperties": { "$ref": "common.schema.json#/$defs/digest" }
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["normalizedReport", "controller", "trace"],
+      "additionalProperties": { "$ref": "#/$defs/artifact" }
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "completedSteps",
+        "completedPhase",
+        "failedReason",
+        "minimumTargetErrorMeters",
+        "finalTargetErrorMeters",
+        "finalTcpSpeed",
+        "holdSteps",
+        "baseTranslation",
+        "baseLateralDrift",
+        "minimumBaseHeight",
+        "minimumUprightCosine",
+        "maximumProjectedGradient",
+        "nonFiniteSamples",
+        "capacityOverflowCount",
+        "ccdOverflowCount",
+        "abnormalContactCount"
+      ]
+    },
+    "evidenceLimit": {
+      "const": {
+        "terminationChannelRecorded": false,
+        "exactTerminationReason": "unknown",
+        "logCleanFlagIsIncomplete": true,
+        "reason": "the executed trace recorded done=true but not the environment termination subchannels"
+      }
+    },
+    "claimBoundary": {
+      "const": {
+        "a800ControlClaim": "failed",
+        "fullTaskClaim": "forbidden",
+        "l3Claim": "forbidden",
+        "fiveRunGate": "not_executed",
+        "formalTraining": "not_started"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["digest", "sizeBytes"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

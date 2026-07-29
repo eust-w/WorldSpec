@@ -1,0 +1,68 @@
+{
+  "id": "attempt://worldspec/h1/a5c-whole-body/a800-73e1bc9efe99",
+  "reportVersion": "0.1.0",
+  "status": "completed",
+  "scope": "h1_whole_body_task_space_control_spike",
+  "executionEvidence": "executed",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "job": {
+    "namespace": "worldspec-a800-poc",
+    "name": "worldspec-h1-midterm-d5z6c",
+    "podPhase": "Succeeded",
+    "probeCommit": "73e1bc9efe99d00daf890a30d254a6bb89e227ca",
+    "imageSourceCommit": "0abd9b57bc6b738dfae03468b4d17eef2e518104",
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:684dafef489c9192982912a6e2ffea3e4a50936ec1ccb0930bd67af55039f94c",
+    "gpu": "NVIDIA A800-SXM4-80GB"
+  },
+  "profile": {
+    "digest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+    "failedA5RReportDigest": "sha256:c55d67244d28d3abdfef787b7858fceabea61a534fe1beb674fdc3bad7a67da0"
+  },
+  "artifacts": {
+    "normalizedReport": {
+      "digest": "sha256:306ff1b1c9f1e3bc10b1c02869600073409d53c7254110e1c6fac58fe64ea67a",
+      "sizeBytes": 11899
+    },
+    "controller": {
+      "digest": "sha256:fdcb0557e0509174eff8cec7b629cf5e846931efb1d805f5df3647bc456274fb",
+      "sizeBytes": 2005
+    },
+    "trace": {
+      "digest": "sha256:a27effb0562c2554248b12cd525103d1cc33e213af3c7406adc8ea7bdd1d27ff",
+      "sizeBytes": 97677
+    }
+  },
+  "metrics": {
+    "completedSteps": 219,
+    "completedPhase": "whole_body_settle",
+    "failedReason": "robot_termination",
+    "minimumTargetErrorMeters": 0.010992306140919063,
+    "finalTargetErrorMeters": 0.026351073109341844,
+    "finalTcpSpeed": 0.2531626936249654,
+    "holdSteps": 0,
+    "baseTranslation": 0.033108578530968914,
+    "baseLateralDrift": 0.010166895808652043,
+    "minimumBaseHeight": 0.9883299469947815,
+    "minimumUprightCosine": 0.9911736845970154,
+    "maximumProjectedGradient": 4.080494374336663e-8,
+    "nonFiniteSamples": 0,
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "abnormalContactCount": 0
+  },
+  "evidenceLimit": {
+    "terminationChannelRecorded": false,
+    "exactTerminationReason": "unknown",
+    "logCleanFlagIsIncomplete": true,
+    "reason": "the executed trace recorded done=true but not the environment termination subchannels"
+  },
+  "claimBoundary": {
+    "a800ControlClaim": "failed",
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "fiveRunGate": "not_executed",
+    "formalTraining": "not_started"
+  },
+  "generatedAt": "2026-07-29T18:45:31.093956Z"
+}

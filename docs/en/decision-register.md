@@ -48,5 +48,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-034 | A5 freezes the A4 leg Supervisor and adds right-arm Jacobian/impedance plus physical contact for a fixed primitive-kitchen loop; gate one run before 5/5 and forbid hidden grasp constraints or an L3 claim | Accepted Design | [ADR-0020](decisions/0020-h1-fixed-kitchen-integration.md) |
 | D-035 | Select A5-R: repair mug support, capacity, and single-step IK; add fixed-base reachability preflight without expanding to whole-body MPC/QP, and proceed to 5/5 only after one passing run | Accepted Design | [ADR-0021](decisions/0021-h1-a5-failure-response.md) |
 | D-036 | Select A5-C: freeze A4 leg policies, use planar base, torso, and right-arm QP variables with explicit MuJoCo bias-force feed-forward, and require a CPU/A800 handle-tracking Spike before A5 can be rerun | Accepted Design | [ADR-0022](decisions/0022-h1-a5r-dynamic-control-failure.md) |
+| D-037 | The A5-C A800 Spike entered position tolerance but terminated before a stable hold; exact termination subchannels were not recorded, so unchanged diagnostic replay, controller redesign, or stopping awaits selection | Pending Decision | [ADR-0023](decisions/0023-h1-a5c-control-spike-failure.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

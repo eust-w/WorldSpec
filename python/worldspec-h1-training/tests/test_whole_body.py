@@ -106,5 +106,13 @@ def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
     assert "formalControlGate" in launcher
     assert "h1-whole-body-control-report.schema.json" in launcher
     assert "whole-body-controller.json" in launcher
+    assert '"termination": termination' in (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "whole_body.py"
+    ).read_text(encoding="utf-8")
     assert "whole-body-control-profile.json" in wrapper
     assert "100000000" not in wrapper

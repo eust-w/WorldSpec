@@ -46,5 +46,6 @@ last-verified: 2026-07-29
 | D-034 | A5 冻结 A4 腿部 Supervisor，以右臂 Jacobian/阻抗和物理接触完成固定 primitive 厨房闭环；先单次再 5/5，禁止隐藏抓取约束和 L3 声明 | Accepted Design | [ADR-0020](decisions/0020-h1-fixed-kitchen-integration.md) |
 | D-035 | 选择 A5-R：修复杯托、容量和单步 IK 实现，增加固定基座可达性预检；不扩大到全身 MPC/QP，单次通过后才继续 5/5 | Accepted Design | [ADR-0021](decisions/0021-h1-a5-failure-response.md) |
 | D-036 | 选择 A5-C：冻结 A4 腿部策略，以底座平面速度、躯干和右臂为 QP 变量并显式加入 MuJoCo 偏置力前馈；先做 CPU/A800 把手跟踪 Spike，通过后才可重跑 A5 | Accepted Design | [ADR-0022](decisions/0022-h1-a5r-dynamic-control-failure.md) |
+| D-037 | A5-C 的 A800 Spike 进入位置容差但在稳定保持前终止；精确终止子通道未记录，等价诊断重放、重做控制器或停止等待选择 | Pending Decision | [ADR-0023](decisions/0023-h1-a5c-control-spike-failure.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。
