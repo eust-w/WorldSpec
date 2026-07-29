@@ -40,8 +40,8 @@ training distribution and read-only teacher constraint:
 ## Evidence boundary
 
 Before a real run, the Profile, Schema, environment reward, teacher loading, and
-A800 Job path are only an `Accepted Design` and implementation baseline. Only a
-real A800 report can prove:
+A800 Job path are only an `Accepted Design` and implementation baseline. A real
+A800 report is used to prove:
 
 - successful teacher-checkpoint loading and network-ABI compatibility;
 - actual stand replay and distillation execution in JAX/MJX training;
@@ -49,6 +49,26 @@ real A800 report can prove:
 
 Even a passing calibration creates only an internal locomotion candidate; it is
 not evidence for the complete kitchen task or L3.
+
+## Execution result
+
+On 2026-07-29, A1 completed on one NVIDIA A800-SXM4-80GB. The run restored the
+student normalizer, policy, and value from the failed transition checkpoint and
+loaded the `stand-v2.1` read-only teacher; neither optimizer was restored.
+Training reached 8,601,600 reported steps in approximately 584 seconds.
+
+A1 achieved the stand-retention objective. The five zero-command stand
+regressions recovered from 0/5 to 5/5, with maximum planar drift of
+0.1327–0.1727 m and maximum linear speed of 0.0698–0.0801 m/s, with no early
+termination. All five walk-settle tests still failed: maximum linear speed in
+the settling window was 0.5120–0.5488 m/s, above the 0.20-m/s gate. Final mean
+episode length was 836.15625, below the required 900. The run had no NaNs,
+joint-limit violations, capacity overflows, or abnormal-contact diagnostics.
+
+The A1 formal gate is therefore `failed` and the policy is `non_publishable`.
+Its checkpoint remains `research_only / internal_only`; no 100M run, automatic
+tuning, or algorithm rerun was started. See the normalized failure evidence in
+[`locomotion-retention.a800.failed.json`](../../../examples/h1-kitchen/locomotion-retention.a800.failed.json).
 
 ## Consequences
 

@@ -242,14 +242,21 @@ See the normalized
 [`locomotion-transition.a800.failed.json`](../../../examples/h1-kitchen/locomotion-transition.a800.failed.json)
 report.
 
-### A1: stand replay and teacher-action distillation
+### 2026-07-29 A1 stand-retention calibration result
 
-The next experiment relaxes none of the original gates. It initializes from
-the failed transition checkpoint, rebalances sampling to 60% walk/settle
-cycles and 40% all-zero-command stand cycles, and uses the passing
-`stand-v2.1` deterministic teacher action only during stand replay. The
-constraint is implemented as an action-MSE distillation reward and is not
-claimed to be strict policy KL. The experiment budget, teacher source, student
-source, and reward parameters are locked by
-[`locomotion-retention-profile.json`](../../../examples/h1-kitchen/locomotion-retention-profile.json);
-the design remains unverified until a real A800 execution.
+A1 was executed on one A800. All five zero-command stand regressions passed,
+and planar drift fell from 0.5112–0.5447 m in the previous run to
+0.1327–0.1727 m. This is evidence that explicit stand replay and teacher-action
+distillation mitigated stand-capability forgetting.
+
+It did not solve braking at the same time. Maximum settling-window linear speed
+in the five walk tests was 0.5120–0.5488 m/s, worse than the previous
+0.4020–0.4377 m/s, and final mean episode length fell to 836.15625. Only the
+five stand regressions passed, so the formal gate failed. The checkpoint digest
+is `sha256:59697ea50339fa9ad17b9131c3369b761e0ff8345cf649be76549294472a4b8b`
+and remains `research_only / internal_only`. No 100M Job, automatic tuning, or
+algorithm rerun was started.
+
+See the normalized
+[`locomotion-retention.a800.failed.json`](../../../examples/h1-kitchen/locomotion-retention.a800.failed.json)
+report.

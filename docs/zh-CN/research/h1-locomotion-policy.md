@@ -192,11 +192,17 @@ CCD 容量溢出，但下一次校准前需要单独评估数值影响。
 规范化失败报告见
 [`locomotion-transition.a800.failed.json`](../../../examples/h1-kitchen/locomotion-transition.a800.failed.json)。
 
-### A1：站立回放与教师动作蒸馏
+### 2026-07-29 A1 站立保持校准结果
 
-下一次实验不放宽任何原始门槛。它从过渡失败 Checkpoint 初始化，以 60% 行走停稳
-周期和 40% 全零命令站立周期重新平衡采样，并只在站立回放阶段引入通过的
-`stand-v2.1` 确定性教师动作。该约束实现为动作均方误差蒸馏奖励，不宣称为严格
-策略 KL。实验预算、教师来源、学生来源和奖励参数由
-[`locomotion-retention-profile.json`](../../../examples/h1-kitchen/locomotion-retention-profile.json)
-锁定；真实 A800 运行前仍属于待验证设计。
+A1 已在单张 A800 上执行。五次零命令站立回归恢复为 5/5 通过，平面漂移从上一轮
+0.5112–0.5447 米降至 0.1327–0.1727 米，证明显式站立回放和教师动作蒸馏有效缓解了
+站立能力遗忘。
+
+但它没有同时解决刹停：五次行走测试的停稳窗口最大线速度为 0.5120–0.5488 m/s，
+反而高于上一轮的 0.4020–0.4377 m/s；最终平均 Episode 长度也降至 836.15625。
+因此十项门控只通过五项站立回归，正式门控失败。Checkpoint Digest 为
+`sha256:59697ea50339fa9ad17b9131c3369b761e0ff8345cf649be76549294472a4b8b`，
+仍为 `research_only / internal_only`。未创建 100M Job，也未自动调参或重跑。
+
+规范化报告见
+[`locomotion-retention.a800.failed.json`](../../../examples/h1-kitchen/locomotion-retention.a800.failed.json)。

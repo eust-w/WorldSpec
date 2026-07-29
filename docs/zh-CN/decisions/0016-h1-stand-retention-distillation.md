@@ -33,13 +33,30 @@ ADR-0015 的 A800 过渡校准改善了行走后的部分制动指标，但五�
 ## 证据边界
 
 Profile、Schema、环境奖励、教师载入与 A800 作业链路在真实运行前仅属于
-`Accepted Design` 和实现基线。只有真实 A800 报告才能证明：
+`Accepted Design` 和实现基线。真实 A800 报告用于证明：
 
 - 教师 Checkpoint 已成功载入且网络 ABI 一致；
 - 站立回放和蒸馏奖励在真实 JAX/MJX 训练中执行；
 - 十项行为门槛是否通过。
 
 即使本校准通过，也只产生内部步态候选，不构成完整厨房任务或 L3 证据。
+
+## 执行结果
+
+2026-07-29，A1 在单张 NVIDIA A800-SXM4-80GB 上完成。运行从过渡失败
+Checkpoint 恢复学生 normalizer、policy 和 value，并从 `stand-v2.1` 恢复只读教师；
+两者优化器均未恢复。训练达到 8,601,600 个报告步，耗时约 584 秒。
+
+A1 达到了保站目标：五次零命令站立回归从上一轮 0/5 恢复为 5/5，最大平面漂移为
+0.1327–0.1727 米，最大线速度为 0.0698–0.0801 m/s，且无提前终止。
+但五次行走—停稳测试仍全部失败：停稳窗口最大线速度为 0.5120–0.5488 m/s，
+高于 0.20 m/s 门槛。最终平均 Episode 长度为 836.15625，也低于 900 门槛。
+运行中没有 NaN、关节越限、容量溢出或异常接触诊断。
+
+因此 A1 的正式门控为 `failed`，策略为 `non_publishable`；Checkpoint 只按
+`research_only / internal_only` 保存，没有启动 100M 训练，也没有自动调参或重跑。
+规范化失败证据见
+[`locomotion-retention.a800.failed.json`](../../../examples/h1-kitchen/locomotion-retention.a800.failed.json)。
 
 ## 后果
 
