@@ -228,6 +228,7 @@ import sys
 
 path = pathlib.Path(sys.argv[1])
 report = {
+    "id": f"build-report://worldspec/h1-training-image/a800-{sys.argv[2][:12]}",
     "reportVersion": "0.1.0",
     "status": "passed",
     "executionEvidence": "executed",

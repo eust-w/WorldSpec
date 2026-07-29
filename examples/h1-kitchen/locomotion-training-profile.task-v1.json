@@ -29,7 +29,7 @@
     "minimumGpuCount": 1,
     "backendPackage": "worldspec_h1_training",
     "backendVersion": "0.1.0",
-    "containerDigest": "sha256:04ea568497bb501977cfda324e81ddb89c9b1ab03855c6074b31382adc86f95d",
+    "containerDigest": "sha256:962feb4a81136909df73882beb6fadc0f5929c458578d084bc8fb5a5e5aa6424",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "mjxCapacity": {
       "activeContactsPerEnvironment": 16,
@@ -67,7 +67,7 @@
   },
   "initialization": {
     "method": "warm_start",
-    "sourceProfileDigest": "sha256:e7dcc0c264128fa6508ed5f033b1f061db4b007a0975d9c0b99b886e4788476f",
+    "sourceProfileDigest": "sha256:2ae193b94a3efcd813a610f66f775537cd213941062918ab7fb2aabd7c2174b1",
     "requiredReportStatus": "passed",
     "requiredCheckpointDistribution": "internal_only",
     "restore": {
