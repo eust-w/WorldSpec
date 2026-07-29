@@ -339,7 +339,9 @@ orchestrator entry. The scene contains no weld, mocap attachment, or
 teleportation; grasping may use only physical contact. Local schema,
 state-machine, MuJoCo 3.6.0 native-load, and IK-binding tests pass.
 
-Until a real A800 report exists, this proves implementation and local
-loadability only, not task success. The execution order is fixed: one probe
-must pass before the other four runs, and any failure is retained and stops
-without starting 100M.
+The real A800 single-run gate has now executed and failed. H1 locomotion and
+standing remained stable, but the task timed out at `reach_handle`; the mug
+fell before the robot arrived, and the log contained 1,069 contact-capacity
+overflows. The system did not execute the other four runs and did not start
+100M. See [ADR-0021](../decisions/0021-h1-a5-failure-response.md) for the
+complete conclusion and the next decision.

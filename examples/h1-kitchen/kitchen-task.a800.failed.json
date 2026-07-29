@@ -1,0 +1,139 @@
+{
+  "id": "kitchen-task-report://worldspec/h1/a800-b56d5e095a46",
+  "reportVersion": "0.1.0",
+  "status": "completed",
+  "scope": "h1_fixed_kitchen_full_loop_probe",
+  "executionEvidence": "executed",
+  "runtimeAcceptance": "research_integration",
+  "controllerStatus": "non_publishable",
+  "formalTaskGate": "failed",
+  "probeDefinition": {
+    "repository": "https://github.com/eust-w/WorldSpec.git",
+    "commit": "b56d5e095a468f5239940c44c7a9982ce98b772d"
+  },
+  "imageSource": {
+    "repository": "https://github.com/eust-w/WorldSpec.git",
+    "commit": "f6c824baeb0829465e750f1bab333dc9c50208d9"
+  },
+  "probeInput": {
+    "repository": "https://github.com/eust-w/WorldSpec.git",
+    "commit": "b56d5e095a468f5239940c44c7a9982ce98b772d",
+    "materialization": "verified_git_archive",
+    "archiveDigest": "sha256:be6b0eef4e3ae06ab796398d6158bc70155bc07a18949224c9e7314d99110dbd"
+  },
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:f3eaaa71f9ad38aa7d9ae61514ee4f4c36db3a44676b1167d9d19a200489f0d8",
+    "readOnlyRootFilesystem": true,
+    "runAsUser": 10001,
+    "secretMountCount": 0
+  },
+  "platform": {
+    "system": "Linux",
+    "machine": "x86_64"
+  },
+  "gpu": {
+    "name": "NVIDIA A800-SXM4-80GB",
+    "memoryMiB": 81920,
+    "jaxBackend": "gpu"
+  },
+  "packages": {
+    "jax": "0.6.2",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0"
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "supervisorProfileDigest": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355",
+  "taskProfileDigest": "sha256:9f246b527fd1a326d05078e2b1764e4ebe1a04f87e10cf993be5d30f36ceebb9",
+  "policies": {
+    "motion": {
+      "checkpointDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356"
+    },
+    "capture": {
+      "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe"
+    },
+    "stand": {
+      "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c"
+    }
+  },
+  "staticPreflight": {
+    "status": "pass"
+  },
+  "runtimePreflight": {
+    "status": "pass",
+    "physicsImplementation": "warp",
+    "ccdIterations": 50
+  },
+  "target": {
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "derivedModelDigest": "sha256:99e284d00b51e28258f50d72cd5bd8e30a78a00417683e43f41d8efb745f7f66"
+  },
+  "scene": {
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v1",
+    "evidenceStatus": "generated",
+    "graspModel": "physical_contact_only",
+    "hiddenAttachment": false
+  },
+  "controller": {
+    "mode": "frozen_locomotion_plus_jacobian_impedance",
+    "controlledJointCount": 4
+  },
+  "qualityAssessment": {
+    "status": "failed",
+    "singleRunGate": false,
+    "fixedSceneFiveRunGate": false,
+    "tests": [
+      {
+        "id": "test://worldspec/h1-kitchen/full-loop/1",
+        "result": "fail",
+        "metrics": {
+          "completedPhase": "reach_handle",
+          "failedReason": "reach_handle_timeout",
+          "forwardDisplacement": 1.3973066806793213,
+          "minimumBaseHeight": 0.9883299469947815,
+          "minimumUprightCosine": 0.9940812587738037,
+          "maximumDrawerOpening": 0.0,
+          "finalDrawerPosition": -2.136980158095346e-42,
+          "cupInside": false,
+          "cupReleased": true,
+          "cupLinearSpeed": 0.14563187956809998,
+          "cupAngularSpeed": 0.5491507053375244,
+          "nonFiniteSamples": 0,
+          "doneSeen": false
+        }
+      }
+    ]
+  },
+  "controllerArtifact": {
+    "path": "kitchen-task-controller.json",
+    "digest": "sha256:988e868c017ccffbdf3089eeb995ef6ea480312eeab24df13c6d6f0d7ce6c2b4",
+    "sizeBytes": 1873,
+    "distribution": "internal_only"
+  },
+  "traceArtifact": {
+    "path": "evaluation-traces.jsonl",
+    "digest": "sha256:20d065efae82fa0cb22b5353816999e7e5a6430c2046f99f94907cbf9dfc506f",
+    "sizeBytes": 173617,
+    "distribution": "internal_only"
+  },
+  "claimBoundary": {
+    "status": "research_integration_only",
+    "l3Claim": "forbidden",
+    "reasons": [
+      "single_run_gate_failed",
+      "remaining_four_runs_not_executed",
+      "contact_capacity_overflow_detected"
+    ]
+  },
+  "logDiagnostics": {
+    "ccdOverflowCount": 0,
+    "capacityOverflowCount": 1069,
+    "abnormalContactCount": 0,
+    "jointLimitViolationCount": 0,
+    "nonFiniteCount": 0,
+    "clean": false
+  },
+  "generatedAt": "2026-07-29T16:31:14.662660Z"
+}

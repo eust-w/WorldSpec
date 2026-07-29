@@ -28,5 +28,6 @@ last-verified: 2026-07-29
 - [ADR-0018 H1 运动状态 Capture Policy](0018-h1-motion-state-capture-policy.md)
 - [ADR-0019 H1 相位感知三策略 Supervisor](0019-h1-phase-aware-supervisor.md)
 - [ADR-0020 H1 固定厨房全闭环集成探针](0020-h1-fixed-kitchen-integration.md)
+- [ADR-0021 H1 A5 首次行为失败后的处理](0021-h1-a5-failure-response.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

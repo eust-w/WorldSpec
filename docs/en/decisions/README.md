@@ -30,5 +30,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0018 H1 motion-state capture policy](0018-h1-motion-state-capture-policy.md)
 - [ADR-0019 H1 phase-aware three-policy supervisor](0019-h1-phase-aware-supervisor.md)
 - [ADR-0020 H1 fixed-kitchen full-loop integration probe](0020-h1-fixed-kitchen-integration.md)
+- [ADR-0021 response to the first H1 A5 behavior failure](0021-h1-a5-failure-response.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.
