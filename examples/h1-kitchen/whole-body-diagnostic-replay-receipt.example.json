@@ -1,0 +1,30 @@
+{
+  "id": "receipt://worldspec/h1/a5-ci-template",
+  "receiptVersion": "0.1.0",
+  "status": "verified",
+  "attemptId": "a5-ci-template",
+  "artifactCopied": true,
+  "artifacts": {
+    "report": {
+      "path": "diagnostic-replay-report.json",
+      "digest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "sizeBytes": 8192
+    },
+    "controller": {
+      "path": "whole-body-controller.json",
+      "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "sizeBytes": 2100
+    },
+    "trace": {
+      "path": "evaluation-traces.jsonl",
+      "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "sizeBytes": 220000
+    },
+    "equivalence": {
+      "path": "equivalence-report.json",
+      "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "sizeBytes": 4096
+    }
+  },
+  "generatedAt": "2026-07-30T00:00:02Z"
+}

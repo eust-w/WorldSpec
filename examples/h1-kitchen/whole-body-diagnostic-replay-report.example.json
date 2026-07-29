@@ -1,0 +1,181 @@
+{
+  "id": "attempt://worldspec/h1/a5-ci-template/report",
+  "reportVersion": "0.1.0",
+  "status": "completed",
+  "scope": "h1_whole_body_task_space_control_diagnostic_replay",
+  "executionEvidence": "executed",
+  "runtimeAcceptance": "diagnostic_replay",
+  "attemptId": "a5-ci-template",
+  "replayProfileDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "baseControlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+  "formalDiagnosticReplayGate": "passed",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "originalTerminationReason": "unknown",
+  "replayTerminationReasons": ["joint_limit"],
+  "diagnosticCompleteness": {
+    "status": "passed",
+    "reasons": [],
+    "recordCount": 219,
+    "terminalReasons": ["joint_limit"],
+    "terminalJoints": ["torso"],
+    "controlSaturationSamples": 3,
+    "maximumControlUtilization": 1.0
+  },
+  "equivalenceAssessment": {
+    "status": "passed",
+    "reportDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "staticSemanticEquivalent": true
+  },
+  "artifactTransferStatus": "passed",
+  "probeDefinition": {
+    "repository": "https://example.invalid/worldspec.git",
+    "commit": "cccccccccccccccccccccccccccccccccccccccc"
+  },
+  "imageSource": {
+    "repository": "https://example.invalid/worldspec.git",
+    "commit": "dddddddddddddddddddddddddddddddddddddddd"
+  },
+  "probeInput": {
+    "repository": "https://example.invalid/worldspec.git",
+    "commit": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "materialization": "verified_git_archive",
+    "archiveDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888"
+  },
+  "container": {
+    "image": "registry.invalid/worldspec-h1-a5-ci-template@sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+  },
+  "platform": {
+    "system": "Linux",
+    "machine": "x86_64",
+    "python": "3.12.9"
+  },
+  "gpu": {
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "packages": {
+    "mujoco": "3.6.0"
+  },
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "supervisorProfileDigest": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355",
+  "controlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+  "policies": {
+    "motion": {},
+    "capture": {},
+    "stand": {}
+  },
+  "staticPreflight": {},
+  "runtimePreflight": {},
+  "target": {
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "derivedModelDigest": "sha256:e43323d01a65d22d937d6d908222db7e13d4f4ef432564f4b129d949d5d6b43b",
+    "observationSize": 42,
+    "actionSize": 10
+  },
+  "scene": {
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v2",
+    "evidenceStatus": "generated",
+    "distribution": "internal_only",
+    "drawer": {
+      "closedCenter": [2.06, -0.21, 1.02],
+      "slideAxis": [-1.0, 0.0, 0.0],
+      "range": [0.0, 0.24],
+      "openThreshold": 0.18,
+      "closedThreshold": 0.03
+    },
+    "cup": {
+      "initialCenter": [1.88, -0.21, 1.195],
+      "proxy": "short_cylinder",
+      "massKg": 0.18
+    },
+    "support": {
+      "type": "fixed_box",
+      "center": [1.88, -0.21, 1.155],
+      "halfSize": [0.1, 0.09, 0.015]
+    },
+    "graspModel": "physical_contact_only",
+    "hiddenAttachment": false
+  },
+  "controller": {
+    "mode": "hierarchical_box_qp_with_inverse_dynamics_feedforward",
+    "decisionVariables": [
+      "base_velocity_x",
+      "base_velocity_y",
+      "base_yaw_rate",
+      "torso_velocity",
+      "right_shoulder_pitch_velocity",
+      "right_shoulder_roll_velocity",
+      "right_shoulder_yaw_velocity",
+      "right_elbow_velocity"
+    ],
+    "controlledJoints": [
+      "torso",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "qpIterations": 48,
+    "cartesianGain": 4.0,
+    "maximumCartesianSpeed": 0.35,
+    "velocityLowerBounds": [-0.08, -0.06, -0.15, -0.5, -0.8, -0.8, -0.8, -0.8],
+    "velocityUpperBounds": [0.08, 0.06, 0.15, 0.5, 0.8, 0.8, 0.8, 0.8],
+    "regularization": [2.0, 2.0, 3.0, 0.35, 0.15, 0.15, 0.15, 0.15],
+    "targetHorizonSeconds": 0.4,
+    "maximumJointTargetStep": 0.3,
+    "jointLimitMarginRadians": 0.05,
+    "feedforwardScale": 1.0,
+    "feedforwardControlReserve": 0.2
+  },
+  "qualityAssessment": {
+    "status": "failed",
+    "tests": [
+      {
+        "id": "test://worldspec/h1-kitchen/a5-ci-template",
+        "result": "fail",
+        "metrics": {
+          "doneSeen": true,
+          "failedReason": "robot_termination:joint_limit"
+        }
+      }
+    ]
+  },
+  "controllerArtifact": {
+    "path": "whole-body-controller.json",
+    "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+    "sizeBytes": 2100,
+    "distribution": "internal_only"
+  },
+  "traceArtifact": {
+    "path": "evaluation-traces.jsonl",
+    "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "sizeBytes": 220000,
+    "distribution": "internal_only"
+  },
+  "equivalenceArtifact": {
+    "path": "equivalence-report.json",
+    "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "sizeBytes": 4096,
+    "distribution": "internal_only"
+  },
+  "claimBoundary": {
+    "status": "diagnostic_replay_only",
+    "originalA5CRootCause": "unknown",
+    "retroactiveRootCauseClaim": "forbidden",
+    "controllerCandidateClaim": "forbidden",
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "fiveRunGate": "not_executed",
+    "formalTraining": "not_started"
+  },
+  "logDiagnostics": {
+    "ccdOverflowCount": 0,
+    "capacityOverflowCount": 0,
+    "abnormalContactCount": 0,
+    "jointLimitViolationCount": 1,
+    "nonFiniteCount": 0,
+    "clean": false
+  },
+  "generatedAt": "2026-07-30T00:00:01Z"
+}

@@ -29,6 +29,18 @@
       "schema": "h1-locomotion-training-result.schema.json",
       "validationLayer": "schema",
       "expectedCode": "SCHEMA_EXECUTION_EVIDENCE_MISMATCH"
+    },
+    {
+      "path": "a5ci-unclassified-termination/trace-record.json",
+      "schema": "h1-whole-body-diagnostic-trace-record.schema.json",
+      "validationLayer": "schema",
+      "expectedCode": "SCHEMA_UNCLASSIFIED_TERMINATION"
+    },
+    {
+      "path": "a5ci-false-diagnostic-pass/report.json",
+      "schema": "h1-whole-body-diagnostic-replay-report.schema.json",
+      "validationLayer": "schema",
+      "expectedCode": "SCHEMA_FALSE_DIAGNOSTIC_PASS"
     }
   ]
 }

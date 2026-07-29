@@ -13,7 +13,9 @@ from __future__ import annotations
 import copy
 import functools
 import json
+import math
 import tempfile
+from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -78,9 +80,563 @@ WHOLE_BODY_GATES = {
     "maximumNonFiniteSamples": 0,
 }
 
-A5R_FAILED_REPORT_DIGEST = (
-    "sha256:c55d67244d28d3abdfef787b7858fceabea61a534fe1beb674fdc3bad7a67da0"
+A5R_FAILED_REPORT_DIGEST = "sha256:c55d67244d28d3abdfef787b7858fceabea61a534fe1beb674fdc3bad7a67da0"
+
+DIAGNOSTIC_TERMINATION_CHANNELS = (
+    "joint_limit",
+    "fall_height",
+    "fall_upright",
+    "nonfinite",
 )
+DIAGNOSTIC_JOINT_GROUPS = ("policy", "held")
+DIAGNOSTIC_ACTUATOR_GROUPS = ("policy", "held", "gripper")
+
+
+def _finite_number(value: object) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
+def _trace_number(value: object) -> float | None:
+    """Return a JSON-safe diagnostic number while preserving invalid evidence as null."""
+
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if math.isfinite(result) else None
+
+
+def whole_body_profile_semantic_projection(profile: Mapping[str, Any]) -> dict[str, Any]:
+    """Project an A5-C control Profile onto replay-relevant semantics.
+
+    A diagnostic replay is allowed to use a newly built OCI image.  No other
+    field is excluded: controller, policies, scene, seed, gates, package lock,
+    capacity, and claim boundaries remain part of the projection.
+    """
+
+    projection = copy.deepcopy(dict(profile))
+    runtime = projection.get("runtime")
+    if not isinstance(runtime, dict):
+        raise TrainingError(
+            "DIAGNOSTIC_PROFILE_RUNTIME_INVALID",
+            "Whole-body semantic projection requires a runtime object.",
+        )
+    runtime.pop("containerImage", None)
+    runtime.pop("containerDigest", None)
+    return projection
+
+
+def whole_body_controller_semantic_projection(
+    controller_artifact: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Remove only the embedded full Profile digest from a controller artifact."""
+
+    projection = copy.deepcopy(dict(controller_artifact))
+    if "profileDigest" not in projection:
+        raise TrainingError(
+            "DIAGNOSTIC_CONTROLLER_PROFILE_DIGEST_MISSING",
+            "Controller projection requires the embedded profileDigest.",
+        )
+    projection.pop("profileDigest")
+    return projection
+
+
+def _path_value(record: Mapping[str, Any], path: str) -> object:
+    value: object = record
+    for segment in path.split("."):
+        if not isinstance(value, Mapping) or segment not in value:
+            return None
+        value = value[segment]
+    return value
+
+
+def _numeric_values(value: object) -> list[float] | None:
+    if _finite_number(value):
+        return [float(value)]
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        values = list(value)
+        if all(_finite_number(item) for item in values):
+            return [float(item) for item in values]
+    return None
+
+
+def _nonfinite_numeric_paths(value: object, prefix: str) -> list[str]:
+    if isinstance(value, bool) or value is None:
+        return []
+    if isinstance(value, (int, float)):
+        return [] if math.isfinite(float(value)) else [prefix]
+    if isinstance(value, Mapping):
+        paths: list[str] = []
+        for key, item in value.items():
+            paths.extend(_nonfinite_numeric_paths(item, f"{prefix}.{key}"))
+        return paths
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        paths = []
+        for index, item in enumerate(value):
+            paths.extend(_nonfinite_numeric_paths(item, f"{prefix}[{index}]"))
+        return paths
+    return []
+
+
+def compare_whole_body_traces(
+    reference_records: Iterable[Mapping[str, Any]],
+    replay_records: Iterable[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Report dynamic A5-C/A5-CI trace differences without deciding equivalence."""
+
+    reference = [dict(record) for record in reference_records]
+    replay = [dict(record) for record in replay_records]
+
+    def index_by_step(records: list[dict[str, Any]]) -> tuple[dict[int, dict[str, Any]], int]:
+        indexed: dict[int, dict[str, Any]] = {}
+        duplicates = 0
+        for record in records:
+            step = record.get("step")
+            if isinstance(step, int) and not isinstance(step, bool):
+                duplicates += int(step in indexed)
+                indexed[step] = record
+        return indexed, duplicates
+
+    reference_by_step, reference_duplicates = index_by_step(reference)
+    replay_by_step, replay_duplicates = index_by_step(replay)
+    common_steps = sorted(set(reference_by_step) & set(replay_by_step))
+    categorical_paths = ("phase", "activePolicy", "finite", "done", "termination")
+    numeric_paths = (
+        "timeSeconds",
+        "command",
+        "basePosition",
+        "minimumBaseHeight",
+        "minimumUprightCosine",
+        "site.targetErrorMeters",
+        "site.tcpSpeed",
+        "control.targetErrorMeters",
+        "control.qpProjectedGradient",
+    )
+    categorical: dict[str, dict[str, Any]] = {}
+    first_divergence: int | None = None
+    for path in categorical_paths:
+        compared = 0
+        differences: list[int] = []
+        reference_available = 0
+        replay_available = 0
+        for step in common_steps:
+            reference_value = _path_value(reference_by_step[step], path)
+            replay_value = _path_value(replay_by_step[step], path)
+            reference_available += int(reference_value is not None)
+            replay_available += int(replay_value is not None)
+            if reference_value is None or replay_value is None:
+                continue
+            compared += 1
+            if reference_value != replay_value:
+                differences.append(step)
+        if differences:
+            candidate = differences[0]
+            first_divergence = (
+                candidate if first_divergence is None else min(first_divergence, candidate)
+            )
+        categorical[path] = {
+            "referenceAvailable": reference_available,
+            "replayAvailable": replay_available,
+            "samplesCompared": compared,
+            "differenceCount": len(differences),
+            "firstDifferenceStep": differences[0] if differences else None,
+        }
+
+    numeric: dict[str, dict[str, Any]] = {}
+    for path in numeric_paths:
+        compared = 0
+        sample_differences: list[float] = []
+        difference_steps: list[int] = []
+        reference_available = 0
+        replay_available = 0
+        for step in common_steps:
+            reference_value = _numeric_values(_path_value(reference_by_step[step], path))
+            replay_value = _numeric_values(_path_value(replay_by_step[step], path))
+            reference_available += int(reference_value is not None)
+            replay_available += int(replay_value is not None)
+            if (
+                reference_value is None
+                or replay_value is None
+                or len(reference_value) != len(replay_value)
+            ):
+                continue
+            compared += 1
+            difference = max(
+                (
+                    abs(left - right)
+                    for left, right in zip(reference_value, replay_value, strict=True)
+                ),
+                default=0.0,
+            )
+            sample_differences.append(difference)
+            if difference != 0.0:
+                difference_steps.append(step)
+        if difference_steps:
+            candidate = difference_steps[0]
+            first_divergence = (
+                candidate if first_divergence is None else min(first_divergence, candidate)
+            )
+        numeric[path] = {
+            "referenceAvailable": reference_available,
+            "replayAvailable": replay_available,
+            "samplesCompared": compared,
+            "differentSampleCount": len(difference_steps),
+            "firstDifferenceStep": difference_steps[0] if difference_steps else None,
+            "maximumAbsoluteDifference": max(sample_differences, default=None),
+            "meanAbsoluteDifference": (
+                sum(sample_differences) / len(sample_differences) if sample_differences else None
+            ),
+        }
+
+    return {
+        "referenceRecordCount": len(reference),
+        "replayRecordCount": len(replay),
+        "commonStepCount": len(common_steps),
+        "referenceOnlySteps": sorted(set(reference_by_step) - set(replay_by_step)),
+        "replayOnlySteps": sorted(set(replay_by_step) - set(reference_by_step)),
+        "duplicateSteps": {
+            "reference": reference_duplicates,
+            "replay": replay_duplicates,
+        },
+        "firstDynamicDivergenceStep": first_divergence,
+        "categoricalDifferences": categorical,
+        "numericDifferences": numeric,
+        "interpretation": "report_only_not_static_equivalence",
+    }
+
+
+def _diagnostic_trace_errors(
+    record: Mapping[str, Any],
+    expected_control: Mapping[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    if not isinstance(record.get("activePolicy"), str) or not record["activePolicy"]:
+        errors.append("active_policy_missing")
+    if (
+        not isinstance(record.get("command"), list)
+        or len(record["command"]) != 3
+        or not all(_finite_number(value) for value in record["command"])
+    ):
+        errors.append("command_not_finite_vector3")
+    if (
+        not isinstance(record.get("basePosition"), list)
+        or len(record["basePosition"]) != 3
+        or not all(_finite_number(value) for value in record["basePosition"])
+    ):
+        errors.append("base_position_not_finite_vector3")
+    for field in ("timeSeconds", "minimumBaseHeight", "minimumUprightCosine"):
+        if not _finite_number(record.get(field)):
+            errors.append(f"{field}_not_finite")
+    for field in ("control", "site"):
+        errors.extend(
+            f"{field}_nonfinite:{path}"
+            for path in _nonfinite_numeric_paths(record.get(field), field)
+        )
+    done = record.get("done")
+    if not isinstance(done, bool):
+        errors.append("done_not_boolean")
+
+    termination = record.get("termination")
+    if not isinstance(termination, Mapping):
+        errors.append("termination_not_object")
+        termination_values: dict[str, bool] = {}
+    else:
+        actual_keys = set(termination)
+        expected_keys = set(DIAGNOSTIC_TERMINATION_CHANNELS)
+        if actual_keys != expected_keys:
+            errors.append("termination_channels_mismatch")
+        termination_values = {}
+        for name in DIAGNOSTIC_TERMINATION_CHANNELS:
+            value = termination.get(name)
+            if not isinstance(value, bool):
+                errors.append(f"termination_{name}_not_boolean")
+            else:
+                termination_values[name] = value
+    if done is True and not any(termination_values.values()):
+        errors.append("done_without_termination_reason")
+
+    joint_state = record.get("jointState")
+    violated_joints: list[str] = []
+    if not isinstance(joint_state, Mapping) or set(joint_state) != set(DIAGNOSTIC_JOINT_GROUPS):
+        errors.append("joint_state_groups_mismatch")
+        joint_state = {}
+    joint_fields = {
+        "name",
+        "position",
+        "velocity",
+        "lowerLimit",
+        "upperLimit",
+        "tolerance",
+        "violated",
+    }
+    for group in DIAGNOSTIC_JOINT_GROUPS:
+        expected_names = expected_control.get(f"{group}Joints")
+        actual_records = joint_state.get(group) if isinstance(joint_state, Mapping) else None
+        if not isinstance(expected_names, list) or not all(
+            isinstance(name, str) and name for name in expected_names
+        ):
+            errors.append(f"expected_{group}_joint_names_invalid")
+            continue
+        if not isinstance(actual_records, list):
+            errors.append(f"{group}_joint_records_not_array")
+            continue
+        actual_names = [
+            item.get("name") if isinstance(item, Mapping) else None for item in actual_records
+        ]
+        if actual_names != expected_names:
+            errors.append(f"{group}_joint_names_mismatch")
+        for index, item in enumerate(actual_records):
+            label = f"{group}_joint_{index}"
+            if not isinstance(item, Mapping):
+                errors.append(f"{label}_not_object")
+                continue
+            if set(item) != joint_fields:
+                errors.append(f"{label}_fields_mismatch")
+            position = item.get("position")
+            velocity = item.get("velocity")
+            lower = item.get("lowerLimit")
+            upper = item.get("upperLimit")
+            tolerance = item.get("tolerance")
+            for field, value in (
+                ("position", position),
+                ("velocity", velocity),
+                ("lower_limit", lower),
+                ("upper_limit", upper),
+                ("tolerance", tolerance),
+            ):
+                if not _finite_number(value):
+                    errors.append(f"{label}_{field}_not_finite")
+            if _finite_number(lower) and _finite_number(upper) and float(lower) > float(upper):
+                errors.append(f"{label}_range_invalid")
+            if _finite_number(tolerance) and float(tolerance) < 0.0:
+                errors.append(f"{label}_tolerance_negative")
+            violated = item.get("violated")
+            if not isinstance(violated, bool):
+                errors.append(f"{label}_violated_not_boolean")
+            elif all(_finite_number(value) for value in (position, lower, upper, tolerance)):
+                expected_violated = float(position) < float(lower) - float(tolerance) or float(
+                    position
+                ) > float(upper) + float(tolerance)
+                if violated != expected_violated:
+                    errors.append(f"{label}_violated_inconsistent")
+                if violated and isinstance(item.get("name"), str):
+                    violated_joints.append(item["name"])
+    if termination_values.get("joint_limit") is True and not violated_joints:
+        errors.append("joint_limit_without_violated_joint")
+    if violated_joints and termination_values.get("joint_limit") is not True:
+        errors.append("violated_joint_without_joint_limit")
+
+    actuation = record.get("actuation")
+    if not isinstance(actuation, Mapping):
+        errors.append("actuation_not_object")
+        actuation = {}
+    groups = actuation.get("groups") if isinstance(actuation, Mapping) else None
+    if not isinstance(groups, Mapping) or set(groups) != set(DIAGNOSTIC_ACTUATOR_GROUPS):
+        errors.append("actuator_groups_mismatch")
+        groups = {}
+    actuator_fields = {
+        "name",
+        "appliedControl",
+        "lowerLimit",
+        "upperLimit",
+        "limited",
+        "utilization",
+        "saturated",
+    }
+    saturated_count = 0
+    maximum_utilization = 0.0
+    for group in DIAGNOSTIC_ACTUATOR_GROUPS:
+        expected_names = expected_control.get(f"{group}Actuators")
+        actual_records = groups.get(group) if isinstance(groups, Mapping) else None
+        if not isinstance(expected_names, list) or not all(
+            isinstance(name, str) and name for name in expected_names
+        ):
+            errors.append(f"expected_{group}_actuator_names_invalid")
+            continue
+        if not isinstance(actual_records, list):
+            errors.append(f"{group}_actuator_records_not_array")
+            continue
+        actual_names = [
+            item.get("name") if isinstance(item, Mapping) else None for item in actual_records
+        ]
+        if actual_names != expected_names:
+            errors.append(f"{group}_actuator_names_mismatch")
+        for index, item in enumerate(actual_records):
+            label = f"{group}_actuator_{index}"
+            if not isinstance(item, Mapping):
+                errors.append(f"{label}_not_object")
+                continue
+            if set(item) != actuator_fields:
+                errors.append(f"{label}_fields_mismatch")
+            lower = item.get("lowerLimit")
+            upper = item.get("upperLimit")
+            applied = item.get("appliedControl")
+            utilization = item.get("utilization")
+            for field, value in (
+                ("applied_control", applied),
+                ("lower_limit", lower),
+                ("upper_limit", upper),
+                ("utilization", utilization),
+            ):
+                if not _finite_number(value):
+                    errors.append(f"{label}_{field}_not_finite")
+            if _finite_number(lower) and _finite_number(upper) and float(lower) > float(upper):
+                errors.append(f"{label}_range_invalid")
+            limited = item.get("limited")
+            saturated = item.get("saturated")
+            if not isinstance(limited, bool):
+                errors.append(f"{label}_limited_not_boolean")
+            if not isinstance(saturated, bool):
+                errors.append(f"{label}_saturated_not_boolean")
+            elif saturated:
+                saturated_count += 1
+                if limited is False:
+                    errors.append(f"{label}_unlimited_saturated")
+            if _finite_number(utilization):
+                maximum_utilization = max(maximum_utilization, float(utilization))
+                if float(utilization) < 0.0:
+                    errors.append(f"{label}_utilization_negative")
+            if all(_finite_number(value) for value in (applied, lower, upper)):
+                control_limit = max(abs(float(lower)), abs(float(upper)))
+                expected_utilization = (
+                    abs(float(applied)) / control_limit if control_limit > 0.0 else 0.0
+                )
+                if _finite_number(utilization) and not math.isclose(
+                    float(utilization),
+                    expected_utilization,
+                    rel_tol=1e-12,
+                    abs_tol=1e-12,
+                ):
+                    errors.append(f"{label}_utilization_inconsistent")
+                saturation_tolerance = max(control_limit * 1e-7, 1e-9)
+                expected_saturated = limited is True and (
+                    float(applied) <= float(lower) + saturation_tolerance
+                    or float(applied) >= float(upper) - saturation_tolerance
+                )
+                if isinstance(saturated, bool) and saturated != expected_saturated:
+                    errors.append(f"{label}_saturated_inconsistent")
+
+    recorded_saturation_count = actuation.get("saturationCount")
+    if (
+        not isinstance(recorded_saturation_count, int)
+        or isinstance(recorded_saturation_count, bool)
+        or recorded_saturation_count != saturated_count
+    ):
+        errors.append("saturation_count_inconsistent")
+    recorded_maximum_utilization = actuation.get("maximumUtilization")
+    if not _finite_number(recorded_maximum_utilization) or not math.isclose(
+        float(recorded_maximum_utilization),
+        maximum_utilization,
+        rel_tol=1e-12,
+        abs_tol=1e-12,
+    ):
+        errors.append("maximum_utilization_inconsistent")
+
+    base_state = record.get("baseState")
+    expected_base_fields = {
+        "position",
+        "linearVelocity",
+        "angularVelocity",
+        "height",
+        "uprightCosine",
+    }
+    if not isinstance(base_state, Mapping) or set(base_state) != expected_base_fields:
+        errors.append("base_state_fields_mismatch")
+    else:
+        for field in ("position", "linearVelocity", "angularVelocity"):
+            value = base_state[field]
+            if (
+                not isinstance(value, list)
+                or len(value) != 3
+                or not all(_finite_number(item) for item in value)
+            ):
+                errors.append(f"base_state_{field}_not_finite_vector3")
+        for field in ("height", "uprightCosine"):
+            if not _finite_number(base_state[field]):
+                errors.append(f"base_state_{field}_not_finite")
+    if record.get("finite") is not True:
+        errors.append("record_not_finite")
+    return errors
+
+
+def validate_diagnostic_trace_record(
+    record: Mapping[str, Any],
+    expected_control: Mapping[str, Any],
+) -> None:
+    """Fail closed when a replay Trace Record is incomplete or self-inconsistent."""
+
+    errors = _diagnostic_trace_errors(record, expected_control)
+    if errors:
+        raise TrainingError(
+            "DIAGNOSTIC_TRACE_INVALID",
+            "A5-CI diagnostic Trace Record is incomplete or inconsistent.",
+            {"step": record.get("step"), "reasons": errors},
+        )
+
+
+def assess_diagnostic_trace(
+    records: Iterable[Mapping[str, Any]],
+    expected_control: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Aggregate a diagnostic trace while retaining all record-level failures."""
+
+    trace = [dict(record) for record in records]
+    reasons: list[str] = []
+    terminal_reasons: set[str] = set()
+    terminal_joints: set[str] = set()
+    control_saturation_samples = 0
+    maximum_control_utilization = 0.0
+    if not trace:
+        reasons.append("trace_empty")
+    for index, record in enumerate(trace):
+        for error in _diagnostic_trace_errors(record, expected_control):
+            reasons.append(f"record[{index}]:{error}")
+        termination = record.get("termination")
+        if isinstance(termination, Mapping):
+            terminal_reasons.update(
+                name for name in DIAGNOSTIC_TERMINATION_CHANNELS if termination.get(name) is True
+            )
+        joint_state = record.get("jointState")
+        if isinstance(joint_state, Mapping):
+            for group in DIAGNOSTIC_JOINT_GROUPS:
+                entries = joint_state.get(group)
+                if not isinstance(entries, list):
+                    continue
+                terminal_joints.update(
+                    item["name"]
+                    for item in entries
+                    if isinstance(item, Mapping)
+                    and item.get("violated") is True
+                    and isinstance(item.get("name"), str)
+                )
+        actuation = record.get("actuation")
+        if isinstance(actuation, Mapping):
+            saturation_count = actuation.get("saturationCount")
+            control_saturation_samples += int(
+                isinstance(saturation_count, int)
+                and not isinstance(saturation_count, bool)
+                and saturation_count > 0
+            )
+            utilization = actuation.get("maximumUtilization")
+            if _finite_number(utilization):
+                maximum_control_utilization = max(
+                    maximum_control_utilization,
+                    float(utilization),
+                )
+    unique_reasons = list(dict.fromkeys(reasons))
+    return {
+        "status": "passed" if not unique_reasons else "failed",
+        "reasons": unique_reasons,
+        "recordCount": len(trace),
+        "terminalReasons": sorted(terminal_reasons),
+        "terminalJoints": sorted(terminal_joints),
+        "controlSaturationSamples": control_saturation_samples,
+        "maximumControlUtilization": maximum_control_utilization,
+    }
 
 
 def solve_box_qp(
@@ -153,6 +709,8 @@ class WholeBodyTaskSpaceController:
         root_dof = int(model.jnt_dofadr[root_joint])
         self._base_dofs = np.asarray([root_dof, root_dof + 1, root_dof + 5], dtype=int)
         self._joint_names = WHOLE_BODY_CONTROLLER["controlledJoints"]
+        self._policy_joint_names = list(control_profile["policyJoints"])
+        self._held_joint_names = list(control_profile["heldJoints"])
         self._joint_ids = np.asarray(
             [
                 mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
@@ -160,25 +718,49 @@ class WholeBodyTaskSpaceController:
             ],
             dtype=int,
         )
-        held_names = control_profile["heldJoints"]
-        self._held_joint_ids = np.asarray(
+        self._policy_joint_ids = np.asarray(
             [
                 mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
-                for name in held_names
+                for name in self._policy_joint_names
+            ],
+            dtype=int,
+        )
+        held_names = self._held_joint_names
+        self._held_joint_ids = np.asarray(
+            [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name) for name in held_names],
+            dtype=int,
+        )
+        self._policy_actuator_names = list(control_profile["policyActuators"])
+        self._held_actuator_names = list(control_profile["heldActuators"])
+        self._gripper_actuator_names = list(control_profile["gripperActuators"])
+        policy_actuator_ids = np.asarray(
+            [
+                mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
+                for name in self._policy_actuator_names
             ],
             dtype=int,
         )
         held_actuator_ids = np.asarray(
             [
                 mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
-                for name in control_profile["heldActuators"]
+                for name in self._held_actuator_names
+            ],
+            dtype=int,
+        )
+        gripper_actuator_ids = np.asarray(
+            [
+                mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_ACTUATOR, name)
+                for name in self._gripper_actuator_names
             ],
             dtype=int,
         )
         if (
             (self._joint_ids < 0).any()
+            or (self._policy_joint_ids < 0).any()
             or (self._held_joint_ids < 0).any()
+            or (policy_actuator_ids < 0).any()
             or (held_actuator_ids < 0).any()
+            or (gripper_actuator_ids < 0).any()
         ):
             raise TrainingError(
                 "WHOLE_BODY_CONTROL_BINDING_MISSING",
@@ -187,11 +769,27 @@ class WholeBodyTaskSpaceController:
         self._joint_qpos = model.jnt_qposadr[self._joint_ids]
         self._joint_dofs = model.jnt_dofadr[self._joint_ids]
         self._joint_ranges = model.jnt_range[self._joint_ids]
+        self._policy_qpos = model.jnt_qposadr[self._policy_joint_ids]
+        self._policy_dofs = model.jnt_dofadr[self._policy_joint_ids]
+        self._policy_ranges = model.jnt_range[self._policy_joint_ids]
         self._held_qpos = model.jnt_qposadr[self._held_joint_ids]
         self._held_dofs = model.jnt_dofadr[self._held_joint_ids]
         self._held_ranges = model.jnt_range[self._held_joint_ids]
-        self._held_index = {
-            name: index for index, name in enumerate(control_profile["heldJoints"])
+        self._held_index = {name: index for index, name in enumerate(self._held_joint_names)}
+        self._actuator_names = (
+            self._policy_actuator_names + self._held_actuator_names + self._gripper_actuator_names
+        )
+        self._actuator_ids = np.concatenate(
+            (policy_actuator_ids, held_actuator_ids, gripper_actuator_ids)
+        )
+        self._actuator_ctrlrange = model.actuator_ctrlrange[self._actuator_ids]
+        self._actuator_limited = model.actuator_ctrllimited[self._actuator_ids].astype(bool)
+        policy_stop = len(self._policy_actuator_names)
+        held_stop = policy_stop + len(self._held_actuator_names)
+        self._actuator_slices = {
+            "policy": slice(0, policy_stop),
+            "held": slice(policy_stop, held_stop),
+            "gripper": slice(held_stop, len(self._actuator_names)),
         }
         self._held_ctrlrange = model.actuator_ctrlrange[held_actuator_ids]
 
@@ -251,8 +849,7 @@ class WholeBodyTaskSpaceController:
         for name, value in zip(self._joint_names, joint_targets, strict=True):
             held_targets[self._held_index[name]] = value
         feedforward = (
-            float(WHOLE_BODY_CONTROLLER["feedforwardScale"])
-            * self._data.qfrc_bias[self._held_dofs]
+            float(WHOLE_BODY_CONTROLLER["feedforwardScale"]) * self._data.qfrc_bias[self._held_dofs]
         )
         reserve = float(WHOLE_BODY_CONTROLLER["feedforwardControlReserve"])
         limits = np.max(np.abs(self._held_ctrlrange), axis=1) * (1.0 - reserve)
@@ -264,9 +861,7 @@ class WholeBodyTaskSpaceController:
             "feedforwardTorque": [float(value) for value in feedforward],
             "tcpPosition": [float(value) for value in current],
             "targetErrorMeters": float(np.linalg.norm(error)),
-            "predictedVelocityResidual": float(
-                np.linalg.norm(predicted_velocity - desired)
-            ),
+            "predictedVelocityResidual": float(np.linalg.norm(predicted_velocity - desired)),
             "qpObjective": objective,
             "qpProjectedGradient": projected_gradient,
             "decision": [float(value) for value in decision],
@@ -291,15 +886,105 @@ class WholeBodyTaskSpaceController:
         return {
             "tcpPosition": [float(value) for value in position],
             "tcpSpeed": float(np.linalg.norm(velocity)),
-            "targetErrorMeters": float(
-                np.linalg.norm(np.asarray(target, dtype=float) - position)
-            ),
-            "heldPositions": [
-                float(value) for value in self._data.qpos[self._held_qpos]
-            ],
-            "heldVelocities": [
-                float(value) for value in self._data.qvel[self._held_dofs]
-            ],
+            "targetErrorMeters": float(np.linalg.norm(np.asarray(target, dtype=float) - position)),
+            "heldPositions": [float(value) for value in self._data.qpos[self._held_qpos]],
+            "heldVelocities": [float(value) for value in self._data.qvel[self._held_dofs]],
+        }
+
+    def diagnostic_state(
+        self,
+        qpos,
+        qvel,
+        applied_control,
+        *,
+        joint_limit_tolerance: float,
+    ) -> dict[str, Any]:
+        """Return trace-only joint and actuator evidence without changing control."""
+
+        np = self._np
+        qpos_value = np.asarray(qpos, dtype=float)
+        qvel_value = np.asarray(qvel, dtype=float)
+        applied_value = np.asarray(applied_control, dtype=float)[self._actuator_ids]
+        limits = np.max(np.abs(self._actuator_ctrlrange), axis=1)
+        utilization = np.divide(
+            np.abs(applied_value),
+            limits,
+            out=np.zeros_like(applied_value),
+            where=limits > 0,
+        )
+        tolerance = np.maximum(limits * 1e-7, 1e-9)
+        saturated = self._actuator_limited & (
+            (applied_value <= self._actuator_ctrlrange[:, 0] + tolerance)
+            | (applied_value >= self._actuator_ctrlrange[:, 1] - tolerance)
+        )
+
+        def joint_records(names, qpos_indices, dof_indices, joint_ranges):
+            return [
+                {
+                    "name": name,
+                    "position": _trace_number(qpos_value[qpos_index]),
+                    "velocity": _trace_number(qvel_value[dof_index]),
+                    "lowerLimit": _trace_number(joint_range[0]),
+                    "upperLimit": _trace_number(joint_range[1]),
+                    "tolerance": _trace_number(joint_limit_tolerance),
+                    "violated": bool(
+                        qpos_value[qpos_index] < joint_range[0] - joint_limit_tolerance
+                        or qpos_value[qpos_index] > joint_range[1] + joint_limit_tolerance
+                    ),
+                }
+                for name, qpos_index, dof_index, joint_range in zip(
+                    names,
+                    qpos_indices,
+                    dof_indices,
+                    joint_ranges,
+                    strict=True,
+                )
+            ]
+
+        actuator_records = [
+            {
+                "name": name,
+                "appliedControl": _trace_number(value),
+                "lowerLimit": _trace_number(control_range[0]),
+                "upperLimit": _trace_number(control_range[1]),
+                "limited": bool(limited),
+                "utilization": _trace_number(ratio),
+                "saturated": bool(is_saturated),
+            }
+            for name, value, control_range, limited, ratio, is_saturated in zip(
+                self._actuator_names,
+                applied_value,
+                self._actuator_ctrlrange,
+                self._actuator_limited,
+                utilization,
+                saturated,
+                strict=True,
+            )
+        ]
+        groups = {
+            group: actuator_records[group_slice]
+            for group, group_slice in self._actuator_slices.items()
+        }
+        return {
+            "jointState": {
+                "policy": joint_records(
+                    self._policy_joint_names,
+                    self._policy_qpos,
+                    self._policy_dofs,
+                    self._policy_ranges,
+                ),
+                "held": joint_records(
+                    self._held_joint_names,
+                    self._held_qpos,
+                    self._held_dofs,
+                    self._held_ranges,
+                ),
+            },
+            "actuation": {
+                "groups": groups,
+                "saturationCount": int(np.count_nonzero(saturated)),
+                "maximumUtilization": _trace_number(np.max(utilization, initial=0.0)),
+            },
         }
 
 
@@ -465,11 +1150,7 @@ def evaluate_whole_body_control_spike(
             phase = "locomotion"
             if transitioning:
                 phase = "locomotion_settle"
-            command = (
-                jp.asarray([0.5, 0.0, 0.0])
-                if moving
-                else jp.asarray([0.0, 0.0, 0.0])
-            )
+            command = jp.asarray([0.5, 0.0, 0.0]) if moving else jp.asarray([0.0, 0.0, 0.0])
             held_targets = [0.0] * 9
             feedforward = [0.0] * 9
             control = None
@@ -522,13 +1203,27 @@ def evaluate_whole_body_control_spike(
         upright = float(np.asarray(env.upvector(state.data)[2]))
         finite = bool(np.isfinite(qpos).all() and np.isfinite(qvel).all())
         done = bool(np.asarray(state.done))
-        termination = {
-            name: bool(np.asarray(value))
-            for name, value in state.info["termination"].items()
-        }
-        terminal_reasons.update(
-            name for name, active in termination.items() if active
+        diagnostic = controller.diagnostic_state(
+            qpos,
+            qvel,
+            state.data.ctrl,
+            joint_limit_tolerance=float(env._joint_limit_tolerance),
         )
+        actuation = diagnostic["actuation"]
+        raw_termination = state.info.get("termination")
+        if isinstance(raw_termination, Mapping):
+            termination = {}
+            for name, value in raw_termination.items():
+                array = np.asarray(value)
+                termination[name] = (
+                    bool(array)
+                    if array.shape == () and np.issubdtype(array.dtype, np.bool_)
+                    else None
+                )
+        else:
+            termination = raw_termination
+        if isinstance(termination, Mapping):
+            terminal_reasons.update(name for name, active in termination.items() if active is True)
         minimum_height = min(minimum_height, height)
         minimum_upright = min(minimum_upright, upright)
         nonfinite += 0 if finite else 1
@@ -549,28 +1244,38 @@ def evaluate_whole_body_control_spike(
             final_site = site
             within = (
                 phase == "track_handle"
-                and site["targetErrorMeters"]
-                <= WHOLE_BODY_GATES["positionToleranceMeters"]
+                and site["targetErrorMeters"] <= WHOLE_BODY_GATES["positionToleranceMeters"]
                 and site["tcpSpeed"] <= WHOLE_BODY_GATES["maximumTcpSpeed"]
             )
             hold_steps = hold_steps + 1 if within else 0
-        traces.append(
-            {
-                "step": index,
-                "timeSeconds": (index + 1) * env.dt,
-                "phase": phase,
-                "activePolicy": active_policy,
-                "command": [float(value) for value in np.asarray(command)],
-                "basePosition": [float(value) for value in qpos[:3]],
-                "minimumBaseHeight": minimum_height,
-                "minimumUprightCosine": minimum_upright,
-                "finite": finite,
-                "done": done,
-                "termination": termination,
-                "control": control,
-                "site": site,
-            }
-        )
+        record = {
+            "step": index,
+            "timeSeconds": (index + 1) * env.dt,
+            "phase": phase,
+            "activePolicy": active_policy,
+            "command": [_trace_number(value) for value in np.asarray(command)],
+            "basePosition": [_trace_number(value) for value in qpos[:3]],
+            "baseState": {
+                "position": [_trace_number(value) for value in qpos[:3]],
+                "linearVelocity": [_trace_number(value) for value in linear],
+                "angularVelocity": [_trace_number(value) for value in angular],
+                "height": _trace_number(height),
+                "uprightCosine": _trace_number(upright),
+            },
+            "minimumBaseHeight": _trace_number(minimum_height),
+            "minimumUprightCosine": _trace_number(minimum_upright),
+            "finite": finite,
+            "done": done,
+            "termination": termination,
+            "jointState": diagnostic["jointState"],
+            "actuation": actuation,
+            "control": control,
+            "site": site,
+        }
+        traces.append(record)
+        diagnostic_errors = _diagnostic_trace_errors(record, profile["control"])
+        if diagnostic_errors:
+            failure = failure or f"diagnostic_incomplete:{diagnostic_errors[0]}"
         if done:
             done_seen = True
             reason = ",".join(sorted(terminal_reasons)) or "unclassified"
@@ -581,21 +1286,19 @@ def evaluate_whole_body_control_spike(
         initial_task_base = np.asarray(state.data.qpos[:3], dtype=float)
     final_base = np.asarray(state.data.qpos[:3], dtype=float)
     base_delta = final_base - initial_task_base
+    diagnostic_assessment = assess_diagnostic_trace(traces, profile["control"])
     passed = (
         failure is None
+        and diagnostic_assessment["status"] == "passed"
         and final_site is not None
         and hold_steps >= WHOLE_BODY_GATES["holdSteps"]
-        and final_site["targetErrorMeters"]
-        <= WHOLE_BODY_GATES["positionToleranceMeters"]
+        and final_site["targetErrorMeters"] <= WHOLE_BODY_GATES["positionToleranceMeters"]
         and final_site["tcpSpeed"] <= WHOLE_BODY_GATES["maximumTcpSpeed"]
-        and float(np.linalg.norm(base_delta[:2]))
-        <= WHOLE_BODY_GATES["maximumBaseTranslation"]
-        and abs(float(base_delta[1]))
-        <= WHOLE_BODY_GATES["maximumBaseLateralDrift"]
+        and float(np.linalg.norm(base_delta[:2])) <= WHOLE_BODY_GATES["maximumBaseTranslation"]
+        and abs(float(base_delta[1])) <= WHOLE_BODY_GATES["maximumBaseLateralDrift"]
         and minimum_height >= WHOLE_BODY_GATES["minimumBaseHeight"]
         and minimum_upright >= WHOLE_BODY_GATES["minimumUprightCosine"]
-        and maximum_projected_gradient
-        <= WHOLE_BODY_GATES["maximumProjectedGradient"]
+        and maximum_projected_gradient <= WHOLE_BODY_GATES["maximumProjectedGradient"]
         and nonfinite <= WHOLE_BODY_GATES["maximumNonFiniteSamples"]
         and not done_seen
     )
@@ -606,9 +1309,7 @@ def evaluate_whole_body_control_spike(
             "metrics": {
                 "failedReason": failure,
                 "holdSteps": hold_steps,
-                "finalTargetErrorMeters": (
-                    final_site["targetErrorMeters"] if final_site else None
-                ),
+                "finalTargetErrorMeters": (final_site["targetErrorMeters"] if final_site else None),
                 "finalTcpSpeed": final_site["tcpSpeed"] if final_site else None,
                 "baseTranslation": float(np.linalg.norm(base_delta[:2])),
                 "baseLateralDrift": abs(float(base_delta[1])),
@@ -617,7 +1318,12 @@ def evaluate_whole_body_control_spike(
                 "maximumProjectedGradient": maximum_projected_gradient,
                 "nonFiniteSamples": nonfinite,
                 "doneSeen": done_seen,
-                "terminalReasons": sorted(terminal_reasons),
+                "terminalReasons": diagnostic_assessment["terminalReasons"],
+                "terminalJoints": diagnostic_assessment["terminalJoints"],
+                "controlSaturationSamples": diagnostic_assessment["controlSaturationSamples"],
+                "maximumControlUtilization": diagnostic_assessment["maximumControlUtilization"],
+                "diagnosticStatus": diagnostic_assessment["status"],
+                "diagnosticReasons": diagnostic_assessment["reasons"],
             },
         },
         traces,

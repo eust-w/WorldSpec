@@ -1,0 +1,621 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-diagnostic-trace-record.schema.json",
+  "title": "WorldSpec H1 A5-CI Diagnostic Trace Record 0.1",
+  "type": "object",
+  "required": [
+    "step",
+    "timeSeconds",
+    "phase",
+    "activePolicy",
+    "command",
+    "basePosition",
+    "baseState",
+    "minimumBaseHeight",
+    "minimumUprightCosine",
+    "finite",
+    "done",
+    "termination",
+    "jointState",
+    "actuation",
+    "control",
+    "site"
+  ],
+  "properties": {
+    "step": { "type": "integer", "minimum": 0 },
+    "timeSeconds": { "type": "number", "minimum": 0 },
+    "phase": {
+      "enum": [
+        "locomotion",
+        "locomotion_settle",
+        "whole_body_settle",
+        "track_handle"
+      ]
+    },
+    "activePolicy": { "enum": ["motion", "capture", "stand"] },
+    "command": { "$ref": "#/$defs/nullableVector3" },
+    "basePosition": { "$ref": "#/$defs/nullableVector3" },
+    "baseState": {
+      "type": "object",
+      "required": [
+        "position",
+        "linearVelocity",
+        "angularVelocity",
+        "height",
+        "uprightCosine"
+      ],
+      "properties": {
+        "position": { "$ref": "#/$defs/nullableVector3" },
+        "linearVelocity": { "$ref": "#/$defs/nullableVector3" },
+        "angularVelocity": { "$ref": "#/$defs/nullableVector3" },
+        "height": { "$ref": "#/$defs/nullableNumber" },
+        "uprightCosine": { "$ref": "#/$defs/nullableNumber" }
+      },
+      "additionalProperties": false
+    },
+    "minimumBaseHeight": { "$ref": "#/$defs/nullableNumber" },
+    "minimumUprightCosine": { "$ref": "#/$defs/nullableNumber" },
+    "finite": { "type": "boolean" },
+    "done": { "type": "boolean" },
+    "termination": {
+      "type": "object",
+      "required": [
+        "joint_limit",
+        "fall_height",
+        "fall_upright",
+        "nonfinite"
+      ],
+      "properties": {
+        "joint_limit": { "type": "boolean" },
+        "fall_height": { "type": "boolean" },
+        "fall_upright": { "type": "boolean" },
+        "nonfinite": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "jointState": {
+      "type": "object",
+      "required": ["policy", "held"],
+      "properties": {
+        "policy": {
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "#/$defs/jointStateLeftHipYaw" },
+            { "$ref": "#/$defs/jointStateLeftHipRoll" },
+            { "$ref": "#/$defs/jointStateLeftHipPitch" },
+            { "$ref": "#/$defs/jointStateLeftKnee" },
+            { "$ref": "#/$defs/jointStateLeftAnkle" },
+            { "$ref": "#/$defs/jointStateRightHipYaw" },
+            { "$ref": "#/$defs/jointStateRightHipRoll" },
+            { "$ref": "#/$defs/jointStateRightHipPitch" },
+            { "$ref": "#/$defs/jointStateRightKnee" },
+            { "$ref": "#/$defs/jointStateRightAnkle" }
+          ],
+          "items": false
+        },
+        "held": {
+          "type": "array",
+          "prefixItems": [
+            { "$ref": "#/$defs/jointStateTorso" },
+            { "$ref": "#/$defs/jointStateLeftShoulderPitch" },
+            { "$ref": "#/$defs/jointStateLeftShoulderRoll" },
+            { "$ref": "#/$defs/jointStateLeftShoulderYaw" },
+            { "$ref": "#/$defs/jointStateLeftElbow" },
+            { "$ref": "#/$defs/jointStateRightShoulderPitch" },
+            { "$ref": "#/$defs/jointStateRightShoulderRoll" },
+            { "$ref": "#/$defs/jointStateRightShoulderYaw" },
+            { "$ref": "#/$defs/jointStateRightElbow" }
+          ],
+          "items": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "actuation": {
+      "type": "object",
+      "required": ["groups", "saturationCount", "maximumUtilization"],
+      "properties": {
+        "groups": {
+          "type": "object",
+          "required": ["policy", "held", "gripper"],
+          "properties": {
+            "policy": {
+              "type": "array",
+              "prefixItems": [
+                { "$ref": "#/$defs/actuatorStateLeftHipYaw" },
+                { "$ref": "#/$defs/actuatorStateLeftHipRoll" },
+                { "$ref": "#/$defs/actuatorStateLeftHipPitch" },
+                { "$ref": "#/$defs/actuatorStateLeftKnee" },
+                { "$ref": "#/$defs/actuatorStateLeftAnkle" },
+                { "$ref": "#/$defs/actuatorStateRightHipYaw" },
+                { "$ref": "#/$defs/actuatorStateRightHipRoll" },
+                { "$ref": "#/$defs/actuatorStateRightHipPitch" },
+                { "$ref": "#/$defs/actuatorStateRightKnee" },
+                { "$ref": "#/$defs/actuatorStateRightAnkle" }
+              ],
+              "items": false
+            },
+            "held": {
+              "type": "array",
+              "prefixItems": [
+                { "$ref": "#/$defs/actuatorStateTorso" },
+                { "$ref": "#/$defs/actuatorStateLeftShoulderPitch" },
+                { "$ref": "#/$defs/actuatorStateLeftShoulderRoll" },
+                { "$ref": "#/$defs/actuatorStateLeftShoulderYaw" },
+                { "$ref": "#/$defs/actuatorStateLeftElbow" },
+                { "$ref": "#/$defs/actuatorStateRightShoulderPitch" },
+                { "$ref": "#/$defs/actuatorStateRightShoulderRoll" },
+                { "$ref": "#/$defs/actuatorStateRightShoulderYaw" },
+                { "$ref": "#/$defs/actuatorStateRightElbow" }
+              ],
+              "items": false
+            },
+            "gripper": {
+              "type": "array",
+              "prefixItems": [
+                { "$ref": "#/$defs/actuatorStateRightGripper" }
+              ],
+              "items": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "saturationCount": { "type": "integer", "minimum": 0 },
+        "maximumUtilization": { "$ref": "#/$defs/nullableNumber" }
+      },
+      "additionalProperties": false
+    },
+    "control": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/controllerState" }
+      ]
+    },
+    "site": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/siteState" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "done": { "const": true } },
+        "required": ["done"]
+      },
+      "then": {
+        "properties": {
+          "termination": {
+            "anyOf": [
+              { "properties": { "joint_limit": { "const": true } } },
+              { "properties": { "fall_height": { "const": true } } },
+              { "properties": { "fall_upright": { "const": true } } },
+              { "properties": { "nonfinite": { "const": true } } }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "termination": {
+            "properties": { "joint_limit": { "const": true } },
+            "required": ["joint_limit"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "jointState": {
+            "anyOf": [
+              {
+                "properties": {
+                  "policy": {
+                    "contains": {
+                      "properties": { "violated": { "const": true } },
+                      "required": ["violated"]
+                    }
+                  }
+                }
+              },
+              {
+                "properties": {
+                  "held": {
+                    "contains": {
+                      "properties": { "violated": { "const": true } },
+                      "required": ["violated"]
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "nullableNumber": { "type": ["number", "null"] },
+    "nullableVector3": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/nullableNumber" },
+        { "$ref": "#/$defs/nullableNumber" },
+        { "$ref": "#/$defs/nullableNumber" }
+      ],
+      "items": false
+    },
+    "jointState": {
+      "type": "object",
+      "required": [
+        "name",
+        "position",
+        "velocity",
+        "lowerLimit",
+        "upperLimit",
+        "tolerance",
+        "violated"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+        },
+        "position": { "$ref": "#/$defs/nullableNumber" },
+        "velocity": { "$ref": "#/$defs/nullableNumber" },
+        "lowerLimit": { "type": "number" },
+        "upperLimit": { "type": "number" },
+        "tolerance": { "type": "number", "minimum": 0 },
+        "violated": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "jointStateLeftHipYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_hip_yaw" } } }
+      ]
+    },
+    "jointStateLeftHipRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_hip_roll" } } }
+      ]
+    },
+    "jointStateLeftHipPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_hip_pitch" } } }
+      ]
+    },
+    "jointStateLeftKnee": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_knee" } } }
+      ]
+    },
+    "jointStateLeftAnkle": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_ankle" } } }
+      ]
+    },
+    "jointStateRightHipYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_hip_yaw" } } }
+      ]
+    },
+    "jointStateRightHipRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_hip_roll" } } }
+      ]
+    },
+    "jointStateRightHipPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_hip_pitch" } } }
+      ]
+    },
+    "jointStateRightKnee": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_knee" } } }
+      ]
+    },
+    "jointStateRightAnkle": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_ankle" } } }
+      ]
+    },
+    "jointStateTorso": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "torso" } } }
+      ]
+    },
+    "jointStateLeftShoulderPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_shoulder_pitch" } } }
+      ]
+    },
+    "jointStateLeftShoulderRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_shoulder_roll" } } }
+      ]
+    },
+    "jointStateLeftShoulderYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_shoulder_yaw" } } }
+      ]
+    },
+    "jointStateLeftElbow": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "left_elbow" } } }
+      ]
+    },
+    "jointStateRightShoulderPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_shoulder_pitch" } } }
+      ]
+    },
+    "jointStateRightShoulderRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_shoulder_roll" } } }
+      ]
+    },
+    "jointStateRightShoulderYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_shoulder_yaw" } } }
+      ]
+    },
+    "jointStateRightElbow": {
+      "allOf": [
+        { "$ref": "#/$defs/jointState" },
+        { "properties": { "name": { "const": "right_elbow" } } }
+      ]
+    },
+    "actuatorState": {
+      "type": "object",
+      "required": [
+        "name",
+        "appliedControl",
+        "lowerLimit",
+        "upperLimit",
+        "limited",
+        "utilization",
+        "saturated"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$"
+        },
+        "appliedControl": { "$ref": "#/$defs/nullableNumber" },
+        "lowerLimit": { "$ref": "#/$defs/nullableNumber" },
+        "upperLimit": { "$ref": "#/$defs/nullableNumber" },
+        "limited": { "type": "boolean" },
+        "utilization": { "$ref": "#/$defs/nullableNumber" },
+        "saturated": { "type": "boolean" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "limited": { "const": false } },
+            "required": ["limited"]
+          },
+          "then": {
+            "properties": {
+              "lowerLimit": { "type": "null" },
+              "upperLimit": { "type": "null" },
+              "utilization": { "type": "null" },
+              "saturated": { "const": false }
+            }
+          },
+          "else": {
+            "properties": {
+              "lowerLimit": { "type": "number" },
+              "upperLimit": { "type": "number" }
+            }
+          }
+        }
+      ],
+      "additionalProperties": false
+    },
+    "actuatorStateLeftHipYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_hip_yaw" } } }
+      ]
+    },
+    "actuatorStateLeftHipRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_hip_roll" } } }
+      ]
+    },
+    "actuatorStateLeftHipPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_hip_pitch" } } }
+      ]
+    },
+    "actuatorStateLeftKnee": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_knee" } } }
+      ]
+    },
+    "actuatorStateLeftAnkle": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_ankle" } } }
+      ]
+    },
+    "actuatorStateRightHipYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_hip_yaw" } } }
+      ]
+    },
+    "actuatorStateRightHipRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_hip_roll" } } }
+      ]
+    },
+    "actuatorStateRightHipPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_hip_pitch" } } }
+      ]
+    },
+    "actuatorStateRightKnee": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_knee" } } }
+      ]
+    },
+    "actuatorStateRightAnkle": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_ankle" } } }
+      ]
+    },
+    "actuatorStateTorso": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "torso" } } }
+      ]
+    },
+    "actuatorStateLeftShoulderPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_shoulder_pitch" } } }
+      ]
+    },
+    "actuatorStateLeftShoulderRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_shoulder_roll" } } }
+      ]
+    },
+    "actuatorStateLeftShoulderYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_shoulder_yaw" } } }
+      ]
+    },
+    "actuatorStateLeftElbow": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "left_elbow" } } }
+      ]
+    },
+    "actuatorStateRightShoulderPitch": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_shoulder_pitch" } } }
+      ]
+    },
+    "actuatorStateRightShoulderRoll": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_shoulder_roll" } } }
+      ]
+    },
+    "actuatorStateRightShoulderYaw": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_shoulder_yaw" } } }
+      ]
+    },
+    "actuatorStateRightElbow": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        { "properties": { "name": { "const": "right_elbow" } } }
+      ]
+    },
+    "actuatorStateRightGripper": {
+      "allOf": [
+        { "$ref": "#/$defs/actuatorState" },
+        {
+          "properties": {
+            "name": { "const": "right_gripper_fingers_actuator" }
+          }
+        }
+      ]
+    },
+    "controllerState": {
+      "type": "object",
+      "required": [
+        "baseCommand",
+        "heldTargets",
+        "feedforwardTorque",
+        "tcpPosition",
+        "targetErrorMeters",
+        "predictedVelocityResidual",
+        "qpObjective",
+        "qpProjectedGradient",
+        "decision"
+      ],
+      "properties": {
+        "baseCommand": { "$ref": "#/$defs/nullableVector3" },
+        "heldTargets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nullableNumber" }
+        },
+        "feedforwardTorque": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nullableNumber" }
+        },
+        "tcpPosition": { "$ref": "#/$defs/nullableVector3" },
+        "targetErrorMeters": { "$ref": "#/$defs/nullableNumber" },
+        "predictedVelocityResidual": { "$ref": "#/$defs/nullableNumber" },
+        "qpObjective": { "$ref": "#/$defs/nullableNumber" },
+        "qpProjectedGradient": { "$ref": "#/$defs/nullableNumber" },
+        "decision": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nullableNumber" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "siteState": {
+      "type": "object",
+      "required": [
+        "tcpPosition",
+        "tcpSpeed",
+        "targetErrorMeters",
+        "heldPositions",
+        "heldVelocities"
+      ],
+      "properties": {
+        "tcpPosition": { "$ref": "#/$defs/nullableVector3" },
+        "tcpSpeed": { "$ref": "#/$defs/nullableNumber" },
+        "targetErrorMeters": { "$ref": "#/$defs/nullableNumber" },
+        "heldPositions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nullableNumber" }
+        },
+        "heldVelocities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nullableNumber" }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -234,6 +234,11 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/whole-body-control-profile.json": "h1-whole-body-control-profile.schema.json",
         "h1-kitchen/whole-body-control.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-control.a800.failed-summary.json": "h1-whole-body-control-failure-summary.schema.json",
+        "h1-kitchen/whole-body-diagnostic-replay-profile.template.json": "h1-whole-body-diagnostic-replay-profile.schema.json",
+        "h1-kitchen/whole-body-diagnostic-trace-record.example.json": "h1-whole-body-diagnostic-trace-record.schema.json",
+        "h1-kitchen/whole-body-equivalence-report.example.json": "h1-whole-body-equivalence-report.schema.json",
+        "h1-kitchen/whole-body-diagnostic-replay-report.example.json": "h1-whole-body-diagnostic-replay-report.schema.json",
+        "h1-kitchen/whole-body-diagnostic-replay-receipt.example.json": "h1-whole-body-diagnostic-replay-receipt.schema.json",
         "h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json": "h1-kitchen-task-preflight.schema.json",
         "h1-kitchen/locomotion-training-result.blocked.json": "h1-locomotion-training-result.schema.json",
         "h1-kitchen/runtime-spike.a800.passed.json": "h1-runtime-spike-report.schema.json",
@@ -300,7 +305,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
     return len(positive)
 
 
-def check_negative_examples(schemas: dict[str, Any], registry: Registry) -> None:
+def check_negative_examples(schemas: dict[str, Any], registry: Registry) -> int:
     expectations = read_json(EXAMPLES / "negative" / "expectations.json")["cases"]
     for case in expectations:
         path = EXAMPLES / "negative" / case["path"]
@@ -323,6 +328,7 @@ def check_negative_examples(schemas: dict[str, Any], registry: Registry) -> None
                 f"NEGATIVE_NOT_REJECTED {case['path']}: "
                 f"expected {case['expectedCode']}, got {sorted(semantic_errors)}"
             )
+    return len(expectations)
 
 
 FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
@@ -384,7 +390,7 @@ def main() -> int:
         schemas, registry = schema_registry()
         check_refs(schemas)
         positive_count = check_examples(schemas, registry)
-        check_negative_examples(schemas, registry)
+        negative_count = check_negative_examples(schemas, registry)
         check_docs()
     except Failure as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
@@ -393,7 +399,7 @@ def main() -> int:
         "PASS: "
         f"{len(schemas)} schemas; "
         f"{positive_count} positive fixtures; "
-        "5 negative fixtures; "
+        f"{negative_count} negative fixtures; "
         "bilingual mirrors and local links"
     )
     return 0

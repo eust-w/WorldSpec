@@ -1,0 +1,76 @@
+{
+  "id": "diagnosticreplayprofile://worldspec/h1-kitchen/a5-ci-template",
+  "profileVersion": "0.1.0",
+  "status": "template",
+  "stage": "whole_body_task_space_control_diagnostic_replay",
+  "attemptId": "a5-ci-template",
+  "baseControlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+  "baselineEvidence": {
+    "summary": {
+      "digest": "sha256:d8e2fbeb97afe340271743925b9d769fdeba73e3fdd8fd465d40e4c099d240a4",
+      "sizeBytes": 2541
+    },
+    "report": {
+      "digest": "sha256:306ff1b1c9f1e3bc10b1c02869600073409d53c7254110e1c6fac58fe64ea67a",
+      "sizeBytes": 11899
+    },
+    "controller": {
+      "digest": "sha256:fdcb0557e0509174eff8cec7b629cf5e846931efb1d805f5df3647bc456274fb",
+      "sizeBytes": 2005
+    },
+    "trace": {
+      "digest": "sha256:a27effb0562c2554248b12cd525103d1cc33e213af3c7406adc8ea7bdd1d27ff",
+      "sizeBytes": 97677,
+      "recordCount": 219
+    }
+  },
+  "baselineBindings": {
+    "seed": 41,
+    "probeRevision": "73e1bc9efe99d00daf890a30d254a6bb89e227ca",
+    "imageSourceRevision": "0abd9b57bc6b738dfae03468b4d17eef2e518104",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:684dafef489c9192982912a6e2ffea3e4a50936ec1ccb0930bd67af55039f94c",
+    "containerDigest": "sha256:684dafef489c9192982912a6e2ffea3e4a50936ec1ccb0930bd67af55039f94c",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "policies": {
+      "motion": {
+        "checkpointDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+        "checkpointSizeBytes": 8838595
+      },
+      "capture": {
+        "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+        "checkpointSizeBytes": 6280278
+      },
+      "stand": {
+        "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+        "checkpointSizeBytes": 6280684
+      }
+    },
+    "target": {
+      "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+      "derivedModelDigest": "sha256:e43323d01a65d22d937d6d908222db7e13d4f4ef432564f4b129d949d5d6b43b",
+      "observationSize": 42,
+      "actionSize": 10
+    }
+  },
+  "semanticProfileProjectionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "controllerSemanticProjectionDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+  "runtime": {
+    "containerImage": "registry.invalid/worldspec-h1-a5-ci-template@sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "containerDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    "imageSourceRevision": "cccccccccccccccccccccccccccccccccccccccc",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+  },
+  "allowedChanges": [
+    "diagnostic_instrumentation",
+    "source_archive_digest",
+    "container_image"
+  ],
+  "artifactPolicy": {
+    "controller": "research_only",
+    "distribution": "internal_only",
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "automaticRetry": "forbidden",
+    "formalTraining": "forbidden"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "step": 1,
+  "timeSeconds": 0.04,
+  "phase": "whole_body_settle",
+  "activePolicy": "stand",
+  "command": [0.0, 0.0, 0.0],
+  "basePosition": [0.0, 0.0, 0.99],
+  "baseState": {
+    "position": [0.0, 0.0, 0.99],
+    "linearVelocity": [0.0, 0.0, 0.0],
+    "angularVelocity": [0.0, 0.0, 0.0],
+    "height": 0.99,
+    "uprightCosine": 0.99
+  },
+  "minimumBaseHeight": 0.99,
+  "minimumUprightCosine": 0.99,
+  "finite": true,
+  "done": true,
+  "termination": {
+    "joint_limit": false,
+    "fall_height": false,
+    "fall_upright": false,
+    "nonfinite": false
+  },
+  "jointState": {
+    "policy": [
+      {
+        "name": "left_hip_yaw",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -0.43,
+        "upperLimit": 0.43,
+        "tolerance": 0.001,
+        "violated": false
+      }
+    ],
+    "held": [
+      {
+        "name": "torso",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -1.57,
+        "upperLimit": 1.57,
+        "tolerance": 0.001,
+        "violated": false
+      }
+    ]
+  },
+  "actuation": {
+    "groups": {
+      "policy": [
+        {
+          "name": "left_hip_yaw",
+          "appliedControl": 0.0,
+          "lowerLimit": -150.0,
+          "upperLimit": 150.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        }
+      ],
+      "held": [
+        {
+          "name": "torso",
+          "appliedControl": 0.0,
+          "lowerLimit": -50.0,
+          "upperLimit": 50.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        }
+      ],
+      "gripper": [
+        {
+          "name": "right_gripper_fingers_actuator",
+          "appliedControl": 0.0,
+          "lowerLimit": 0.0,
+          "upperLimit": 255.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": true
+        }
+      ]
+    },
+    "saturationCount": 1,
+    "maximumUtilization": 0.0
+  },
+  "control": null,
+  "site": null
+}

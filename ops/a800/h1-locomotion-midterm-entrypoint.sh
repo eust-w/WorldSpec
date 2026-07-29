@@ -113,14 +113,38 @@ python - \
   "${INPUT_DIR}/stand-teacher-checkpoint.zip" \
   "${WORLD_SPEC_SUPERVISOR_STAND_REPORT_FILENAME:-}" \
   "${INPUT_DIR}/supervisor-stand-report.json" \
-  "${INPUT_DIR}/supervisor-stand-checkpoint.zip" <<'PY'
+  "${INPUT_DIR}/supervisor-stand-checkpoint.zip" \
+  "${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE_FILENAME:-}" \
+  "${INPUT_DIR}/a5c-baseline-summary.json" \
+  "${INPUT_DIR}/a5c-baseline-report.json" \
+  "${INPUT_DIR}/a5c-baseline-controller.json" \
+  "${INPUT_DIR}/a5c-baseline-trace.jsonl" \
+  "${WORLD_SPEC_IMAGE_SOURCE_REVISION}" <<'PY'
+import copy
 import hashlib
 import json
 import pathlib
 import sys
 
+
+def digest_bytes(payload):
+    return f"sha256:{hashlib.sha256(payload).hexdigest()}"
+
+
+def digest_json(value):
+    return digest_bytes(
+        json.dumps(
+            value,
+            allow_nan=False,
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        ).encode("utf-8")
+    )
+
 profile = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 stage = profile["stage"]
+replay_filename = sys.argv[14]
 checked_report_path = pathlib.Path(sys.argv[2])
 input_report_path = pathlib.Path(sys.argv[3])
 checkpoint_path = pathlib.Path(sys.argv[4])
@@ -171,9 +195,9 @@ else:
     raise SystemExit("unsupported warm-start source stage")
 if report["researchCheckpoint"]["digest"] != checkpoint_digest:
     raise SystemExit("warm-start report/checkpoint lineage mismatch")
-if profile["runtime"]["containerImage"] != sys.argv[5]:
+if not replay_filename and profile["runtime"]["containerImage"] != sys.argv[5]:
     raise SystemExit("midterm Profile container image mismatch")
-if profile["runtime"]["packageLockDigest"] != sys.argv[6]:
+if not replay_filename and profile["runtime"]["packageLockDigest"] != sys.argv[6]:
     raise SystemExit("midterm Profile package lock mismatch")
 if stage in {
     "loaded_track_settle_retention",
@@ -300,6 +324,82 @@ if stage == "whole_body_task_space_control_spike":
     a5r_digest = f"sha256:{hashlib.sha256(a5r_path.read_bytes()).hexdigest()}"
     if a5r_digest != profile["failedA5RReportDigest"]:
         raise SystemExit("whole-body Spike A5-R failure lineage mismatch")
+
+if replay_filename:
+    if stage != "whole_body_task_space_control_spike":
+        raise SystemExit("diagnostic replay must wrap the frozen whole-body control stage")
+    replay_path = pathlib.Path(sys.argv[7]) / "examples" / "h1-kitchen" / replay_filename
+    replay = json.loads(replay_path.read_text(encoding="utf-8"))
+    if replay["stage"] != "whole_body_task_space_control_diagnostic_replay":
+        raise SystemExit("diagnostic replay stage mismatch")
+    if digest_json(profile) != replay["baseControlProfileDigest"]:
+        raise SystemExit("diagnostic replay base control Profile digest mismatch")
+    semantic_profile = copy.deepcopy(profile)
+    semantic_profile["runtime"].pop("containerImage")
+    semantic_profile["runtime"].pop("containerDigest")
+    if digest_json(semantic_profile) != replay["semanticProfileProjectionDigest"]:
+        raise SystemExit("diagnostic replay semantic Profile projection mismatch")
+    evidence_paths = {
+        "summary": pathlib.Path(sys.argv[15]),
+        "report": pathlib.Path(sys.argv[16]),
+        "controller": pathlib.Path(sys.argv[17]),
+        "trace": pathlib.Path(sys.argv[18]),
+    }
+    for name, evidence_path in evidence_paths.items():
+        payload = evidence_path.read_bytes()
+        expected = replay["baselineEvidence"][name]
+        if digest_bytes(payload) != expected["digest"] or len(payload) != expected["sizeBytes"]:
+            raise SystemExit(f"diagnostic replay baseline {name} identity mismatch")
+    trace_records = [
+        line
+        for line in evidence_paths["trace"].read_text(encoding="utf-8").splitlines()
+        if line
+    ]
+    if len(trace_records) != replay["baselineEvidence"]["trace"]["recordCount"]:
+        raise SystemExit("diagnostic replay baseline trace record count mismatch")
+    controller = json.loads(evidence_paths["controller"].read_text(encoding="utf-8"))
+    if "profileDigest" not in controller:
+        raise SystemExit("diagnostic replay baseline controller lacks profileDigest")
+    controller.pop("profileDigest")
+    if digest_json(controller) != replay["controllerSemanticProjectionDigest"]:
+        raise SystemExit("diagnostic replay baseline controller projection mismatch")
+    baseline_report = json.loads(evidence_paths["report"].read_text(encoding="utf-8"))
+    bindings = replay["baselineBindings"]
+    if (
+        bindings["seed"] != profile["seed"]
+        or bindings["probeRevision"] != baseline_report["probeDefinition"]["commit"]
+        or bindings["imageSourceRevision"] != baseline_report["imageSource"]["commit"]
+        or bindings["containerImage"] != baseline_report["container"]["image"]
+        or bindings["containerDigest"]
+        != baseline_report["container"]["image"].rsplit("@", 1)[1]
+        or bindings["packageLockDigest"] != baseline_report["packageLockDigest"]
+        or bindings["target"] != baseline_report["target"]
+    ):
+        raise SystemExit("diagnostic replay baseline binding mismatch")
+    for role in ("motion", "capture", "stand"):
+        source = baseline_report["policies"][role]
+        expected = bindings["policies"][role]
+        if (
+            expected["checkpointDigest"] != source["archiveDigest"]
+            or expected["checkpointSizeBytes"] != source["archiveSizeBytes"]
+        ):
+            raise SystemExit(
+                f"diagnostic replay baseline {role} policy binding mismatch"
+            )
+    runtime = replay["runtime"]
+    if (
+        runtime["containerImage"] != sys.argv[5]
+        or runtime["containerDigest"] != sys.argv[5].rsplit("@", 1)[1]
+        or runtime["packageLockDigest"] != sys.argv[6]
+        or runtime["imageSourceRevision"] != sys.argv[19]
+    ):
+        raise SystemExit("diagnostic replay runtime binding mismatch")
+    if replay["allowedChanges"] != [
+        "diagnostic_instrumentation",
+        "source_archive_digest",
+        "container_image",
+    ]:
+        raise SystemExit("diagnostic replay allowed-change set mismatch")
 PY
 
 stage installed_runtime
@@ -355,13 +455,24 @@ from pathlib import Path
 
 import jax
 
-from worldspec_h1_training.contract import read_json
+from worldspec_h1_training.contract import (
+    canonical_bytes,
+    digest_bytes,
+    digest_json,
+    read_json,
+)
 from worldspec_h1_training.capture import run_capture_calibration
 from worldspec_h1_training.dual_policy import run_dual_policy_probe
 from worldspec_h1_training.kitchen_task import run_fixed_kitchen_task_probe
 from worldspec_h1_training.midterm import run_midterm_calibration
 from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
-from worldspec_h1_training.whole_body import run_whole_body_control_spike
+from worldspec_h1_training.whole_body import (
+    assess_diagnostic_trace,
+    compare_whole_body_traces,
+    run_whole_body_control_spike,
+    whole_body_controller_semantic_projection,
+    whole_body_profile_semantic_projection,
+)
 
 source_dir = Path(os.environ["SOURCE_DIR"])
 result_dir = Path(os.environ["RESULT_DIR"])
@@ -374,6 +485,19 @@ midterm_profile = read_json(
     / "examples"
     / "h1-kitchen"
     / os.environ["WORLD_SPEC_MIDTERM_PROFILE_FILENAME"]
+)
+diagnostic_replay_filename = os.environ.get(
+    "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE_FILENAME", ""
+)
+diagnostic_replay_profile = (
+    read_json(
+        source_dir
+        / "examples"
+        / "h1-kitchen"
+        / diagnostic_replay_filename
+    )
+    if diagnostic_replay_filename
+    else None
 )
 if midterm_profile["stage"] == "dual_policy_switch_probe":
     result = run_dual_policy_probe(
@@ -457,6 +581,225 @@ else:
         ),
     )
     result["training"]["profileStage"] = midterm_profile["stage"]
+
+diagnostic_replay = None
+if diagnostic_replay_profile is not None:
+    if midterm_profile["stage"] != "whole_body_task_space_control_spike":
+        raise RuntimeError("diagnostic replay requires the frozen whole-body stage")
+
+    def read_jsonl(path: Path) -> list[dict]:
+        records = []
+        with path.open(encoding="utf-8") as stream:
+            for line_number, line in enumerate(stream, 1):
+                if not line.strip():
+                    continue
+                record = json.loads(line)
+                if not isinstance(record, dict):
+                    raise RuntimeError(
+                        f"trace line {line_number} is not a JSON object"
+                    )
+                records.append(record)
+        return records
+
+    baseline_trace = read_jsonl(
+        Path(os.environ["INPUT_DIR"]) / "a5c-baseline-trace.jsonl"
+    )
+    replay_trace_path = artifact_dir / "evaluation-traces.jsonl"
+    replay_trace = read_jsonl(replay_trace_path)
+    diagnostic_completeness = assess_diagnostic_trace(
+        replay_trace,
+        midterm_profile["control"],
+    )
+    dynamic_comparison = compare_whole_body_traces(
+        baseline_trace,
+        replay_trace,
+    )
+    replay_controller_path = artifact_dir / "whole-body-controller.json"
+    replay_controller = read_json(replay_controller_path)
+    profile_projection_digest = digest_json(
+        whole_body_profile_semantic_projection(midterm_profile)
+    )
+    controller_projection_digest = digest_json(
+        whole_body_controller_semantic_projection(replay_controller)
+    )
+    target_expected = diagnostic_replay_profile["baselineBindings"]["target"]
+    target_actual = result["target"]
+    baseline_bindings = diagnostic_replay_profile["baselineBindings"]
+    profile_projection_matches = (
+        profile_projection_digest
+        == diagnostic_replay_profile["semanticProfileProjectionDigest"]
+    )
+    controller_projection_matches = (
+        controller_projection_digest
+        == diagnostic_replay_profile["controllerSemanticProjectionDigest"]
+    )
+    static_checks = {
+        "baseControlProfileDigest": (
+            digest_json(midterm_profile)
+            == diagnostic_replay_profile["baseControlProfileDigest"]
+        ),
+        "semanticProfileProjectionDigest": profile_projection_matches,
+        "controllerSemanticProjectionDigest": controller_projection_matches,
+        "sourceBundleDigest": (
+            target_actual["sourceBundleDigest"]
+            == target_expected["sourceBundleDigest"]
+        ),
+        "derivedModelDigest": (
+            target_actual["derivedModelDigest"]
+            == target_expected["derivedModelDigest"]
+        ),
+        "observationSize": (
+            target_actual["observationSize"]
+            == target_expected["observationSize"]
+        ),
+        "actionSize": (
+            target_actual["actionSize"] == target_expected["actionSize"]
+        ),
+    }
+    policy_checks = {
+        role: (
+            midterm_profile[f"{role}Policy"]["checkpointDigest"]
+            == baseline_bindings["policies"][role]["checkpointDigest"]
+            and midterm_profile[f"{role}Policy"]["checkpointSizeBytes"]
+            == baseline_bindings["policies"][role]["checkpointSizeBytes"]
+        )
+        for role in ("motion", "capture", "stand")
+    }
+    binding_checks = {
+        "seed": midterm_profile["seed"] == baseline_bindings["seed"],
+        "scene": static_checks["baseControlProfileDigest"],
+        "controller": (
+            static_checks["baseControlProfileDigest"]
+            and controller_projection_matches
+        ),
+        "qualityGates": static_checks["baseControlProfileDigest"],
+        "mjxCapacity": static_checks["baseControlProfileDigest"],
+        "sourceBundle": static_checks["sourceBundleDigest"],
+        "derivedModel": static_checks["derivedModelDigest"],
+        "observationAbi": static_checks["observationSize"],
+        "actionAbi": static_checks["actionSize"],
+        "motionPolicy": policy_checks["motion"],
+        "capturePolicy": policy_checks["capture"],
+        "standPolicy": policy_checks["stand"],
+        "packageLock": (
+            midterm_profile["runtime"]["packageLockDigest"]
+            == baseline_bindings["packageLockDigest"]
+            == diagnostic_replay_profile["runtime"]["packageLockDigest"]
+        ),
+    }
+    equivalence_status = (
+        "passed"
+        if all(static_checks.values()) and all(binding_checks.values())
+        else "failed"
+    )
+    phase_diff = dynamic_comparison["categoricalDifferences"]["phase"]
+    policy_diff = dynamic_comparison["categoricalDifferences"]["activePolicy"]
+    termination_diff = dynamic_comparison["categoricalDifferences"]["termination"]
+    height_diff = dynamic_comparison["numericDifferences"]["minimumBaseHeight"]
+    equivalence_report = {
+        "id": (
+            "conformance://worldspec/h1/a5ci/"
+            + diagnostic_replay_profile["attemptId"]
+            + "/equivalence"
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_whole_body_task_space_control_diagnostic_equivalence",
+        "attemptId": diagnostic_replay_profile["attemptId"],
+        "baseControlProfileDigest": diagnostic_replay_profile[
+            "baseControlProfileDigest"
+        ],
+        "replayProfileDigest": digest_json(diagnostic_replay_profile),
+        "staticSemanticEquivalence": {
+            "profileProjection": {
+                "baselineDigest": diagnostic_replay_profile[
+                    "semanticProfileProjectionDigest"
+                ],
+                "replayDigest": profile_projection_digest,
+                "matches": profile_projection_matches,
+            },
+            "controllerProjection": {
+                "baselineDigest": diagnostic_replay_profile[
+                    "controllerSemanticProjectionDigest"
+                ],
+                "replayDigest": controller_projection_digest,
+                "matches": controller_projection_matches,
+            },
+            "allowedDifferencesOnly": all(static_checks.values()),
+        },
+        "bindingChecks": binding_checks,
+        "dynamicComparison": {
+            "role": "report_only_not_equivalence_proof",
+            "baselineTraceDigest": diagnostic_replay_profile[
+                "baselineEvidence"
+            ]["trace"]["digest"],
+            "replayTraceDigest": digest_bytes(replay_trace_path.read_bytes()),
+            "baselineRecordCount": len(baseline_trace),
+            "replayRecordCount": len(replay_trace),
+            "differences": {
+                "stepCountDelta": len(replay_trace) - len(baseline_trace),
+                "phaseSequenceEqual": (
+                    phase_diff["samplesCompared"]
+                    == dynamic_comparison["commonStepCount"]
+                    and phase_diff["differenceCount"] == 0
+                ),
+                "activePolicySequenceEqual": (
+                    policy_diff["samplesCompared"]
+                    == dynamic_comparison["commonStepCount"]
+                    and policy_diff["differenceCount"] == 0
+                ),
+                "terminationSequenceEqual": (
+                    termination_diff["samplesCompared"]
+                    == dynamic_comparison["commonStepCount"]
+                    and termination_diff["differenceCount"] == 0
+                ),
+                "metricDelta": {
+                    "minimumBaseHeight": height_diff[
+                        "maximumAbsoluteDifference"
+                    ]
+                },
+            },
+            "detail": dynamic_comparison,
+        },
+        "formalEquivalenceGate": equivalence_status,
+        "claimBoundary": {
+            "staticSemanticProjectionIsAuthoritative": True,
+            "dynamicComparisonIsEvidenceOnly": True,
+            "bitwiseTraceEqualityRequired": False,
+            "retroactiveRootCauseClaim": "forbidden",
+        },
+        "generatedAt": datetime.now(timezone.utc).isoformat().replace(
+            "+00:00", "Z"
+        ),
+    }
+    equivalence_path = artifact_dir / "equivalence-report.json"
+    equivalence_path.write_bytes(canonical_bytes(equivalence_report))
+    diagnostic_replay = {
+        "profile": diagnostic_replay_profile,
+        "diagnosticCompleteness": diagnostic_completeness,
+        "equivalenceAssessment": {
+            "status": equivalence_status,
+            "basis": "static_semantic_projection",
+            "failedChecks": sorted(
+                [
+                    key
+                    for key, passed in {
+                        **static_checks,
+                        **binding_checks,
+                    }.items()
+                    if not passed
+                ]
+            ),
+            "dynamicComparisonIsInformational": True,
+            "reportDigest": digest_bytes(equivalence_path.read_bytes()),
+        },
+        "equivalenceArtifact": {
+            "path": equivalence_path.name,
+            "digest": digest_bytes(equivalence_path.read_bytes()),
+            "sizeBytes": equivalence_path.stat().st_size,
+            "distribution": "internal_only",
+        },
+    }
 with (result_dir / "gpu.csv").open(encoding="utf-8") as stream:
     gpu_row = next(csv.reader(stream))
 package_names = (
@@ -622,32 +965,88 @@ elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
         + json.dumps(report, separators=(",", ":"))
     )
 elif midterm_profile["stage"] == "whole_body_task_space_control_spike":
-    report = {
-        "id": (
-            "whole-body-control-report://worldspec/h1/a800-"
-            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
-        ),
-        "reportVersion": "0.1.0",
-        "status": "completed",
-        "scope": "h1_whole_body_task_space_control_spike",
-        "executionEvidence": "executed",
-        "runtimeAcceptance": "research_control_spike",
-        "controllerStatus": (
-            "control_candidate"
-            if result["qualityAssessment"]["status"] == "passed"
-            else "non_publishable"
-        ),
-        "formalControlGate": (
-            "passed"
-            if result["qualityAssessment"]["status"] == "passed"
-            else "failed"
-        ),
-        **common,
-    }
-    print(
-        "WORLDSPEC_A800_WHOLE_BODY_RESULT="
-        + json.dumps(report, separators=(",", ":"))
-    )
+    if diagnostic_replay is not None:
+        diagnostics = diagnostic_replay["diagnosticCompleteness"]
+        equivalence = diagnostic_replay["equivalenceAssessment"]
+        replay_terminal_reasons = diagnostics["terminalReasons"]
+        diagnostic_passed = (
+            diagnostics["status"] == "passed"
+            and equivalence["status"] == "passed"
+        )
+        report = {
+            **common,
+            "id": (
+                "attempt://worldspec/h1/a5ci/"
+                + diagnostic_replay["profile"]["attemptId"]
+                + "/report"
+            ),
+            "reportVersion": "0.1.0",
+            "status": "completed",
+            "scope": "h1_whole_body_task_space_control_diagnostic_replay",
+            "attemptId": diagnostic_replay["profile"]["attemptId"],
+            "executionEvidence": "executed",
+            "runtimeAcceptance": "diagnostic_replay",
+            "replayProfileDigest": digest_json(diagnostic_replay["profile"]),
+            "baseControlProfileDigest": diagnostic_replay["profile"][
+                "baseControlProfileDigest"
+            ],
+            "controllerStatus": "non_publishable",
+            "originalTerminationReason": "unknown",
+            "replayTerminationReasons": replay_terminal_reasons,
+            "formalDiagnosticReplayGate": (
+                "passed" if diagnostic_passed else "failed"
+            ),
+            "formalControlGate": (
+                "passed"
+                if result["qualityAssessment"]["status"] == "passed"
+                else "failed"
+            ),
+            "artifactTransferStatus": "pending",
+            "diagnosticCompleteness": diagnostics,
+            "equivalenceAssessment": equivalence,
+            "equivalenceArtifact": diagnostic_replay["equivalenceArtifact"],
+            "claimBoundary": {
+                "status": "diagnostic_replay_only",
+                "originalA5CRootCause": "unknown",
+                "retroactiveRootCauseClaim": "forbidden",
+                "controllerCandidateClaim": "forbidden",
+                "fullTaskClaim": "forbidden",
+                "l3Claim": "forbidden",
+                "fiveRunGate": "not_executed",
+                "formalTraining": "not_started",
+            },
+        }
+        print(
+            "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_REPLAY_RESULT="
+            + json.dumps(report, separators=(",", ":"))
+        )
+    else:
+        report = {
+            "id": (
+                "whole-body-control-report://worldspec/h1/a800-"
+                + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+            ),
+            "reportVersion": "0.1.0",
+            "status": "completed",
+            "scope": "h1_whole_body_task_space_control_spike",
+            "executionEvidence": "executed",
+            "runtimeAcceptance": "research_control_spike",
+            "controllerStatus": (
+                "control_candidate"
+                if result["qualityAssessment"]["status"] == "passed"
+                else "non_publishable"
+            ),
+            "formalControlGate": (
+                "passed"
+                if result["qualityAssessment"]["status"] == "passed"
+                else "failed"
+            ),
+            **common,
+        }
+        print(
+            "WORLDSPEC_A800_WHOLE_BODY_RESULT="
+            + json.dumps(report, separators=(",", ":"))
+        )
 else:
     report = {
         "id": (

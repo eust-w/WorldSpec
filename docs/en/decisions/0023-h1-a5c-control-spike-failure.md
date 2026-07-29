@@ -55,19 +55,38 @@ See
 - no threshold change, tuning, or new A800 job may be launched before the next
   route is selected.
 
-## Decision required
+## Decision
 
-### A5-CI (recommended): add termination diagnostics and replay once unchanged
+Selected `A5-CI`: add termination diagnostics and replay once unchanged.
 
 - keep controller matrices, weights, gates, and input policies unchanged;
-- add the four termination subchannels, joint positions and velocities, torque
-  saturation, and active policy to the trace;
+- add the four termination subchannels, joint positions and velocities, actual
+  Control, Control Range, control utilization/saturation, and active policy to
+  the trace;
 - build a new image and replay exactly one control Spike;
 - if it fails again, use the exact termination reason for a new controller
   design and do not automatically retry.
 
 This is the smallest information-gain step and avoids treating an unknown
 termination as a gain-tuning problem.
+
+### A5-CI contract
+
+- keep the old `whole-body-control-profile.json` and old Report Schema
+  unchanged;
+- bind the new Replay Profile to the old canonical Profile digest, all four
+  baseline artifacts, three policies, scene, gates, capacity, ABI, and package
+  lock;
+- use static semantic projection as the equivalence gate; old/new GPU Trace
+  differences are report-only evidence;
+- separate `formalDiagnosticReplayGate` from `formalControlGate`, while fixing
+  `controllerStatus` to `non_publishable`;
+- permit one fixed-Attempt, single-GPU replay with `backoffLimit=0`; forbid
+  automatic retry, A5/5-of-5, and 100M training;
+- prove only the termination cause of the replay; the original A5-C cause
+  remains `unknown`.
+
+## Routes not selected
 
 ### A5-CR: redesign the whole-body controller contract now
 

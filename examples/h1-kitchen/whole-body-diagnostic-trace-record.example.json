@@ -1,0 +1,396 @@
+{
+  "step": 218,
+  "timeSeconds": 4.38,
+  "phase": "whole_body_settle",
+  "activePolicy": "stand",
+  "command": [0.0, 0.0, 0.0],
+  "basePosition": [0.021, -0.01, 0.988],
+  "baseState": {
+    "position": [0.021, -0.01, 0.988],
+    "linearVelocity": [0.01, 0.0, -0.02],
+    "angularVelocity": [0.01, 0.02, 0.0],
+    "height": 0.988,
+    "uprightCosine": 0.991
+  },
+  "minimumBaseHeight": 0.988,
+  "minimumUprightCosine": 0.991,
+  "finite": true,
+  "done": true,
+  "termination": {
+    "joint_limit": true,
+    "fall_height": false,
+    "fall_upright": false,
+    "nonfinite": false
+  },
+  "jointState": {
+    "policy": [
+      {
+        "name": "left_hip_yaw",
+        "position": 0.05,
+        "velocity": 0.01,
+        "lowerLimit": -0.43,
+        "upperLimit": 0.43,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "left_hip_roll",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -0.43,
+        "upperLimit": 0.43,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "left_hip_pitch",
+        "position": -0.1,
+        "velocity": 0.0,
+        "lowerLimit": -3.14,
+        "upperLimit": 2.53,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "left_knee",
+        "position": 0.3,
+        "velocity": 0.0,
+        "lowerLimit": -0.26,
+        "upperLimit": 2.05,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "left_ankle",
+        "position": -0.2,
+        "velocity": 0.0,
+        "lowerLimit": -0.87,
+        "upperLimit": 0.52,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_hip_yaw",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -0.43,
+        "upperLimit": 0.43,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_hip_roll",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -0.43,
+        "upperLimit": 0.43,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_hip_pitch",
+        "position": -0.1,
+        "velocity": 0.0,
+        "lowerLimit": -3.14,
+        "upperLimit": 2.53,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_knee",
+        "position": 0.3,
+        "velocity": 0.0,
+        "lowerLimit": -0.26,
+        "upperLimit": 2.05,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_ankle",
+        "position": -0.2,
+        "velocity": 0.0,
+        "lowerLimit": -0.87,
+        "upperLimit": 0.52,
+        "tolerance": 0.001,
+        "violated": false
+      }
+    ],
+    "held": [
+      {
+        "name": "torso",
+        "position": 1.58,
+        "velocity": 0.03,
+        "lowerLimit": -1.57,
+        "upperLimit": 1.57,
+        "tolerance": 0.001,
+        "violated": true
+      },
+      {
+        "name": "left_shoulder_pitch",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -2.87,
+        "upperLimit": 2.87,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "left_shoulder_roll",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -0.34,
+        "upperLimit": 3.11,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "left_shoulder_yaw",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -1.30,
+        "upperLimit": 2.61,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "left_elbow",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -1.25,
+        "upperLimit": 2.61,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_shoulder_pitch",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -2.87,
+        "upperLimit": 2.87,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_shoulder_roll",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -3.11,
+        "upperLimit": 0.34,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_shoulder_yaw",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -2.61,
+        "upperLimit": 1.30,
+        "tolerance": 0.001,
+        "violated": false
+      },
+      {
+        "name": "right_elbow",
+        "position": 0.0,
+        "velocity": 0.0,
+        "lowerLimit": -1.25,
+        "upperLimit": 2.61,
+        "tolerance": 0.001,
+        "violated": false
+      }
+    ]
+  },
+  "actuation": {
+    "groups": {
+      "policy": [
+        {
+          "name": "left_hip_yaw",
+          "appliedControl": 12.0,
+          "lowerLimit": -150.0,
+          "upperLimit": 150.0,
+          "limited": true,
+          "utilization": 0.08,
+          "saturated": false
+        },
+        {
+          "name": "left_hip_roll",
+          "appliedControl": 0.0,
+          "lowerLimit": -150.0,
+          "upperLimit": 150.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "left_hip_pitch",
+          "appliedControl": 0.0,
+          "lowerLimit": -150.0,
+          "upperLimit": 150.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "left_knee",
+          "appliedControl": 0.0,
+          "lowerLimit": -200.0,
+          "upperLimit": 200.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "left_ankle",
+          "appliedControl": 0.0,
+          "lowerLimit": -40.0,
+          "upperLimit": 40.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_hip_yaw",
+          "appliedControl": 0.0,
+          "lowerLimit": -150.0,
+          "upperLimit": 150.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_hip_roll",
+          "appliedControl": 0.0,
+          "lowerLimit": -150.0,
+          "upperLimit": 150.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_hip_pitch",
+          "appliedControl": 0.0,
+          "lowerLimit": -150.0,
+          "upperLimit": 150.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_knee",
+          "appliedControl": 0.0,
+          "lowerLimit": -200.0,
+          "upperLimit": 200.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_ankle",
+          "appliedControl": 0.0,
+          "lowerLimit": -40.0,
+          "upperLimit": 40.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        }
+      ],
+      "held": [
+        {
+          "name": "torso",
+          "appliedControl": 50.0,
+          "lowerLimit": -50.0,
+          "upperLimit": 50.0,
+          "limited": true,
+          "utilization": 1.0,
+          "saturated": true
+        },
+        {
+          "name": "left_shoulder_pitch",
+          "appliedControl": 0.0,
+          "lowerLimit": -40.0,
+          "upperLimit": 40.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "left_shoulder_roll",
+          "appliedControl": 0.0,
+          "lowerLimit": -40.0,
+          "upperLimit": 40.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "left_shoulder_yaw",
+          "appliedControl": 0.0,
+          "lowerLimit": -18.0,
+          "upperLimit": 18.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "left_elbow",
+          "appliedControl": 0.0,
+          "lowerLimit": -18.0,
+          "upperLimit": 18.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_shoulder_pitch",
+          "appliedControl": 0.0,
+          "lowerLimit": -40.0,
+          "upperLimit": 40.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_shoulder_roll",
+          "appliedControl": 0.0,
+          "lowerLimit": -40.0,
+          "upperLimit": 40.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_shoulder_yaw",
+          "appliedControl": 0.0,
+          "lowerLimit": -18.0,
+          "upperLimit": 18.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        },
+        {
+          "name": "right_elbow",
+          "appliedControl": 0.0,
+          "lowerLimit": -18.0,
+          "upperLimit": 18.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": false
+        }
+      ],
+      "gripper": [
+        {
+          "name": "right_gripper_fingers_actuator",
+          "appliedControl": 0.0,
+          "lowerLimit": 0.0,
+          "upperLimit": 255.0,
+          "limited": true,
+          "utilization": 0.0,
+          "saturated": true
+        }
+      ]
+    },
+    "saturationCount": 2,
+    "maximumUtilization": 1.0
+  },
+  "control": null,
+  "site": null
+}

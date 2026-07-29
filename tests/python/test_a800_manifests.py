@@ -434,6 +434,64 @@ def test_capture_calibration_binds_both_policies_and_fails_closed() -> None:
     assert "run_a800_h1_locomotion_midterm.sh" in wrapper
 
 
+def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
+    (job,) = _documents("h1-locomotion-midterm-job.yaml")
+    assert job["spec"]["backoffLimit"] == 0
+    pod = job["spec"]["template"]["spec"]
+    assert pod["restartPolicy"] == "Never"
+    assert pod["automountServiceAccountToken"] is False
+    (container,) = pod["containers"]
+    environment = {item["name"]: item["value"] for item in container["env"]}
+    assert environment["WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE_FILENAME"] == (
+        "__DIAGNOSTIC_REPLAY_PROFILE_FILENAME__"
+    )
+    assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
+    assert all("secret" not in volume for volume in pod["volumes"])
+    assert all(
+        "persistentVolumeClaim" not in volume
+        for volume in pod["volumes"]
+    )
+
+    entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "assess_diagnostic_trace" in entrypoint
+    assert "compare_whole_body_traces" in entrypoint
+    assert "whole_body_profile_semantic_projection" in entrypoint
+    assert '"role": "report_only_not_equivalence_proof"' in entrypoint
+    assert "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_REPLAY_RESULT=" in entrypoint
+    assert '"controllerStatus": "non_publishable"' in entrypoint
+    assert '"originalTerminationReason": "unknown"' in entrypoint
+    assert "run_training" not in entrypoint
+
+    launcher = (
+        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
+    ).read_text(encoding="utf-8")
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" in launcher
+    assert "a5c-baseline-summary.json" in launcher
+    assert "a5c-baseline-report.json" in launcher
+    assert "a5c-baseline-controller.json" in launcher
+    assert "a5c-baseline-trace.jsonl" in launcher
+    assert "--chunk-size 524288" in launcher
+    assert "formalDiagnosticReplayGate" in launcher
+    assert "artifact-receipt.json" in launcher
+    assert "equivalence-report.json" in launcher
+    assert "A5-CI deterministic attempt already has local evidence" in launcher
+    assert "worldspec-h1-a5ci-" in launcher
+    assert "backoffLimit" not in launcher
+    assert "100,000,000" not in launcher
+
+    wrapper = (
+        ROOT / "scripts" / "run_a800_h1_whole_body_diagnostic_replay.sh"
+    ).read_text(encoding="utf-8")
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE must name" in wrapper
+    assert "whole-body-control-profile.json" in wrapper
+    assert "worldspec-h1-midterm-d5z6c/whole-body-control-report.json" in wrapper
+    assert "worldspec-h1-midterm-d5z6c/evaluation-traces.jsonl" in wrapper
+    assert "WORLD_SPEC_IMAGE_SOURCE_REVISION" in wrapper
+    assert "run_a800_h1_locomotion_midterm.sh" in wrapper
+
+
 def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> None:
     (job,) = _documents("h1-locomotion-formal-job.yaml")
     assert job["metadata"]["namespace"] == "worldspec-a800-poc"

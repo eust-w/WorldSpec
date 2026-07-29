@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-diagnostic-replay-profile.schema.json",
+  "title": "WorldSpec H1 A5-CI Diagnostic Replay Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "attemptId",
+    "baseControlProfileDigest",
+    "baselineEvidence",
+    "baselineBindings",
+    "semanticProfileProjectionDigest",
+    "controllerSemanticProjectionDigest",
+    "runtime",
+    "allowedChanges",
+    "artifactPolicy"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "enum": ["template", "locked"] },
+    "stage": {
+      "const": "whole_body_task_space_control_diagnostic_replay"
+    },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^a5-ci-[a-z0-9][a-z0-9-]{2,63}$"
+    },
+    "baseControlProfileDigest": {
+      "const": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd"
+    },
+    "baselineEvidence": {
+      "type": "object",
+      "required": ["summary", "report", "controller", "trace"],
+      "properties": {
+        "summary": {
+          "const": {
+            "digest": "sha256:d8e2fbeb97afe340271743925b9d769fdeba73e3fdd8fd465d40e4c099d240a4",
+            "sizeBytes": 2541
+          }
+        },
+        "report": {
+          "const": {
+            "digest": "sha256:306ff1b1c9f1e3bc10b1c02869600073409d53c7254110e1c6fac58fe64ea67a",
+            "sizeBytes": 11899
+          }
+        },
+        "controller": {
+          "const": {
+            "digest": "sha256:fdcb0557e0509174eff8cec7b629cf5e846931efb1d805f5df3647bc456274fb",
+            "sizeBytes": 2005
+          }
+        },
+        "trace": {
+          "const": {
+            "digest": "sha256:a27effb0562c2554248b12cd525103d1cc33e213af3c7406adc8ea7bdd1d27ff",
+            "sizeBytes": 97677,
+            "recordCount": 219
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "baselineBindings": {
+      "type": "object",
+      "required": [
+        "seed",
+        "probeRevision",
+        "imageSourceRevision",
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "policies",
+        "target"
+      ],
+      "properties": {
+        "seed": { "const": 41 },
+        "probeRevision": {
+          "const": "73e1bc9efe99d00daf890a30d254a6bb89e227ca"
+        },
+        "imageSourceRevision": {
+          "const": "0abd9b57bc6b738dfae03468b4d17eef2e518104"
+        },
+        "containerImage": {
+          "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:684dafef489c9192982912a6e2ffea3e4a50936ec1ccb0930bd67af55039f94c"
+        },
+        "containerDigest": {
+          "const": "sha256:684dafef489c9192982912a6e2ffea3e4a50936ec1ccb0930bd67af55039f94c"
+        },
+        "packageLockDigest": {
+          "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+        },
+        "policies": {
+          "const": {
+            "motion": {
+              "checkpointDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+              "checkpointSizeBytes": 8838595
+            },
+            "capture": {
+              "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+              "checkpointSizeBytes": 6280278
+            },
+            "stand": {
+              "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+              "checkpointSizeBytes": 6280684
+            }
+          }
+        },
+        "target": {
+          "const": {
+            "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+            "derivedModelDigest": "sha256:e43323d01a65d22d937d6d908222db7e13d4f4ef432564f4b129d949d5d6b43b",
+            "observationSize": 42,
+            "actionSize": 10
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "semanticProfileProjectionDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "controllerSemanticProjectionDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "imageSourceRevision",
+        "packageLockDigest"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$",
+          "not": {
+            "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:684dafef489c9192982912a6e2ffea3e4a50936ec1ccb0930bd67af55039f94c"
+          }
+        },
+        "containerDigest": {
+          "allOf": [
+            { "$ref": "common.schema.json#/$defs/digest" },
+            {
+              "not": {
+                "const": "sha256:684dafef489c9192982912a6e2ffea3e4a50936ec1ccb0930bd67af55039f94c"
+              }
+            }
+          ]
+        },
+        "imageSourceRevision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "packageLockDigest": {
+          "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+        }
+      },
+      "additionalProperties": false
+    },
+    "allowedChanges": {
+      "const": [
+        "diagnostic_instrumentation",
+        "source_archive_digest",
+        "container_image"
+      ]
+    },
+    "artifactPolicy": {
+      "const": {
+        "controller": "research_only",
+        "distribution": "internal_only",
+        "fullTaskClaim": "forbidden",
+        "l3Claim": "forbidden",
+        "automaticRetry": "forbidden",
+        "formalTraining": "forbidden"
+      }
+    }
+  },
+  "additionalProperties": false
+}

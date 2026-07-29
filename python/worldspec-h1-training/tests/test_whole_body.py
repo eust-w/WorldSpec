@@ -13,9 +13,15 @@ from worldspec_h1_training.whole_body import (
     A5R_FAILED_REPORT_DIGEST,
     WHOLE_BODY_CONTROLLER,
     WHOLE_BODY_GATES,
+    WholeBodyTaskSpaceController,
+    assess_diagnostic_trace,
+    compare_whole_body_traces,
     make_whole_body_evaluation_profile,
     solve_box_qp,
+    validate_diagnostic_trace_record,
     validate_whole_body_profile,
+    whole_body_controller_semantic_projection,
+    whole_body_profile_semantic_projection,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -26,8 +32,7 @@ CONTROL = ROOT / "examples" / "h1-kitchen" / "whole-body-control-profile.json"
 
 def _profiles() -> tuple[dict, dict, dict]:
     return tuple(
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in (BASE, SUPERVISOR, CONTROL)
+        json.loads(path.read_text(encoding="utf-8")) for path in (BASE, SUPERVISOR, CONTROL)
     )
 
 
@@ -90,16 +95,315 @@ def test_box_qp_matches_diagonal_solution_and_reports_kkt_residual() -> None:
     assert projected_gradient <= 1e-12
 
 
+def test_trace_diagnostics_report_joint_state_and_actuator_saturation() -> None:
+    controller = object.__new__(WholeBodyTaskSpaceController)
+    controller._np = np
+    controller._policy_joint_names = ["left_hip"]
+    controller._policy_qpos = np.asarray([7])
+    controller._policy_dofs = np.asarray([6])
+    controller._policy_ranges = np.asarray([[-0.5, 0.5]])
+    controller._held_joint_names = ["torso"]
+    controller._held_qpos = np.asarray([8])
+    controller._held_dofs = np.asarray([7])
+    controller._held_ranges = np.asarray([[-1.0, 1.0]])
+    controller._actuator_names = ["left_hip", "torso", "gripper"]
+    controller._actuator_ids = np.asarray([0, 1, 2])
+    controller._actuator_ctrlrange = np.asarray([[-100.0, 100.0], [-50.0, 50.0], [-1.0, 1.0]])
+    controller._actuator_limited = np.asarray([True, True, True])
+    controller._actuator_slices = {
+        "policy": slice(0, 1),
+        "held": slice(1, 2),
+        "gripper": slice(2, 3),
+    }
+    qpos = np.arange(9, dtype=float)
+    qvel = np.arange(8, dtype=float) * 0.1
+
+    diagnostic = controller.diagnostic_state(
+        qpos,
+        qvel,
+        np.asarray([100.0, 25.0, 0.0]),
+        joint_limit_tolerance=0.1,
+    )
+
+    assert diagnostic["jointState"]["policy"][0]["name"] == "left_hip"
+    assert diagnostic["jointState"]["policy"][0]["position"] == pytest.approx(7.0)
+    assert diagnostic["jointState"]["policy"][0]["velocity"] == pytest.approx(0.6)
+    assert diagnostic["jointState"]["policy"][0]["lowerLimit"] == pytest.approx(-0.5)
+    assert diagnostic["jointState"]["policy"][0]["upperLimit"] == pytest.approx(0.5)
+    assert diagnostic["jointState"]["policy"][0]["tolerance"] == pytest.approx(0.1)
+    assert diagnostic["jointState"]["policy"][0]["violated"] is True
+    assert diagnostic["jointState"]["held"][0]["name"] == "torso"
+    assert diagnostic["jointState"]["held"][0]["position"] == pytest.approx(8.0)
+    assert diagnostic["jointState"]["held"][0]["velocity"] == pytest.approx(0.7)
+    assert diagnostic["actuation"]["saturationCount"] == 1
+    assert diagnostic["actuation"]["maximumUtilization"] == pytest.approx(1.0)
+    assert diagnostic["actuation"]["groups"]["policy"][0]["saturated"] is True
+    assert diagnostic["actuation"]["groups"]["held"][0]["saturated"] is False
+
+
+def _expected_control() -> dict:
+    return {
+        "policyJoints": ["left_hip"],
+        "heldJoints": ["torso"],
+        "policyActuators": ["left_hip"],
+        "heldActuators": ["torso"],
+        "gripperActuators": ["gripper"],
+    }
+
+
+def _diagnostic_record(
+    *,
+    reason: str | None = None,
+    done: bool = False,
+) -> dict:
+    termination = {
+        "joint_limit": False,
+        "fall_height": False,
+        "fall_upright": False,
+        "nonfinite": False,
+    }
+    if reason is not None:
+        termination[reason] = True
+    policy_violated = reason == "joint_limit"
+    return {
+        "step": 4,
+        "timeSeconds": 0.1,
+        "phase": "locomotion",
+        "activePolicy": "motion",
+        "command": [0.5, 0.0, 0.0],
+        "basePosition": [0.1, 0.0, 1.0],
+        "baseState": {
+            "position": [0.1, 0.0, 1.0],
+            "linearVelocity": [0.5, 0.0, 0.0],
+            "angularVelocity": [0.0, 0.0, 0.0],
+            "height": 1.0,
+            "uprightCosine": 0.99,
+        },
+        "minimumBaseHeight": 0.99,
+        "minimumUprightCosine": 0.98,
+        "finite": reason != "nonfinite",
+        "done": done,
+        "termination": termination,
+        "jointState": {
+            "policy": [
+                {
+                    "name": "left_hip",
+                    "position": 0.61 if policy_violated else 0.0,
+                    "velocity": 0.1,
+                    "lowerLimit": -0.5,
+                    "upperLimit": 0.5,
+                    "tolerance": 0.1,
+                    "violated": policy_violated,
+                }
+            ],
+            "held": [
+                {
+                    "name": "torso",
+                    "position": 0.0,
+                    "velocity": 0.0,
+                    "lowerLimit": -1.0,
+                    "upperLimit": 1.0,
+                    "tolerance": 0.1,
+                    "violated": False,
+                }
+            ],
+        },
+        "actuation": {
+            "groups": {
+                "policy": [
+                    {
+                        "name": "left_hip",
+                        "appliedControl": 100.0,
+                        "lowerLimit": -100.0,
+                        "upperLimit": 100.0,
+                        "limited": True,
+                        "utilization": 1.0,
+                        "saturated": True,
+                    }
+                ],
+                "held": [
+                    {
+                        "name": "torso",
+                        "appliedControl": 25.0,
+                        "lowerLimit": -50.0,
+                        "upperLimit": 50.0,
+                        "limited": True,
+                        "utilization": 0.5,
+                        "saturated": False,
+                    }
+                ],
+                "gripper": [
+                    {
+                        "name": "gripper",
+                        "appliedControl": 0.0,
+                        "lowerLimit": -1.0,
+                        "upperLimit": 1.0,
+                        "limited": False,
+                        "utilization": 0.0,
+                        "saturated": False,
+                    }
+                ],
+            },
+            "saturationCount": 1,
+            "maximumUtilization": 1.0,
+        },
+        "control": None,
+        "site": None,
+    }
+
+
+@pytest.mark.parametrize(
+    "reason",
+    ["joint_limit", "fall_height", "fall_upright"],
+)
+def test_diagnostic_trace_accepts_all_finite_termination_channels(reason: str) -> None:
+    record = _diagnostic_record(reason=reason, done=True)
+
+    validate_diagnostic_trace_record(record, _expected_control())
+
+    assessment = assess_diagnostic_trace([record], _expected_control())
+    assert assessment["status"] == "passed"
+    assert assessment["terminalReasons"] == [reason]
+    assert assessment["terminalJoints"] == (["left_hip"] if reason == "joint_limit" else [])
+    assert assessment["controlSaturationSamples"] == 1
+    assert assessment["maximumControlUtilization"] == pytest.approx(1.0)
+
+
+def test_diagnostic_trace_records_nonfinite_as_failed_evidence() -> None:
+    record = _diagnostic_record(reason="nonfinite", done=True)
+    record["baseState"]["position"][0] = None
+
+    with pytest.raises(TrainingError) as captured:
+        validate_diagnostic_trace_record(record, _expected_control())
+
+    assert captured.value.code == "DIAGNOSTIC_TRACE_INVALID"
+    assessment = assess_diagnostic_trace([record], _expected_control())
+    assert assessment["status"] == "failed"
+    assert assessment["terminalReasons"] == ["nonfinite"]
+    assert any("record_not_finite" in reason for reason in assessment["reasons"])
+
+
+@pytest.mark.parametrize(
+    ("mutation", "expected_reason"),
+    [
+        (
+            lambda record: record["termination"].pop("fall_height"),
+            "termination_channels_mismatch",
+        ),
+        (
+            lambda record: record["termination"].update({"joint_limit": 1}),
+            "termination_joint_limit_not_boolean",
+        ),
+        (
+            lambda record: record["jointState"]["policy"][0].update({"name": "wrong"}),
+            "policy_joint_names_mismatch",
+        ),
+        (
+            lambda record: record["actuation"]["groups"]["held"].clear(),
+            "held_actuator_names_mismatch",
+        ),
+        (
+            lambda record: record["actuation"]["groups"]["held"][0].update({"utilization": 0.25}),
+            "held_actuator_0_utilization_inconsistent",
+        ),
+        (
+            lambda record: (
+                record["control"].update({"qpObjective": float("nan")})
+                if isinstance(record["control"], dict)
+                else record.update({"control": {"qpObjective": float("nan")}})
+            ),
+            "control_nonfinite",
+        ),
+    ],
+)
+def test_diagnostic_trace_fails_closed_on_field_drift(mutation, expected_reason: str) -> None:
+    record = _diagnostic_record()
+    mutation(record)
+
+    assessment = assess_diagnostic_trace([record], _expected_control())
+
+    assert assessment["status"] == "failed"
+    assert any(expected_reason in reason for reason in assessment["reasons"])
+
+
+def test_diagnostic_trace_rejects_done_without_reason_and_unlocated_joint_limit() -> None:
+    done_without_reason = _diagnostic_record(done=True)
+    joint_without_location = _diagnostic_record(reason="joint_limit", done=True)
+    joint_without_location["jointState"]["policy"][0]["position"] = 0.0
+    joint_without_location["jointState"]["policy"][0]["violated"] = False
+
+    first = assess_diagnostic_trace([done_without_reason], _expected_control())
+    second = assess_diagnostic_trace([joint_without_location], _expected_control())
+
+    assert any("done_without_termination_reason" in reason for reason in first["reasons"])
+    assert any("joint_limit_without_violated_joint" in reason for reason in second["reasons"])
+
+
+def test_semantic_projections_exclude_only_permitted_digest_fields() -> None:
+    _, _, control = _profiles()
+    controller = {
+        "profileDigest": digest_json(control),
+        "controller": copy.deepcopy(WHOLE_BODY_CONTROLLER),
+        "scene": copy.deepcopy(control["scene"]),
+    }
+    replay_control = copy.deepcopy(control)
+    replay_control["runtime"]["containerImage"] = "registry/image@sha256:" + ("1" * 64)
+    replay_control["runtime"]["containerDigest"] = "sha256:" + ("1" * 64)
+    replay_controller = copy.deepcopy(controller)
+    replay_controller["profileDigest"] = "sha256:" + ("2" * 64)
+
+    projected_profile = whole_body_profile_semantic_projection(control)
+    projected_controller = whole_body_controller_semantic_projection(controller)
+
+    assert projected_profile == whole_body_profile_semantic_projection(replay_control)
+    assert projected_controller == whole_body_controller_semantic_projection(replay_controller)
+    assert "containerImage" not in projected_profile["runtime"]
+    assert "containerDigest" not in projected_profile["runtime"]
+    assert (
+        projected_profile["runtime"]["packageLockDigest"] == control["runtime"]["packageLockDigest"]
+    )
+    assert projected_profile["seed"] == 41
+    assert "profileDigest" not in projected_controller
+    assert projected_controller["controller"] == WHOLE_BODY_CONTROLLER
+
+    replay_control["seed"] = 42
+    replay_controller["controller"]["cartesianGain"] = 4.1
+    assert projected_profile != whole_body_profile_semantic_projection(replay_control)
+    assert projected_controller != whole_body_controller_semantic_projection(replay_controller)
+
+
+def test_trace_comparison_reports_dynamic_differences_without_gate_result() -> None:
+    reference = _diagnostic_record()
+    replay = copy.deepcopy(reference)
+    replay["activePolicy"] = "stand"
+    replay["basePosition"][0] = 0.2
+    replay["termination"] = {
+        "joint_limit": False,
+        "fall_height": True,
+        "fall_upright": False,
+        "nonfinite": False,
+    }
+
+    comparison = compare_whole_body_traces([reference], [replay])
+
+    assert comparison["firstDynamicDivergenceStep"] == 4
+    assert comparison["categoricalDifferences"]["activePolicy"]["differenceCount"] == 1
+    assert comparison["categoricalDifferences"]["termination"]["differenceCount"] == 1
+    assert comparison["numericDifferences"]["basePosition"][
+        "maximumAbsoluteDifference"
+    ] == pytest.approx(0.1)
+    assert comparison["interpretation"] == "report_only_not_static_equivalence"
+    assert "status" not in comparison
+
+
 def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
-    entrypoint = (
-        ROOT / "ops" / "a800" / "h1-locomotion-midterm-entrypoint.sh"
-    ).read_text(encoding="utf-8")
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
-    ).read_text(encoding="utf-8")
-    wrapper = (
-        ROOT / "scripts" / "run_a800_h1_whole_body_control_spike.sh"
-    ).read_text(encoding="utf-8")
+    entrypoint = (ROOT / "ops" / "a800" / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_a800_h1_whole_body_control_spike.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert "run_whole_body_control_spike" in entrypoint
     assert "WORLDSPEC_A800_WHOLE_BODY_RESULT=" in entrypoint
@@ -107,6 +411,22 @@ def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
     assert "h1-whole-body-control-report.schema.json" in launcher
     assert "whole-body-controller.json" in launcher
     assert '"termination": termination' in (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "whole_body.py"
+    ).read_text(encoding="utf-8")
+    assert '"jointState": diagnostic["jointState"]' in (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "whole_body.py"
+    ).read_text(encoding="utf-8")
+    assert '"actuation": actuation' in (
         ROOT
         / "python"
         / "worldspec-h1-training"

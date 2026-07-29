@@ -13,7 +13,6 @@ from pathlib import Path
 
 import mujoco
 import numpy as np
-
 from worldspec_h1_training.contract import canonical_bytes, digest_bytes, digest_json
 from worldspec_h1_training.whole_body import (
     WHOLE_BODY_GATES,

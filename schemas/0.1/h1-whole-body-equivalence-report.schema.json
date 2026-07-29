@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-equivalence-report.schema.json",
+  "title": "WorldSpec H1 A5-CI Static Equivalence Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "attemptId",
+    "baseControlProfileDigest",
+    "replayProfileDigest",
+    "staticSemanticEquivalence",
+    "bindingChecks",
+    "dynamicComparison",
+    "formalEquivalenceGate",
+    "claimBoundary",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": {
+      "const": "h1_whole_body_task_space_control_diagnostic_equivalence"
+    },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^a5-ci-[a-z0-9][a-z0-9-]{2,63}$"
+    },
+    "baseControlProfileDigest": {
+      "const": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd"
+    },
+    "replayProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "staticSemanticEquivalence": {
+      "type": "object",
+      "required": [
+        "profileProjection",
+        "controllerProjection",
+        "allowedDifferencesOnly"
+      ],
+      "properties": {
+        "profileProjection": { "$ref": "#/$defs/projectionCheck" },
+        "controllerProjection": { "$ref": "#/$defs/projectionCheck" },
+        "allowedDifferencesOnly": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "bindingChecks": {
+      "type": "object",
+      "required": [
+        "seed",
+        "scene",
+        "controller",
+        "qualityGates",
+        "mjxCapacity",
+        "sourceBundle",
+        "derivedModel",
+        "observationAbi",
+        "actionAbi",
+        "motionPolicy",
+        "capturePolicy",
+        "standPolicy",
+        "packageLock"
+      ],
+      "properties": {
+        "seed": { "type": "boolean" },
+        "scene": { "type": "boolean" },
+        "controller": { "type": "boolean" },
+        "qualityGates": { "type": "boolean" },
+        "mjxCapacity": { "type": "boolean" },
+        "sourceBundle": { "type": "boolean" },
+        "derivedModel": { "type": "boolean" },
+        "observationAbi": { "type": "boolean" },
+        "actionAbi": { "type": "boolean" },
+        "motionPolicy": { "type": "boolean" },
+        "capturePolicy": { "type": "boolean" },
+        "standPolicy": { "type": "boolean" },
+        "packageLock": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "dynamicComparison": {
+      "type": "object",
+      "required": [
+        "role",
+        "baselineTraceDigest",
+        "replayTraceDigest",
+        "baselineRecordCount",
+        "replayRecordCount",
+        "differences",
+        "detail"
+      ],
+      "properties": {
+        "role": { "const": "report_only_not_equivalence_proof" },
+        "baselineTraceDigest": {
+          "const": "sha256:a27effb0562c2554248b12cd525103d1cc33e213af3c7406adc8ea7bdd1d27ff"
+        },
+        "replayTraceDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "baselineRecordCount": { "const": 219 },
+        "replayRecordCount": { "type": "integer", "minimum": 1 },
+        "differences": {
+          "type": "object",
+          "required": [
+            "stepCountDelta",
+            "phaseSequenceEqual",
+            "activePolicySequenceEqual",
+            "terminationSequenceEqual",
+            "metricDelta"
+          ],
+          "properties": {
+            "stepCountDelta": { "type": "integer" },
+            "phaseSequenceEqual": { "type": "boolean" },
+            "activePolicySequenceEqual": { "type": "boolean" },
+            "terminationSequenceEqual": { "type": "boolean" },
+            "metricDelta": { "type": "object" }
+          },
+          "additionalProperties": false
+        },
+        "detail": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "formalEquivalenceGate": { "enum": ["passed", "failed"] },
+    "claimBoundary": {
+      "const": {
+        "staticSemanticProjectionIsAuthoritative": true,
+        "dynamicComparisonIsEvidenceOnly": true,
+        "bitwiseTraceEqualityRequired": false,
+        "retroactiveRootCauseClaim": "forbidden"
+      }
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "formalEquivalenceGate": { "const": "passed" } },
+        "required": ["formalEquivalenceGate"]
+      },
+      "then": {
+        "properties": {
+          "staticSemanticEquivalence": {
+            "properties": {
+              "profileProjection": {
+                "properties": { "matches": { "const": true } }
+              },
+              "controllerProjection": {
+                "properties": { "matches": { "const": true } }
+              },
+              "allowedDifferencesOnly": { "const": true }
+            }
+          },
+          "bindingChecks": {
+            "properties": {
+              "seed": { "const": true },
+              "scene": { "const": true },
+              "controller": { "const": true },
+              "qualityGates": { "const": true },
+              "mjxCapacity": { "const": true },
+              "sourceBundle": { "const": true },
+              "derivedModel": { "const": true },
+              "observationAbi": { "const": true },
+              "actionAbi": { "const": true },
+              "motionPolicy": { "const": true },
+              "capturePolicy": { "const": true },
+              "standPolicy": { "const": true },
+              "packageLock": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "projectionCheck": {
+      "type": "object",
+      "required": ["baselineDigest", "replayDigest", "matches"],
+      "properties": {
+        "baselineDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "replayDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "matches": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

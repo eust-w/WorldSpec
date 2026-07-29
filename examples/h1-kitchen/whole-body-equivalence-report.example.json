@@ -1,0 +1,64 @@
+{
+  "id": "conformance://worldspec/h1/a5-ci-template/equivalence",
+  "reportVersion": "0.1.0",
+  "status": "completed",
+  "scope": "h1_whole_body_task_space_control_diagnostic_equivalence",
+  "attemptId": "a5-ci-template",
+  "baseControlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+  "replayProfileDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "staticSemanticEquivalence": {
+    "profileProjection": {
+      "baselineDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "replayDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "matches": true
+    },
+    "controllerProjection": {
+      "baselineDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "replayDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "matches": true
+    },
+    "allowedDifferencesOnly": true
+  },
+  "bindingChecks": {
+    "seed": true,
+    "scene": true,
+    "controller": true,
+    "qualityGates": true,
+    "mjxCapacity": true,
+    "sourceBundle": true,
+    "derivedModel": true,
+    "observationAbi": true,
+    "actionAbi": true,
+    "motionPolicy": true,
+    "capturePolicy": true,
+    "standPolicy": true,
+    "packageLock": true
+  },
+  "dynamicComparison": {
+    "role": "report_only_not_equivalence_proof",
+    "baselineTraceDigest": "sha256:a27effb0562c2554248b12cd525103d1cc33e213af3c7406adc8ea7bdd1d27ff",
+    "replayTraceDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "baselineRecordCount": 219,
+    "replayRecordCount": 219,
+    "differences": {
+      "stepCountDelta": 0,
+      "phaseSequenceEqual": true,
+      "activePolicySequenceEqual": true,
+      "terminationSequenceEqual": false,
+      "metricDelta": {
+        "minimumBaseHeight": 0.0
+      }
+    },
+    "detail": {
+      "interpretation": "report_only_not_static_equivalence"
+    }
+  },
+  "formalEquivalenceGate": "passed",
+  "claimBoundary": {
+    "staticSemanticProjectionIsAuthoritative": true,
+    "dynamicComparisonIsEvidenceOnly": true,
+    "bitwiseTraceEqualityRequired": false,
+    "retroactiveRootCauseClaim": "forbidden"
+  },
+  "generatedAt": "2026-07-30T00:00:00Z"
+}

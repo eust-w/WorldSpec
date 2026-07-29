@@ -62,6 +62,8 @@ spec:
               value: __RETENTION_TEACHER_REPORT_FILENAME__
             - name: WORLD_SPEC_SUPERVISOR_STAND_REPORT_FILENAME
               value: __SUPERVISOR_STAND_REPORT_FILENAME__
+            - name: WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE_FILENAME
+              value: __DIAGNOSTIC_REPLAY_PROFILE_FILENAME__
             - name: HOME
               value: /scratch/home
             - name: XDG_CACHE_HOME

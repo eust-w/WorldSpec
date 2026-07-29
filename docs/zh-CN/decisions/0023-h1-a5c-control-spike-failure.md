@@ -1,5 +1,5 @@
 ---
-status: Pending Decision
+status: Accepted Design
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../en/decisions/0023-h1-a5c-control-spike-failure.md
@@ -40,16 +40,31 @@ last-verified: 2026-07-30
 - 不允许把失败 Controller 标记为候选、集成资产或 L3；
 - 在选择下一条路线前，不自动改门槛、调参或消耗新的 A800 作业。
 
-## 需要选择
+## 决策
 
-### A5-CI（推荐）：仅补齐终止诊断并做一次等价重放
+选择 `A5-CI`：仅补齐终止诊断并做一次等价重放。
 
 - 控制器矩阵、权重、门槛和输入策略保持不变；
-- Trace 增加四个终止子通道、关节位置/速度、力矩饱和和活动策略；
+- Trace 增加四个终止子通道、关节位置/速度、实际 Control、Control Range、
+  控制利用率/饱和和活动策略；
 - 构建新镜像后只重放一次控制 Spike；
 - 若再次失败，按精确终止原因进入新的控制设计，不继续自动重试。
 
 这条路线不会把未知原因误当成增益问题，是最小的信息增益步骤。
+
+### A5-CI 契约
+
+- 旧 `whole-body-control-profile.json` 与旧 Report Schema 保持不变；
+- 新 Replay Profile 必须绑定旧 Profile 的规范摘要、四类旧证据、三个策略、
+  场景、门槛、容量、ABI 和包锁；
+- 静态语义投影是等价门，旧/新 GPU Trace 的动态差异只作为报告证据；
+- `formalDiagnosticReplayGate` 与 `formalControlGate` 分离，且
+  `controllerStatus` 固定为 `non_publishable`；
+- 只允许固定 Attempt 的一次单 GPU、`backoffLimit=0` 重放；不得自动重试、
+  执行 A5/5-of-5 或启动 100M；
+- 新诊断只证明本次重放的终止原因，旧 A5-C 根因继续保持 `unknown`。
+
+## 未选择路线
 
 ### A5-CR：直接重做全身控制契约
 

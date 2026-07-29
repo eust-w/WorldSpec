@@ -1,0 +1,68 @@
+{
+  "id": "attempt://negative/a5-ci-false-pass",
+  "reportVersion": "0.1.0",
+  "status": "completed",
+  "scope": "h1_whole_body_task_space_control_diagnostic_replay",
+  "executionEvidence": "executed",
+  "attemptId": "a5-ci-false-pass",
+  "replayProfileDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+  "baseControlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+  "formalDiagnosticReplayGate": "passed",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "originalTerminationReason": "unknown",
+  "replayTerminationReasons": [],
+  "diagnosticCompleteness": {
+    "status": "failed",
+    "terminationChannelsComplete": false,
+    "classifiedTermination": false,
+    "jointBindingsComplete": true,
+    "actuatorBindingsComplete": true,
+    "finiteDiagnosticValues": true,
+    "fieldDriftDetected": false
+  },
+  "equivalenceAssessment": {
+    "status": "failed",
+    "reportDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "staticSemanticEquivalent": false
+  },
+  "metrics": {
+    "failedReason": "robot_termination:unclassified",
+    "completedSteps": 1,
+    "completedPhase": "whole_body_settle",
+    "doneSeen": true,
+    "holdSteps": 0,
+    "controlSaturationSamples": 0,
+    "maximumControlUtilization": 0.0,
+    "nonFiniteSamples": 0
+  },
+  "controllerArtifact": {
+    "path": "whole-body-controller.json",
+    "digest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+    "sizeBytes": 2100,
+    "distribution": "internal_only"
+  },
+  "traceArtifact": {
+    "path": "evaluation-traces.jsonl",
+    "digest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+    "sizeBytes": 2200,
+    "distribution": "internal_only"
+  },
+  "equivalenceArtifact": {
+    "path": "equivalence-report.json",
+    "digest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+    "sizeBytes": 4096,
+    "distribution": "internal_only"
+  },
+  "claimBoundary": {
+    "status": "diagnostic_replay_only",
+    "originalA5CRootCause": "unknown",
+    "retroactiveRootCauseClaim": "forbidden",
+    "controllerCandidateClaim": "forbidden",
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "fiveRunGate": "not_executed",
+    "formalTraining": "not_started"
+  },
+  "generatedAt": "2026-07-30T00:00:01Z"
+}
