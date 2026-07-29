@@ -45,5 +45,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-031 | A2 separates motion and zero-velocity/stand into two frozen policies with a deterministic five-step linear-action-blend supervisor; first run a zero-training A800 probe | Accepted Design | [ADR-0017](decisions/0017-h1-dual-policy-supervisor.md) |
 | D-032 | A3 samples real handoff states from the frozen motion policy and trains a separate capture policy; the settle gate measures the final 0.2-second static hold, and failure triggers neither automatic tuning nor a 100M run | Accepted Design | [ADR-0018](decisions/0018-h1-motion-state-capture-policy.md) |
 | D-033 | A4 connects frozen Motion, Capture, and Stand policies through a consecutive velocity-stability gate; Capture is capped at 40 steps, handoff blends for five steps, and pure Stand must last at least ten steps; the probe does not start 100M | Accepted Design | [ADR-0019](decisions/0019-h1-phase-aware-supervisor.md) |
+| D-034 | A5 freezes the A4 leg Supervisor and adds right-arm Jacobian/impedance plus physical contact for a fixed primitive-kitchen loop; gate one run before 5/5 and forbid hidden grasp constraints or an L3 claim | Accepted Design | [ADR-0020](decisions/0020-h1-fixed-kitchen-integration.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

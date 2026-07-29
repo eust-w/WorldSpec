@@ -43,5 +43,6 @@ last-verified: 2026-07-29
 | D-031 | A2 将运动与零速度/站立拆为两个冻结策略，由 5 步线性动作混合的确定性 Supervisor 切换；先做零训练 A800 探针 | Accepted Design | [ADR-0017](decisions/0017-h1-dual-policy-supervisor.md) |
 | D-032 | A3 从冻结运动策略真实 rollout 采样交接状态，训练独立 Capture Policy；停稳门测最后 0.2 秒静止保持，失败不自动调参或启动 100M | Accepted Design | [ADR-0018](decisions/0018-h1-motion-state-capture-policy.md) |
 | D-033 | A4 用速度连续稳定门控串联 Motion、Capture、Stand 三策略；Capture 最多 40 步、交接混合 5 步、纯 Stand 至少 10 步，探针不启动 100M | Accepted Design | [ADR-0019](decisions/0019-h1-phase-aware-supervisor.md) |
+| D-034 | A5 冻结 A4 腿部 Supervisor，以右臂 Jacobian/阻抗和物理接触完成固定 primitive 厨房闭环；先单次再 5/5，禁止隐藏抓取约束和 L3 声明 | Accepted Design | [ADR-0020](decisions/0020-h1-fixed-kitchen-integration.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

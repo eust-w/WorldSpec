@@ -339,6 +339,8 @@ def make_environment(
             info = {
                 "rng": rng,
                 "command": command,
+                "held_targets": self._held_targets,
+                "gripper_commands": self._gripper_commands,
                 "transition_active": transition_active,
                 "stand_replay_active": stand_replay_active,
                 "capture_active": capture_active,
@@ -396,11 +398,16 @@ def make_environment(
             policy_torque = (targets - policy_q) * self._policy_kps - policy_dq * self._policy_kds
             held_q = state.data.qpos[self._held_qpos]
             held_dq = state.data.qvel[self._held_dof]
-            held_torque = (self._held_targets - held_q) * self._held_kps - held_dq * self._held_kds
+            held_targets = state.info.get("held_targets", self._held_targets)
+            gripper_commands = state.info.get(
+                "gripper_commands",
+                self._gripper_commands,
+            )
+            held_torque = (held_targets - held_q) * self._held_kps - held_dq * self._held_kds
             ctrl = jp.zeros(self.mjx_model.nu)
             ctrl = ctrl.at[self._policy_actuators].set(policy_torque)
             ctrl = ctrl.at[self._held_actuators].set(held_torque)
-            ctrl = ctrl.at[self._gripper_actuators].set(self._gripper_commands)
+            ctrl = ctrl.at[self._gripper_actuators].set(gripper_commands)
             limited_ctrl = jp.clip(ctrl, self._ctrl_lower, self._ctrl_upper)
             ctrl = jp.where(self._ctrl_limited, limited_ctrl, ctrl)
             data = mjx_env.step(self.mjx_model, state.data, ctrl, self._n_substeps)
@@ -587,6 +594,8 @@ def make_environment(
                 {
                     "rng": rng,
                     "command": next_command,
+                    "held_targets": held_targets,
+                    "gripper_commands": gripper_commands,
                     "transition_active": next_transition_active,
                     "stand_replay_active": next_stand_replay_active,
                     "capture_active": capture_active,

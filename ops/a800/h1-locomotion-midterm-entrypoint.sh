@@ -130,7 +130,11 @@ if input_report != checked_report:
     raise SystemExit("uploaded warm-start report differs from the repository-bound report")
 source = (
     profile["motionPolicy"]
-    if stage in {"dual_policy_switch_probe", "phase_aware_supervisor_probe"}
+    if stage in {
+        "dual_policy_switch_probe",
+        "phase_aware_supervisor_probe",
+        "fixed_kitchen_full_loop_probe",
+    }
     else profile["warmStart"]
 )
 report_digest = f"sha256:{hashlib.sha256(input_report).hexdigest()}"
@@ -175,13 +179,14 @@ if stage in {
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
+    "fixed_kitchen_full_loop_probe",
 }:
     teacher = (
         profile["standPolicy"]
         if stage == "dual_policy_switch_probe"
         else (
             profile["capturePolicy"]
-            if stage == "phase_aware_supervisor_probe"
+            if stage in {"phase_aware_supervisor_probe", "fixed_kitchen_full_loop_probe"}
             else (
                 profile["motionTeacher"]
                 if stage == "loaded_track_settle_capture"
@@ -242,7 +247,7 @@ if stage in {
             raise SystemExit("capture policy is not the frozen passing A3 evidence")
     else:
         raise SystemExit("unsupported auxiliary policy source stage")
-if stage == "phase_aware_supervisor_probe":
+if stage in {"phase_aware_supervisor_probe", "fixed_kitchen_full_loop_probe"}:
     stand = profile["standPolicy"]
     stand_filename = sys.argv[11]
     if not stand_filename:
@@ -333,6 +338,7 @@ import jax
 from worldspec_h1_training.contract import read_json
 from worldspec_h1_training.capture import run_capture_calibration
 from worldspec_h1_training.dual_policy import run_dual_policy_probe
+from worldspec_h1_training.kitchen_task import run_fixed_kitchen_task_probe
 from worldspec_h1_training.midterm import run_midterm_calibration
 from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
 
@@ -371,6 +377,24 @@ elif midterm_profile["stage"] == "loaded_track_settle_capture":
 elif midterm_profile["stage"] == "phase_aware_supervisor_probe":
     result = run_phase_aware_supervisor_probe(
         base_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "supervisor-stand-checkpoint.zip",
+    )
+elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
+    supervisor_profile = read_json(
+        source_dir
+        / "examples"
+        / "h1-kitchen"
+        / "locomotion-supervisor-profile.json"
+    )
+    result = run_fixed_kitchen_task_probe(
+        base_profile,
+        supervisor_profile,
         midterm_profile,
         Path(os.environ["BUNDLE_DIR"]),
         Path(os.environ["MODEL_DIR"]),
@@ -529,6 +553,33 @@ elif midterm_profile["stage"] == "phase_aware_supervisor_probe":
     }
     print(
         "WORLDSPEC_A800_SUPERVISOR_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
+    report = {
+        "id": (
+            "kitchen-task-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_fixed_kitchen_full_loop_probe",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_integration",
+        "controllerStatus": (
+            "integration_candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalTaskGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_KITCHEN_TASK_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 else:

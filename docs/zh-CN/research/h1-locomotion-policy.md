@@ -257,3 +257,14 @@ A4 在单张 A800 上把冻结的 Motion、Capture 和 Stand 三策略通过速�
 
 该结果只把 A4 标记为 `supervisor_candidate / internal_only`。它没有启动 100M，
 也没有证明长时序厨房操作、随机鲁棒性、厨房 L3 或真机安全性。
+
+### 2026-07-29 A5 固定厨房集成基线
+
+A5 已建立 Schema、Profile、primitive 抽屉/杯子 MJCF 派生、右臂 Jacobian/阻抗
+控制器、顺序状态机和 A800 fail-closed 编排入口。场景不包含 weld、mocap
+attachment 或 teleport；抓取只允许物理接触。当前本地已通过 Schema、状态机、
+MuJoCo 3.6.0 原生加载和 IK 绑定测试。
+
+在真实 A800 报告产生前，这些只能证明实现与本地可加载性，不能证明任务成功。
+执行顺序固定为单次探针通过后才运行其余四次；任何失败都保留报告并停止，不启动
+100M。

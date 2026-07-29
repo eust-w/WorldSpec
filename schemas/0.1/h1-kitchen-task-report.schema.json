@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-kitchen-task-report.schema.json",
+  "title": "WorldSpec H1 Fixed Kitchen Full-Loop Probe Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "controllerStatus",
+    "formalTaskGate",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "baseTrainingProfileDigest",
+    "supervisorProfileDigest",
+    "taskProfileDigest",
+    "policies",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "scene",
+    "controller",
+    "qualityAssessment",
+    "controllerArtifact",
+    "traceArtifact",
+    "claimBoundary",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": { "const": "h1_fixed_kitchen_full_loop_probe" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "research_integration" },
+    "controllerStatus": {
+      "enum": ["integration_candidate", "non_publishable"]
+    },
+    "formalTaskGate": { "enum": ["passed", "failed"] },
+    "probeDefinition": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "imageSource": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "probeInput": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/probeInput"
+    },
+    "container": { "type": "object" },
+    "platform": { "type": "object" },
+    "gpu": { "type": "object" },
+    "packages": { "type": "object" },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "baseTrainingProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "supervisorProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "taskProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "policies": {
+      "type": "object",
+      "required": ["motion", "capture", "stand"],
+      "additionalProperties": { "type": "object" }
+    },
+    "staticPreflight": { "type": "object" },
+    "runtimePreflight": { "type": "object" },
+    "target": { "type": "object" },
+    "scene": { "type": "object" },
+    "controller": { "type": "object" },
+    "qualityAssessment": {
+      "type": "object",
+      "required": [
+        "status",
+        "singleRunGate",
+        "fixedSceneFiveRunGate",
+        "tests"
+      ],
+      "properties": {
+        "status": { "enum": ["passed", "failed"] },
+        "singleRunGate": { "type": "boolean" },
+        "fixedSceneFiveRunGate": { "type": "boolean" },
+        "tests": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "required": ["id", "result", "metrics"],
+            "properties": {
+              "id": { "$ref": "common.schema.json#/$defs/id" },
+              "result": { "enum": ["pass", "fail"] },
+              "metrics": {
+                "type": "object",
+                "required": [
+                  "completedPhase",
+                  "failedReason",
+                  "forwardDisplacement",
+                  "minimumBaseHeight",
+                  "minimumUprightCosine",
+                  "maximumDrawerOpening",
+                  "finalDrawerPosition",
+                  "cupInside",
+                  "cupReleased",
+                  "cupLinearSpeed",
+                  "cupAngularSpeed",
+                  "nonFiniteSamples",
+                  "doneSeen"
+                ]
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "controllerArtifact": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/artifact"
+    },
+    "traceArtifact": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/artifact"
+    },
+    "claimBoundary": {
+      "type": "object",
+      "required": ["status", "l3Claim", "reasons"],
+      "properties": {
+        "status": { "const": "research_integration_only" },
+        "l3Claim": { "const": "forbidden" },
+        "reasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "logDiagnostics": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/logDiagnostics"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "formalTaskGate": { "const": "passed" } },
+        "required": ["formalTaskGate"]
+      },
+      "then": {
+        "properties": {
+          "controllerStatus": { "const": "integration_candidate" },
+          "qualityAssessment": {
+            "properties": {
+              "status": { "const": "passed" },
+              "singleRunGate": { "const": true },
+              "fixedSceneFiveRunGate": { "const": true },
+              "tests": {
+                "minItems": 5,
+                "maxItems": 5,
+                "not": {
+                  "contains": {
+                    "properties": { "result": { "const": "fail" } },
+                    "required": ["result"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

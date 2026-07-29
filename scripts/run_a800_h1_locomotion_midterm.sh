@@ -81,11 +81,17 @@ elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_SUPERVISOR_RESULT=
   REPORT_SCHEMA=h1-locomotion-supervisor-report.schema.json
   GATE_FIELD=formalSupervisorGate
+elif [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+  REPORT_FILENAME=kitchen-task-report.json
+  REPORT_MARKER=WORLDSPEC_A800_KITCHEN_TASK_RESULT=
+  REPORT_SCHEMA=h1-kitchen-task-report.schema.json
+  GATE_FIELD=formalTaskGate
 fi
 if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
-  [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+  [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+  [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
   for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: retention teacher input is not readable: %s\n' \
@@ -95,7 +101,8 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   done
   RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
 fi
-if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+  [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
   for required in "${SUPERVISOR_STAND_REPORT}" "${SUPERVISOR_STAND_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: supervisor stand input is not readable: %s\n' \
@@ -157,7 +164,11 @@ report_payload = pathlib.Path(sys.argv[2]).read_bytes()
 checkpoint_payload = pathlib.Path(sys.argv[3]).read_bytes()
 source = (
     profile["motionPolicy"]
-    if profile["stage"] in {"dual_policy_switch_probe", "phase_aware_supervisor_probe"}
+    if profile["stage"] in {
+        "dual_policy_switch_probe",
+        "phase_aware_supervisor_probe",
+        "fixed_kitchen_full_loop_probe",
+    }
     else profile["warmStart"]
 )
 if f"sha256:{hashlib.sha256(report_payload).hexdigest()}" != source["sourceReportDigest"]:
@@ -173,6 +184,7 @@ if profile["stage"] in {
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
+    "fixed_kitchen_full_loop_probe",
 }:
     teacher_report_payload = pathlib.Path(sys.argv[4]).read_bytes()
     teacher_checkpoint_payload = pathlib.Path(sys.argv[5]).read_bytes()
@@ -181,7 +193,10 @@ if profile["stage"] in {
         if profile["stage"] == "dual_policy_switch_probe"
         else (
             profile["capturePolicy"]
-            if profile["stage"] == "phase_aware_supervisor_probe"
+            if profile["stage"] in {
+                "phase_aware_supervisor_probe",
+                "fixed_kitchen_full_loop_probe",
+            }
             else (
                 profile["motionTeacher"]
                 if profile["stage"] == "loaded_track_settle_capture"
@@ -200,7 +215,7 @@ if profile["stage"] in {
         or len(teacher_checkpoint_payload) != teacher["checkpointSizeBytes"]
     ):
         raise SystemExit("retention teacher checkpoint identity mismatch")
-if profile["stage"] == "phase_aware_supervisor_probe":
+if profile["stage"] in {"phase_aware_supervisor_probe", "fixed_kitchen_full_loop_probe"}:
     stand_report_payload = pathlib.Path(sys.argv[6]).read_bytes()
     stand_checkpoint_payload = pathlib.Path(sys.argv[7]).read_bytes()
     stand = profile["standPolicy"]
@@ -403,7 +418,8 @@ PY
       if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
-        [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+        [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
         read -r teacher_report_size teacher_report_digest \
           teacher_checkpoint_size teacher_checkpoint_digest < <(
           python3 - \
@@ -438,7 +454,8 @@ PY
           --expected-size "${teacher_checkpoint_size}" \
           --expected-digest "${teacher_checkpoint_digest}"
       fi
-      if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+      if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
         read -r supervisor_stand_report_size supervisor_stand_report_digest \
           supervisor_stand_checkpoint_size supervisor_stand_checkpoint_digest < <(
           python3 - \
@@ -507,7 +524,10 @@ capacity = sum(
 abnormal = sum("abnormal contact" in line.lower() for line in lines)
 tests = report["qualityAssessment"]["tests"]
 joint = sum(
-    any("joint" in reason and "limit" in reason for reason in test["metrics"]["terminalReasons"])
+    any(
+        "joint" in reason and "limit" in reason
+        for reason in test["metrics"].get("terminalReasons", [])
+    )
     for test in tests
 )
 nonfinite = sum(test["metrics"]["nonFiniteSamples"] for test in tests)
@@ -539,13 +559,20 @@ elif gate_field == "formalSupervisorGate":
         if report[gate_field] == "passed"
         else "non_publishable"
     )
+elif gate_field == "formalTaskGate":
+    report["controllerStatus"] = (
+        "integration_candidate"
+        if report[gate_field] == "passed"
+        else "non_publishable"
+    )
 report_path.write_text(
     json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
 )
 PY
       if [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
-        [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+        [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+        [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
         read -r controller_size controller_digest trace_size trace_digest < <(
           python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
 import json
@@ -563,14 +590,18 @@ PY
           --pod "${pod_name}" \
           --container midterm \
           --remote-path "$(
-            if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+            if [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+              printf '/scratch/results/artifacts/kitchen-task-controller.json'
+            elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
               printf '/scratch/results/artifacts/phase-aware-supervisor.json'
             else
               printf '/scratch/results/artifacts/dual-policy-controller.json'
             fi
           )" \
           --destination "$(
-            if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
+            if [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
+              printf '%s/kitchen-task-controller.json' "${local_result_dir}"
+            elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
               printf '%s/phase-aware-supervisor.json' "${local_result_dir}"
             else
               printf '%s/dual-policy-controller.json' "${local_result_dir}"

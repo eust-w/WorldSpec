@@ -330,3 +330,16 @@ their GPU traces were not bytewise identical. See
 This result establishes only an internal `supervisor_candidate`. It did not
 start 100M and does not prove the long-horizon kitchen task, randomized
 robustness, kitchen L3, or real-robot safety.
+
+### 2026-07-29 A5 fixed-kitchen integration baseline
+
+A5 now has schemas, a profile, derived primitive drawer/mug MJCF, a right-arm
+Jacobian/impedance controller, an ordered state machine, and a fail-closed A800
+orchestrator entry. The scene contains no weld, mocap attachment, or
+teleportation; grasping may use only physical contact. Local schema,
+state-machine, MuJoCo 3.6.0 native-load, and IK-binding tests pass.
+
+Until a real A800 report exists, this proves implementation and local
+loadability only, not task success. The execution order is fixed: one probe
+must pass before the other four runs, and any failure is retained and stops
+without starting 100M.

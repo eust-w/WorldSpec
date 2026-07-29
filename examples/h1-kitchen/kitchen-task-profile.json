@@ -1,0 +1,123 @@
+{
+  "id": "taskprofile://worldspec/h1-kitchen/fixed-full-loop-v1",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "fixed_kitchen_full_loop_probe",
+  "seed": 41,
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "supervisorProfileDigest": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355",
+  "motionPolicy": {
+    "sourceStage": "loaded-track-settle-transition-v2-failed",
+    "sourceReportDigest": "sha256:1d7310274a58e78e21570fe0916c23af49573f41d769037393967d41ce89705d",
+    "checkpointDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+    "checkpointSizeBytes": 8838595,
+    "distribution": "internal_only",
+    "selectedRole": "motion"
+  },
+  "capturePolicy": {
+    "sourceStage": "loaded-track-settle-capture-v1-passed",
+    "sourceReportDigest": "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f",
+    "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "checkpointSizeBytes": 6280278,
+    "distribution": "internal_only",
+    "selectedRole": "motion_state_capture"
+  },
+  "standPolicy": {
+    "sourceStage": "stand-v2.1",
+    "sourceReportDigest": "sha256:8a92a910ca52540fff50bab37e20e7e28d4ea06ae0acd20d0079e8b45e65f660",
+    "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "checkpointSizeBytes": 6280684,
+    "distribution": "internal_only",
+    "selectedRole": "zero_velocity_and_stand"
+  },
+  "scene": {
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v1",
+    "evidenceStatus": "generated",
+    "distribution": "internal_only",
+    "drawer": {
+      "closedCenter": [2.06, -0.21, 1.02],
+      "slideAxis": [-1.0, 0.0, 0.0],
+      "range": [0.0, 0.24],
+      "openThreshold": 0.18,
+      "closedThreshold": 0.03
+    },
+    "cup": {
+      "initialCenter": [1.88, -0.21, 1.195],
+      "proxy": "short_cylinder",
+      "massKg": 0.18
+    },
+    "graspModel": "physical_contact_only",
+    "hiddenAttachment": false
+  },
+  "controller": {
+    "mode": "frozen_locomotion_plus_jacobian_impedance",
+    "controlledJoints": [
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "damping": 0.04,
+    "maximumJointTargetStep": 0.04,
+    "positionToleranceMeters": 0.035,
+    "openGripperCommand": 0.0,
+    "closedGripperCommand": 255.0,
+    "phaseMinimumSteps": {
+      "stand_ready": 25,
+      "reach_handle": 5,
+      "close_handle": 30,
+      "pull_drawer": 5,
+      "release_handle": 20,
+      "reach_cup": 5,
+      "close_cup": 40,
+      "lift_cup": 5,
+      "insert_cup": 5,
+      "release_cup": 30,
+      "retract": 5,
+      "push_drawer": 5,
+      "final_hold": 25
+    },
+    "phaseMaximumSteps": {
+      "stand_ready": 25,
+      "reach_handle": 100,
+      "close_handle": 30,
+      "pull_drawer": 120,
+      "release_handle": 20,
+      "reach_cup": 120,
+      "close_cup": 40,
+      "lift_cup": 120,
+      "insert_cup": 140,
+      "release_cup": 30,
+      "retract": 100,
+      "push_drawer": 140,
+      "final_hold": 25
+    }
+  },
+  "qualityGates": {
+    "probeRuns": 1,
+    "acceptanceRuns": 5,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "drawerOpenThreshold": 0.18,
+    "drawerClosedThreshold": 0.03,
+    "cupInsideMargin": 0.015,
+    "maximumCupLinearSpeed": 0.08,
+    "maximumCupAngularSpeed": 0.2,
+    "minimumStableSteps": 20,
+    "maximumNonFiniteSamples": 0
+  },
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:a89268bd611d8ae707e22142a4f68c29173c3ef9843176993d99112ecf0d4ed7",
+    "containerDigest": "sha256:a89268bd611d8ae707e22142a4f68c29173c3ef9843176993d99112ecf0d4ed7",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50,
+    "evaluationEnvironments": 1
+  },
+  "artifactPolicy": {
+    "controller": "research_only",
+    "distribution": "internal_only",
+    "l3Claim": "forbidden"
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-kitchen-task-profile.schema.json",
+  "title": "WorldSpec H1 Fixed Kitchen Full-Loop Probe Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "seed",
+    "baseTrainingProfileDigest",
+    "supervisorProfileDigest",
+    "motionPolicy",
+    "capturePolicy",
+    "standPolicy",
+    "scene",
+    "controller",
+    "qualityGates",
+    "runtime",
+    "artifactPolicy"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "stage": { "const": "fixed_kitchen_full_loop_probe" },
+    "seed": { "type": "integer", "minimum": 0 },
+    "baseTrainingProfileDigest": {
+      "const": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6"
+    },
+    "supervisorProfileDigest": {
+      "const": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355"
+    },
+    "motionPolicy": {
+      "$ref": "h1-locomotion-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "capturePolicy": {
+      "$ref": "h1-locomotion-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "standPolicy": {
+      "$ref": "h1-locomotion-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "scene": {
+      "type": "object",
+      "required": [
+        "sceneId",
+        "evidenceStatus",
+        "distribution",
+        "drawer",
+        "cup",
+        "graspModel",
+        "hiddenAttachment"
+      ],
+      "properties": {
+        "sceneId": { "$ref": "common.schema.json#/$defs/id" },
+        "evidenceStatus": { "const": "generated" },
+        "distribution": { "const": "internal_only" },
+        "drawer": {
+          "type": "object",
+          "required": [
+            "closedCenter",
+            "slideAxis",
+            "range",
+            "openThreshold",
+            "closedThreshold"
+          ],
+          "properties": {
+            "closedCenter": { "$ref": "#/$defs/vector3" },
+            "slideAxis": { "$ref": "#/$defs/vector3" },
+            "range": { "$ref": "#/$defs/range2" },
+            "openThreshold": { "type": "number", "minimum": 0 },
+            "closedThreshold": { "type": "number", "minimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "cup": {
+          "type": "object",
+          "required": ["initialCenter", "proxy", "massKg"],
+          "properties": {
+            "initialCenter": { "$ref": "#/$defs/vector3" },
+            "proxy": { "const": "short_cylinder" },
+            "massKg": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "graspModel": { "const": "physical_contact_only" },
+        "hiddenAttachment": { "const": false }
+      },
+      "additionalProperties": false
+    },
+    "controller": {
+      "type": "object",
+      "required": [
+        "mode",
+        "controlledJoints",
+        "damping",
+        "maximumJointTargetStep",
+        "positionToleranceMeters",
+        "openGripperCommand",
+        "closedGripperCommand",
+        "phaseMinimumSteps",
+        "phaseMaximumSteps"
+      ],
+      "properties": {
+        "mode": { "const": "frozen_locomotion_plus_jacobian_impedance" },
+        "controlledJoints": {
+          "type": "array",
+          "prefixItems": [
+            { "const": "right_shoulder_pitch" },
+            { "const": "right_shoulder_roll" },
+            { "const": "right_shoulder_yaw" },
+            { "const": "right_elbow" }
+          ],
+          "items": false
+        },
+        "damping": { "type": "number", "exclusiveMinimum": 0 },
+        "maximumJointTargetStep": { "type": "number", "exclusiveMinimum": 0 },
+        "positionToleranceMeters": { "type": "number", "exclusiveMinimum": 0 },
+        "openGripperCommand": { "const": 0.0 },
+        "closedGripperCommand": { "const": 255.0 },
+        "phaseMinimumSteps": { "$ref": "#/$defs/phaseSteps" },
+        "phaseMaximumSteps": { "$ref": "#/$defs/phaseSteps" }
+      },
+      "additionalProperties": false
+    },
+    "qualityGates": {
+      "type": "object",
+      "required": [
+        "probeRuns",
+        "acceptanceRuns",
+        "minimumForwardDisplacement",
+        "maximumForwardDisplacement",
+        "minimumBaseHeight",
+        "minimumUprightCosine",
+        "drawerOpenThreshold",
+        "drawerClosedThreshold",
+        "cupInsideMargin",
+        "maximumCupLinearSpeed",
+        "maximumCupAngularSpeed",
+        "minimumStableSteps",
+        "maximumNonFiniteSamples"
+      ],
+      "properties": {
+        "probeRuns": { "const": 1 },
+        "acceptanceRuns": { "const": 5 },
+        "minimumForwardDisplacement": { "const": 1.0 },
+        "maximumForwardDisplacement": { "const": 2.2 },
+        "minimumBaseHeight": { "const": 0.8 },
+        "minimumUprightCosine": { "const": 0.8 },
+        "drawerOpenThreshold": { "const": 0.18 },
+        "drawerClosedThreshold": { "const": 0.03 },
+        "cupInsideMargin": { "const": 0.015 },
+        "maximumCupLinearSpeed": { "const": 0.08 },
+        "maximumCupAngularSpeed": { "const": 0.2 },
+        "minimumStableSteps": { "const": 20 },
+        "maximumNonFiniteSamples": { "const": 0 }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations",
+        "evaluationEnvironments"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": {
+          "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+        },
+        "ccdIterations": { "const": 50 },
+        "evaluationEnvironments": { "const": 1 }
+      },
+      "additionalProperties": false
+    },
+    "artifactPolicy": {
+      "const": {
+        "controller": "research_only",
+        "distribution": "internal_only",
+        "l3Claim": "forbidden"
+      }
+    }
+  },
+  "$defs": {
+    "vector3": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number" },
+        { "type": "number" },
+        { "type": "number" }
+      ],
+      "items": false
+    },
+    "range2": {
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "items": false
+    },
+    "phaseSteps": {
+      "type": "object",
+      "required": [
+        "stand_ready",
+        "reach_handle",
+        "close_handle",
+        "pull_drawer",
+        "release_handle",
+        "reach_cup",
+        "close_cup",
+        "lift_cup",
+        "insert_cup",
+        "release_cup",
+        "retract",
+        "push_drawer",
+        "final_hold"
+      ],
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    }
+  },
+  "additionalProperties": false
+}
