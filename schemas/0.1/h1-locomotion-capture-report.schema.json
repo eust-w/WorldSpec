@@ -1,0 +1,432 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-capture-report.schema.json",
+  "title": "WorldSpec H1 Motion-State Capture Calibration Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "policyStatus",
+    "formalCaptureGate",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "baseTrainingProfileDigest",
+    "captureProfileDigest",
+    "effectiveTrainingProfileDigest",
+    "warmStart",
+    "motionTeacher",
+    "snapshotBank",
+    "runtimeCapacity",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "training",
+    "qualityAssessment",
+    "researchCheckpoint",
+    "traceArtifact",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "reportVersion": {
+      "const": "0.1.0"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "scope": {
+      "const": "h1_motion_state_capture_calibration"
+    },
+    "executionEvidence": {
+      "const": "executed"
+    },
+    "runtimeAcceptance": {
+      "const": "research_capture"
+    },
+    "policyStatus": {
+      "enum": [
+        "capture_candidate",
+        "non_publishable"
+      ]
+    },
+    "formalCaptureGate": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "probeDefinition": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "imageSource": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "probeInput": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/probeInput"
+    },
+    "container": {
+      "type": "object"
+    },
+    "platform": {
+      "type": "object"
+    },
+    "gpu": {
+      "type": "object"
+    },
+    "packages": {
+      "type": "object"
+    },
+    "packageLockDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "baseTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "captureProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "effectiveTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "warmStart": {
+      "$ref": "#/$defs/initialization"
+    },
+    "motionTeacher": {
+      "$ref": "#/$defs/motionTeacher"
+    },
+    "snapshotBank": {
+      "type": "object",
+      "required": [
+        "path",
+        "digest",
+        "sizeBytes",
+        "distribution",
+        "snapshotCount",
+        "handoffStepMinimum",
+        "handoffStepMaximum",
+        "motionCommandMinimum",
+        "motionCommandMaximum",
+        "terminatedSnapshotCount",
+        "seed"
+      ],
+      "properties": {
+        "path": {
+          "const": "capture-state-bank.npz"
+        },
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "const": "internal_only"
+        },
+        "snapshotCount": {
+          "const": 4096
+        },
+        "handoffStepMinimum": {
+          "type": "integer",
+          "minimum": 140,
+          "maximum": 159
+        },
+        "handoffStepMaximum": {
+          "type": "integer",
+          "minimum": 140,
+          "maximum": 159
+        },
+        "motionCommandMinimum": {
+          "$ref": "#/$defs/vector3"
+        },
+        "motionCommandMaximum": {
+          "$ref": "#/$defs/vector3"
+        },
+        "terminatedSnapshotCount": {
+          "const": 0
+        },
+        "seed": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "runtimeCapacity": {
+      "type": "object"
+    },
+    "staticPreflight": {
+      "type": "object"
+    },
+    "runtimePreflight": {
+      "type": "object"
+    },
+    "target": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/target"
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "profileStage",
+        "progressRecordCount",
+        "maximumReportedStep",
+        "elapsedSeconds",
+        "firstProgress",
+        "finalProgress"
+      ],
+      "properties": {
+        "profileStage": {
+          "const": "loaded_track_settle_capture"
+        }
+      }
+    },
+    "qualityAssessment": {
+      "type": "object",
+      "required": [
+        "status",
+        "finalMeanEpisodeLength",
+        "minimumFinalMeanEpisodeLength",
+        "meanEpisodeLengthGate",
+        "deterministicSuiteGate",
+        "tests"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "failed"
+          ]
+        },
+        "finalMeanEpisodeLength": {
+          "type": "number"
+        },
+        "minimumFinalMeanEpisodeLength": {
+          "const": 90.0
+        },
+        "meanEpisodeLengthGate": {
+          "type": "boolean"
+        },
+        "deterministicSuiteGate": {
+          "type": "boolean"
+        },
+        "tests": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/test"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "researchCheckpoint": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/artifact"
+    },
+    "traceArtifact": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/artifact"
+    },
+    "logDiagnostics": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/logDiagnostics"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "initialization": {
+      "type": "object",
+      "required": [
+        "archiveDigest",
+        "archiveSizeBytes",
+        "selectedStep",
+        "networkConfig",
+        "restored",
+        "optimizerState"
+      ],
+      "properties": {
+        "archiveDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "archiveSizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selectedStep": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "networkConfig": {
+          "type": "object"
+        },
+        "restored": {
+          "type": "object",
+          "required": [
+            "normalizer",
+            "policy",
+            "value",
+            "optimizer"
+          ],
+          "properties": {
+            "normalizer": {
+              "const": true
+            },
+            "policy": {
+              "const": true
+            },
+            "value": {
+              "const": true
+            },
+            "optimizer": {
+              "const": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": {
+          "const": "reset"
+        }
+      },
+      "additionalProperties": false
+    },
+    "motionTeacher": {
+      "type": "object",
+      "required": [
+        "archiveDigest",
+        "archiveSizeBytes",
+        "selectedStep",
+        "networkConfig",
+        "restored",
+        "optimizerState",
+        "mode",
+        "scope"
+      ],
+      "properties": {
+        "archiveDigest": {
+          "const": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356"
+        },
+        "archiveSizeBytes": {
+          "const": 8838595
+        },
+        "selectedStep": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "networkConfig": {
+          "type": "object"
+        },
+        "restored": {
+          "type": "object",
+          "required": [
+            "normalizer",
+            "policy",
+            "value",
+            "optimizer"
+          ],
+          "properties": {
+            "normalizer": {
+              "const": true
+            },
+            "policy": {
+              "const": true
+            },
+            "value": {
+              "const": true
+            },
+            "optimizer": {
+              "const": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": {
+          "const": "reset"
+        },
+        "mode": {
+          "const": "deterministic_motion_rollout"
+        },
+        "scope": {
+          "const": "capture_state_generation_and_evaluation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "vector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "formalCaptureGate": {
+            "const": "passed"
+          }
+        },
+        "required": [
+          "formalCaptureGate"
+        ]
+      },
+      "then": {
+        "properties": {
+          "policyStatus": {
+            "const": "capture_candidate"
+          },
+          "qualityAssessment": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              },
+              "meanEpisodeLengthGate": {
+                "const": true
+              },
+              "deterministicSuiteGate": {
+                "const": true
+              },
+              "tests": {
+                "not": {
+                  "contains": {
+                    "properties": {
+                      "result": {
+                        "const": "fail"
+                      }
+                    },
+                    "required": [
+                      "result"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "logDiagnostics": {
+            "properties": {
+              "clean": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

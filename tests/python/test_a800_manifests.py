@@ -404,6 +404,32 @@ def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:
     assert "worldspec-h1-calibration-4mklr/calibration-checkpoint.zip" in wrapper
 
 
+def test_capture_calibration_binds_both_policies_and_fails_closed() -> None:
+    entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(
+        encoding="utf-8"
+    )
+    wrapper = (ROOT / "scripts" / "run_a800_h1_capture_calibration.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert '"loaded_track_settle_capture"' in entrypoint
+    assert "run_capture_calibration" in entrypoint
+    assert "WORLDSPEC_A800_CAPTURE_RESULT=" in entrypoint
+    assert '"runtimeAcceptance": "research_capture"' in entrypoint
+    assert '"capture_candidate"' in entrypoint
+    assert "REPORT_SCHEMA=h1-locomotion-capture-report.schema.json" in launcher
+    assert "GATE_FIELD=formalCaptureGate" in launcher
+    assert "/scratch/results/artifacts/capture-state-bank.npz" in launcher
+    assert "locomotion-calibration.a800.passed.json" in wrapper
+    assert "locomotion-transition.a800.failed.json" in wrapper
+    assert "worldspec-h1-calibration-4mklr/calibration-checkpoint.zip" in wrapper
+    assert "worldspec-h1-midterm-nxszt/midterm-checkpoint.zip" in wrapper
+    assert "run_a800_h1_locomotion_midterm.sh" in wrapper
+
+
 def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> None:
     (job,) = _documents("h1-locomotion-formal-job.yaml")
     assert job["metadata"]["namespace"] == "worldspec-a800-poc"

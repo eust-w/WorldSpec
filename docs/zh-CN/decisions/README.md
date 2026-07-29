@@ -25,5 +25,6 @@ last-verified: 2026-07-29
 - [ADR-0015 H1 过渡制动课程与 CCD 单候选探针](0015-h1-transition-braking-calibration.md)
 - [ADR-0016 H1 站立回放与教师动作蒸馏](0016-h1-stand-retention-distillation.md)
 - [ADR-0017 H1 行走与站立双策略 Supervisor](0017-h1-dual-policy-supervisor.md)
+- [ADR-0018 H1 运动状态 Capture Policy](0018-h1-motion-state-capture-policy.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

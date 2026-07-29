@@ -28,6 +28,7 @@ def make_environment(
     profile: dict[str, Any],
     training_model: Path,
     stand_teacher_policy: Any | None = None,
+    capture_state_bank: dict[str, Any] | None = None,
 ):
     """Create an MJX environment bound to the derived composition model."""
 
@@ -158,9 +159,32 @@ def make_environment(
             self._zero_command_probability = float(command["zeroCommandProbability"])
             self._calibration_enabled = isinstance(training_environment, dict)
             self._transition_curriculum = None
+            self._capture_curriculum = None
+            self._capture_state_bank = None
             self._stand_teacher_policy = stand_teacher_policy
             self._stand_replay_probability = 0.0
             self._stand_distillation_sigma = 1.0
+            if capture_state_bank is not None:
+                required = {"qpos", "qvel", "last_action"}
+                if set(capture_state_bank) != required:
+                    raise TrainingError(
+                        "CAPTURE_STATE_BANK_INVALID",
+                        "Capture state bank must contain qpos, qvel, and last_action.",
+                    )
+                bank = {key: jp.asarray(value) for key, value in capture_state_bank.items()}
+                count = int(bank["qpos"].shape[0])
+                if (
+                    count <= 0
+                    or bank["qvel"].shape[0] != count
+                    or bank["last_action"].shape != (count, self.action_size)
+                    or bank["qpos"].shape[1] != self._mj_model.nq
+                    or bank["qvel"].shape[1] != self._mj_model.nv
+                ):
+                    raise TrainingError(
+                        "CAPTURE_STATE_BANK_SHAPE_INVALID",
+                        "Capture state bank does not match the target model ABI.",
+                    )
+                self._capture_state_bank = bank
             if self._calibration_enabled:
                 termination = training_environment["termination"]
                 self._minimum_height = float(termination["minimumBaseHeight"])
@@ -207,6 +231,10 @@ def make_environment(
                             "TRAINING_STAND_TEACHER_MISSING",
                             "Stand replay with distillation requires a bound teacher policy.",
                         )
+                capture = training_environment.get("captureCurriculum")
+                if isinstance(capture, dict):
+                    self._capture_curriculum = capture
+                    self._capture_steps = int(capture["captureSteps"])
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
                 self._minimum_upright = float(validation["minimumUprightCosine"])
@@ -280,12 +308,27 @@ def make_environment(
             )
 
         def reset(self, rng):
-            rng, command_rng = jax.random.split(rng)
-            command, transition_active, stand_replay_active = self.sample_cycle(command_rng)
+            rng, command_rng, bank_rng = jax.random.split(rng, 3)
+            if self._capture_state_bank is not None:
+                bank_size = self._capture_state_bank["qpos"].shape[0]
+                bank_index = jax.random.randint(bank_rng, (), 0, bank_size)
+                qpos = self._capture_state_bank["qpos"][bank_index]
+                qvel = self._capture_state_bank["qvel"][bank_index]
+                last_action = self._capture_state_bank["last_action"][bank_index]
+                command = jp.zeros(3)
+                transition_active = jp.asarray(False)
+                stand_replay_active = jp.asarray(False)
+                capture_active = jp.asarray(True)
+            else:
+                qpos = self._initial_qpos
+                qvel = jp.zeros(self.mjx_model.nv)
+                last_action = jp.zeros(self.action_size)
+                command, transition_active, stand_replay_active = self.sample_cycle(command_rng)
+                capture_active = jp.asarray(self._capture_curriculum is not None)
             data = mjx_env.make_data(
                 self.mj_model,
-                qpos=self._initial_qpos,
-                qvel=jp.zeros(self.mjx_model.nv),
+                qpos=qpos,
+                qvel=qvel,
                 ctrl=jp.zeros(self.mjx_model.nu),
                 impl=self.mjx_model.impl.value,
                 naconmax=config.naconmax,
@@ -298,7 +341,8 @@ def make_environment(
                 "command": command,
                 "transition_active": transition_active,
                 "stand_replay_active": stand_replay_active,
-                "last_action": jp.zeros(self.action_size),
+                "capture_active": capture_active,
+                "last_action": last_action,
                 "step": jp.zeros((), dtype=jp.int32),
                 "termination": {
                     "joint_limit": jp.zeros((), dtype=bool),
@@ -332,6 +376,7 @@ def make_environment(
                 "state/upright_cosine": jp.zeros(()),
                 "state/transition_settle": jp.zeros(()),
                 "state/stand_replay": jp.zeros(()),
+                "state/capture": jp.zeros(()),
             }
             observation = {"state": self._observation(data, info["last_action"], info["command"])}
             return mjx_env.State(
@@ -383,6 +428,7 @@ def make_environment(
                 "stand_replay_active",
                 jp.asarray(False),
             )
+            capture_active = state.info.get("capture_active", jp.asarray(False))
             if self._transition_curriculum is not None:
                 _, settle_phase, _ = transition_phase_masks(
                     state.info["step"],
@@ -391,7 +437,7 @@ def make_environment(
                 )
                 transition_settle = transition_active & settle_phase
             else:
-                transition_settle = jp.asarray(False)
+                transition_settle = capture_active
             settle_linear_reward = jp.zeros(())
             settle_yaw_reward = jp.zeros(())
             stand_distillation_reward = jp.zeros(())
@@ -405,7 +451,7 @@ def make_environment(
                     -height_error / float(self._reward_sigmas["baseHeight"])
                 )
                 pose_reward = jp.exp(-pose_cost / float(self._reward_sigmas["pose"]))
-                if self._transition_curriculum is not None:
+                if self._transition_curriculum is not None or self._capture_curriculum is not None:
                     settle_sigma = float(self._reward_sigmas["settleTracking"])
                     settle_linear_reward = (
                         jp.exp(-jp.sum(jp.square(local_velocity[:2])) / settle_sigma)
@@ -419,7 +465,10 @@ def make_environment(
                         float(self._reward_config["settleActionRateScale"]),
                         1.0,
                     )
-                    if self._stand_teacher_policy is not None:
+                    if (
+                        self._transition_curriculum is not None
+                        and self._stand_teacher_policy is not None
+                    ):
                         teacher_observation = dict(state.obs)
                         teacher_observation["state"] = teacher_observation["state"].at[-3:].set(0.0)
                         teacher_action, _ = self._stand_teacher_policy(
@@ -522,6 +571,11 @@ def make_environment(
                     sampled_stand_replay_active,
                     stand_replay_active,
                 )
+            elif self._capture_curriculum is not None:
+                resample = step >= self._capture_steps
+                next_command = jp.zeros(3)
+                next_transition_active = jp.asarray(False)
+                next_stand_replay_active = jp.asarray(False)
             else:
                 resample = step >= self._command_resample_steps
                 next_command = jp.where(resample, self.sample_command(command_rng), command)
@@ -535,6 +589,7 @@ def make_environment(
                     "command": next_command,
                     "transition_active": next_transition_active,
                     "stand_replay_active": next_stand_replay_active,
+                    "capture_active": capture_active,
                     "last_action": action,
                     "step": next_step,
                     "termination": {
@@ -572,6 +627,7 @@ def make_environment(
                     "state/upright_cosine": upvector[2],
                     "state/transition_settle": transition_settle.astype(reward.dtype),
                     "state/stand_replay": stand_replay_active.astype(reward.dtype),
+                    "state/capture": capture_active.astype(reward.dtype),
                 },
             )
             observation = {"state": self._observation(data, action, next_command)}

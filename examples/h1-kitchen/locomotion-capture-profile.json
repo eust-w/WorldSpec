@@ -1,0 +1,142 @@
+{
+  "id": "captureprofile://worldspec/h1-menagerie-right-robotiq/motion-state-capture-v1",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "loaded_track_settle_capture",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:79baed154978e9e33eca4b82b65d54e3b9de93a4d542c73111838251c87cf879",
+    "containerDigest": "sha256:79baed154978e9e33eca4b82b65d54e3b9de93a4d542c73111838251c87cf879",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50
+  },
+  "warmStart": {
+    "sourceStage": "stand-v2.1",
+    "sourceReportDigest": "sha256:8a92a910ca52540fff50bab37e20e7e28d4ea06ae0acd20d0079e8b45e65f660",
+    "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "checkpointSizeBytes": 6280684,
+    "distribution": "internal_only",
+    "restore": {
+      "normalizer": true,
+      "policy": true,
+      "value": true
+    },
+    "optimizerState": "reset"
+  },
+  "motionTeacher": {
+    "sourceStage": "loaded-track-settle-transition-v2-failed",
+    "sourceReportDigest": "sha256:1d7310274a58e78e21570fe0916c23af49573f41d769037393967d41ce89705d",
+    "checkpointDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+    "checkpointSizeBytes": 8838595,
+    "distribution": "internal_only",
+    "mode": "deterministic_motion_rollout",
+    "scope": "capture_state_generation_and_evaluation"
+  },
+  "trainingOverrides": {
+    "numTimesteps": 8388608,
+    "numEnvs": 4096,
+    "numEvals": 6,
+    "episodeLength": 100,
+    "unrollLength": 20,
+    "numMinibatches": 16,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256,
+    "learningRate": 0.0001,
+    "entropyCost": 0.003
+  },
+  "environment": {
+    "commandDistribution": {
+      "linearVelocityX": [
+        0.0,
+        0.0
+      ],
+      "linearVelocityY": [
+        0.0,
+        0.0
+      ],
+      "angularVelocityYaw": [
+        0.0,
+        0.0
+      ],
+      "zeroCommandProbability": 1.0
+    },
+    "captureCurriculum": {
+      "mode": "motion_snapshot_to_zero",
+      "snapshotCount": 4096,
+      "handoffStepRange": [
+        140,
+        159
+      ],
+      "captureSteps": 100,
+      "motionCommandDistribution": {
+        "linearVelocityX": [
+          0.4,
+          0.6
+        ],
+        "linearVelocityY": [
+          -0.05,
+          0.05
+        ],
+        "angularVelocityYaw": [
+          -0.1,
+          0.1
+        ]
+      }
+    },
+    "termination": {
+      "minimumBaseHeight": 0.5,
+      "minimumUprightCosine": 0.25,
+      "jointLimitToleranceRadians": 0.02
+    },
+    "reward": {
+      "survival": 3.0,
+      "trackingLinear": 6.0,
+      "trackingYaw": 2.0,
+      "upright": 3.0,
+      "baseHeight": 2.0,
+      "pose": 0.5,
+      "verticalVelocityCost": 1.0,
+      "angularVelocityXYCost": 0.5,
+      "torqueCost": 0.000002,
+      "actionRateCost": 0.03,
+      "settleLinear": 12.0,
+      "settleYaw": 5.0,
+      "settleActionRateScale": 0.25
+    },
+    "targets": {
+      "baseHeight": 0.98
+    },
+    "sigmas": {
+      "tracking": 0.2,
+      "upright": 0.05,
+      "baseHeight": 0.02,
+      "pose": 0.2,
+      "settleTracking": 0.05
+    },
+    "commandResampleSteps": 100
+  },
+  "qualityGates": {
+    "minimumFinalMeanEpisodeLength": 90.0,
+    "nominalDurationSeconds": 4.0,
+    "moveDurationSeconds": 3.0,
+    "settleWindowSeconds": 1.0,
+    "settleMeasurementWindowSeconds": 0.2,
+    "requiredConsecutivePasses": 5,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "maximumLateralDrift": 0.2,
+    "maximumTrackingRmse": 0.25,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "maximumSettleLinearSpeed": 0.2,
+    "maximumSettleAngularSpeed": 0.4,
+    "maximumStandPlanarDrift": 0.2,
+    "maximumNonFiniteSamples": 0
+  },
+  "artifactPolicy": {
+    "checkpoint": "research_only",
+    "snapshotBank": "research_only",
+    "distribution": "internal_only"
+  },
+  "evidenceStatus": "derived"
+}

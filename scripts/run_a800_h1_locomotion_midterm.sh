@@ -65,9 +65,15 @@ if [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_DUAL_POLICY_RESULT=
   REPORT_SCHEMA=h1-locomotion-dual-policy-report.schema.json
   GATE_FIELD=formalProbeGate
+elif [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
+  REPORT_FILENAME=capture-report.json
+  REPORT_MARKER=WORLDSPEC_A800_CAPTURE_RESULT=
+  REPORT_SCHEMA=h1-locomotion-capture-report.schema.json
+  GATE_FIELD=formalCaptureGate
 fi
 if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
-  [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
+  [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
   for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: retention teacher input is not readable: %s\n' \
@@ -138,13 +144,21 @@ if (
     or len(checkpoint_payload) != source["checkpointSizeBytes"]
 ):
     raise SystemExit("stand checkpoint identity mismatch")
-if profile["stage"] in {"loaded_track_settle_retention", "dual_policy_switch_probe"}:
+if profile["stage"] in {
+    "loaded_track_settle_retention",
+    "dual_policy_switch_probe",
+    "loaded_track_settle_capture",
+}:
     teacher_report_payload = pathlib.Path(sys.argv[4]).read_bytes()
     teacher_checkpoint_payload = pathlib.Path(sys.argv[5]).read_bytes()
     teacher = (
         profile["standPolicy"]
         if profile["stage"] == "dual_policy_switch_probe"
-        else profile["retentionTeacher"]
+        else (
+            profile["motionTeacher"]
+            if profile["stage"] == "loaded_track_settle_capture"
+            else profile["retentionTeacher"]
+        )
     )
     if (
         f"sha256:{hashlib.sha256(teacher_report_payload).hexdigest()}"
@@ -329,7 +343,8 @@ PY
         --expected-size "${checkpoint_size}" \
         --expected-digest "${checkpoint_digest}"
       if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
-        [[ "${profile_stage}" == "dual_policy_switch_probe" ]]; then
+        [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
         read -r teacher_report_size teacher_report_digest \
           teacher_checkpoint_size teacher_checkpoint_digest < <(
           python3 - \
@@ -420,6 +435,10 @@ if gate_field == "formalProbeGate":
     report["controllerStatus"] = (
         "candidate" if report[gate_field] == "passed" else "non_publishable"
     )
+elif gate_field == "formalCaptureGate":
+    report["policyStatus"] = (
+        "capture_candidate" if report[gate_field] == "passed" else "non_publishable"
+    )
 report_path.write_text(
     json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     encoding="utf-8",
@@ -467,6 +486,27 @@ PY
           --destination "${local_result_dir}/midterm-checkpoint.zip" \
           --expected-size "${checkpoint_size}" \
           --expected-digest "${checkpoint_digest}"
+        if [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
+          read -r snapshot_size snapshot_digest < <(
+            python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
+import json
+import pathlib
+import sys
+report = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+snapshot = report["snapshotBank"]
+print(snapshot["sizeBytes"], snapshot["digest"])
+PY
+          )
+          python3 "${CHUNK_COPY}" \
+            --kubeconfig "${KUBECONFIG_PATH}" \
+            --namespace "${K8S_NAMESPACE}" \
+            --pod "${pod_name}" \
+            --container midterm \
+            --remote-path /scratch/results/artifacts/capture-state-bank.npz \
+            --destination "${local_result_dir}/capture-state-bank.npz" \
+            --expected-size "${snapshot_size}" \
+            --expected-digest "${snapshot_digest}"
+        fi
       fi
       python3 "${CHUNK_COPY}" \
         --kubeconfig "${KUBECONFIG_PATH}" \

@@ -1,6 +1,6 @@
 # WorldSpec JSON Schema 0.1
 
-All schemas use JSON Schema Draft 2020-12. `world-definition.schema.json` is the canonical world entry point; ingestion, generation, build, runtime, rights, task/control/predicate profiles, task-run evidence, H1 composition, locomotion adapter/training/calibration profiles and conformance/results, worker jobs, artifacts, reports, and certificates have separate entry schemas.
+All schemas use JSON Schema Draft 2020-12. `world-definition.schema.json` is the canonical world entry point; ingestion, generation, build, runtime, rights, task/control/predicate profiles, task-run evidence, H1 composition, locomotion adapter/training/calibration/capture profiles and conformance/results, worker jobs, artifacts, reports, and certificates have separate entry schemas.
 
 `target-profile.schema.json` only describes certified execution targets (`mujoco` and `threejs`). OpenUSD is an ingestion format represented by `ingestion-profile.schema.json`; it is not an Isaac Sim certification claim.
 

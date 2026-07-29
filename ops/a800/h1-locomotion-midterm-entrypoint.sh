@@ -163,11 +163,19 @@ if profile["runtime"]["containerImage"] != sys.argv[5]:
     raise SystemExit("midterm Profile container image mismatch")
 if profile["runtime"]["packageLockDigest"] != sys.argv[6]:
     raise SystemExit("midterm Profile package lock mismatch")
-if stage in {"loaded_track_settle_retention", "dual_policy_switch_probe"}:
+if stage in {
+    "loaded_track_settle_retention",
+    "dual_policy_switch_probe",
+    "loaded_track_settle_capture",
+}:
     teacher = (
         profile["standPolicy"]
         if stage == "dual_policy_switch_probe"
-        else profile["retentionTeacher"]
+        else (
+            profile["motionTeacher"]
+            if stage == "loaded_track_settle_capture"
+            else profile["retentionTeacher"]
+        )
     )
     teacher_filename = sys.argv[8]
     if not teacher_filename:
@@ -199,11 +207,22 @@ if stage in {"loaded_track_settle_retention", "dual_policy_switch_probe"}:
     ):
         raise SystemExit("retention teacher checkpoint identity mismatch")
     teacher_report = json.loads(teacher_input_report)
-    if (
-        teacher_report["qualityAssessment"]["status"] != "passed"
-        or teacher_report["researchCheckpoint"]["digest"] != teacher_checkpoint_digest
-    ):
-        raise SystemExit("retention teacher evidence is not the passing stand-v2.1 source")
+    if teacher_report["researchCheckpoint"]["digest"] != teacher_checkpoint_digest:
+        raise SystemExit("auxiliary policy report/checkpoint lineage mismatch")
+    if teacher["sourceStage"] == "stand-v2.1":
+        if teacher_report["qualityAssessment"]["status"] != "passed":
+            raise SystemExit("stand teacher evidence is not passing")
+    elif teacher["sourceStage"] == "loaded-track-settle-transition-v2-failed":
+        if (
+            teacher_report["qualityAssessment"]["status"] != "failed"
+            or teacher_report["formalTrainingGate"] != "failed"
+            or teacher_report["policyStatus"] != "non_publishable"
+            or teacher_report["training"]["profileStage"]
+            != "loaded_track_settle_transition"
+        ):
+            raise SystemExit("motion teacher is not the frozen transition-v2 evidence")
+    else:
+        raise SystemExit("unsupported auxiliary policy source stage")
 PY
 
 stage installed_runtime
@@ -260,6 +279,7 @@ from pathlib import Path
 import jax
 
 from worldspec_h1_training.contract import read_json
+from worldspec_h1_training.capture import run_capture_calibration
 from worldspec_h1_training.dual_policy import run_dual_policy_probe
 from worldspec_h1_training.midterm import run_midterm_calibration
 
@@ -277,6 +297,16 @@ midterm_profile = read_json(
 )
 if midterm_profile["stage"] == "dual_policy_switch_probe":
     result = run_dual_policy_probe(
+        base_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+    )
+elif midterm_profile["stage"] == "loaded_track_settle_capture":
+    result = run_capture_calibration(
         base_profile,
         midterm_profile,
         Path(os.environ["BUNDLE_DIR"]),
@@ -381,6 +411,33 @@ if midterm_profile["stage"] == "dual_policy_switch_probe":
     }
     print(
         "WORLDSPEC_A800_DUAL_POLICY_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "loaded_track_settle_capture":
+    report = {
+        "id": (
+            "capture-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_motion_state_capture_calibration",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_capture",
+        "policyStatus": (
+            "capture_candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalCaptureGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_CAPTURE_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 else:
