@@ -39,11 +39,12 @@ Select option A:
 
 ## Evidence boundary
 
-This ADR and its Profile, Schema, Worker, and Job are only an `Accepted Design`
-and implementation baseline. Until a real A800 report exists, they do not prove
-that:
+This ADR and its Profile, Schema, Worker, and Job are an `Accepted Design` and
+implementation baseline. The CCD=50 spike passed on a real A800 over 4,096
+environments and 200 steps with zero iteration advisories and capacity
+overflows; this releases only transition calibration. Until that calibration
+report exists, they do not prove that:
 
-- CCD=50 resolves the numerical issue;
 - the transition curriculum improves settling;
 - the midterm policy passes;
 - formal 100M training is released.

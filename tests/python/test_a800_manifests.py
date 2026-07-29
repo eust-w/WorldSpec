@@ -354,6 +354,13 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     ).read_text(encoding="utf-8")
     assert "WORLD_SPEC_CCD_SPIKE_REPORT" in transition_launcher
     assert 'report.get("status") != "passed"' in transition_launcher
+    assert 'report.get("transitionProfileDigest") != profile_digest' in (
+        transition_launcher
+    )
+    assert 'report.get("container", {}).get("image")' in transition_launcher
+    assert '"selectionPolicy": "single_predeclared_candidate"' in (
+        transition_launcher
+    )
     assert 'report.get("logDiagnostics", {}).get("clean") is not True' in (
         transition_launcher
     )

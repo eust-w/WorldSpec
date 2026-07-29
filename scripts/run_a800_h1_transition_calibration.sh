@@ -20,16 +20,39 @@ done
 
 python3 - "${TRANSITION_PROFILE}" "${CCD_REPORT}" <<'PY'
 import json
+import hashlib
 import pathlib
 import sys
 
 profile = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 report = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
 expected = profile["runtime"]["ccdIterations"]
+profile_digest = "sha256:" + hashlib.sha256(
+    json.dumps(
+        profile,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode()
+).hexdigest()
 if (
     report.get("status") != "passed"
     or report.get("runtimeAcceptance") != "numeric_spike"
+    or report.get("canonicalTrainingStatus") != "not_executed"
+    or report.get("transitionProfileDigest") != profile_digest
+    or report.get("container", {}).get("image")
+    != profile["runtime"]["containerImage"]
+    or report.get("runtimePreflight", {}).get("ccdIterations") != expected
     or report.get("target", {}).get("appliedCcdIterations") != expected
+    or report.get("candidate")
+    != {
+        "baselineIterations": 35,
+        "candidateIterations": 50,
+        "numEnvs": 4096,
+        "rolloutSteps": 200,
+        "selectionPolicy": "single_predeclared_candidate",
+    }
     or report.get("logDiagnostics", {}).get("clean") is not True
 ):
     raise SystemExit("CCD numeric spike did not release transition calibration")

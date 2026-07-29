@@ -217,5 +217,7 @@ option A: retain every original gate, add an explicit 150-step-motion to
 50-step-zero-command curriculum and settling rewards, and first run the single
 CCD `35 → 50` numerical candidate. The spike must emit no iteration advisory
 or capacity overflow over a 4,096-environment, 200-step trace; otherwise
-calibration does not start. This remains an implemented, not-yet-run experiment
-and is not improvement evidence.
+calibration does not start. The CCD spike has now passed on a real A800 with
+zero iteration advisories, CCD-capacity overflows, and other capacity
+overflows. It proves only that the declared CCD=50 numerical spike is clean;
+it is not settling-improvement evidence.
