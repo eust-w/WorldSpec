@@ -221,3 +221,23 @@ calibration does not start. The CCD spike has now passed on a real A800 with
 zero iteration advisories, CCD-capacity overflows, and other capacity
 overflows. It proves only that the declared CCD=50 numerical spike is clean;
 it is not settling-improvement evidence.
+
+### 2026-07-29 transition-calibration result
+
+`loaded_track_settle_transition` completed 17,203,200 reported steps on the
+same class of single A800. Post-walk maximum settling linear speed improved
+from 0.4788–0.4883 m/s to 0.4020–0.4377 m/s, and maximum angular speed from
+0.5349–0.5940 rad/s to 0.4131–0.4529 rad/s, but all five walking tests still
+exceeded the original gates.
+
+At the same time, zero-command stand regression degraded from 5/5 to 0/5:
+planar drift reached 0.5112–0.5447 m and settling linear speed was
+0.2220–0.2825 m/s. Final mean episode length decreased from 972.125 to
+903.4375. The run had no NaNs, joint-limit violations, capacity overflows, or
+abnormal-contact diagnostics. The curriculum improved part of the braking
+signal but degraded stand retention and overall quality, so the formal gate
+failed, no 100M Job was created, and no automatic tuning or retry followed.
+
+See the normalized
+[`locomotion-transition.a800.failed.json`](../../../examples/h1-kitchen/locomotion-transition.a800.failed.json)
+report.

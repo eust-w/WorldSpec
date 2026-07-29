@@ -42,8 +42,8 @@ Select option A:
 This ADR and its Profile, Schema, Worker, and Job are an `Accepted Design` and
 implementation baseline. The CCD=50 spike passed on a real A800 over 4,096
 environments and 200 steps with zero iteration advisories and capacity
-overflows; this releases only transition calibration. Until that calibration
-report exists, they do not prove that:
+overflows. The subsequent transition calibration completed but failed its
+gate. The evidence does not prove that:
 
 - the transition curriculum improves settling;
 - the midterm policy passes;
@@ -51,6 +51,19 @@ report exists, they do not prove that:
 
 Even a passing transition calibration only releases formal locomotion training;
 it is not evidence for the complete kitchen task or L3.
+
+## Executed result
+
+The transition calibration reached 17,203,200 reported steps with a final mean
+episode length of 903.4375. Post-walk maximum settling linear speed improved to
+0.4020–0.4377 m/s and angular speed to 0.4131–0.4529 rad/s, but both remained
+above the original gates. More importantly, all five zero-command stand
+regressions failed with planar drift of 0.5112–0.5447 m. Option A therefore
+does not release formal training, and no 100M Job was created.
+
+See the complete normalized
+[`locomotion-transition.a800.failed.json`](../../../examples/h1-kitchen/locomotion-transition.a800.failed.json)
+report.
 
 ## Consequences
 
