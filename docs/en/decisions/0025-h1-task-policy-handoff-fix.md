@@ -55,4 +55,3 @@ this ADR decides only the new A5-CF control variant.
 - Historical A5-C/A5-CI replay does not implicitly enable the new Supervisor.
 - A new A800 failure requires a new evidence-based decision before expanding
   the repair.
-

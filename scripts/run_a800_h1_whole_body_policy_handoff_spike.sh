@@ -4,6 +4,7 @@ set -Eeuo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 export WORLD_SPEC_MIDTERM_PROFILE="${ROOT_DIR}/examples/h1-kitchen/whole-body-policy-handoff-profile.json"
+export WORLD_SPEC_IMAGE_SOURCE_REVISION="441429dbbd2ee8c0c9a9b1d76a5652d64e7d46d8"
 export WORLD_SPEC_WARM_START_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-transition.a800.failed.json"
 export WORLD_SPEC_WARM_START_CHECKPOINT="${ROOT_DIR}/runs/a800/worldspec-h1-midterm-nxszt/midterm-checkpoint.zip"
 export WORLD_SPEC_RETENTION_TEACHER_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-capture.a800.passed.json"
