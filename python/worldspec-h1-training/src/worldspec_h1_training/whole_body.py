@@ -16,6 +16,7 @@ import json
 import math
 import tempfile
 from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -82,6 +83,38 @@ WHOLE_BODY_GATES = {
 
 A5R_FAILED_REPORT_DIGEST = "sha256:c55d67244d28d3abdfef787b7858fceabea61a534fe1beb674fdc3bad7a67da0"
 
+TASK_POLICY_HANDOFF = {
+    "mode": "hysteretic_motion_capture_blend_stand",
+    "initialPolicy": "stand",
+    "motionEntryThreshold": 0.05,
+    "motionExitThreshold": 0.02,
+    "captureGate": copy.deepcopy(SUPERVISOR["captureGate"]),
+    "blendSteps": SUPERVISOR["handoff"]["blendSteps"],
+    "policyObservationCommandDuringHandoff": [0.0, 0.0, 0.0],
+    "motionReentry": "allowed_above_entry_threshold",
+}
+
+A5CI_DIAGNOSTIC_EVIDENCE = {
+    "attemptId": "a5ci-replay-05",
+    "baseControlProfileDigest": (
+        "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd"
+    ),
+    "replayProfileDigest": (
+        "sha256:aa4ce7769044c26902745a9f054c6b18310c850f178c2f43295386e9fba1832c"
+    ),
+    "passedSummaryDigest": (
+        "sha256:bb005cb91d983f8174205b8a9cfb102152e58e512822debef46c0c6c7b7501a5"
+    ),
+    "replayReportDigest": (
+        "sha256:b3fff6a7a8845eef6eddbb2f7f67da51bc5f34771c081dcb22d5ddd717ddeff8"
+    ),
+    "traceDigest": ("sha256:c7da0c7becb3fc84e0b06199fa622364cac9ccd29453b5a79aa9b0a70eec20a7"),
+    "terminalReason": "joint_limit",
+    "terminalJoint": "right_hip_yaw",
+    "formalDiagnosticReplayGate": "passed",
+    "formalControlGate": "failed",
+}
+
 DIAGNOSTIC_TERMINATION_CHANNELS = (
     "joint_limit",
     "fall_height",
@@ -90,6 +123,115 @@ DIAGNOSTIC_TERMINATION_CHANNELS = (
 )
 DIAGNOSTIC_JOINT_GROUPS = ("policy", "held")
 DIAGNOSTIC_ACTUATOR_GROUPS = ("policy", "held", "gripper")
+
+
+@dataclass
+class TaskPolicyHandoffState:
+    """Task-phase leg-policy supervisor with a guarded stop transition.
+
+    The task-space QP may request small planar corrections after the passing A4
+    locomotion supervisor has already reached stand.  A5-C used a single
+    command-norm threshold and switched motion directly to stand.  This state
+    machine adds hysteresis and reuses the independently validated capture and
+    five-step blend path for every motion-to-stand transition.
+    """
+
+    phase: str = "stand"
+    capture_steps: int = 0
+    stable_steps: int = 0
+    blend_steps: int = 0
+    handoff_failed: bool = False
+
+    def prepare(self, command_norm: float) -> str:
+        """Update phase from the current requested command before inference."""
+
+        if not math.isfinite(command_norm) or command_norm < 0.0:
+            raise TrainingError(
+                "TASK_POLICY_COMMAND_INVALID",
+                "Task policy handoff requires a finite non-negative command norm.",
+            )
+        entry = TASK_POLICY_HANDOFF["motionEntryThreshold"]
+        exit_threshold = TASK_POLICY_HANDOFF["motionExitThreshold"]
+        if self.phase == "stand":
+            if command_norm >= entry:
+                self._enter_motion()
+        elif self.phase == "motion":
+            if command_norm <= exit_threshold:
+                self._enter_capture()
+        elif self.phase in {"capture", "blend"}:
+            if command_norm >= entry:
+                self._enter_motion()
+        else:
+            raise TrainingError(
+                "TASK_POLICY_PHASE_INVALID",
+                f"Unsupported task policy handoff phase: {self.phase}",
+            )
+        return self.phase
+
+    def select(self, motion_action, capture_action, stand_action):
+        """Return action, active policy label, and stand-blend alpha."""
+
+        if self.phase == "motion":
+            return motion_action, "motion", 0.0
+        if self.phase == "capture":
+            return capture_action, "capture", 0.0
+        if self.phase == "blend":
+            total = TASK_POLICY_HANDOFF["blendSteps"]
+            alpha = (self.blend_steps + 1) / total
+            return (
+                (1.0 - alpha) * capture_action + alpha * stand_action,
+                "blend",
+                alpha,
+            )
+        if self.phase == "stand":
+            return stand_action, "stand", 1.0
+        raise TrainingError(
+            "TASK_POLICY_PHASE_INVALID",
+            f"Unsupported task policy handoff phase: {self.phase}",
+        )
+
+    def observe(self, active_phase: str, linear_speed: float, angular_speed: float) -> None:
+        """Advance capture and blend only after observing the executed step."""
+
+        capture = TASK_POLICY_HANDOFF["captureGate"]
+        if active_phase == "capture":
+            self.capture_steps += 1
+            stable = (
+                linear_speed <= capture["maximumLinearSpeed"]
+                and angular_speed <= capture["maximumAngularSpeed"]
+            )
+            self.stable_steps = self.stable_steps + 1 if stable else 0
+            if (
+                self.capture_steps >= capture["minimumSteps"]
+                and self.stable_steps >= capture["requiredConsecutiveStableSteps"]
+            ):
+                self.phase = "blend"
+                self.blend_steps = 0
+            elif self.capture_steps >= capture["maximumSteps"]:
+                self.handoff_failed = True
+        elif active_phase == "blend":
+            self.blend_steps += 1
+            if self.blend_steps >= TASK_POLICY_HANDOFF["blendSteps"]:
+                self.phase = "stand"
+        elif active_phase not in {"motion", "stand"}:
+            raise TrainingError(
+                "TASK_POLICY_PHASE_INVALID",
+                f"Unsupported observed task policy phase: {active_phase}",
+            )
+
+    def _enter_motion(self) -> None:
+        self.phase = "motion"
+        self.capture_steps = 0
+        self.stable_steps = 0
+        self.blend_steps = 0
+        self.handoff_failed = False
+
+    def _enter_capture(self) -> None:
+        self.phase = "capture"
+        self.capture_steps = 0
+        self.stable_steps = 0
+        self.blend_steps = 0
+        self.handoff_failed = False
 
 
 def _finite_number(value: object) -> bool:
@@ -1040,6 +1182,24 @@ def validate_whole_body_profile(
             "WHOLE_BODY_GATES_INVALID",
             "A5-C Spike gates cannot be relaxed.",
         )
+    task_policy_handoff = profile.get("taskPolicyHandoff")
+    diagnostic_evidence = profile.get("diagnosticEvidence")
+    if (task_policy_handoff is None) != (diagnostic_evidence is None):
+        raise TrainingError(
+            "WHOLE_BODY_HANDOFF_LINEAGE_INCOMPLETE",
+            "A5-CF requires both the handoff contract and its A5-CI diagnostic evidence.",
+        )
+    if task_policy_handoff is not None:
+        if task_policy_handoff != TASK_POLICY_HANDOFF:
+            raise TrainingError(
+                "WHOLE_BODY_HANDOFF_INVALID",
+                "A5-CF must use the frozen hysteretic capture-blend handoff contract.",
+            )
+        if diagnostic_evidence != A5CI_DIAGNOSTIC_EVIDENCE:
+            raise TrainingError(
+                "WHOLE_BODY_HANDOFF_EVIDENCE_MISMATCH",
+                "A5-CF must remain bound to the passing A5-CI failure evidence.",
+            )
     runtime = profile.get("runtime", {})
     if (
         runtime.get("ccdIterations") != 50
@@ -1091,6 +1251,7 @@ def evaluate_whole_body_control_spike(
     motion_policy,
     capture_policy,
     stand_policy,
+    task_policy_handoff: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     import jax
     import jax.numpy as jp
@@ -1105,6 +1266,7 @@ def evaluate_whole_body_control_spike(
     rng = jax.random.PRNGKey(profile["training"]["seed"])
     state = reset(rng)
     supervisor = SupervisorState()
+    task_supervisor = TaskPolicyHandoffState() if task_policy_handoff is not None else None
     traces: list[dict[str, Any]] = []
     nonfinite = 0
     done_seen = False
@@ -1177,7 +1339,17 @@ def evaluate_whole_body_control_spike(
                 maximum_projected_gradient,
                 control["qpProjectedGradient"],
             )
-        state = with_inputs(state, command, held_targets, feedforward)
+        policy_command = command
+        task_handoff_phase = None
+        task_handoff_alpha = None
+        if not (moving or transitioning) and task_supervisor is not None:
+            command_norm = float(np.linalg.norm(np.asarray(command)))
+            task_handoff_phase = task_supervisor.prepare(command_norm)
+            if task_handoff_phase != "motion":
+                policy_command = jp.asarray(
+                    task_policy_handoff["policyObservationCommandDuringHandoff"]
+                )
+        state = with_inputs(state, policy_command, held_targets, feedforward)
         rng, motion_rng, capture_rng, stand_rng = jax.random.split(rng, 4)
         motion_action, _ = motion_inference(state.obs, motion_rng)
         capture_action, _ = capture_inference(state.obs, capture_rng)
@@ -1185,6 +1357,12 @@ def evaluate_whole_body_control_spike(
         if moving or transitioning:
             action, active_policy, _ = supervisor.select(
                 moving,
+                motion_action,
+                capture_action,
+                stand_action,
+            )
+        elif task_supervisor is not None:
+            action, active_policy, task_handoff_alpha = task_supervisor.select(
                 motion_action,
                 capture_action,
                 stand_action,
@@ -1237,6 +1415,14 @@ def evaluate_whole_body_control_spike(
                 failure = "locomotion_handoff_timeout"
             site = None
         else:
+            if task_supervisor is not None:
+                task_supervisor.observe(
+                    active_policy,
+                    float(np.linalg.norm(linear)),
+                    float(np.linalg.norm(angular)),
+                )
+                if task_supervisor.handoff_failed:
+                    failure = failure or "task_policy_handoff_timeout"
             metrics = _task_metrics(env, state)
             target_phase = "stand_ready" if phase == "whole_body_settle" else "reach_handle"
             target = _target_for_phase(target_phase, metrics)
@@ -1272,6 +1458,17 @@ def evaluate_whole_body_control_spike(
             "control": control,
             "site": site,
         }
+        if task_supervisor is not None and not (moving or transitioning):
+            record["policyCommand"] = [_trace_number(value) for value in np.asarray(policy_command)]
+            record["taskPolicyHandoff"] = {
+                "phase": task_handoff_phase,
+                "blendAlpha": _trace_number(task_handoff_alpha),
+                "requestedCommandNorm": _trace_number(np.linalg.norm(np.asarray(command))),
+                "captureSteps": task_supervisor.capture_steps,
+                "stableSteps": task_supervisor.stable_steps,
+                "blendSteps": task_supervisor.blend_steps,
+                "handoffFailed": task_supervisor.handoff_failed,
+            }
         traces.append(record)
         diagnostic_errors = _diagnostic_trace_errors(record, profile["control"])
         if diagnostic_errors:
@@ -1324,6 +1521,13 @@ def evaluate_whole_body_control_spike(
                 "maximumControlUtilization": diagnostic_assessment["maximumControlUtilization"],
                 "diagnosticStatus": diagnostic_assessment["status"],
                 "diagnosticReasons": diagnostic_assessment["reasons"],
+                "taskPolicyHandoffEnabled": task_supervisor is not None,
+                "taskPolicyFinalPhase": (
+                    task_supervisor.phase if task_supervisor is not None else None
+                ),
+                "taskPolicyHandoffFailed": (
+                    task_supervisor.handoff_failed if task_supervisor is not None else False
+                ),
             },
         },
         traces,
@@ -1393,6 +1597,7 @@ def run_whole_body_control_spike(
             policies["motion"],
             policies["capture"],
             policies["stand"],
+            profile.get("taskPolicyHandoff"),
         )
     trace_path = output_dir / "evaluation-traces.jsonl"
     with trace_path.open("w", encoding="utf-8") as stream:
@@ -1404,6 +1609,11 @@ def run_whole_body_control_spike(
         "profileDigest": digest_json(profile),
         "supervisorProfileDigest": digest_json(supervisor_profile),
         "controller": copy.deepcopy(WHOLE_BODY_CONTROLLER),
+        **(
+            {"taskPolicyHandoff": copy.deepcopy(profile["taskPolicyHandoff"])}
+            if "taskPolicyHandoff" in profile
+            else {}
+        ),
         "scene": copy.deepcopy(TASK_SCENE),
         "policies": {
             role: {
@@ -1434,6 +1644,11 @@ def run_whole_body_control_spike(
         },
         "scene": copy.deepcopy(TASK_SCENE),
         "controller": copy.deepcopy(WHOLE_BODY_CONTROLLER),
+        **(
+            {"taskPolicyHandoff": copy.deepcopy(profile["taskPolicyHandoff"])}
+            if "taskPolicyHandoff" in profile
+            else {}
+        ),
         "qualityAssessment": {
             "status": "passed" if passed else "failed",
             "tests": [test],

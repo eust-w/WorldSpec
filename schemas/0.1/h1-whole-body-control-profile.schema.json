@@ -96,6 +96,38 @@
         "maximumNonFiniteSamples": 0
       }
     },
+    "diagnosticEvidence": {
+      "const": {
+        "attemptId": "a5ci-replay-05",
+        "baseControlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+        "replayProfileDigest": "sha256:aa4ce7769044c26902745a9f054c6b18310c850f178c2f43295386e9fba1832c",
+        "passedSummaryDigest": "sha256:bb005cb91d983f8174205b8a9cfb102152e58e512822debef46c0c6c7b7501a5",
+        "replayReportDigest": "sha256:b3fff6a7a8845eef6eddbb2f7f67da51bc5f34771c081dcb22d5ddd717ddeff8",
+        "traceDigest": "sha256:c7da0c7becb3fc84e0b06199fa622364cac9ccd29453b5a79aa9b0a70eec20a7",
+        "terminalReason": "joint_limit",
+        "terminalJoint": "right_hip_yaw",
+        "formalDiagnosticReplayGate": "passed",
+        "formalControlGate": "failed"
+      }
+    },
+    "taskPolicyHandoff": {
+      "const": {
+        "mode": "hysteretic_motion_capture_blend_stand",
+        "initialPolicy": "stand",
+        "motionEntryThreshold": 0.05,
+        "motionExitThreshold": 0.02,
+        "captureGate": {
+          "minimumSteps": 20,
+          "maximumSteps": 40,
+          "maximumLinearSpeed": 0.12,
+          "maximumAngularSpeed": 0.2,
+          "requiredConsecutiveStableSteps": 5
+        },
+        "blendSteps": 5,
+        "policyObservationCommandDuringHandoff": [0.0, 0.0, 0.0],
+        "motionReentry": "allowed_above_entry_threshold"
+      }
+    },
     "runtime": {
       "type": "object",
       "required": [
@@ -135,6 +167,10 @@
         "l3Claim": "forbidden"
       }
     }
+  },
+  "dependentRequired": {
+    "diagnosticEvidence": ["taskPolicyHandoff"],
+    "taskPolicyHandoff": ["diagnosticEvidence"]
   },
   "additionalProperties": false
 }

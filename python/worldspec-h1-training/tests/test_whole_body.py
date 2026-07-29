@@ -10,9 +10,12 @@ import pytest
 from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.whole_body import (
+    A5CI_DIAGNOSTIC_EVIDENCE,
     A5R_FAILED_REPORT_DIGEST,
+    TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
     WHOLE_BODY_GATES,
+    TaskPolicyHandoffState,
     WholeBodyTaskSpaceController,
     assess_diagnostic_trace,
     compare_whole_body_traces,
@@ -28,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[3]
 BASE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 SUPERVISOR = ROOT / "examples" / "h1-kitchen" / "locomotion-supervisor-profile.json"
 CONTROL = ROOT / "examples" / "h1-kitchen" / "whole-body-control-profile.json"
+HANDOFF = ROOT / "examples" / "h1-kitchen" / "whole-body-policy-handoff-profile.json"
 
 
 def _profiles() -> tuple[dict, dict, dict]:
@@ -59,6 +63,73 @@ def test_a5c_effective_profile_uses_single_environment_runtime() -> None:
     assert effective["training"]["numEnvs"] == 1
     assert effective["runtime"]["ccdIterations"] == 50
     assert effective["runtime"]["mjxCapacity"] == control["runtime"]["mjxCapacity"]
+
+
+def test_a5cf_profile_binds_exact_diagnostic_evidence_and_handoff() -> None:
+    base, supervisor, _ = _profiles()
+    handoff = json.loads(HANDOFF.read_text(encoding="utf-8"))
+
+    validate_whole_body_profile(base, supervisor, handoff)
+
+    assert handoff["diagnosticEvidence"] == A5CI_DIAGNOSTIC_EVIDENCE
+    assert handoff["taskPolicyHandoff"] == TASK_POLICY_HANDOFF
+    assert handoff["qualityGates"] == WHOLE_BODY_GATES
+
+
+@pytest.mark.parametrize("missing", ["diagnosticEvidence", "taskPolicyHandoff"])
+def test_a5cf_rejects_partial_handoff_lineage(missing: str) -> None:
+    base, supervisor, _ = _profiles()
+    handoff = json.loads(HANDOFF.read_text(encoding="utf-8"))
+    handoff.pop(missing)
+
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, handoff)
+
+    assert captured.value.code == "WHOLE_BODY_HANDOFF_LINEAGE_INCOMPLETE"
+
+
+def test_task_policy_handoff_uses_hysteresis_capture_and_blend() -> None:
+    state = TaskPolicyHandoffState()
+    motion = np.asarray([1.0])
+    capture = np.asarray([2.0])
+    stand = np.asarray([3.0])
+
+    assert state.prepare(0.02) == "stand"
+    action, policy, alpha = state.select(motion, capture, stand)
+    assert (action.tolist(), policy, alpha) == ([3.0], "stand", 1.0)
+
+    assert state.prepare(0.06) == "motion"
+    assert state.prepare(0.03) == "motion"
+    action, policy, alpha = state.select(motion, capture, stand)
+    assert (action.tolist(), policy, alpha) == ([1.0], "motion", 0.0)
+
+    assert state.prepare(0.019) == "capture"
+    for _ in range(20):
+        action, policy, alpha = state.select(motion, capture, stand)
+        assert (action.tolist(), policy, alpha) == ([2.0], "capture", 0.0)
+        state.observe(policy, linear_speed=0.01, angular_speed=0.01)
+    assert state.phase == "blend"
+
+    blend_actions = []
+    for _ in range(TASK_POLICY_HANDOFF["blendSteps"]):
+        action, policy, alpha = state.select(motion, capture, stand)
+        blend_actions.append((action.item(), alpha))
+        state.observe(policy, linear_speed=0.01, angular_speed=0.01)
+    assert blend_actions[0] == pytest.approx((2.2, 0.2))
+    assert blend_actions[-1] == pytest.approx((3.0, 1.0))
+    assert state.phase == "stand"
+
+
+def test_task_policy_handoff_allows_motion_reentry_before_completion() -> None:
+    state = TaskPolicyHandoffState()
+    state.prepare(0.06)
+    state.prepare(0.01)
+    assert state.phase == "capture"
+
+    state.observe("capture", linear_speed=0.5, angular_speed=0.5)
+    assert state.prepare(0.051) == "motion"
+    assert state.capture_steps == 0
+    assert state.handoff_failed is False
 
 
 @pytest.mark.parametrize(
@@ -436,3 +507,10 @@ def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
     ).read_text(encoding="utf-8")
     assert "whole-body-control-profile.json" in wrapper
     assert "100000000" not in wrapper
+
+    handoff_wrapper = (
+        ROOT / "scripts" / "run_a800_h1_whole_body_policy_handoff_spike.sh"
+    ).read_text(encoding="utf-8")
+    assert "whole-body-policy-handoff-profile.json" in handoff_wrapper
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in handoff_wrapper
+    assert "100000000" not in handoff_wrapper

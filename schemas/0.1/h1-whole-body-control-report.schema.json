@@ -74,6 +74,9 @@
     "target": { "type": "object" },
     "scene": { "type": "object" },
     "controller": { "type": "object" },
+    "taskPolicyHandoff": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/taskPolicyHandoff"
+    },
     "qualityAssessment": {
       "type": "object",
       "required": ["status", "tests"],

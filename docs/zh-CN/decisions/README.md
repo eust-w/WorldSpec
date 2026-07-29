@@ -29,5 +29,9 @@ last-verified: 2026-07-29
 - [ADR-0019 H1 相位感知三策略 Supervisor](0019-h1-phase-aware-supervisor.md)
 - [ADR-0020 H1 固定厨房全闭环集成探针](0020-h1-fixed-kitchen-integration.md)
 - [ADR-0021 H1 A5 首次行为失败后的处理](0021-h1-a5-failure-response.md)
+- [ADR-0022 H1 A5-R 动态控制失败](0022-h1-a5r-dynamic-control-failure.md)
+- [ADR-0023 H1 A5-C 控制 Spike 失败](0023-h1-a5c-control-spike-failure.md)
+- [ADR-0024 H1 A5-CI 修正重放](0024-h1-a5ci-corrected-replay.md)
+- [ADR-0025 H1 任务阶段腿部策略安全交接](0025-h1-task-policy-handoff-fix.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。
