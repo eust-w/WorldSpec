@@ -16,6 +16,7 @@ from worldspec_h1_training.manipulation_balance import (
     DYNAMIC_ARM_CURRICULUM,
     MOTION_TEACHER,
     PREVIOUS_ATTEMPT,
+    PREVIOUS_QUALITY_FAILURE,
     QUALITY_GATES,
     RUNTIME_FAILURE,
     SNAPSHOT_CURRICULUM,
@@ -50,6 +51,7 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
     assert profile["a6k1CaptureFailure"] == A6K1_CAPTURE_FAILURE
     assert profile["previousAttempt"] == PREVIOUS_ATTEMPT
     assert profile["runtimeFailure"] == RUNTIME_FAILURE
+    assert profile["previousQualityFailure"] == PREVIOUS_QUALITY_FAILURE
     assert profile["checkpointSelection"] == CHECKPOINT_SELECTION
     assert effective["training"]["numTimesteps"] == 16_777_216
     assert effective["training"]["numEnvs"] == 4096
@@ -129,6 +131,35 @@ def test_manipulation_balance_rejects_runtime_failure_lineage_drift() -> None:
 
     with pytest.raises(TrainingError, match="runtimeFailure"):
         validate_manipulation_balance_profile(base, profile)
+
+
+def test_manipulation_balance_rejects_previous_quality_failure_drift() -> None:
+    base, profile = _profiles()
+    profile["previousQualityFailure"]["selectedStep"] += 1
+
+    with pytest.raises(TrainingError, match="previousQualityFailure"):
+        validate_manipulation_balance_profile(base, profile)
+
+
+def test_manipulation_balance_adds_unbounded_recovery_costs() -> None:
+    base, profile = _profiles()
+
+    effective = make_manipulation_balance_training_profile(base, profile)
+
+    reward = effective["trainingEnvironment"]["reward"]
+    assert reward["baseAnchorErrorCost"] == 25.0
+    assert reward["settleLinearErrorCost"] == 2.0
+
+    source = (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "environment.py"
+    ).read_text(encoding="utf-8")
+    assert "legacy_reward = jp.clip(" in source
+    assert "reward = legacy_reward - unbounded_recovery_cost * self.dt" in source
 
 
 def test_manipulation_balance_rejects_quality_gate_relaxation() -> None:

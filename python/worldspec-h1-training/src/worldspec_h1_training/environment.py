@@ -552,6 +552,9 @@ def make_environment(
                 "cost/vertical_velocity": jp.zeros(()),
                 "cost/angular_velocity_xy": jp.zeros(()),
                 "cost/pose": jp.zeros(()),
+                "cost/base_anchor": jp.zeros(()),
+                "cost/settle_linear_error": jp.zeros(()),
+                "cost/unbounded_recovery": jp.zeros(()),
                 "cost/torque": jp.zeros(()),
                 "cost/action_rate": jp.zeros(()),
                 "cost/teacher_action_mse": jp.zeros(()),
@@ -660,6 +663,8 @@ def make_environment(
             settle_yaw_reward = jp.zeros(())
             stand_distillation_reward = jp.zeros(())
             settle_distillation_reward = jp.zeros(())
+            settle_linear_error = jp.zeros(())
+            unbounded_recovery_cost = jp.zeros(())
             teacher_action_mse = jp.zeros(())
             stand_teacher_action_mse = jp.zeros(())
             settle_teacher_action_mse = jp.zeros(())
@@ -684,10 +689,12 @@ def make_environment(
                         and self._anchor_recovery is not None
                         else jp.zeros(3)
                     )
+                    settle_linear_error = jp.sum(
+                        jp.square(settle_command[:2] - local_velocity[:2])
+                    )
                     settle_linear_reward = (
                         jp.exp(
-                            -jp.sum(jp.square(settle_command[:2] - local_velocity[:2]))
-                            / settle_sigma
+                            -settle_linear_error / settle_sigma
                         )
                         * transition_settle
                     )
@@ -738,7 +745,7 @@ def make_environment(
                     )
                 else:
                     action_rate_scale = 1.0
-                reward = jp.clip(
+                legacy_reward = jp.clip(
                     (
                         float(self._reward_config["survival"]) * survival_reward
                         + float(self._reward_config["trackingLinear"]) * tracking_linear
@@ -770,6 +777,13 @@ def make_environment(
                     * self.dt,
                     0.0,
                 )
+                unbounded_recovery_cost = (
+                    float(self._reward_config.get("baseAnchorErrorCost", 0.0))
+                    * base_anchor_error
+                    + float(self._reward_config.get("settleLinearErrorCost", 0.0))
+                    * settle_linear_error
+                )
+                reward = legacy_reward - unbounded_recovery_cost * self.dt
                 torque_cost = raw_torque_cost * float(self._reward_config["torqueCost"])
                 action_rate_cost = (
                     raw_action_rate_cost
@@ -901,6 +915,9 @@ def make_environment(
                     "cost/vertical_velocity": vertical_cost,
                     "cost/angular_velocity_xy": angular_velocity_xy_cost,
                     "cost/pose": pose_cost,
+                    "cost/base_anchor": base_anchor_error,
+                    "cost/settle_linear_error": settle_linear_error,
+                    "cost/unbounded_recovery": unbounded_recovery_cost,
                     "cost/torque": torque_cost,
                     "cost/action_rate": action_rate_cost,
                     "cost/teacher_action_mse": teacher_action_mse,

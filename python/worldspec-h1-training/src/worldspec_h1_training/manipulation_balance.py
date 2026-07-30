@@ -30,13 +30,30 @@ from .trainer import _deterministic_zip, _flat_observation_size, _host_float
 from .warm_start import materialize_warm_start, validate_network_compatibility
 
 CAPTURE_WARM_START = {
-    "sourceStage": "loaded-track-settle-manipulation-mixed-reset-v3-failed",
-    "sourceReportDigest": "sha256:54598b80cdf26f0ba0a21108373fc97bac2c8e5bc0b936174a770d73b8c4f2bf",
-    "checkpointDigest": "sha256:89618f878a8aee343bde51ba36fc1271d18de732896ba9c2dffac981ba8b936e",
-    "checkpointSizeBytes": 8_796_941,
+    "sourceStage": "loaded-track-settle-manipulation-suite-isolated-v11-failed",
+    "sourceReportDigest": "sha256:68185f1a8c32f3d6ad4053618faf3684b82b346fcd1f6af77218d719eaf5eacd",
+    "checkpointDigest": "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e",
+    "checkpointSizeBytes": 1_264_042,
     "distribution": "internal_only",
     "restore": {"normalizer": True, "policy": True, "value": True},
     "optimizerState": "reset",
+}
+
+PREVIOUS_QUALITY_FAILURE = {
+    "job": "worldspec-h1-midterm-hnhb6",
+    "probeRevision": "765fdf930aaad9b9d9cd78f6aa48d6303a194e5d",
+    "reportDigest": "sha256:1230c13509a66677f4d91f534f5e19a6a6e5b936abdf5196ce0d2c85e41d32b3",
+    "reportSizeBytes": 34_691,
+    "checkpointDigest": "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e",
+    "checkpointSizeBytes": 1_264_042,
+    "traceDigest": "sha256:11863642d9fc04e146a08696c0d021914b1ab17dd598292bf18a4bdb32555e8d",
+    "traceSizeBytes": 434_095,
+    "snapshotBankDigest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+    "formalGate": "failed",
+    "selectedStep": 4_915_200,
+    "postWalkTestsPassed": 4,
+    "fromRestTestsPassed": 5,
+    "qualityGatesChanged": False,
 }
 
 MOTION_TEACHER = {
@@ -331,11 +348,13 @@ REWARD = {
     "baseHeight": 3.0,
     "pose": 0.5,
     "baseAnchor": 12.0,
+    "baseAnchorErrorCost": 25.0,
     "verticalVelocityCost": 1.0,
     "angularVelocityXYCost": 0.5,
     "torqueCost": 0.000002,
     "actionRateCost": 0.03,
     "settleLinear": 12.0,
+    "settleLinearErrorCost": 2.0,
     "settleYaw": 5.0,
     "settleActionRateScale": 0.2,
     "terminationPenalty": 100.0,
@@ -372,6 +391,7 @@ def validate_manipulation_balance_profile(
         "a6k1CaptureFailure": A6K1_CAPTURE_FAILURE,
         "previousAttempt": PREVIOUS_ATTEMPT,
         "runtimeFailure": RUNTIME_FAILURE,
+        "previousQualityFailure": PREVIOUS_QUALITY_FAILURE,
         "checkpointSelection": CHECKPOINT_SELECTION,
         "trainingOverrides": TRAINING_OVERRIDES,
         "environment": {
@@ -1299,6 +1319,7 @@ def run_manipulation_balance_calibration(
         "a6k1CaptureFailure": copy.deepcopy(A6K1_CAPTURE_FAILURE),
         "previousAttempt": copy.deepcopy(PREVIOUS_ATTEMPT),
         "runtimeFailure": copy.deepcopy(RUNTIME_FAILURE),
+        "previousQualityFailure": copy.deepcopy(PREVIOUS_QUALITY_FAILURE),
         "checkpointSelection": {
             **copy.deepcopy(CHECKPOINT_SELECTION),
             "selectedStep": selected_assessment["step"],

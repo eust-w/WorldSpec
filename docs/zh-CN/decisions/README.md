@@ -51,5 +51,6 @@ last-verified: 2026-07-30
 - [ADR-0041 H1 操作平衡 Checkpoint 组合门控](0041-h1-manipulation-checkpoint-portfolio.md)
 - [ADR-0042 H1 Checkpoint 组合评估显存隔离](0042-h1-manipulation-checkpoint-memory-isolation.md)
 - [ADR-0043 H1 操作平衡训练与评估进程隔离](0043-h1-manipulation-process-isolation.md)
+- [ADR-0044 H1 操作平衡无界恢复成本](0044-h1-manipulation-unbounded-recovery.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

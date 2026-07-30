@@ -186,6 +186,24 @@
         "qualityGatesChanged": false
       }
     },
+    "previousQualityFailure": {
+      "const": {
+        "job": "worldspec-h1-midterm-hnhb6",
+        "probeRevision": "765fdf930aaad9b9d9cd78f6aa48d6303a194e5d",
+        "reportDigest": "sha256:1230c13509a66677f4d91f534f5e19a6a6e5b936abdf5196ce0d2c85e41d32b3",
+        "reportSizeBytes": 34691,
+        "checkpointDigest": "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e",
+        "checkpointSizeBytes": 1264042,
+        "traceDigest": "sha256:11863642d9fc04e146a08696c0d021914b1ab17dd598292bf18a4bdb32555e8d",
+        "traceSizeBytes": 434095,
+        "snapshotBankDigest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+        "formalGate": "failed",
+        "selectedStep": 4915200,
+        "postWalkTestsPassed": 4,
+        "fromRestTestsPassed": 5,
+        "qualityGatesChanged": false
+      }
+    },
     "checkpointSelection": {
       "type": "object",
       "required": [
