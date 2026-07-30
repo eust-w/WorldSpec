@@ -397,6 +397,19 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "task-load warm-start checkpoint identity mismatch" in (
         task_load_launcher
     )
+    assert '("report", pathlib.Path(sys.argv[4]), "reportDigest")' in (
+        task_load_launcher
+    )
+    assert '("controller", pathlib.Path(sys.argv[5]), "controllerDigest")' in (
+        task_load_launcher
+    )
+    assert '("trace", pathlib.Path(sys.argv[6]), "traceDigest")' in (
+        task_load_launcher
+    )
+    assert 'raise SystemExit(f"A5-CK {label} digest mismatch")' in (
+        task_load_launcher
+    )
+    assert "A5-CK trace record count mismatch" in task_load_launcher
     assert "run_a800_h1_locomotion_midterm.sh" in task_load_launcher
 
 
