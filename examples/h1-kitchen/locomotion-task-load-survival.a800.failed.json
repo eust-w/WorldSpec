@@ -1,0 +1,823 @@
+{
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "checkpointSelection": {
+    "candidateCount": 7,
+    "candidates": [
+      {
+        "deterministicSuiteGate": true,
+        "expectedTestCount": 10,
+        "formalGate": false,
+        "meanEpisodeLength": 672.453125,
+        "meanEpisodeLengthGate": false,
+        "normalizedViolationScore": 0.0,
+        "passedTestCount": 10,
+        "step": 2457600
+      },
+      {
+        "deterministicSuiteGate": true,
+        "expectedTestCount": 10,
+        "formalGate": false,
+        "meanEpisodeLength": 579.625,
+        "meanEpisodeLengthGate": false,
+        "normalizedViolationScore": 0.0,
+        "passedTestCount": 10,
+        "step": 4915200
+      },
+      {
+        "deterministicSuiteGate": true,
+        "expectedTestCount": 10,
+        "formalGate": false,
+        "meanEpisodeLength": 641.3515625,
+        "meanEpisodeLengthGate": false,
+        "normalizedViolationScore": 0.0,
+        "passedTestCount": 10,
+        "step": 7372800
+      },
+      {
+        "deterministicSuiteGate": true,
+        "expectedTestCount": 10,
+        "formalGate": false,
+        "meanEpisodeLength": 617.734375,
+        "meanEpisodeLengthGate": false,
+        "normalizedViolationScore": 0.0,
+        "passedTestCount": 10,
+        "step": 9830400
+      },
+      {
+        "deterministicSuiteGate": false,
+        "expectedTestCount": 10,
+        "formalGate": false,
+        "meanEpisodeLength": 621.171875,
+        "meanEpisodeLengthGate": false,
+        "normalizedViolationScore": 0.030603349208831787,
+        "passedTestCount": 7,
+        "step": 12288000
+      },
+      {
+        "deterministicSuiteGate": false,
+        "expectedTestCount": 10,
+        "formalGate": false,
+        "meanEpisodeLength": 543.6640625,
+        "meanEpisodeLengthGate": false,
+        "normalizedViolationScore": 0.5755041172080202,
+        "passedTestCount": 5,
+        "step": 14745600
+      },
+      {
+        "deterministicSuiteGate": false,
+        "expectedTestCount": 10,
+        "formalGate": false,
+        "meanEpisodeLength": 563.734375,
+        "meanEpisodeLengthGate": false,
+        "normalizedViolationScore": 1.1178410199893842,
+        "passedTestCount": 5,
+        "step": 17203200
+      }
+    ],
+    "mode": "deterministic_gate_rank_v1",
+    "selectedFormalGate": false,
+    "selectedStep": 2457600
+  },
+  "container": {
+    "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:e0f101565d232de31b7f44d4f13d9a1616794b5ff0fc2253aacbb49244e29f46",
+    "readOnlyRootFilesystem": true,
+    "runAsGroup": 10001,
+    "runAsUser": 10001,
+    "secretMountCount": 0,
+    "serviceAccountTokenMounted": false
+  },
+  "effectiveTrainingProfileDigest": "sha256:06df4d31484c0bce9a4538d0c7637196da375581a2369b1dd328309b39a34f80",
+  "executionEvidence": "executed",
+  "formalTrainingGate": "failed",
+  "generatedAt": "2026-07-30T03:53:50.946465Z",
+  "gpu": {
+    "driverVersion": "570.195.03",
+    "jaxBackend": "gpu",
+    "jaxDevices": [
+      "cuda:0"
+    ],
+    "memoryMiB": 81920,
+    "name": "NVIDIA A800-SXM4-80GB"
+  },
+  "id": "midterm-report://worldspec/h1-loaded-track-settle/a800-234355fec14d",
+  "imageSource": {
+    "commit": "db73f3226c87e51ede659e2beb73b7c3007fefb6",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "logDiagnostics": {
+    "abnormalContactCount": 0,
+    "capacityOverflowCount": 0,
+    "ccdOverflowCount": 0,
+    "clean": true,
+    "jointLimitViolationCount": 0,
+    "nonFiniteCount": 0
+  },
+  "midtermProfileDigest": "sha256:baeb0128ba57d80d9348f4fc0a57309f0eff51e949a4f0e61755b7c45b1672f2",
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "packages": {
+    "brax": "0.14.2",
+    "flax": "0.11.2",
+    "jax": "0.6.2",
+    "jaxlib": "0.6.2",
+    "jsonschema": "4.26.0",
+    "mujoco": "3.6.0",
+    "mujoco-mjx": "3.6.0",
+    "orbax-checkpoint": "0.11.31",
+    "playground": "0.2.0",
+    "warp-lang": "1.11.0",
+    "worldspec-h1-training": "0.1.0",
+    "worldspec-worker": "0.1.0"
+  },
+  "platform": {
+    "machine": "x86_64",
+    "python": "3.12.11",
+    "system": "Linux"
+  },
+  "policyStatus": "non_publishable",
+  "probeDefinition": {
+    "commit": "234355fec14d0c6d2a0dcad8c5c60a06febf254a",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "probeInput": {
+    "archiveDigest": "sha256:75eeb94dc7b4591a9d5a19e620ff041dd1499d5f50e0d6f47891ccd82fe2b67d",
+    "commit": "234355fec14d0c6d2a0dcad8c5c60a06febf254a",
+    "materialization": "verified_git_archive",
+    "repository": "https://github.com/eust-w/WorldSpec.git"
+  },
+  "qualityAssessment": {
+    "assessmentBasis": "selected_saved_checkpoint",
+    "deterministicSuiteGate": true,
+    "finalMeanEpisodeLength": 672.453125,
+    "meanEpisodeLengthGate": false,
+    "minimumFinalMeanEpisodeLength": 900.0,
+    "status": "failed",
+    "terminalMeanEpisodeLength": 563.734375,
+    "tests": [
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/1",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.2965539693832397,
+          "lateralDrift": 0.026979999616742134,
+          "maximumPlanarDrift": 1.2968346524915018,
+          "maximumSettleAngularSpeed": 0.09059802265018121,
+          "maximumSettleLinearSpeed": 0.0836991975320101,
+          "maximumSettleTeacherActionMse": 1.0815845727920532,
+          "maximumStandTeacherActionMse": 1.1144065856933594,
+          "maximumTeacherActionMse": 1.1144065856933594,
+          "minimumBaseHeight": 0.9882761836051941,
+          "minimumUprightCosine": 0.9950928688049316,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.16670630551183746
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/2",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.2973675727844238,
+          "lateralDrift": 0.011398622766137123,
+          "maximumPlanarDrift": 1.297417645753869,
+          "maximumSettleAngularSpeed": 0.08148910658161251,
+          "maximumSettleLinearSpeed": 0.049006662589070986,
+          "maximumSettleTeacherActionMse": 1.0912930965423584,
+          "maximumStandTeacherActionMse": 1.1173604726791382,
+          "maximumTeacherActionMse": 1.1173604726791382,
+          "minimumBaseHeight": 0.9882806539535522,
+          "minimumUprightCosine": 0.994825005531311,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.16607066830143657
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/3",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.29643976688385,
+          "lateralDrift": 0.021532101556658745,
+          "maximumPlanarDrift": 1.2966185640176906,
+          "maximumSettleAngularSpeed": 0.08439283257438861,
+          "maximumSettleLinearSpeed": 0.08955418562599748,
+          "maximumSettleTeacherActionMse": 1.0813708305358887,
+          "maximumStandTeacherActionMse": 1.1145212650299072,
+          "maximumTeacherActionMse": 1.1145212650299072,
+          "minimumBaseHeight": 0.9882728457450867,
+          "minimumUprightCosine": 0.995618999004364,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.16705521701967907
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/4",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.2964988946914673,
+          "lateralDrift": 0.022946830838918686,
+          "maximumPlanarDrift": 1.2967019476278063,
+          "maximumSettleAngularSpeed": 0.08937275502462817,
+          "maximumSettleLinearSpeed": 0.0774017290525632,
+          "maximumSettleTeacherActionMse": 1.0892887115478516,
+          "maximumStandTeacherActionMse": 1.1143393516540527,
+          "maximumTeacherActionMse": 1.1143393516540527,
+          "minimumBaseHeight": 0.9883183240890503,
+          "minimumUprightCosine": 0.9950951337814331,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.16634255805610942
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-policy/walk_settle/5",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 1.2958171367645264,
+          "lateralDrift": 0.021699152886867523,
+          "maximumPlanarDrift": 1.2959988060058631,
+          "maximumSettleAngularSpeed": 0.09297913001245252,
+          "maximumSettleLinearSpeed": 0.08897860358595355,
+          "maximumSettleTeacherActionMse": 1.0800795555114746,
+          "maximumStandTeacherActionMse": 1.0993343591690063,
+          "maximumTeacherActionMse": 1.0993343591690063,
+          "minimumBaseHeight": 0.9881964921951294,
+          "minimumUprightCosine": 0.9951218366622925,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.16851888176437188
+        },
+        "result": "pass",
+        "suite": "walk_settle"
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/1",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 0.16590771079063416,
+          "lateralDrift": 0.007461455650627613,
+          "maximumPlanarDrift": 0.16607541004078535,
+          "maximumSettleAngularSpeed": 0.03118573168566249,
+          "maximumSettleLinearSpeed": 0.06658445738339303,
+          "maximumSettleTeacherActionMse": 0.5951315760612488,
+          "maximumStandTeacherActionMse": 0.43726760149002075,
+          "maximumTeacherActionMse": 0.5951315760612488,
+          "minimumBaseHeight": 0.9882761836051941,
+          "minimumUprightCosine": 0.9996441602706909,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/2",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 0.1588827222585678,
+          "lateralDrift": 0.002293200697749853,
+          "maximumPlanarDrift": 0.15889927061422704,
+          "maximumSettleAngularSpeed": 0.028797472561640298,
+          "maximumSettleLinearSpeed": 0.04092259458737248,
+          "maximumSettleTeacherActionMse": 0.6146149635314941,
+          "maximumStandTeacherActionMse": 0.45066505670547485,
+          "maximumTeacherActionMse": 0.6146149635314941,
+          "minimumBaseHeight": 0.988280713558197,
+          "minimumUprightCosine": 0.9996708631515503,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/3",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 0.16427932679653168,
+          "lateralDrift": 0.025417715311050415,
+          "maximumPlanarDrift": 0.1662340442399067,
+          "maximumSettleAngularSpeed": 0.02929985119844638,
+          "maximumSettleLinearSpeed": 0.06321025193649309,
+          "maximumSettleTeacherActionMse": 0.5952684283256531,
+          "maximumStandTeacherActionMse": 0.4376032054424286,
+          "maximumTeacherActionMse": 0.5952684283256531,
+          "minimumBaseHeight": 0.9882728457450867,
+          "minimumUprightCosine": 0.999657928943634,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/4",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 0.16047976911067963,
+          "lateralDrift": 0.0023804313968867064,
+          "maximumPlanarDrift": 0.16049742286856922,
+          "maximumSettleAngularSpeed": 0.04861876104414997,
+          "maximumSettleLinearSpeed": 0.04674206990781601,
+          "maximumSettleTeacherActionMse": 0.6231525540351868,
+          "maximumStandTeacherActionMse": 0.4561808109283447,
+          "maximumTeacherActionMse": 0.6231525540351868,
+          "minimumBaseHeight": 0.9883183240890503,
+          "minimumUprightCosine": 0.9996603727340698,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      },
+      {
+        "id": "test://worldspec/h1-policy/stand_regression/5",
+        "metrics": {
+          "completedSteps": 200,
+          "doneSeen": false,
+          "forwardDisplacement": 0.16977179050445557,
+          "lateralDrift": 0.016438813880085945,
+          "maximumPlanarDrift": 0.17056580974179103,
+          "maximumSettleAngularSpeed": 0.17662585817911772,
+          "maximumSettleLinearSpeed": 0.08882864296042732,
+          "maximumSettleTeacherActionMse": 0.2653510868549347,
+          "maximumStandTeacherActionMse": 0.25614163279533386,
+          "maximumTeacherActionMse": 0.2653510868549347,
+          "minimumBaseHeight": 0.9881964921951294,
+          "minimumUprightCosine": 0.999703049659729,
+          "nonFiniteSamples": 0,
+          "requiredSteps": 200,
+          "settleMeasurementWindowSeconds": 0.2,
+          "terminalReasons": [],
+          "trackingRmse": 0.0
+        },
+        "result": "pass",
+        "suite": "stand_regression"
+      }
+    ]
+  },
+  "reportVersion": "0.1.0",
+  "researchCheckpoint": {
+    "digest": "sha256:c8487802fd06f08e2a08fce03e505cee31ec420c50a21559f601327392aab201",
+    "distribution": "internal_only",
+    "path": "midterm-checkpoint.zip",
+    "sizeBytes": 1269304
+  },
+  "runtimeAcceptance": "research_midterm",
+  "runtimeCapacity": {
+    "activeContactsPerEnvironment": 16,
+    "ccdContactsPerEnvironment": 8,
+    "effectiveNaccdmax": 32768,
+    "effectiveNaconmax": 65536,
+    "njmax": 128
+  },
+  "runtimePreflight": {
+    "ccdIterations": 50,
+    "devices": [
+      "cuda:0"
+    ],
+    "executionEvidence": "executed",
+    "jaxBackend": "gpu",
+    "physicsImplementation": "warp",
+    "status": "pass",
+    "versions": {
+      "brax": "0.14.2",
+      "jax": "0.6.2",
+      "mujoco": "3.6.0",
+      "mujoco-mjx": "3.6.0",
+      "playground": "0.2.0",
+      "warp-lang": "1.11.0"
+    }
+  },
+  "scope": "h1_loaded_track_settle_midterm",
+  "settleTeacher": {
+    "archiveDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "archiveSizeBytes": 6280278,
+    "mode": "deterministic_action_distillation",
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "scope": "transition_settle_only",
+    "selectedStep": 8601600
+  },
+  "standTeacher": {
+    "archiveDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "archiveSizeBytes": 6280684,
+    "mode": "deterministic_action_distillation",
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "scope": "stand_replay_only",
+    "selectedStep": 4505600
+  },
+  "staticPreflight": {
+    "bundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b",
+    "executionEvidence": "static_validation",
+    "frameworkDecision": "accepted",
+    "runtimeArtifactStatus": "locked",
+    "status": "pass"
+  },
+  "status": "completed",
+  "target": {
+    "actionSize": 10,
+    "derivedModelDigest": "sha256:f2a7cc5e0df291d778e917c08c02de600830755af6752c55e35131a0c8a0b377",
+    "observationSize": 42,
+    "sourceBundleDigest": "sha256:07e8122f3c922c1ae65e3eca17c34af4cb7a5e92dc926ecb07da9fdbda95938b"
+  },
+  "taskLoadCurriculum": {
+    "heldFeedforward": [
+      0.032988220529269176,
+      -1.1402555002525037,
+      0.08486267857762098,
+      0.012800121336152957,
+      -1.0451398037469817,
+      -0.9578816827225751,
+      0.837737275364864,
+      0.46023224988862355,
+      -4.402542577541209
+    ],
+    "heldTargetScale": [
+      1.0,
+      1.0
+    ],
+    "heldTargets": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1543052911758423,
+      0.09892238825658843,
+      -0.006488978405079102,
+      -0.19852599334400028
+    ],
+    "initialBaseVelocityX": [
+      0.0,
+      0.0
+    ],
+    "mode": "static_right_arm_pose",
+    "observationAugmentation": "none",
+    "qualityGatesChanged": false,
+    "sourceJob": "worldspec-h1-midterm-5nn2q",
+    "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9"
+  },
+  "traceArtifact": {
+    "digest": "sha256:365238557106371159fb9e79d2bf04ff02d0f9cfdbf22ba954a3fd6890bc9350",
+    "path": "evaluation-traces.jsonl",
+    "sizeBytes": 1155056
+  },
+  "training": {
+    "elapsedSeconds": 1119.5427168509923,
+    "finalProgress": {
+      "elapsedSeconds": 712.8528030971065,
+      "metrics": {
+        "eval/avg_episode_length": 563.734375,
+        "eval/episode_cost/action_rate": 7.292555332183838,
+        "eval/episode_cost/action_rate_std": 3.516704797744751,
+        "eval/episode_cost/angular_velocity_xy": 57.855995178222656,
+        "eval/episode_cost/angular_velocity_xy_std": 30.398601531982422,
+        "eval/episode_cost/pose": 50.71357727050781,
+        "eval/episode_cost/pose_std": 23.114721298217773,
+        "eval/episode_cost/settle_teacher_action_mse": 162.5313720703125,
+        "eval/episode_cost/settle_teacher_action_mse_std": 86.2806167602539,
+        "eval/episode_cost/stand_teacher_action_mse": 157.29168701171875,
+        "eval/episode_cost/stand_teacher_action_mse_std": 83.09294891357422,
+        "eval/episode_cost/teacher_action_mse": 187.98313903808594,
+        "eval/episode_cost/teacher_action_mse_std": 98.1795883178711,
+        "eval/episode_cost/termination": 21.2890625,
+        "eval/episode_cost/termination_std": 8.888327598571777,
+        "eval/episode_cost/torque": 3.8956263065338135,
+        "eval/episode_cost/torque_std": 1.8210883140563965,
+        "eval/episode_cost/upright": 9.810894012451172,
+        "eval/episode_cost/upright_std": 2.7121963500976562,
+        "eval/episode_cost/vertical_velocity": 6.878411293029785,
+        "eval/episode_cost/vertical_velocity_std": 1.8133844137191772,
+        "eval/episode_reward": 177.69308471679688,
+        "eval/episode_reward/base_height": 484.7471008300781,
+        "eval/episode_reward/base_height_std": 223.0039520263672,
+        "eval/episode_reward/pose": 377.5535888671875,
+        "eval/episode_reward/pose_std": 188.8931121826172,
+        "eval/episode_reward/settle_distillation": 23.818401336669922,
+        "eval/episode_reward/settle_distillation_std": 14.150055885314941,
+        "eval/episode_reward/settle_linear": 75.48631286621094,
+        "eval/episode_reward/settle_linear_std": 40.79172897338867,
+        "eval/episode_reward/settle_yaw": 98.15403747558594,
+        "eval/episode_reward/settle_yaw_std": 54.54576873779297,
+        "eval/episode_reward/stand_distillation": 83.08218383789062,
+        "eval/episode_reward/stand_distillation_std": 116.19359588623047,
+        "eval/episode_reward/survival": 563.734375,
+        "eval/episode_reward/survival_std": 256.40576171875,
+        "eval/episode_reward/tracking_linear": 412.5328369140625,
+        "eval/episode_reward/tracking_linear_std": 222.88333129882812,
+        "eval/episode_reward/tracking_yaw": 553.1093139648438,
+        "eval/episode_reward/tracking_yaw_std": 254.08843994140625,
+        "eval/episode_reward/upright": 450.9185791015625,
+        "eval/episode_reward/upright_std": 228.94265747070312,
+        "eval/episode_reward_std": 104.51100158691406,
+        "eval/episode_state/base_height": 577.1915283203125,
+        "eval/episode_state/base_height_std": 266.5474853515625,
+        "eval/episode_state/capture": 0.0,
+        "eval/episode_state/capture_std": 0.0,
+        "eval/episode_state/stand_replay": 117.4453125,
+        "eval/episode_state/stand_replay_std": 156.33486938476562,
+        "eval/episode_state/task_load_scale": 563.734375,
+        "eval/episode_state/task_load_scale_std": 256.40576171875,
+        "eval/episode_state/transition_settle": 101.5078125,
+        "eval/episode_state/transition_settle_std": 56.01311111450195,
+        "eval/episode_state/upright_cosine": 558.6087646484375,
+        "eval/episode_state/upright_cosine_std": 256.0185241699219,
+        "eval/episode_termination/fall_height": 0.8515625,
+        "eval/episode_termination/fall_height_std": 0.3555331230163574,
+        "eval/episode_termination/fall_upright": 0.0,
+        "eval/episode_termination/fall_upright_std": 0.0,
+        "eval/episode_termination/joint_limit": 0.0078125,
+        "eval/episode_termination/joint_limit_std": 0.08804240077733994,
+        "eval/episode_termination/nonfinite": 0.0,
+        "eval/episode_termination/nonfinite_std": 0.0,
+        "eval/epoch_eval_time": 21.9054274559021,
+        "eval/sps": 5843.30071885962,
+        "eval/std_episode_length": 256.40576171875,
+        "eval/walltime": 191.14400506019592,
+        "training/entropy_loss": 0.008768588304519653,
+        "training/kl_mean": 0.012897795997560024,
+        "training/learning_rate": 2.000000313273631e-05,
+        "training/policy_dist_max_loc": 5.071000099182129,
+        "training/policy_dist_max_std": 5.269010543823242,
+        "training/policy_dist_mean_loc": -0.210406094789505,
+        "training/policy_dist_mean_std": 0.07945991307497025,
+        "training/policy_dist_min_loc": -4.6086955070495605,
+        "training/policy_dist_min_std": 0.00848290603607893,
+        "training/policy_loss": -0.00310862367041409,
+        "training/sps": 56557.84641487929,
+        "training/total_loss": 0.17903229594230652,
+        "training/v_loss": 0.17337234318256378,
+        "training/walltime": 318.63274812698364
+      },
+      "step": 17203200
+    },
+    "firstProgress": {
+      "elapsedSeconds": 231.8867220543325,
+      "metrics": {
+        "eval/avg_episode_length": 764.71875,
+        "eval/episode_cost/action_rate": 20.333593368530273,
+        "eval/episode_cost/action_rate_std": 7.353017807006836,
+        "eval/episode_cost/angular_velocity_xy": 48.38846969604492,
+        "eval/episode_cost/angular_velocity_xy_std": 29.881914138793945,
+        "eval/episode_cost/pose": 50.800575256347656,
+        "eval/episode_cost/pose_std": 19.25591278076172,
+        "eval/episode_cost/settle_teacher_action_mse": 188.4730224609375,
+        "eval/episode_cost/settle_teacher_action_mse_std": 78.25811767578125,
+        "eval/episode_cost/stand_teacher_action_mse": 170.64857482910156,
+        "eval/episode_cost/stand_teacher_action_mse_std": 74.65851593017578,
+        "eval/episode_cost/teacher_action_mse": 217.46405029296875,
+        "eval/episode_cost/teacher_action_mse_std": 90.162109375,
+        "eval/episode_cost/termination": 14.453125,
+        "eval/episode_cost/termination_std": 12.346468925476074,
+        "eval/episode_cost/torque": 5.143601417541504,
+        "eval/episode_cost/torque_std": 1.9005768299102783,
+        "eval/episode_cost/upright": 4.591435432434082,
+        "eval/episode_cost/upright_std": 2.127802848815918,
+        "eval/episode_cost/vertical_velocity": 5.8148956298828125,
+        "eval/episode_cost/vertical_velocity_std": 3.016460657119751,
+        "eval/episode_reward": 264.69287109375,
+        "eval/episode_reward/base_height": 653.6611328125,
+        "eval/episode_reward/base_height_std": 231.2947540283203,
+        "eval/episode_reward/pose": 571.2620849609375,
+        "eval/episode_reward/pose_std": 214.98558044433594,
+        "eval/episode_reward/settle_distillation": 27.134437561035156,
+        "eval/episode_reward/settle_distillation_std": 13.597145080566406,
+        "eval/episode_reward/settle_linear": 77.04949188232422,
+        "eval/episode_reward/settle_linear_std": 41.19165802001953,
+        "eval/episode_reward/settle_yaw": 127.3553237915039,
+        "eval/episode_reward/settle_yaw_std": 66.78850555419922,
+        "eval/episode_reward/stand_distillation": 127.40328979492188,
+        "eval/episode_reward/stand_distillation_std": 132.34910583496094,
+        "eval/episode_reward/survival": 764.71875,
+        "eval/episode_reward/survival_std": 266.81182861328125,
+        "eval/episode_reward/tracking_linear": 646.185791015625,
+        "eval/episode_reward/tracking_linear_std": 264.2851867675781,
+        "eval/episode_reward/tracking_yaw": 755.4865112304688,
+        "eval/episode_reward/tracking_yaw_std": 266.1300354003906,
+        "eval/episode_reward/upright": 714.63623046875,
+        "eval/episode_reward/upright_std": 265.5368957519531,
+        "eval/episode_reward_std": 116.42064666748047,
+        "eval/episode_state/base_height": 787.9503173828125,
+        "eval/episode_state/base_height_std": 278.4163513183594,
+        "eval/episode_state/capture": 0.0,
+        "eval/episode_state/capture_std": 0.0,
+        "eval/episode_state/stand_replay": 198.0703125,
+        "eval/episode_state/stand_replay_std": 203.4585418701172,
+        "eval/episode_state/task_load_scale": 764.71875,
+        "eval/episode_state/task_load_scale_std": 266.81182861328125,
+        "eval/episode_state/transition_settle": 131.796875,
+        "eval/episode_state/transition_settle_std": 68.27979278564453,
+        "eval/episode_state/upright_cosine": 762.3062133789062,
+        "eval/episode_state/upright_cosine_std": 267.4767761230469,
+        "eval/episode_termination/fall_height": 0.578125,
+        "eval/episode_termination/fall_height_std": 0.49385878443717957,
+        "eval/episode_termination/fall_upright": 0.0,
+        "eval/episode_termination/fall_upright_std": 0.0,
+        "eval/episode_termination/joint_limit": 0.0,
+        "eval/episode_termination/joint_limit_std": 0.0,
+        "eval/episode_termination/nonfinite": 0.0,
+        "eval/episode_termination/nonfinite_std": 0.0,
+        "eval/epoch_eval_time": 29.75871729850769,
+        "eval/sps": 4301.260659726715,
+        "eval/std_episode_length": 266.81182861328125,
+        "eval/walltime": 29.75871729850769
+      },
+      "step": 0
+    },
+    "maximumReportedStep": 17203200,
+    "profileStage": "loaded_track_settle_task_load_survival",
+    "progressRecordCount": 8
+  },
+  "warmStart": {
+    "archiveDigest": "sha256:59697ea50339fa9ad17b9131c3369b761e0ff8345cf649be76549294472a4b8b",
+    "archiveSizeBytes": 6327077,
+    "networkConfig": {
+      "action_size": 10,
+      "network_factory_kwargs": {
+        "activation": "silu",
+        "distribution_type": "tanh_normal",
+        "init_noise_std": 1.0,
+        "mean_clip_scale": null,
+        "mean_kernel_init_fn": null,
+        "mean_kernel_init_kwargs": null,
+        "noise_std_type": "scalar",
+        "num_quantiles": 32,
+        "policy_hidden_layer_sizes": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "policy_network_kernel_init_fn": "lecun_uniform",
+        "policy_network_kernel_init_kwargs": null,
+        "policy_obs_key": "state",
+        "state_dependent_std": false,
+        "use_distributional_critic": false,
+        "value_hidden_layer_sizes": [
+          256,
+          256,
+          256,
+          256,
+          256
+        ],
+        "value_network_kernel_init_fn": "lecun_uniform",
+        "value_network_kernel_init_kwargs": null,
+        "value_obs_key": "state"
+      },
+      "normalize_observations": true,
+      "observation_size": {
+        "state": {
+          "dtype": "unserializable object: float32",
+          "shape": [
+            42
+          ]
+        }
+      }
+    },
+    "optimizerState": "reset",
+    "restored": {
+      "normalizer": true,
+      "optimizer": false,
+      "policy": true,
+      "value": true
+    },
+    "selectedStep": 8601600
+  }
+}

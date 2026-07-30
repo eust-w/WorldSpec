@@ -37,6 +37,9 @@ TASK_LOAD_RETENTION_PROFILE = (
 TASK_LOAD_SURVIVAL_PROFILE = (
     ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-survival-profile.json"
 )
+TASK_LOAD_DEPLOYMENT_EVAL_PROFILE = (
+    ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-deployment-eval-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -317,6 +320,35 @@ def test_task_load_survival_rejects_prior_attempt_drift() -> None:
     profile["priorAttempt"]["sourceReportSizeBytes"] += 1
 
     with pytest.raises(TrainingError, match="frozen failed retention attempt"):
+        validate_task_load_retention_profile(base, profile)
+
+
+def test_task_load_deployment_eval_uses_deterministic_eval_and_warm_candidate() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_DEPLOYMENT_EVAL_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_task_load_retention_training_profile(base, profile)
+
+    assert effective["training"]["deterministicEval"] is True
+    assert effective["training"]["hyperparameterStatus"] == (
+        "research_task_load_deployment_eval_override"
+    )
+    assert profile["checkpointSelection"]["includeWarmStart"] is True
+    assert profile["warmStart"]["checkpointDigest"] == (profile["priorAttempt"]["checkpointDigest"])
+    assert effective["validation"]["minimumFinalMeanEpisodeLength"] == 900.0
+
+
+def test_task_load_deployment_eval_rejects_stochastic_eval_or_lineage_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_DEPLOYMENT_EVAL_PROFILE.read_text(encoding="utf-8"))
+    profile["trainingOverrides"]["deterministicEval"] = False
+
+    with pytest.raises(TrainingError, match="optimizer"):
+        validate_task_load_retention_profile(base, profile)
+
+    profile = json.loads(TASK_LOAD_DEPLOYMENT_EVAL_PROFILE.read_text(encoding="utf-8"))
+    profile["warmStart"]["checkpointDigest"] = "sha256:" + ("0" * 64)
+    with pytest.raises(TrainingError, match="predecessor evidence"):
         validate_task_load_retention_profile(base, profile)
 
 

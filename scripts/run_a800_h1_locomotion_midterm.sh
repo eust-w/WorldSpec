@@ -157,6 +157,7 @@ fi
 if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
   [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
@@ -172,7 +173,8 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
 fi
 if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
-  [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]]; then
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]]; then
   for required in "${SETTLE_TEACHER_REPORT}" "${SETTLE_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: settle teacher input is not readable: %s\n' \
@@ -267,6 +269,7 @@ if profile["stage"] in {
     "loaded_track_settle_retention",
     "loaded_track_settle_task_load_retention",
     "loaded_track_settle_task_load_survival",
+    "loaded_track_settle_task_load_deployment_eval",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -294,6 +297,7 @@ if profile["stage"] in {
                     in {
                         "loaded_track_settle_task_load_retention",
                         "loaded_track_settle_task_load_survival",
+                        "loaded_track_settle_task_load_deployment_eval",
                     }
                     else profile["retentionTeacher"]
                 )
@@ -333,7 +337,8 @@ if profile["stage"] in {
 PY
 
 if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
-  [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]]; then
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]]; then
   python3 - \
     "${MIDTERM_PROFILE}" \
     "${SETTLE_TEACHER_REPORT}" \
@@ -672,6 +677,7 @@ PY
       if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]] ||
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
@@ -712,7 +718,8 @@ PY
           --expected-digest "${teacher_checkpoint_digest}"
       fi
       if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
-        [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]]; then
+        [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]]; then
         read -r settle_report_size settle_report_digest \
           settle_checkpoint_size settle_checkpoint_digest < <(
           python3 - \

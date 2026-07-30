@@ -419,6 +419,24 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "run_a800_h1_task_load_retention_calibration.sh" in (
         task_load_survival_launcher
     )
+    task_load_deployment_eval_launcher = (
+        ROOT / "scripts" / "run_a800_h1_task_load_deployment_eval.sh"
+    ).read_text(encoding="utf-8")
+    assert "locomotion-task-load-deployment-eval-profile.json" in (
+        task_load_deployment_eval_launcher
+    )
+    assert "locomotion-task-load-survival.a800.failed.json" in (
+        task_load_deployment_eval_launcher
+    )
+    assert "worldspec-h1-midterm-59n24/midterm-checkpoint.zip" in (
+        task_load_deployment_eval_launcher
+    )
+    assert "loaded_track_settle_task_load_deployment_eval" in (
+        task_load_deployment_eval_launcher
+    )
+    assert "run_a800_h1_locomotion_midterm.sh" in (
+        task_load_deployment_eval_launcher
+    )
 
 
 def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:

@@ -284,6 +284,7 @@ if stage in {
     "loaded_track_settle_retention",
     "loaded_track_settle_task_load_retention",
     "loaded_track_settle_task_load_survival",
+    "loaded_track_settle_task_load_deployment_eval",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -309,6 +310,7 @@ if stage in {
                     in {
                         "loaded_track_settle_task_load_retention",
                         "loaded_track_settle_task_load_survival",
+                        "loaded_track_settle_task_load_deployment_eval",
                     }
                     else profile["retentionTeacher"]
                 )
@@ -371,6 +373,7 @@ if stage in {
 if stage in {
     "loaded_track_settle_task_load_retention",
     "loaded_track_settle_task_load_survival",
+    "loaded_track_settle_task_load_deployment_eval",
 }:
     settle_filename = sys.argv[20]
     if not settle_filename:
@@ -717,6 +720,7 @@ else:
                 "loaded_track_settle_retention",
                 "loaded_track_settle_task_load_retention",
                 "loaded_track_settle_task_load_survival",
+                "loaded_track_settle_task_load_deployment_eval",
             }
             else None
         ),
@@ -726,6 +730,7 @@ else:
             in {
                 "loaded_track_settle_task_load_retention",
                 "loaded_track_settle_task_load_survival",
+                "loaded_track_settle_task_load_deployment_eval",
             }
             else None
         ),

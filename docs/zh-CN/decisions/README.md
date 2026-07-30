@@ -40,5 +40,6 @@ last-verified: 2026-07-30
 - [ADR-0030 H1 任务载荷感知下肢策略](0030-h1-task-load-aware-locomotion.md)
 - [ADR-0031 H1 任务载荷保持与 Checkpoint 选择](0031-h1-task-load-retention-and-checkpoint-selection.md)
 - [ADR-0032 H1 终端静止保持测量与存活塑形](0032-h1-terminal-hold-and-survival-shaping.md)
+- [ADR-0033 H1 确定性部署评估与 Warm Start 候选](0033-h1-deterministic-deployment-evaluation.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。
