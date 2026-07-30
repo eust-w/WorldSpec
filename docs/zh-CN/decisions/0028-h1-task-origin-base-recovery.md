@@ -41,3 +41,15 @@ A5-CH Job `worldspec-h1-midterm-ddkxh` 在真实 Drobodata A800 上以
 - 固定底座 CPU 预检只能证明右臂跟踪，不证明基座恢复行为。
 - 单次 A5-CJ 不证明物理抓取、抽屉开合、杯子放置、5/5、L3 或 100M 训练。
 - A5-CH 失败证据保持不可变；A5-CJ 不能追溯性改变其结论。
+
+## 执行结果
+
+A5-CJ Job `worldspec-h1-midterm-dlrnk` 已在 Drobodata A800 上真实执行。
+Report、Controller 和 368 行 Trace 已完整回传并通过 SHA-256 校验，但
+`formalControlGate=failed`，终止原因为 `fall_height`，Controller 保持
+`non_publishable`。
+
+Trace 显示任务阶段开始时基座仍有正向残余速度；PD 速度阻尼立即产生负向
+`vx`，而冻结 Motion Policy 的训练命令域为非负纵向速度。随后策略在域外
+命令和手臂扰动下振荡，并在已形成明显后向速度后无法恢复。该结论只解释
+本次 A5-CJ 运行，不追溯修改历史失败结论。

@@ -52,3 +52,17 @@ Adopt one gated A5-CJ run:
   5/5, L3, or 100M training.
 - A5-CH failure evidence remains immutable and A5-CJ cannot retroactively
   change its conclusion.
+
+## Execution result
+
+A5-CJ Job `worldspec-h1-midterm-dlrnk` executed on a real Drobodata A800.
+The Report, Controller, and 368-row Trace were handed off and SHA-256 verified,
+but `formalControlGate=failed` with `fall_height`; the Controller remains
+`non_publishable`.
+
+The Trace shows residual forward base velocity at task entry. PD velocity
+damping immediately produced negative `vx`, while the frozen Motion Policy was
+trained only on non-negative longitudinal commands. The policy then oscillated
+under this out-of-domain command and arm disturbance and could not recover after
+substantial backward velocity developed. This conclusion applies only to this
+A5-CJ run and does not rewrite prior failure evidence.

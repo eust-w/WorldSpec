@@ -14,9 +14,11 @@ from worldspec_h1_training.whole_body import (
     A5CG_FAILURE_EVIDENCE,
     A5CH_FAILURE_EVIDENCE,
     A5CI_DIAGNOSTIC_EVIDENCE,
+    A5CJ_FAILURE_EVIDENCE,
     A5R_FAILED_REPORT_DIGEST,
     BASE_ANCHOR_RECOVERY,
     DYNAMIC_ARM_TRACKING,
+    FORWARD_ONLY_BASE_ANCHOR_RECOVERY,
     TASK_GEOMETRY_CALIBRATION,
     TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
@@ -42,6 +44,9 @@ HANDOFF = ROOT / "examples" / "h1-kitchen" / "whole-body-policy-handoff-profile.
 DYNAMIC_ARM = ROOT / "examples" / "h1-kitchen" / "whole-body-dynamic-arm-profile.json"
 ERGONOMIC_HANDLE = ROOT / "examples" / "h1-kitchen" / "whole-body-ergonomic-handle-profile.json"
 BASE_ANCHOR = ROOT / "examples" / "h1-kitchen" / "whole-body-base-anchor-profile.json"
+FORWARD_ONLY_BASE_ANCHOR = (
+    ROOT / "examples" / "h1-kitchen" / "whole-body-forward-only-base-anchor-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict, dict]:
@@ -244,6 +249,38 @@ def test_base_anchor_recovery_command_rejects_incomplete_or_nonfinite_state() ->
     with pytest.raises(TrainingError) as nonfinite:
         base_anchor_recovery_command([0.0, 0.0], [float("nan"), 0.0], [0.0, 0.0])
     assert nonfinite.value.code == "BASE_ANCHOR_STATE_NONFINITE"
+
+
+def test_a5ck_profile_binds_a5cj_evidence_and_forward_only_contract() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(FORWARD_ONLY_BASE_ANCHOR.read_text(encoding="utf-8"))
+
+    validate_whole_body_profile(base, supervisor, profile)
+
+    assert profile["a5cjEvidence"] == A5CJ_FAILURE_EVIDENCE
+    assert profile["baseAnchorRecovery"] == FORWARD_ONLY_BASE_ANCHOR_RECOVERY
+    command = base_anchor_recovery_command(
+        [1.40, 0.0],
+        [1.45, 0.0],
+        [0.10, 0.0],
+        profile["baseAnchorRecovery"],
+    )
+    assert command == pytest.approx([0.0, 0.0, 0.0])
+
+
+def test_a5ck_rejects_a5cj_evidence_or_command_domain_drift() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(FORWARD_ONLY_BASE_ANCHOR.read_text(encoding="utf-8"))
+    profile["a5cjEvidence"]["traceRecordCount"] = 367
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+    assert captured.value.code == "WHOLE_BODY_FORWARD_ONLY_EVIDENCE_MISMATCH"
+
+    profile = json.loads(FORWARD_ONLY_BASE_ANCHOR.read_text(encoding="utf-8"))
+    profile["baseAnchorRecovery"]["maximumBackwardCommand"] = 0.1
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+    assert captured.value.code == "WHOLE_BODY_BASE_ANCHOR_INVALID"
 
 
 def test_task_policy_handoff_uses_hysteresis_capture_and_blend() -> None:
@@ -693,3 +730,10 @@ def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
     assert "whole-body-base-anchor-profile.json" in base_anchor_wrapper
     assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in base_anchor_wrapper
     assert "100000000" not in base_anchor_wrapper
+
+    forward_only_wrapper = (
+        ROOT / "scripts" / "run_a800_h1_whole_body_forward_only_base_anchor_spike.sh"
+    ).read_text(encoding="utf-8")
+    assert "whole-body-forward-only-base-anchor-profile.json" in forward_only_wrapper
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in forward_only_wrapper
+    assert "100000000" not in forward_only_wrapper

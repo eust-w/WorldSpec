@@ -62,7 +62,8 @@
         },
         "taskPolicyHandoffFailed": { "type": "boolean" },
         "dynamicArmTrackingEnabled": { "type": "boolean" },
-        "taskGeometryCalibrationEnabled": { "type": "boolean" }
+        "taskGeometryCalibrationEnabled": { "type": "boolean" },
+        "baseAnchorRecoveryEnabled": { "type": "boolean" }
       },
       "additionalProperties": false
     },

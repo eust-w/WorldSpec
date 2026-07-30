@@ -1,0 +1,306 @@
+{
+  "id": "controlprofile://worldspec/h1-kitchen/whole-body-forward-only-base-anchor-spike-v1",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "whole_body_task_space_control_spike",
+  "seed": 41,
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "supervisorProfileDigest": "sha256:14912f19403922ccdab5ba9027c8ecd97adcc514ba52035ea1e53e4c8d951355",
+  "failedA5RReportDigest": "sha256:c55d67244d28d3abdfef787b7858fceabea61a534fe1beb674fdc3bad7a67da0",
+  "motionPolicy": {
+    "sourceStage": "loaded-track-settle-transition-v2-failed",
+    "sourceReportDigest": "sha256:1d7310274a58e78e21570fe0916c23af49573f41d769037393967d41ce89705d",
+    "checkpointDigest": "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356",
+    "checkpointSizeBytes": 8838595,
+    "distribution": "internal_only",
+    "selectedRole": "motion"
+  },
+  "capturePolicy": {
+    "sourceStage": "loaded-track-settle-capture-v1-passed",
+    "sourceReportDigest": "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f",
+    "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "checkpointSizeBytes": 6280278,
+    "distribution": "internal_only",
+    "selectedRole": "motion_state_capture"
+  },
+  "standPolicy": {
+    "sourceStage": "stand-v2.1",
+    "sourceReportDigest": "sha256:8a92a910ca52540fff50bab37e20e7e28d4ea06ae0acd20d0079e8b45e65f660",
+    "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "checkpointSizeBytes": 6280684,
+    "distribution": "internal_only",
+    "selectedRole": "zero_velocity_and_stand"
+  },
+  "scene": {
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v3-ergonomic",
+    "evidenceStatus": "generated",
+    "distribution": "internal_only",
+    "drawer": {
+      "closedCenter": [
+        2.03,
+        -0.21,
+        1.085
+      ],
+      "slideAxis": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "range": [
+        0.0,
+        0.24
+      ],
+      "openThreshold": 0.18,
+      "closedThreshold": 0.03
+    },
+    "cup": {
+      "initialCenter": [
+        1.85,
+        -0.21,
+        1.26
+      ],
+      "proxy": "short_cylinder",
+      "massKg": 0.18
+    },
+    "support": {
+      "type": "fixed_box",
+      "center": [
+        1.85,
+        -0.21,
+        1.22
+      ],
+      "halfSize": [
+        0.1,
+        0.09,
+        0.015
+      ]
+    },
+    "graspModel": "physical_contact_only",
+    "hiddenAttachment": false
+  },
+  "controller": {
+    "mode": "hierarchical_box_qp_with_inverse_dynamics_feedforward",
+    "decisionVariables": [
+      "base_velocity_x",
+      "base_velocity_y",
+      "base_yaw_rate",
+      "torso_velocity",
+      "right_shoulder_pitch_velocity",
+      "right_shoulder_roll_velocity",
+      "right_shoulder_yaw_velocity",
+      "right_elbow_velocity"
+    ],
+    "controlledJoints": [
+      "torso",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "qpIterations": 48,
+    "cartesianGain": 4.0,
+    "maximumCartesianSpeed": 0.35,
+    "velocityLowerBounds": [
+      -0.08,
+      -0.06,
+      -0.15,
+      -0.5,
+      -0.8,
+      -0.8,
+      -0.8,
+      -0.8
+    ],
+    "velocityUpperBounds": [
+      0.08,
+      0.06,
+      0.15,
+      0.5,
+      0.8,
+      0.8,
+      0.8,
+      0.8
+    ],
+    "regularization": [
+      2.0,
+      2.0,
+      3.0,
+      0.35,
+      0.15,
+      0.15,
+      0.15,
+      0.15
+    ],
+    "targetHorizonSeconds": 0.4,
+    "maximumJointTargetStep": 0.3,
+    "jointLimitMarginRadians": 0.05,
+    "feedforwardScale": 1.0,
+    "feedforwardControlReserve": 0.2
+  },
+  "diagnosticEvidence": {
+    "attemptId": "a5ci-replay-05",
+    "baseControlProfileDigest": "sha256:84175bdeb52d0b9a9122888e36f8bbd9fd42ccf79adb5c5534f16a5d74d787fd",
+    "replayProfileDigest": "sha256:aa4ce7769044c26902745a9f054c6b18310c850f178c2f43295386e9fba1832c",
+    "passedSummaryDigest": "sha256:bb005cb91d983f8174205b8a9cfb102152e58e512822debef46c0c6c7b7501a5",
+    "replayReportDigest": "sha256:b3fff6a7a8845eef6eddbb2f7f67da51bc5f34771c081dcb22d5ddd717ddeff8",
+    "traceDigest": "sha256:c7da0c7becb3fc84e0b06199fa622364cac9ccd29453b5a79aa9b0a70eec20a7",
+    "terminalReason": "joint_limit",
+    "terminalJoint": "right_hip_yaw",
+    "formalDiagnosticReplayGate": "passed",
+    "formalControlGate": "failed"
+  },
+  "taskPolicyHandoff": {
+    "mode": "hysteretic_motion_capture_blend_stand",
+    "initialPolicy": "stand",
+    "motionEntryThreshold": 0.05,
+    "motionExitThreshold": 0.02,
+    "captureGate": {
+      "minimumSteps": 20,
+      "maximumSteps": 40,
+      "maximumLinearSpeed": 0.12,
+      "maximumAngularSpeed": 0.2,
+      "requiredConsecutiveStableSteps": 5
+    },
+    "blendSteps": 5,
+    "policyObservationCommandDuringHandoff": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "motionReentry": "allowed_above_entry_threshold"
+  },
+  "a5cfEvidence": {
+    "job": "worldspec-h1-midterm-45v9r",
+    "controlProfileDigest": "sha256:2fd53b32393025124967288f39419980f2c1b0b5a46140f91284e86c30202a54",
+    "reportDigest": "sha256:5de85648bc2fcd12a47b402628e7072f295ea4a95426c65ecaa71edaed51f012",
+    "controllerDigest": "sha256:c723dfc437f4f4b2ba1f1952e04f93ae82ab8fc0039249cce604484dff8524e4",
+    "traceDigest": "sha256:6c98416d60bf36e78cf29d4043d16ecebb04bfbe862012b49ef4ab171b7a91b1",
+    "traceRecordCount": 307,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "motion",
+    "taskPolicyHandoffFailed": false,
+    "formalControlGate": "failed"
+  },
+  "dynamicArmTracking": {
+    "mode": "fixed_base_four_joint_qp_with_bias_feedforward",
+    "controlledJoints": [
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "baseCommand": "locked_zero",
+    "torsoTargetRadians": 0.0,
+    "uncontrolledHeldTargets": "profile_defaults",
+    "legPolicy": "stand",
+    "feedforward": "mujoco_qfrc_bias"
+  },
+  "a5cgEvidence": {
+    "job": "worldspec-h1-midterm-9zmdg",
+    "controlProfileDigest": "sha256:994c9a7e9b3e6312e3e1e8b13c5cc97f9a2b69e3798682a36d57a79f4153cb0d",
+    "reportDigest": "sha256:56a804482e903e64d11092b0d5c1f60fa50466b6581d3de56f08d1aca1ae957f",
+    "controllerDigest": "sha256:d7a3b176e08a9a14dc1b0331bfb7bd3a09bab03b46080451249d104f7d7dc7b2",
+    "traceDigest": "sha256:8cc84091b367ece380b8f500a9481d9d6567a937ae4199241ef90f19cc507b08",
+    "traceRecordCount": 301,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "stand",
+    "taskPolicyHandoffFailed": false,
+    "dynamicArmTrackingEnabled": true,
+    "formalControlGate": "failed"
+  },
+  "taskGeometryCalibration": {
+    "mode": "measured_stable_workspace_alignment",
+    "sourceJob": "worldspec-h1-midterm-9zmdg",
+    "sourceTraceDigest": "sha256:8cc84091b367ece380b8f500a9481d9d6567a937ae4199241ef90f19cc507b08",
+    "sourceStableTcpPosition": [
+      1.835095491188453,
+      -0.18911960748591475,
+      1.1411498880156772
+    ],
+    "sceneTranslation": [
+      -0.03,
+      0.0,
+      0.065
+    ],
+    "calibratedHandleTarget": [
+      1.84,
+      -0.21,
+      1.14
+    ],
+    "qualityGatesChanged": false
+  },
+  "qualityGates": {
+    "settleSteps": 25,
+    "trackingSteps": 180,
+    "positionToleranceMeters": 0.035,
+    "holdSteps": 20,
+    "maximumTcpSpeed": 0.15,
+    "maximumBaseTranslation": 0.2,
+    "maximumBaseLateralDrift": 0.12,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "maximumProjectedGradient": 0.00001,
+    "maximumNonFiniteSamples": 0
+  },
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:32a7f2709ce0edbd4433ffe843fa25e3b4236c7a2870757c75efcb54a88935e5",
+    "containerDigest": "sha256:32a7f2709ce0edbd4433ffe843fa25e3b4236c7a2870757c75efcb54a88935e5",
+    "imageSourceRevision": "a54c2be8a17e7b2ded5f6776c2805e3b525d2fb2",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50,
+    "evaluationEnvironments": 1,
+    "mjxCapacity": {
+      "activeContactsPerEnvironment": 32,
+      "ccdContactsPerEnvironment": 16,
+      "njmax": 128
+    }
+  },
+  "artifactPolicy": {
+    "controller": "research_only",
+    "distribution": "internal_only",
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden"
+  },
+  "a5chEvidence": {
+    "job": "worldspec-h1-midterm-ddkxh",
+    "controlProfileDigest": "sha256:43f631d024b4c69b8aff19a8ec79f7b56843b0cdd70728eb43620b89bdf9ae5b",
+    "reportDigest": "sha256:fe44f1e9b56ebe2a7b26d11d77ac6f474479a5259eb4feb50fed56150d5c3903",
+    "controllerDigest": "sha256:06a2646082e1f732ca57461d58a4055fa4cee4a1e411bb029ea14e69140d9ad9",
+    "traceDigest": "sha256:095b64dc733772182f716e3c088d103d690eeef78a716004f872112ca85285d3",
+    "traceRecordCount": 287,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "stand",
+    "taskPolicyHandoffFailed": false,
+    "dynamicArmTrackingEnabled": true,
+    "taskGeometryCalibrationEnabled": true,
+    "formalControlGate": "failed"
+  },
+  "baseAnchorRecovery": {
+    "mode": "task_origin_forward_only_pd_motion_policy",
+    "positionGain": 2.0,
+    "velocityGain": 0.8,
+    "maximumForwardCommand": 0.5,
+    "maximumBackwardCommand": 0.0,
+    "maximumLateralCommand": 0.1,
+    "yawCommand": 0.0,
+    "activationThreshold": 0.05,
+    "releaseThreshold": 0.02,
+    "armDuringRecovery": "freeze_last_stable_targets",
+    "qualityGatesChanged": false,
+    "longitudinalCommandDomain": "forward_only"
+  },
+  "a5cjEvidence": {
+    "job": "worldspec-h1-midterm-dlrnk",
+    "controlProfileDigest": "sha256:cf9f6d7937b56b320e7d1290a10d7028f70b252969f8868be9cfda238a856df6",
+    "reportDigest": "sha256:19f57d4dc1b8702e0cd94c2fab43f68b922f41322aba6edac4e7f1a02c199536",
+    "controllerDigest": "sha256:489961d2fa1335a16d94f35ab9e881e8bc937cecf79f4ec284944a7d1d1902d4",
+    "traceDigest": "sha256:4a021cc7817e955adaa9e43abac2cf9f2180b048c0d013f46d20664c77cd5a39",
+    "traceRecordCount": 368,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "motion",
+    "taskPolicyHandoffFailed": false,
+    "dynamicArmTrackingEnabled": true,
+    "taskGeometryCalibrationEnabled": true,
+    "baseAnchorRecoveryEnabled": true,
+    "formalControlGate": "failed"
+  }
+}

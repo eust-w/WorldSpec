@@ -1,0 +1,58 @@
+{
+  "id": "attempt://worldspec/h1/a5cj-base-anchor/a800-59839bba3271",
+  "status": "failed",
+  "executionEvidence": "executed",
+  "job": "worldspec-h1-midterm-dlrnk",
+  "probeRevision": "59839bba3271f1dedaf5e8e09a1379ed8302b70e",
+  "imageSourceRevision": "a54c2be8a17e7b2ded5f6776c2805e3b525d2fb2",
+  "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:32a7f2709ce0edbd4433ffe843fa25e3b4236c7a2870757c75efcb54a88935e5",
+  "controlProfileDigest": "sha256:cf9f6d7937b56b320e7d1290a10d7028f70b252969f8868be9cfda238a856df6",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "failure": {
+    "reason": "robot_termination:fall_height",
+    "terminalReasons": [
+      "fall_height"
+    ],
+    "terminalJoints": [],
+    "traceRecordCount": 368,
+    "taskPolicyFinalPhase": "motion",
+    "taskPolicyHandoffFailed": false,
+    "dynamicArmTrackingEnabled": true,
+    "taskGeometryCalibrationEnabled": true,
+    "baseAnchorRecoveryEnabled": true
+  },
+  "metrics": {
+    "minimumBaseHeight": 0.782250165939331,
+    "minimumUprightCosine": 0.8802247643470764,
+    "baseTranslation": 0.6000763166731519,
+    "baseLateralDrift": 0.012308255769312382,
+    "finalTargetErrorMeters": 0.7298354492323705,
+    "finalTcpSpeed": 2.345628224963838,
+    "maximumProjectedGradient": 1.6801647104158768e-7,
+    "nonFiniteSamples": 0,
+    "baseAnchorRecoverySteps": 158,
+    "maximumBaseAnchorCommand": 0.5099019513592785
+  },
+  "artifacts": {
+    "report": {
+      "digest": "sha256:19f57d4dc1b8702e0cd94c2fab43f68b922f41322aba6edac4e7f1a02c199536",
+      "sizeBytes": 14442
+    },
+    "controller": {
+      "digest": "sha256:489961d2fa1335a16d94f35ab9e881e8bc937cecf79f4ec284944a7d1d1902d4",
+      "sizeBytes": 3480
+    },
+    "trace": {
+      "digest": "sha256:4a021cc7817e955adaa9e43abac2cf9f2180b048c0d013f46d20664c77cd5a39",
+      "sizeBytes": 2974037,
+      "recordCount": 368
+    }
+  },
+  "claimBoundary": {
+    "controlCandidate": false,
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "training100M": "not_started"
+  }
+}

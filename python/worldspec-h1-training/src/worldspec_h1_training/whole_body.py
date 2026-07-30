@@ -203,6 +203,31 @@ BASE_ANCHOR_RECOVERY = {
     "qualityGatesChanged": False,
 }
 
+A5CJ_FAILURE_EVIDENCE = {
+    "job": "worldspec-h1-midterm-dlrnk",
+    "controlProfileDigest": (
+        "sha256:cf9f6d7937b56b320e7d1290a10d7028f70b252969f8868be9cfda238a856df6"
+    ),
+    "reportDigest": "sha256:19f57d4dc1b8702e0cd94c2fab43f68b922f41322aba6edac4e7f1a02c199536",
+    "controllerDigest": ("sha256:489961d2fa1335a16d94f35ab9e881e8bc937cecf79f4ec284944a7d1d1902d4"),
+    "traceDigest": "sha256:4a021cc7817e955adaa9e43abac2cf9f2180b048c0d013f46d20664c77cd5a39",
+    "traceRecordCount": 368,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "motion",
+    "taskPolicyHandoffFailed": False,
+    "dynamicArmTrackingEnabled": True,
+    "taskGeometryCalibrationEnabled": True,
+    "baseAnchorRecoveryEnabled": True,
+    "formalControlGate": "failed",
+}
+
+FORWARD_ONLY_BASE_ANCHOR_RECOVERY = {
+    **BASE_ANCHOR_RECOVERY,
+    "mode": "task_origin_forward_only_pd_motion_policy",
+    "maximumBackwardCommand": 0.0,
+    "longitudinalCommandDomain": "forward_only",
+}
+
 DIAGNOSTIC_TERMINATION_CHANNELS = (
     "joint_limit",
     "fall_height",
@@ -1282,10 +1307,16 @@ def validate_whole_body_profile(
     a5cg_evidence = profile.get("a5cgEvidence")
     base_anchor_recovery = profile.get("baseAnchorRecovery")
     a5ch_evidence = profile.get("a5chEvidence")
+    a5cj_evidence = profile.get("a5cjEvidence")
     if (base_anchor_recovery is None) != (a5ch_evidence is None):
         raise TrainingError(
             "WHOLE_BODY_BASE_ANCHOR_LINEAGE_INCOMPLETE",
             "A5-CJ requires both the base-anchor contract and A5-CH failure evidence.",
+        )
+    if a5cj_evidence is not None and base_anchor_recovery is None:
+        raise TrainingError(
+            "WHOLE_BODY_FORWARD_ONLY_LINEAGE_INCOMPLETE",
+            "A5-CK requires its forward-only base-anchor contract.",
         )
     if base_anchor_recovery is not None and task_geometry_calibration is None:
         raise TrainingError(
@@ -1376,7 +1407,10 @@ def validate_whole_body_profile(
                 "WHOLE_BODY_BASE_ANCHOR_CONTROLLER_MISSING",
                 "A5-CJ must preserve the A5-CH geometry and dynamic arm controller.",
             )
-        if base_anchor_recovery != BASE_ANCHOR_RECOVERY:
+        expected_base_anchor = (
+            FORWARD_ONLY_BASE_ANCHOR_RECOVERY if a5cj_evidence is not None else BASE_ANCHOR_RECOVERY
+        )
+        if base_anchor_recovery != expected_base_anchor:
             raise TrainingError(
                 "WHOLE_BODY_BASE_ANCHOR_INVALID",
                 "A5-CJ must use the frozen task-origin recovery contract.",
@@ -1385,6 +1419,11 @@ def validate_whole_body_profile(
             raise TrainingError(
                 "WHOLE_BODY_BASE_ANCHOR_EVIDENCE_MISMATCH",
                 "A5-CJ must remain bound to the archived A5-CH fall-height evidence.",
+            )
+        if a5cj_evidence is not None and a5cj_evidence != A5CJ_FAILURE_EVIDENCE:
+            raise TrainingError(
+                "WHOLE_BODY_FORWARD_ONLY_EVIDENCE_MISMATCH",
+                "A5-CK must remain bound to the archived A5-CJ out-of-domain command evidence.",
             )
     runtime = profile.get("runtime", {})
     if (
