@@ -11,6 +11,8 @@ from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.full_task import (
     A5CK_CONTROL_LINEAGE,
     A6_SUPERVISOR_EVIDENCE,
+    FULL_TASK_ARM_RECOVERY_EVIDENCE,
+    FULL_TASK_BASE_ANCHOR_RECOVERY,
     FULL_TASK_HANDOFF_EVIDENCE,
     FULL_TASK_LOCOMOTION_HANDOFF,
     FULL_TASK_PHASE_CONTROLLER,
@@ -21,7 +23,6 @@ from worldspec_h1_training.full_task import (
 from worldspec_h1_training.kitchen_task import ERGONOMIC_TASK_SCENE, TASK_CAPACITY
 from worldspec_h1_training.whole_body import (
     DYNAMIC_ARM_TRACKING,
-    FORWARD_ONLY_BASE_ANCHOR_RECOVERY,
     TASK_GEOMETRY_CALIBRATION,
     TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
@@ -59,9 +60,10 @@ def _profiles() -> tuple[dict, dict, dict]:
         "taskPolicyHandoff": copy.deepcopy(TASK_POLICY_HANDOFF),
         "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
         "taskGeometryCalibration": copy.deepcopy(TASK_GEOMETRY_CALIBRATION),
-        "baseAnchorRecovery": copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+        "baseAnchorRecovery": copy.deepcopy(FULL_TASK_BASE_ANCHOR_RECOVERY),
         "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
+        "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "qualityGates": copy.deepcopy(FULL_TASK_SINGLE_GATES),
         "runtime": {

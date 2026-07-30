@@ -24,6 +24,7 @@
     "baseAnchorRecovery",
     "taskSceneLocomotionHandoff",
     "taskSceneHandoffEvidence",
+    "taskSceneArmRecoveryEvidence",
     "phaseController",
     "qualityGates",
     "runtime",
@@ -88,7 +89,20 @@
       "$ref": "h1-whole-body-control-profile.schema.json#/properties/taskGeometryCalibration"
     },
     "baseAnchorRecovery": {
-      "$ref": "h1-whole-body-control-profile.schema.json#/properties/baseAnchorRecovery"
+      "const": {
+        "mode": "task_origin_forward_only_pd_motion_policy",
+        "positionGain": 2.0,
+        "velocityGain": 0.8,
+        "maximumForwardCommand": 0.5,
+        "maximumBackwardCommand": 0.0,
+        "maximumLateralCommand": 0.1,
+        "yawCommand": 0.0,
+        "activationThreshold": 0.05,
+        "releaseThreshold": 0.02,
+        "armDuringRecovery": "track_current_task_space_solution",
+        "qualityGatesChanged": false,
+        "longitudinalCommandDomain": "forward_only"
+      }
     },
     "taskSceneLocomotionHandoff": {
       "const": {
@@ -125,6 +139,21 @@
         "captureStepsObserved": 40,
         "stableStepsAtTerminal": 2,
         "firstStableStep": 188,
+        "qualityGatesChanged": false
+      }
+    },
+    "taskSceneArmRecoveryEvidence": {
+      "const": {
+        "job": "worldspec-h1-midterm-z8fbf",
+        "reportDigest": "sha256:53e2b58a0aee444e9430e5be5167ebbd628973b178864df414c6aa9777eb9fd0",
+        "reportSizeBytes": 17688,
+        "traceDigest": "sha256:2b60b2885c74deba9dd2eaa1f375501f0dd2027449362d5a4fb381a446dd5cee",
+        "traceSizeBytes": 2657263,
+        "diagnosticStatus": "passed",
+        "failedReason": "reach_handle_timeout",
+        "completedPhase": "reach_handle",
+        "baseAnchorRecoverySteps": 100,
+        "finalTargetErrorMeters": 0.07562772505351109,
         "qualityGatesChanged": false
       }
     },

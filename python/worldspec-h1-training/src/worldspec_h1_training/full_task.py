@@ -127,6 +127,25 @@ FULL_TASK_HANDOFF_EVIDENCE = {
     "firstStableStep": 188,
     "qualityGatesChanged": False,
 }
+FULL_TASK_BASE_ANCHOR_RECOVERY = copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY)
+FULL_TASK_BASE_ANCHOR_RECOVERY["armDuringRecovery"] = "track_current_task_space_solution"
+FULL_TASK_ARM_RECOVERY_EVIDENCE = {
+    "job": "worldspec-h1-midterm-z8fbf",
+    "reportDigest": (
+        "sha256:53e2b58a0aee444e9430e5be5167ebbd628973b178864df414c6aa9777eb9fd0"
+    ),
+    "reportSizeBytes": 17_688,
+    "traceDigest": (
+        "sha256:2b60b2885c74deba9dd2eaa1f375501f0dd2027449362d5a4fb381a446dd5cee"
+    ),
+    "traceSizeBytes": 2_657_263,
+    "diagnosticStatus": "passed",
+    "failedReason": "reach_handle_timeout",
+    "completedPhase": "reach_handle",
+    "baseAnchorRecoverySteps": 100,
+    "finalTargetErrorMeters": 0.07562772505351109,
+    "qualityGatesChanged": False,
+}
 
 
 def validate_full_task_single_profile(
@@ -176,9 +195,10 @@ def validate_full_task_single_profile(
         ("taskPolicyHandoff", TASK_POLICY_HANDOFF),
         ("dynamicArmTracking", DYNAMIC_ARM_TRACKING),
         ("taskGeometryCalibration", TASK_GEOMETRY_CALIBRATION),
-        ("baseAnchorRecovery", FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+        ("baseAnchorRecovery", FULL_TASK_BASE_ANCHOR_RECOVERY),
         ("taskSceneLocomotionHandoff", FULL_TASK_LOCOMOTION_HANDOFF),
         ("taskSceneHandoffEvidence", FULL_TASK_HANDOFF_EVIDENCE),
+        ("taskSceneArmRecoveryEvidence", FULL_TASK_ARM_RECOVERY_EVIDENCE),
         ("phaseController", FULL_TASK_PHASE_CONTROLLER),
         ("qualityGates", FULL_TASK_SINGLE_GATES),
     )
@@ -276,7 +296,6 @@ def evaluate_full_task_single(
     failure: str | None = None
     terminal_reasons: set[str] = set()
     initial_task_base = None
-    last_stable_task_control: dict[str, Any] | None = None
     base_anchor_recovery_steps = 0
     maximum_base_anchor_command = 0.0
     initial_load_targets = list(
@@ -340,26 +359,23 @@ def evaluate_full_task_single(
                 initial_task_base,
                 np.asarray(state.data.qpos[:3], dtype=float),
                 np.asarray(env.local_velocity(state.data), dtype=float),
-                FORWARD_ONLY_BASE_ANCHOR_RECOVERY,
+                FULL_TASK_BASE_ANCHOR_RECOVERY,
             )
             anchor_norm = float(np.linalg.norm(np.asarray(anchor_command)))
             maximum_base_anchor_command = max(maximum_base_anchor_command, anchor_norm)
             recovery_active = (
-                anchor_norm >= FORWARD_ONLY_BASE_ANCHOR_RECOVERY["activationThreshold"]
+                anchor_norm >= FULL_TASK_BASE_ANCHOR_RECOVERY["activationThreshold"]
                 or task_policy.phase != "stand"
             )
             if recovery_active:
-                if last_stable_task_control is None:
-                    last_stable_task_control = copy.deepcopy(candidate)
-                control = copy.deepcopy(last_stable_task_control)
+                control = candidate
                 base_anchor_recovery_steps += 1
             else:
-                last_stable_task_control = copy.deepcopy(candidate)
                 control = candidate
             control["baseAnchorCommand"] = [float(value) for value in anchor_command]
             control["baseAnchorRecoveryActive"] = recovery_active
             control["appliedArmTargetSource"] = (
-                "last_stable_task_control" if recovery_active else "current_task_space_solution"
+                "current_task_space_solution"
             )
             maximum_projected_gradient = max(
                 maximum_projected_gradient,
@@ -679,9 +695,10 @@ def run_task_load_full_kitchen_single_probe(
         "taskPolicyHandoff": copy.deepcopy(TASK_POLICY_HANDOFF),
         "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
         "taskGeometryCalibration": copy.deepcopy(TASK_GEOMETRY_CALIBRATION),
-        "baseAnchorRecovery": copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+        "baseAnchorRecovery": copy.deepcopy(FULL_TASK_BASE_ANCHOR_RECOVERY),
         "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
+        "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "scene": copy.deepcopy(ERGONOMIC_TASK_SCENE),
         "policies": {
@@ -705,6 +722,7 @@ def run_task_load_full_kitchen_single_probe(
         "supervisorEvidence": copy.deepcopy(A6_SUPERVISOR_EVIDENCE),
         "controlLineage": copy.deepcopy(A5CK_CONTROL_LINEAGE),
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
+        "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
         "policies": loaded,
         "staticPreflight": static,
         "runtimePreflight": runtime,
@@ -719,7 +737,7 @@ def run_task_load_full_kitchen_single_probe(
             "wholeBodyController": copy.deepcopy(WHOLE_BODY_CONTROLLER),
             "taskPolicyHandoff": copy.deepcopy(TASK_POLICY_HANDOFF),
             "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
-            "baseAnchorRecovery": copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+            "baseAnchorRecovery": copy.deepcopy(FULL_TASK_BASE_ANCHOR_RECOVERY),
             "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
             "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         },

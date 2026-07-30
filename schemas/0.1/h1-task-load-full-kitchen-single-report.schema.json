@@ -69,6 +69,7 @@
     "supervisorEvidence": { "type": "object" },
     "controlLineage": { "type": "object" },
     "taskSceneHandoffEvidence": { "type": "object" },
+    "taskSceneArmRecoveryEvidence": { "type": "object" },
     "policies": {
       "type": "object",
       "required": ["motion", "capture", "stand"],
