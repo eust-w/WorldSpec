@@ -84,10 +84,10 @@
     "deterministicEval": true
   },
   "checkpointSelection": {
-    "mode": "deterministic_gate_rank_v1",
-    "evaluateAllSavedCheckpoints": true,
+    "mode": "terminal_gate_v1",
+    "evaluateAllSavedCheckpoints": false,
     "packageSelectedOnly": true,
-    "includeWarmStart": true
+    "includeWarmStart": false
   },
   "environment": {
     "commandDistribution": {

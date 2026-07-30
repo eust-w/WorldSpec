@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import functools
+import json
 import shutil
 import tempfile
 import time
@@ -977,28 +978,29 @@ def validate_task_load_retention_profile(
         }
         if formal_stage
         else (
-        {
-            "sourceStage": "loaded-track-settle-task-load-deployment-eval-v4-failed",
-            "sourceReportDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_DIGEST,
-            "checkpointDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_DIGEST,
-            "checkpointSizeBytes": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_SIZE,
-        }
-        if horizon_stage
-        else (
             {
-                "sourceStage": "loaded-track-settle-task-load-survival-v3-failed",
-                "sourceReportDigest": FAILED_TASK_LOAD_SURVIVAL_REPORT_DIGEST,
-                "checkpointDigest": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_DIGEST,
-                "checkpointSizeBytes": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_SIZE,
+                "sourceStage": "loaded-track-settle-task-load-deployment-eval-v4-failed",
+                "sourceReportDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_DIGEST,
+                "checkpointDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_DIGEST,
+                "checkpointSizeBytes": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_SIZE,
             }
-            if deployment_eval_stage
-            else {
-                "sourceStage": "loaded-track-settle-retention-v3-failed",
-                "sourceReportDigest": FAILED_RETENTION_REPORT_DIGEST,
-                "checkpointDigest": FAILED_RETENTION_CHECKPOINT_DIGEST,
-                "checkpointSizeBytes": FAILED_RETENTION_CHECKPOINT_SIZE,
-            }
-        ))
+            if horizon_stage
+            else (
+                {
+                    "sourceStage": "loaded-track-settle-task-load-survival-v3-failed",
+                    "sourceReportDigest": FAILED_TASK_LOAD_SURVIVAL_REPORT_DIGEST,
+                    "checkpointDigest": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_DIGEST,
+                    "checkpointSizeBytes": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_SIZE,
+                }
+                if deployment_eval_stage
+                else {
+                    "sourceStage": "loaded-track-settle-retention-v3-failed",
+                    "sourceReportDigest": FAILED_RETENTION_REPORT_DIGEST,
+                    "checkpointDigest": FAILED_RETENTION_CHECKPOINT_DIGEST,
+                    "checkpointSizeBytes": FAILED_RETENTION_CHECKPOINT_SIZE,
+                }
+            )
+        )
     )
     if any(source.get(key) != value for key, value in expected_source.items()):
         raise TrainingError(
@@ -1036,31 +1038,41 @@ def validate_task_load_retention_profile(
             TASK_LOAD_HORIZON_TRAINING_OVERRIDES
             if horizon_stage
             else (
-            TASK_LOAD_DEPLOYMENT_EVAL_TRAINING_OVERRIDES
-            if deployment_eval_stage
-            else (
-                TASK_LOAD_SURVIVAL_TRAINING_OVERRIDES
-                if survival_stage
-                else TASK_LOAD_RETENTION_TRAINING_OVERRIDES
+                TASK_LOAD_DEPLOYMENT_EVAL_TRAINING_OVERRIDES
+                if deployment_eval_stage
+                else (
+                    TASK_LOAD_SURVIVAL_TRAINING_OVERRIDES
+                    if survival_stage
+                    else TASK_LOAD_RETENTION_TRAINING_OVERRIDES
+                )
             )
-        ))
+        )
     )
     if profile.get("trainingOverrides") != expected_training:
         raise TrainingError(
             "TASK_LOAD_RETENTION_TRAINING_OVERRIDES_INVALID",
             "Task-load retention budget, optimizer, and topology are frozen.",
         )
-    expected_checkpoint_selection = {
-        "mode": "deterministic_gate_rank_v1",
-        "evaluateAllSavedCheckpoints": True,
-        "packageSelectedOnly": True,
-    }
-    if deployment_eval_stage or horizon_stage or formal_stage:
+    expected_checkpoint_selection = (
+        {
+            "mode": "terminal_gate_v1",
+            "evaluateAllSavedCheckpoints": False,
+            "packageSelectedOnly": True,
+            "includeWarmStart": False,
+        }
+        if formal_stage
+        else {
+            "mode": "deterministic_gate_rank_v1",
+            "evaluateAllSavedCheckpoints": True,
+            "packageSelectedOnly": True,
+        }
+    )
+    if deployment_eval_stage or horizon_stage:
         expected_checkpoint_selection["includeWarmStart"] = True
     if profile.get("checkpointSelection") != expected_checkpoint_selection:
         raise TrainingError(
             "TASK_LOAD_RETENTION_SELECTION_INVALID",
-            "Task-load retention must evaluate every saved checkpoint and package one.",
+            "Task-load checkpoint evaluation and packaging policy is not frozen.",
         )
     environment = profile.get("environment", {})
     expected_command = TASK_LOAD_FORMAL_COMMAND if formal_stage else TRANSITION_COMMAND
@@ -1160,9 +1172,7 @@ def validate_task_load_retention_profile(
             "Task-load retention must use the base Profile package lock.",
         )
     expected_artifact_policy = {
-        "checkpoint": (
-            "policy_candidate_if_passed" if formal_stage else "research_only"
-        ),
+        "checkpoint": ("policy_candidate_if_passed" if formal_stage else "research_only"),
         "distribution": "internal_only",
     }
     if profile.get("artifactPolicy") != expected_artifact_policy:
@@ -1266,14 +1276,15 @@ def make_task_load_retention_training_profile(
             "research_task_load_horizon_override"
             if profile["stage"] == "loaded_track_settle_task_load_horizon"
             else (
-            "research_task_load_deployment_eval_override"
-            if profile["stage"] == "loaded_track_settle_task_load_deployment_eval"
-            else (
-                "research_task_load_survival_override"
-                if profile["stage"] == "loaded_track_settle_task_load_survival"
-                else "research_task_load_retention_override"
+                "research_task_load_deployment_eval_override"
+                if profile["stage"] == "loaded_track_settle_task_load_deployment_eval"
+                else (
+                    "research_task_load_survival_override"
+                    if profile["stage"] == "loaded_track_settle_task_load_survival"
+                    else "research_task_load_retention_override"
+                )
             )
-        ))
+        )
     )
     effective["training"]["commandDistribution"] = copy.deepcopy(
         profile["environment"]["commandDistribution"]
@@ -1495,6 +1506,24 @@ def run_midterm_calibration(
                 "metrics": scalar_metrics,
             }
         )
+        progress_path = output_dir / "training-progress.json"
+        temporary_progress = output_dir / "training-progress.json.tmp"
+        temporary_progress.write_text(
+            json.dumps(
+                {
+                    "progressVersion": "0.1.0",
+                    "stage": profile["stage"],
+                    "records": progress_records,
+                },
+                allow_nan=False,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        temporary_progress.replace(progress_path)
 
     training = effective["training"]
     network_factory = functools.partial(
@@ -1640,6 +1669,38 @@ def run_midterm_calibration(
                 "MIDTERM_EPISODE_METRIC_MISSING",
                 "Midterm calibration did not report eval/avg_episode_length.",
             )
+        if profile.get("stage") == "loaded_track_settle_task_load_formal":
+            recovery_archive = output_dir / "formal-training-checkpoints.zip"
+            _deterministic_zip(checkpoint_dir, recovery_archive)
+            progress_path = output_dir / "training-progress.json"
+            recovery_manifest = {
+                "recoveryVersion": "0.1.0",
+                "stage": profile["stage"],
+                "status": "training_completed_evaluation_pending",
+                "maximumReportedStep": max(item["step"] for item in progress_records),
+                "progressRecordCount": len(progress_records),
+                "artifacts": {
+                    recovery_archive.name: {
+                        "digest": digest_bytes(recovery_archive.read_bytes()),
+                        "sizeBytes": recovery_archive.stat().st_size,
+                    },
+                    progress_path.name: {
+                        "digest": digest_bytes(progress_path.read_bytes()),
+                        "sizeBytes": progress_path.stat().st_size,
+                    },
+                },
+            }
+            (output_dir / "formal-training-recovery.json").write_text(
+                json.dumps(
+                    recovery_manifest,
+                    allow_nan=False,
+                    ensure_ascii=False,
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
         if profile.get("stage") in {
             "loaded_track_settle_task_load_retention",
             "loaded_track_settle_task_load_survival",
@@ -1657,6 +1718,8 @@ def run_midterm_calibration(
                 ),
                 key=lambda path: int(path.name),
             )
+            if profile["checkpointSelection"]["evaluateAllSavedCheckpoints"] is False:
+                checkpoint_steps = checkpoint_steps[-1:]
             candidate_details: list[dict[str, Any]] = []
             if profile.get("checkpointSelection", {}).get("includeWarmStart") is True:
                 warm_mean_episode_length = progress_records[0]["metrics"].get(
@@ -1762,8 +1825,6 @@ def run_midterm_calibration(
             checkpoint_archive = output_dir / "midterm-checkpoint.zip"
             _deterministic_zip(checkpoint_dir, checkpoint_archive)
     with (output_dir / "evaluation-traces.jsonl").open("w", encoding="utf-8") as stream:
-        import json
-
         for record in selected_traces:
             stream.write(json.dumps(record, sort_keys=True) + "\n")
     expected_tests = profile["qualityGates"]["requiredConsecutivePasses"] * 2

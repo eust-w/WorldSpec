@@ -324,6 +324,7 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert environment["WORLD_SPEC_SETTLE_TEACHER_REPORT_FILENAME"] == (
         "__SETTLE_TEACHER_REPORT_FILENAME__"
     )
+    assert environment["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
     assert container["name"] == "midterm"
     assert container["image"] == "__RUNTIME_IMAGE__"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
@@ -332,6 +333,18 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
     assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
+
+    entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "formal-training-checkpoints.zip" in entrypoint
+    assert "formal-training-recovery.json" in entrypoint
+    assert "WORLDSPEC_A800_FORMAL_TRAINING_FAILURE=" in entrypoint
+    assert "formal-training-failure.json" in launcher
+    assert "formal_training_failure_artifacts_copied=true" in launcher
 
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
         encoding="utf-8"

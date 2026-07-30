@@ -431,6 +431,12 @@ def test_task_load_formal_promotes_passing_horizon_to_locked_100m() -> None:
         "checkpoint": "policy_candidate_if_passed",
         "distribution": "internal_only",
     }
+    assert profile["checkpointSelection"] == {
+        "mode": "terminal_gate_v1",
+        "evaluateAllSavedCheckpoints": False,
+        "packageSelectedOnly": True,
+        "includeWarmStart": False,
+    }
 
 
 def test_task_load_formal_rejects_lineage_budget_and_gate_drift() -> None:

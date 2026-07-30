@@ -76,6 +76,8 @@ spec:
               value: highest
             - name: JAX_PLATFORMS
               value: cuda
+            - name: XLA_PYTHON_CLIENT_PREALLOCATE
+              value: "false"
             - name: CUDA_VISIBLE_DEVICES
               value: "0"
           resources:

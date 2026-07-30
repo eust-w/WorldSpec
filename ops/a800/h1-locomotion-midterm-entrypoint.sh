@@ -87,6 +87,75 @@ PY
     if [[ ! -f "${RESULT_DIR}/artifact-copied" ]]; then
       echo "ERROR: launcher did not acknowledge diagnostic failure artifacts" >&2
     fi
+  elif [[ -n "${WORLD_SPEC_MIDTERM_PROFILE_FILENAME:-}" ]] &&
+    [[ -f "${SOURCE_DIR}/examples/h1-kitchen/${WORLD_SPEC_MIDTERM_PROFILE_FILENAME}" ]] &&
+    python - \
+      "${SOURCE_DIR}/examples/h1-kitchen/${WORLD_SPEC_MIDTERM_PROFILE_FILENAME}" <<'PY'
+import json
+import pathlib
+import sys
+
+profile = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+raise SystemExit(
+    0 if profile.get("stage") == "loaded_track_settle_task_load_formal" else 1
+)
+PY
+  then
+    python - \
+      "${RESULT_DIR}/formal-training-failure.json" \
+      "${ARTIFACT_DIR}" \
+      "${failed_stage}" \
+      "${exit_code}" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+from datetime import datetime, timezone
+
+output_path = pathlib.Path(sys.argv[1])
+artifact_dir = pathlib.Path(sys.argv[2])
+allowed_artifacts = (
+    "formal-training-checkpoints.zip",
+    "training-progress.json",
+    "formal-training-recovery.json",
+)
+artifacts = {}
+for name in allowed_artifacts:
+    path = artifact_dir / name
+    if not path.is_file():
+        continue
+    payload = path.read_bytes()
+    artifacts[name] = {
+        "digest": f"sha256:{hashlib.sha256(payload).hexdigest()}",
+        "sizeBytes": len(payload),
+    }
+failure = {
+    "failureVersion": "0.1.0",
+    "status": "failed",
+    "stage": sys.argv[3],
+    "exitCode": int(sys.argv[4]),
+    "artifacts": artifacts,
+    "generatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+}
+output_path.write_text(
+    json.dumps(failure, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    encoding="utf-8",
+)
+print(
+    "WORLDSPEC_A800_FORMAL_TRAINING_FAILURE="
+    + json.dumps(failure, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+)
+PY
+    stage artifact_failure_ready
+    for ((attempt = 0; attempt < 1800; attempt++)); do
+      if [[ -f "${RESULT_DIR}/artifact-copied" ]]; then
+        break
+      fi
+      sleep 1
+    done
+    if [[ ! -f "${RESULT_DIR}/artifact-copied" ]]; then
+      echo "ERROR: launcher did not acknowledge formal-training failure artifacts" >&2
+    fi
   fi
   exit "${exit_code}"
 }
