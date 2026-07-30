@@ -333,6 +333,8 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-capture.a800.passed.json": "h1-locomotion-capture-report.schema.json",
         "h1-kitchen/locomotion-supervisor-profile.json": "h1-locomotion-supervisor-profile.schema.json",
         "h1-kitchen/locomotion-supervisor.a800.passed.json": "h1-locomotion-supervisor-report.schema.json",
+        "h1-kitchen/locomotion-task-load-supervisor-profile.json": "h1-locomotion-task-load-supervisor-profile.schema.json",
+        "h1-kitchen/task-load-supervisor-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "../third_party/h1-training.lock.json": "h1-training-source-lock.schema.json",
     }
     for relative, schema_name in positive.items():

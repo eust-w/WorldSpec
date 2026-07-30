@@ -1,0 +1,13 @@
+{
+  "id": "build-report://worldspec/h1-training-image/a800-26b55607b550",
+  "reportVersion": "0.1.0",
+  "status": "passed",
+  "executionEvidence": "executed",
+  "sourceCommit": "26b55607b55022c65edabd1367b96bf7e8bd1794",
+  "contextDigest": "sha256:f3a666bb54b5c4b02b1af47c4d0d5dbf16d346ff99ced309542d42138b1be0fb",
+  "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+  "baseImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/real2sim-worker@sha256:d37f7e8a483518bdb447cd460b8c6dfb4407e385c1715b32a9d7f193a11dcdee",
+  "destinationTag": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training:26b55607b550-20260730110311",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:6ae1793a3a6a3a7af68195b9bc47878d0deb4587c0f8fc3fc8055675db0b79dc",
+  "generatedAt": "2026-07-30T11:14:14.910193Z"
+}

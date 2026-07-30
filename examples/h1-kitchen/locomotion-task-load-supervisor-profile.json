@@ -1,0 +1,158 @@
+{
+  "id": "supervisorprofile://worldspec/h1-menagerie-right-robotiq/task-load-phase-aware-v1",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "task_load_phase_aware_supervisor_probe",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "motionPolicy": {
+    "sourceStage": "loaded-track-settle-task-load-formal-v1-failed",
+    "sourceReportDigest": "sha256:31e4991a33721928df2b2887f00dccd339dfe261dfbf1aaec4597579c6c784d9",
+    "checkpointDigest": "sha256:61ebfa89d0fa5e7d7fc6488c524cf21c742c6a25efb5854a2bd689a61c895016",
+    "checkpointSizeBytes": 1260210,
+    "distribution": "internal_only",
+    "selectedRole": "motion"
+  },
+  "capturePolicy": {
+    "sourceStage": "loaded-track-settle-capture-v1-passed",
+    "sourceReportDigest": "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f",
+    "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "checkpointSizeBytes": 6280278,
+    "distribution": "internal_only",
+    "selectedRole": "motion_state_capture"
+  },
+  "standPolicy": {
+    "sourceStage": "stand-v2.1",
+    "sourceReportDigest": "sha256:8a92a910ca52540fff50bab37e20e7e28d4ea06ae0acd20d0079e8b45e65f660",
+    "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "checkpointSizeBytes": 6280684,
+    "distribution": "internal_only",
+    "selectedRole": "zero_velocity_and_stand"
+  },
+  "evaluationEnvironment": {
+    "commandDistribution": {
+      "linearVelocityX": [0.0, 0.8],
+      "linearVelocityY": [-0.15, 0.15],
+      "angularVelocityYaw": [-0.35, 0.35],
+      "zeroCommandProbability": 0.2
+    },
+    "taskLoadCurriculum": {
+      "mode": "static_right_arm_pose",
+      "sourceJob": "worldspec-h1-midterm-5nn2q",
+      "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+      "heldTargetScale": [1.0, 1.0],
+      "initialBaseVelocityX": [0.0, 0.0],
+      "heldTargets": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.1543052911758423,
+        0.09892238825658843,
+        -0.006488978405079102,
+        -0.19852599334400028
+      ],
+      "heldFeedforward": [
+        0.032988220529269176,
+        -1.1402555002525037,
+        0.08486267857762098,
+        0.012800121336152957,
+        -1.0451398037469817,
+        -0.9578816827225751,
+        0.837737275364864,
+        0.46023224988862355,
+        -4.402542577541209
+      ],
+      "observationAugmentation": "none",
+      "qualityGatesChanged": false
+    },
+    "termination": {
+      "minimumBaseHeight": 0.5,
+      "minimumUprightCosine": 0.25,
+      "jointLimitToleranceRadians": 0.02
+    },
+    "reward": {
+      "survival": 3.0,
+      "trackingLinear": 6.0,
+      "trackingYaw": 2.0,
+      "upright": 3.0,
+      "baseHeight": 2.0,
+      "pose": 0.5,
+      "verticalVelocityCost": 1.0,
+      "angularVelocityXYCost": 0.5,
+      "torqueCost": 0.000002,
+      "actionRateCost": 0.03,
+      "settleLinear": 16.0,
+      "settleYaw": 6.0,
+      "settleActionRateScale": 0.15,
+      "standDistillation": 4.0,
+      "settleDistillation": 4.0,
+      "standTeacherActionCost": 1.0,
+      "settleTeacherActionCost": 1.0,
+      "terminationPenalty": 100
+    },
+    "targets": {
+      "baseHeight": 0.98
+    },
+    "sigmas": {
+      "tracking": 0.2,
+      "upright": 0.05,
+      "baseHeight": 0.02,
+      "pose": 0.2,
+      "settleTracking": 0.05,
+      "standDistillation": 0.05,
+      "settleDistillation": 0.05
+    },
+    "commandResampleSteps": 200
+  },
+  "supervisor": {
+    "mode": "phase_aware_velocity_stability_gate",
+    "motionCommandThreshold": 0.05,
+    "moveSteps": 150,
+    "settleSteps": 50,
+    "captureGate": {
+      "minimumSteps": 20,
+      "maximumSteps": 40,
+      "maximumLinearSpeed": 0.12,
+      "maximumAngularSpeed": 0.2,
+      "requiredConsecutiveStableSteps": 5
+    },
+    "handoff": {
+      "mode": "linear_action_blend",
+      "blendSteps": 5,
+      "durationSeconds": 0.1,
+      "observationCommand": [0.0, 0.0, 0.0]
+    },
+    "minimumStandDwellSteps": 10,
+    "standRegressionPolicy": "standPolicy"
+  },
+  "qualityGates": {
+    "nominalDurationSeconds": 4.0,
+    "moveDurationSeconds": 3.0,
+    "settleWindowSeconds": 1.0,
+    "settleMeasurementWindowSeconds": 0.2,
+    "requiredConsecutivePasses": 5,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "maximumLateralDrift": 0.2,
+    "maximumTrackingRmse": 0.25,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "maximumSettleLinearSpeed": 0.2,
+    "maximumSettleAngularSpeed": 0.4,
+    "maximumStandPlanarDrift": 0.2,
+    "maximumNonFiniteSamples": 0,
+    "minimumStandDwellSteps": 10
+  },
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:6ae1793a3a6a3a7af68195b9bc47878d0deb4587c0f8fc3fc8055675db0b79dc",
+    "containerDigest": "sha256:6ae1793a3a6a3a7af68195b9bc47878d0deb4587c0f8fc3fc8055675db0b79dc",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50,
+    "evaluationEnvironments": 1
+  },
+  "artifactPolicy": {
+    "controller": "research_only",
+    "distribution": "internal_only"
+  }
+}

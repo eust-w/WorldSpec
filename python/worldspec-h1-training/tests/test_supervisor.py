@@ -19,6 +19,9 @@ from worldspec_h1_training.supervisor import (
 ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 SUPERVISOR_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-supervisor-profile.json"
+TASK_LOAD_SUPERVISOR_PROFILE = (
+    ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-supervisor-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -129,14 +132,12 @@ def test_supervisor_effective_profile_is_a_deep_copy() -> None:
 
 
 def test_task_load_supervisor_binds_100m_motion_and_static_right_arm_load() -> None:
-    base, profile = _profiles()
-    profile["id"] = "supervisorprofile://worldspec/h1/task-load-phase-aware-v1"
-    profile["stage"] = "task_load_phase_aware_supervisor_probe"
-    profile["motionPolicy"] = copy.deepcopy(TASK_LOAD_MOTION_POLICY_SOURCE)
-    profile["evaluationEnvironment"] = copy.deepcopy(TASK_LOAD_EVALUATION_ENVIRONMENT)
+    base, _ = _profiles()
+    profile = json.loads(TASK_LOAD_SUPERVISOR_PROFILE.read_text(encoding="utf-8"))
 
     effective = make_supervisor_evaluation_profile(base, profile)
 
+    assert profile["motionPolicy"] == TASK_LOAD_MOTION_POLICY_SOURCE
     assert effective["trainingEnvironment"] == TASK_LOAD_EVALUATION_ENVIRONMENT
     assert effective["training"]["commandDistribution"] == {
         "linearVelocityX": [0.0, 0.8],
@@ -173,6 +174,9 @@ def test_a800_supervisor_entrypoint_and_launcher_are_fail_closed() -> None:
     wrapper = (ROOT / "scripts" / "run_a800_h1_phase_aware_supervisor_probe.sh").read_text(
         encoding="utf-8"
     )
+    task_load_wrapper = (ROOT / "scripts" / "run_a800_h1_task_load_supervisor_probe.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert "phase_aware_supervisor_probe" in entrypoint
     assert "run_phase_aware_supervisor_probe" in entrypoint
@@ -187,5 +191,9 @@ def test_a800_supervisor_entrypoint_and_launcher_are_fail_closed() -> None:
     assert "WORLD_SPEC_RETAIN_INCOMPLETE_REMOTE" in launcher
     assert "remote_evidence_retained=true" in launcher
     assert "WORLD_SPEC_SUPERVISOR_STAND_CHECKPOINT" in wrapper
+    assert "locomotion-task-load-formal.a800.failed-summary.json" in task_load_wrapper
+    assert "worldspec-h1-midterm-cdbm5" in task_load_wrapper
+    assert "task-load-supervisor-image-build.a800.passed.json" in task_load_wrapper
     assert "100000000" not in entrypoint
     assert "100000000" not in wrapper
+    assert "100000000" not in task_load_wrapper
