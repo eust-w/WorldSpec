@@ -98,3 +98,20 @@ Suite. A final CPU-only aggregator rejects missing, extra, or lineage-drifted
 results before applying the unchanged candidate ordering and formal quality
 gate. Training inputs, Checkpoints, state bank, seed, evaluation traces, and
 every gate remain unchanged.
+
+## Formal v11 outcome
+
+Job `worldspec-h1-midterm-hnhb6` completed seven-candidate training, all 14
+isolated suites, CPU aggregation, and verified artifact handoff on a real A800.
+The runtime defect is closed, but the formal manipulation-balance gate failed.
+All seven candidates passed `from_rest` 5/5; their `post_walk_capture` results
+were 2/5, 4/5, 3/5, 4/5, 4/5, 4/5, and 4/5. The frozen ordering selected Step
+4,915,200. Its second post-walk trajectory terminated with `fall_height` at
+step 99/100, reaching a 0.466 m minimum base height and 0.749 m maximum lateral
+drift.
+
+This is a real policy-quality failure, not a runtime failure. The Checkpoint is
+preserved only as `internal_only / non_publishable` failure evidence. One
+full-kitchen run, kitchen 5/5, and 100M training remain prohibited. The next
+design stage must improve post-walk hard-state control or training without
+relaxing any existing gate.
