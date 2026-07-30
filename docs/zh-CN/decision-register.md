@@ -66,5 +66,6 @@ last-verified: 2026-07-30
 | D-054 | 正式 100M 已在 A800 完成并回传可恢复 Checkpoint；5/5 行走—停稳通过但 0/5 零命令站立回归因 0.314–0.324 m 漂移失败，策略保持 non_publishable，禁止自动调参、重试或 L3 声明 | Accepted | [ADR-0035](decisions/0035-h1-formal-100m-training-result.md) |
 | D-055 | 选择 A6-S：把 100M 终端 Checkpoint 仅作为任务载荷 Motion Policy，复用冻结的 Capture/Stand Supervisor 做一次 A800 十项门控；通过后才可单次完整 A5，再通过后才可厨房 5/5，任一步失败即停止 | Accepted Design | [ADR-0036](decisions/0036-h1-task-load-supervisor-gate.md) |
 | D-056 | A6-S 十项门控通过后，新增独立 A6-K1 单次完整厨房 Profile；复用 A6-S 三策略与 A5-CK 控制契约，单次通过只产生内部候选并仅解锁独立 5/5 Profile | Accepted Design | [ADR-0037](decisions/0037-h1-task-load-full-kitchen-single-gate.md) |
+| D-057 | 锚点恢复校准把步行后操作平衡提高到 4/5，但训练只使用步行后快照而正式门有一半静态起步；选择 50% 快照、50% 静态起步的混合重置校准，保持 ABI、训练步数、Episode 长度和全部质量门不变 | Accepted Design | [ADR-0038](decisions/0038-h1-manipulation-balance-mixed-reset.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

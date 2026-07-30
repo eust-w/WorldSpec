@@ -166,6 +166,7 @@ def make_environment(
             self._dynamic_arm_curriculum = None
             self._anchor_recovery = None
             self._capture_state_bank = None
+            self._capture_state_bank_from_rest_probability = 0.0
             self._stand_teacher_policy = stand_teacher_policy
             self._settle_teacher_policy = settle_teacher_policy
             self._stand_replay_probability = 0.0
@@ -289,6 +290,11 @@ def make_environment(
                     anchor_recovery = dynamic_arm.get("anchorRecovery")
                     if isinstance(anchor_recovery, dict):
                         self._anchor_recovery = anchor_recovery
+                snapshot = training_environment.get("snapshotCurriculum")
+                if isinstance(snapshot, dict):
+                    self._capture_state_bank_from_rest_probability = float(
+                        snapshot.get("fromRestProbability", 0.0)
+                    )
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
                 self._minimum_upright = float(validation["minimumUprightCosine"])
@@ -371,8 +377,7 @@ def make_environment(
             lower_step = knots[lower]
             upper_step = knots[upper]
             alpha = jp.clip(
-                (step.astype(jp.float32) - lower_step)
-                / jp.maximum(upper_step - lower_step, 1.0),
+                (step.astype(jp.float32) - lower_step) / jp.maximum(upper_step - lower_step, 1.0),
                 0.0,
                 1.0,
             )
@@ -382,8 +387,7 @@ def make_environment(
                 self._dynamic_arm_targets[upper] - self._dynamic_arm_targets[lower]
             )
             feedforward = self._dynamic_arm_feedforward[lower] + alpha * (
-                self._dynamic_arm_feedforward[upper]
-                - self._dynamic_arm_feedforward[lower]
+                self._dynamic_arm_feedforward[upper] - self._dynamic_arm_feedforward[lower]
             )
             return (
                 target_start + scale * (target - target_start),
@@ -434,20 +438,32 @@ def make_environment(
             )
 
         def reset(self, rng):
-            rng, command_rng, bank_rng, arm_rng = jax.random.split(rng, 4)
+            rng, command_rng, bank_rng, arm_rng, mixture_rng = jax.random.split(rng, 5)
             task_load_scale = jp.zeros(())
             dynamic_arm_scale = jp.ones(())
             if self._capture_state_bank is not None:
                 bank_size = self._capture_state_bank["qpos"].shape[0]
                 bank_index = jax.random.randint(bank_rng, (), 0, bank_size)
-                qpos = self._capture_state_bank["qpos"][bank_index]
-                qvel = self._capture_state_bank["qvel"][bank_index]
-                last_action = self._capture_state_bank["last_action"][bank_index]
+                bank_qpos = self._capture_state_bank["qpos"][bank_index]
+                bank_qvel = self._capture_state_bank["qvel"][bank_index]
+                bank_last_action = self._capture_state_bank["last_action"][bank_index]
+                from_rest = jax.random.bernoulli(
+                    mixture_rng,
+                    self._capture_state_bank_from_rest_probability,
+                )
+                qpos = jp.where(from_rest, self._initial_qpos, bank_qpos)
+                qvel = jp.where(from_rest, jp.zeros(self.mjx_model.nv), bank_qvel)
+                last_action = jp.where(
+                    from_rest,
+                    jp.zeros(self.action_size),
+                    bank_last_action,
+                )
                 command = jp.zeros(3)
                 transition_active = jp.asarray(False)
                 stand_replay_active = jp.asarray(False)
                 capture_active = jp.asarray(True)
             else:
+                from_rest = jp.asarray(False)
                 qpos = self._initial_qpos
                 qvel = jp.zeros(self.mjx_model.nv)
                 last_action = jp.zeros(self.action_size)
@@ -511,6 +527,7 @@ def make_environment(
                 "transition_active": transition_active,
                 "stand_replay_active": stand_replay_active,
                 "capture_active": capture_active,
+                "from_rest_reset": from_rest,
                 "last_action": last_action,
                 "step": jp.zeros((), dtype=jp.int32),
                 "termination": {
@@ -550,6 +567,7 @@ def make_environment(
                 "state/transition_settle": jp.zeros(()),
                 "state/stand_replay": jp.zeros(()),
                 "state/capture": jp.zeros(()),
+                "state/from_rest_reset": from_rest.astype(jp.float32),
                 "state/task_load_scale": task_load_scale,
                 "reward/base_anchor": jp.zeros(()),
                 "state/base_anchor_error": jp.zeros(()),
@@ -666,10 +684,13 @@ def make_environment(
                         and self._anchor_recovery is not None
                         else jp.zeros(3)
                     )
-                    settle_linear_reward = jp.exp(
-                        -jp.sum(jp.square(settle_command[:2] - local_velocity[:2]))
-                        / settle_sigma
-                    ) * transition_settle
+                    settle_linear_reward = (
+                        jp.exp(
+                            -jp.sum(jp.square(settle_command[:2] - local_velocity[:2]))
+                            / settle_sigma
+                        )
+                        * transition_settle
+                    )
                     settle_yaw_reward = (
                         jp.exp(-jp.square(settle_command[2] - gyro[2]) / settle_sigma)
                         * transition_settle
@@ -725,8 +746,7 @@ def make_environment(
                         + float(self._reward_config["upright"]) * upright_reward
                         + float(self._reward_config["baseHeight"]) * base_height_reward
                         + float(self._reward_config["pose"]) * pose_reward
-                        + float(self._reward_config.get("baseAnchor", 0.0))
-                        * base_anchor_reward
+                        + float(self._reward_config.get("baseAnchor", 0.0)) * base_anchor_reward
                         + float(self._reward_config.get("settleLinear", 0.0)) * settle_linear_reward
                         + float(self._reward_config.get("settleYaw", 0.0)) * settle_yaw_reward
                         + float(self._reward_config.get("standDistillation", 0.0))
@@ -896,6 +916,10 @@ def make_environment(
                     "state/transition_settle": transition_settle.astype(reward.dtype),
                     "state/stand_replay": stand_replay_active.astype(reward.dtype),
                     "state/capture": capture_active.astype(reward.dtype),
+                    "state/from_rest_reset": state.info.get(
+                        "from_rest_reset",
+                        jp.asarray(False),
+                    ).astype(reward.dtype),
                     "state/task_load_scale": state.info.get(
                         "task_load_scale",
                         jp.zeros(()),

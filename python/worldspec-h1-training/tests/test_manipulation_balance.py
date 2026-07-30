@@ -24,10 +24,7 @@ from worldspec_h1_training.manipulation_balance import (
 ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
 MANIPULATION_PROFILE = (
-    ROOT
-    / "examples"
-    / "h1-kitchen"
-    / "locomotion-manipulation-balance-profile.json"
+    ROOT / "examples" / "h1-kitchen" / "locomotion-manipulation-balance-profile.json"
 )
 
 
@@ -55,10 +52,8 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
         "research_manipulation_balance_override"
     )
     assert effective["trainingEnvironment"]["snapshotCurriculum"] == SNAPSHOT_CURRICULUM
-    assert (
-        effective["trainingEnvironment"]["dynamicArmCurriculum"]
-        == DYNAMIC_ARM_CURRICULUM
-    )
+    assert SNAPSHOT_CURRICULUM["fromRestProbability"] == 0.5
+    assert effective["trainingEnvironment"]["dynamicArmCurriculum"] == DYNAMIC_ARM_CURRICULUM
     assert (
         effective["trainingEnvironment"]["dynamicArmCurriculum"]["anchorRecovery"]
         == ANCHOR_RECOVERY
@@ -98,6 +93,14 @@ def test_manipulation_balance_rejects_anchor_recovery_drift() -> None:
         validate_manipulation_balance_profile(base, profile)
 
 
+def test_manipulation_balance_rejects_reset_mixture_drift() -> None:
+    base, profile = _profiles()
+    profile["environment"]["snapshotCurriculum"]["fromRestProbability"] = 0.25
+
+    with pytest.raises(TrainingError, match="environment"):
+        validate_manipulation_balance_profile(base, profile)
+
+
 def test_manipulation_balance_rejects_previous_attempt_drift() -> None:
     base, profile = _profiles()
     profile["previousAttempt"]["formalGate"] = "passed"
@@ -121,3 +124,19 @@ def test_manipulation_balance_profile_does_not_mutate_base() -> None:
     make_manipulation_balance_training_profile(base, profile)
 
     assert base == original
+
+
+def test_environment_applies_mixed_capture_and_rest_reset() -> None:
+    source = (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "environment.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'snapshot.get("fromRestProbability", 0.0)' in source
+    assert "from_rest = jax.random.bernoulli(" in source
+    assert "qpos = jp.where(from_rest, self._initial_qpos, bank_qpos)" in source
+    assert "jp.where(from_rest, jp.zeros(self.mjx_model.nv), bank_qvel)" in source

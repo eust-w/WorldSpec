@@ -1,8 +1,9 @@
 """Post-walk manipulation-balance calibration for H1.
 
 This stage is intentionally separate from the historical locomotion and capture
-profiles.  It keeps the ten-action leg ABI, starts from motion-to-capture
-snapshots, and exposes the policy to an evidence-bound right-arm trajectory.
+profiles.  It keeps the ten-action leg ABI, trains on an equal mixture of
+motion-to-capture snapshots and the deterministic rest state, and exposes the
+policy to an evidence-bound right-arm trajectory.
 """
 
 from __future__ import annotations
@@ -65,20 +66,24 @@ A6K1_CAPTURE_FAILURE = {
 }
 
 PREVIOUS_ATTEMPT = {
-    "job": "worldspec-h1-midterm-w2f8x",
-    "probeRevision": "d6588e5fc7ca7495a13fa234a5bd4c0507256968",
-    "reportDigest": "sha256:7b4097e9bc146ed75bbaa908648098cafacf6261fbb16604d21fa9eb74364a8d",
-    "reportSizeBytes": 29_947,
-    "checkpointDigest": "sha256:d9113bd0479962bb65401f9441efbd26e43f08abefd9756bebe26745281cd127",
-    "checkpointSizeBytes": 8_796_078,
-    "traceDigest": "sha256:2640534b31d9cd14d1bea8d0d74989b45d0f6081746a5a2f9d4fda465ac611b5",
-    "traceSizeBytes": 431_676,
-    "snapshotBankDigest": "sha256:dcd23fcae13430b8761338dd049f8e4e4cc0bab229da6a22f09c0a9521453ccd",
-    "snapshotBankSizeBytes": 1_190_016,
+    "job": "worldspec-h1-midterm-dxbgm",
+    "probeRevision": "3107988623e20391573043efba706664f15b95fe",
+    "reportDigest": "sha256:b5308429cc1870ae6a6f4c60a61e666d2b0fc8df658b87b017be6d683b6c2f69",
+    "reportSizeBytes": 31_165,
+    "checkpointDigest": "sha256:419dd8f830209823099f806bf3f79d0310f0376e81617a3d28465aede20a0215",
+    "checkpointSizeBytes": 8_807_890,
+    "traceDigest": "sha256:8702778fa4b7773601b9835cf0c48ba9c1cbaf11b50888cef89e3e8b66354148",
+    "traceSizeBytes": 434_010,
+    "snapshotBankDigest": "sha256:fb9e9ea4157e187ba930111678586246de09c62a4045672f5ae459c5c4176557",
+    "snapshotBankSizeBytes": 1_189_875,
     "formalGate": "failed",
-    "finalMeanEpisodeLength": 88.875,
-    "fromRestMaximumBaseTranslation": 0.4705555733358963,
-    "fromRestMaximumTerminalLinearSpeed": 1.5863483127264932,
+    "finalMeanEpisodeLength": 88.0078125,
+    "deterministicTestsPassed": 4,
+    "fromRestMaximumBaseTranslation": 0.19421254000873567,
+    "fromRestMaximumTerminalLinearSpeed": 0.5424353392169927,
+    "postWalkMaximumBaseTranslation": 0.34201740938670944,
+    "postWalkMaximumTerminalLinearSpeed": 1.068310242030232,
+    "trainingFromRestProbability": 0.0,
     "qualityGatesChanged": False,
 }
 
@@ -100,8 +105,9 @@ ZERO_COMMAND = {
 }
 
 SNAPSHOT_CURRICULUM = {
-    "mode": "loaded_motion_capture_snapshot",
+    "mode": "loaded_motion_capture_and_rest_mixture",
     "snapshotCount": 4096,
+    "fromRestProbability": 0.5,
     "motionSteps": 150,
     "captureStepRange": [35, 50],
     "motionCommandDistribution": {

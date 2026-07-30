@@ -1,0 +1,57 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-anchor/dxbgm",
+  "status": "failed",
+  "job": "worldspec-h1-midterm-dxbgm",
+  "probeRevision": "3107988623e20391573043efba706664f15b95fe",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:0b82fa4413897a6a89864ff9b8789eef62d536e08cf89a4322fd70581bf5e196",
+  "report": {
+    "digest": "sha256:b5308429cc1870ae6a6f4c60a61e666d2b0fc8df658b87b017be6d683b6c2f69",
+    "sizeBytes": 31165
+  },
+  "checkpoint": {
+    "digest": "sha256:419dd8f830209823099f806bf3f79d0310f0376e81617a3d28465aede20a0215",
+    "sizeBytes": 8807890,
+    "distribution": "internal_only"
+  },
+  "trace": {
+    "digest": "sha256:8702778fa4b7773601b9835cf0c48ba9c1cbaf11b50888cef89e3e8b66354148",
+    "sizeBytes": 434010,
+    "distribution": "internal_only"
+  },
+  "snapshotBank": {
+    "digest": "sha256:fb9e9ea4157e187ba930111678586246de09c62a4045672f5ae459c5c4176557",
+    "sizeBytes": 1189875,
+    "snapshotCount": 4096,
+    "terminatedSnapshotCount": 0,
+    "distribution": "internal_only"
+  },
+  "training": {
+    "maximumReportedStep": 17203200,
+    "finalMeanEpisodeLength": 88.0078125,
+    "minimumRequiredMeanEpisodeLength": 90.0,
+    "fromRestProbability": 0.0
+  },
+  "quality": {
+    "formalManipulationBalanceGate": "failed",
+    "policyStatus": "non_publishable",
+    "deterministicTestsPassed": 4,
+    "deterministicTestsRequired": 10,
+    "fromRestMaximumBaseTranslation": 0.19421254000873567,
+    "fromRestMaximumTerminalLinearSpeed": 0.5424353392169927,
+    "postWalkMaximumBaseTranslation": 0.34201740938670944,
+    "postWalkMaximumTerminalLinearSpeed": 1.068310242030232,
+    "nonFiniteSamples": 0
+  },
+  "diagnosis": {
+    "classification": "training_distribution_gap",
+    "evidence": "Training resets used only post-walk capture snapshots while half of the deterministic gate started from rest.",
+    "qualityGatesChanged": false
+  },
+  "decision": {
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "nextStep": "mixed_reset_distribution_calibration",
+    "qualityGatesChanged": false
+  },
+  "generatedAt": "2026-07-30T15:08:38Z"
+}
