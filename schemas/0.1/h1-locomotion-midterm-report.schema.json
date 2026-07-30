@@ -165,44 +165,227 @@
       },
       "additionalProperties": false
     },
+    "standTeacher": {
+      "$ref": "#/properties/retentionTeacher"
+    },
+    "settleTeacher": {
+      "type": "object",
+      "required": [
+        "archiveDigest",
+        "archiveSizeBytes",
+        "selectedStep",
+        "networkConfig",
+        "restored",
+        "optimizerState",
+        "mode",
+        "scope"
+      ],
+      "properties": {
+        "archiveDigest": {
+          "const": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe"
+        },
+        "archiveSizeBytes": {
+          "const": 6280278
+        },
+        "selectedStep": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "networkConfig": {
+          "type": "object"
+        },
+        "restored": {
+          "type": "object",
+          "required": [
+            "normalizer",
+            "policy",
+            "value",
+            "optimizer"
+          ],
+          "properties": {
+            "normalizer": {
+              "const": true
+            },
+            "policy": {
+              "const": true
+            },
+            "value": {
+              "const": true
+            },
+            "optimizer": {
+              "const": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": {
+          "const": "reset"
+        },
+        "mode": {
+          "const": "deterministic_action_distillation"
+        },
+        "scope": {
+          "const": "transition_settle_only"
+        }
+      },
+      "additionalProperties": false
+    },
     "taskLoadCurriculum": {
-      "const": {
-        "mode": "static_right_arm_pose_and_base_disturbance",
-        "sourceJob": "worldspec-h1-midterm-5nn2q",
-        "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
-        "heldTargetScale": [
-          0.5,
-          1.0
-        ],
-        "initialBaseVelocityX": [
-          -0.1,
-          0.1
-        ],
-        "heldTargets": [
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.0,
-          0.1543052911758423,
-          0.09892238825658843,
-          -0.006488978405079102,
-          -0.19852599334400028
-        ],
-        "heldFeedforward": [
-          0.032988220529269176,
-          -1.1402555002525037,
-          0.08486267857762098,
-          0.012800121336152957,
-          -1.0451398037469817,
-          -0.9578816827225751,
-          0.837737275364864,
-          0.46023224988862355,
-          -4.402542577541209
-        ],
-        "observationAugmentation": "none",
-        "qualityGatesChanged": false
-      }
+      "oneOf": [
+        {
+          "const": {
+            "mode": "static_right_arm_pose_and_base_disturbance",
+            "sourceJob": "worldspec-h1-midterm-5nn2q",
+            "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+            "heldTargetScale": [
+              0.5,
+              1.0
+            ],
+            "initialBaseVelocityX": [
+              -0.1,
+              0.1
+            ],
+            "heldTargets": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.1543052911758423,
+              0.09892238825658843,
+              -0.006488978405079102,
+              -0.19852599334400028
+            ],
+            "heldFeedforward": [
+              0.032988220529269176,
+              -1.1402555002525037,
+              0.08486267857762098,
+              0.012800121336152957,
+              -1.0451398037469817,
+              -0.9578816827225751,
+              0.837737275364864,
+              0.46023224988862355,
+              -4.402542577541209
+            ],
+            "observationAugmentation": "none",
+            "qualityGatesChanged": false
+          }
+        },
+        {
+          "const": {
+            "mode": "static_right_arm_pose",
+            "sourceJob": "worldspec-h1-midterm-5nn2q",
+            "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+            "heldTargetScale": [
+              1.0,
+              1.0
+            ],
+            "initialBaseVelocityX": [
+              0.0,
+              0.0
+            ],
+            "heldTargets": [
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.0,
+              0.1543052911758423,
+              0.09892238825658843,
+              -0.006488978405079102,
+              -0.19852599334400028
+            ],
+            "heldFeedforward": [
+              0.032988220529269176,
+              -1.1402555002525037,
+              0.08486267857762098,
+              0.012800121336152957,
+              -1.0451398037469817,
+              -0.9578816827225751,
+              0.837737275364864,
+              0.46023224988862355,
+              -4.402542577541209
+            ],
+            "observationAugmentation": "none",
+            "qualityGatesChanged": false
+          }
+        }
+      ]
+    },
+    "checkpointSelection": {
+      "type": "object",
+      "required": [
+        "mode",
+        "selectedStep",
+        "candidateCount",
+        "selectedFormalGate",
+        "candidates"
+      ],
+      "properties": {
+        "mode": {
+          "const": "deterministic_gate_rank_v1"
+        },
+        "selectedStep": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidateCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selectedFormalGate": {
+          "type": "boolean"
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "step",
+              "meanEpisodeLength",
+              "meanEpisodeLengthGate",
+              "deterministicSuiteGate",
+              "passedTestCount",
+              "expectedTestCount",
+              "normalizedViolationScore",
+              "formalGate"
+            ],
+            "properties": {
+              "step": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "meanEpisodeLength": {
+                "type": "number"
+              },
+              "meanEpisodeLengthGate": {
+                "type": "boolean"
+              },
+              "deterministicSuiteGate": {
+                "type": "boolean"
+              },
+              "passedTestCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 10
+              },
+              "expectedTestCount": {
+                "const": 10
+              },
+              "normalizedViolationScore": {
+                "type": "number",
+                "minimum": 0
+              },
+              "formalGate": {
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
     },
     "runtimeCapacity": { "type": "object" },
     "staticPreflight": { "type": "object" },
@@ -231,7 +414,8 @@
             "loaded_track_settle",
             "loaded_track_settle_transition",
             "loaded_track_settle_retention",
-            "loaded_track_settle_task_load"
+            "loaded_track_settle_task_load",
+            "loaded_track_settle_task_load_retention"
           ]
         }
       }
@@ -249,6 +433,15 @@
       "properties": {
         "status": { "enum": ["passed", "failed"] },
         "finalMeanEpisodeLength": { "type": "number" },
+        "assessmentBasis": {
+          "enum": [
+            "terminal_training_checkpoint",
+            "selected_saved_checkpoint"
+          ]
+        },
+        "terminalMeanEpisodeLength": {
+          "type": "number"
+        },
         "minimumFinalMeanEpisodeLength": { "const": 900.0 },
         "meanEpisodeLengthGate": { "type": "boolean" },
         "deterministicSuiteGate": { "type": "boolean" },
@@ -345,6 +538,43 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "training": {
+            "properties": {
+              "profileStage": {
+                "const": "loaded_track_settle_task_load_retention"
+              }
+            },
+            "required": [
+              "profileStage"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "standTeacher",
+          "settleTeacher",
+          "taskLoadCurriculum",
+          "checkpointSelection"
+        ],
+        "properties": {
+          "qualityAssessment": {
+            "required": [
+              "assessmentBasis",
+              "terminalMeanEpisodeLength"
+            ],
+            "properties": {
+              "assessmentBasis": {
+                "const": "selected_saved_checkpoint"
+              }
+            }
+          }
+        }
+      }
+    },
     {
       "if": {
         "properties": {

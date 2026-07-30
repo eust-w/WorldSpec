@@ -238,6 +238,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/whole-body-base-anchor-profile.json": "h1-whole-body-control-profile.schema.json",
         "h1-kitchen/whole-body-forward-only-base-anchor-profile.json": "h1-whole-body-control-profile.schema.json",
         "h1-kitchen/locomotion-task-load-profile.json": "h1-locomotion-task-load-profile.schema.json",
+        "h1-kitchen/locomotion-task-load-retention-profile.json": "h1-locomotion-task-load-retention-profile.schema.json",
         "h1-kitchen/whole-body-control.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-policy-handoff.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-dynamic-arm.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",

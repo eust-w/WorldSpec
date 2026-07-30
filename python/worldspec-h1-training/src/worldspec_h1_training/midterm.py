@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import functools
+import shutil
 import tempfile
 import time
 from pathlib import Path
@@ -34,6 +35,18 @@ FAILED_TRANSITION_CHECKPOINT_DIGEST = (
     "sha256:2e4590c9291c81581205aee02c4bf168b9532790a14aecac839faee68954d356"
 )
 FAILED_TRANSITION_CHECKPOINT_SIZE = 8_838_595
+FAILED_RETENTION_REPORT_DIGEST = (
+    "sha256:e232bed2b23400871fbe406ec8bf89463e19c293693616370febc2bc78cc7397"
+)
+FAILED_RETENTION_CHECKPOINT_DIGEST = (
+    "sha256:59697ea50339fa9ad17b9131c3369b761e0ff8345cf649be76549294472a4b8b"
+)
+FAILED_RETENTION_CHECKPOINT_SIZE = 6_327_077
+CAPTURE_REPORT_DIGEST = "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f"
+CAPTURE_CHECKPOINT_DIGEST = (
+    "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe"
+)
+CAPTURE_CHECKPOINT_SIZE = 6_280_278
 
 TRANSITION_COMMAND = {
     "linearVelocityX": [0.0, 0.6],
@@ -170,6 +183,56 @@ TASK_LOAD_CURRICULUM = {
     ],
     "observationAugmentation": "none",
     "qualityGatesChanged": False,
+}
+
+TASK_LOAD_RETENTION_TRAINING_OVERRIDES = {
+    "numTimesteps": 16_777_216,
+    "numEnvs": 4096,
+    "numEvals": 8,
+    "episodeLength": 1000,
+    "unrollLength": 20,
+    "numMinibatches": 16,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256,
+    "learningRate": 0.00005,
+    "entropyCost": 0.001,
+}
+TASK_LOAD_RETENTION_CURRICULUM = {
+    "mode": "move_then_zero_with_stand_replay",
+    "transitionCycleProbability": 0.75,
+    "standReplayProbability": 0.25,
+    "moveSteps": 150,
+    "settleSteps": 50,
+    "motionCommandDistribution": {
+        "linearVelocityX": [0.4, 0.6],
+        "linearVelocityY": [-0.05, 0.05],
+        "angularVelocityYaw": [-0.1, 0.1],
+    },
+}
+TASK_LOAD_RETENTION_LOAD = {
+    **TASK_LOAD_CURRICULUM,
+    "mode": "static_right_arm_pose",
+    "heldTargetScale": [1.0, 1.0],
+    "initialBaseVelocityX": [0.0, 0.0],
+}
+TASK_LOAD_RETENTION_REWARD_ADDITIONS = {
+    "settleLinear": 16.0,
+    "settleYaw": 6.0,
+    "settleActionRateScale": 0.15,
+    "standDistillation": 4.0,
+    "settleDistillation": 4.0,
+}
+TASK_LOAD_RETENTION_STAND_TEACHER = {
+    **RETENTION_TEACHER,
+}
+TASK_LOAD_RETENTION_SETTLE_TEACHER = {
+    "sourceStage": "loaded-track-settle-capture-v1-passed",
+    "sourceReportDigest": CAPTURE_REPORT_DIGEST,
+    "checkpointDigest": CAPTURE_CHECKPOINT_DIGEST,
+    "checkpointSizeBytes": CAPTURE_CHECKPOINT_SIZE,
+    "distribution": "internal_only",
+    "mode": "deterministic_action_distillation",
+    "scope": "transition_settle_only",
 }
 
 
@@ -720,6 +783,173 @@ def validate_task_load_profile(
         )
 
 
+def validate_task_load_retention_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> None:
+    """Validate full arm-load training with stand and settle retention teachers."""
+
+    validate_profile(base_profile)
+    if (
+        profile.get("profileVersion") != "0.1.0"
+        or profile.get("status") != "research"
+        or profile.get("stage") != "loaded_track_settle_task_load_retention"
+    ):
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_PROFILE_UNSUPPORTED",
+            "Task-load retention must use loaded_track_settle_task_load_retention v0.1.",
+        )
+    if profile.get("baseTrainingProfileDigest") != digest_json(base_profile):
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_BASE_PROFILE_MISMATCH",
+            "Task-load retention is not bound to the exact base training Profile.",
+        )
+    if profile.get("a5ckEvidence") != A5CK_FAILURE_EVIDENCE:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_FAILURE_EVIDENCE_MISMATCH",
+            "Task-load retention must preserve the archived A5-CK failure lineage.",
+        )
+    source = profile.get("warmStart", {})
+    if (
+        source.get("sourceStage") != "loaded-track-settle-retention-v3-failed"
+        or source.get("sourceReportDigest") != FAILED_RETENTION_REPORT_DIGEST
+        or source.get("checkpointDigest") != FAILED_RETENTION_CHECKPOINT_DIGEST
+        or source.get("checkpointSizeBytes") != FAILED_RETENTION_CHECKPOINT_SIZE
+    ):
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_WARM_START_EVIDENCE_MISMATCH",
+            "Task-load retention must warm-start from the frozen retention-v3 evidence.",
+        )
+    if source.get("optimizerState") != "reset" or source.get("restore") != {
+        "normalizer": True,
+        "policy": True,
+        "value": True,
+    }:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_WARM_START_INVALID",
+            "Task-load retention must restore normalizer/policy/value and reset optimizer.",
+        )
+    if source.get("distribution") != "internal_only":
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_WARM_START_DISTRIBUTION_INVALID",
+            "Task-load retention warm-start input must remain internal-only.",
+        )
+    if profile.get("standTeacher") != TASK_LOAD_RETENTION_STAND_TEACHER:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_STAND_TEACHER_INVALID",
+            "Task-load retention must bind stand-v2.1 as the stand teacher.",
+        )
+    if profile.get("settleTeacher") != TASK_LOAD_RETENTION_SETTLE_TEACHER:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_SETTLE_TEACHER_INVALID",
+            "Task-load retention must bind the passing capture policy as settle teacher.",
+        )
+    if profile.get("trainingOverrides") != TASK_LOAD_RETENTION_TRAINING_OVERRIDES:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_TRAINING_OVERRIDES_INVALID",
+            "Task-load retention budget, optimizer, and topology are frozen.",
+        )
+    if profile.get("checkpointSelection") != {
+        "mode": "deterministic_gate_rank_v1",
+        "evaluateAllSavedCheckpoints": True,
+        "packageSelectedOnly": True,
+    }:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_SELECTION_INVALID",
+            "Task-load retention must evaluate every saved checkpoint and package one.",
+        )
+    environment = profile.get("environment", {})
+    if environment.get("commandDistribution") != TRANSITION_COMMAND:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_COMMAND_INVALID",
+            "Task-load retention must preserve the kitchen command range.",
+        )
+    if environment.get("transitionCurriculum") != TASK_LOAD_RETENTION_CURRICULUM:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_CURRICULUM_INVALID",
+            "Task-load retention must use 75% transition and 25% stand replay.",
+        )
+    if environment.get("taskLoadCurriculum") != TASK_LOAD_RETENTION_LOAD:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_LOAD_INVALID",
+            "Task-load retention must train and evaluate the full A5-CK right-arm load.",
+        )
+    expected_reward = {
+        "survival": 3.0,
+        "trackingLinear": 6.0,
+        "trackingYaw": 2.0,
+        "upright": 3.0,
+        "baseHeight": 2.0,
+        "pose": 0.5,
+        "verticalVelocityCost": 1.0,
+        "angularVelocityXYCost": 0.5,
+        "torqueCost": 0.000002,
+        "actionRateCost": 0.03,
+        **TASK_LOAD_RETENTION_REWARD_ADDITIONS,
+    }
+    if environment.get("reward") != expected_reward:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_REWARD_INVALID",
+            "Task-load retention must preserve the dual-teacher braking reward.",
+        )
+    if (
+        environment.get("termination")
+        != {
+            "minimumBaseHeight": 0.5,
+            "minimumUprightCosine": 0.25,
+            "jointLimitToleranceRadians": 0.02,
+        }
+        or environment.get("targets") != {"baseHeight": 0.98}
+        or environment.get("sigmas")
+        != {
+            "tracking": 0.2,
+            "upright": 0.05,
+            "baseHeight": 0.02,
+            "pose": 0.2,
+            "settleTracking": 0.05,
+            "standDistillation": 0.05,
+            "settleDistillation": 0.05,
+        }
+        or environment.get("commandResampleSteps") != 200
+    ):
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_TIMING_INVALID",
+            "Task-load retention timing, termination, and distillation sigmas are frozen.",
+        )
+    if profile.get("qualityGates") != TRANSITION_QUALITY_GATES:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_QUALITY_GATES_INVALID",
+            "Task-load retention cannot relax the accepted quality gates.",
+        )
+    runtime = profile.get("runtime", {})
+    if runtime.get("ccdIterations") != 50:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_CCD_ITERATIONS_INVALID",
+            "Task-load retention requires CCD=50.",
+        )
+    if (
+        runtime.get("containerDigest")
+        != (runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1])
+    ):
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_CONTAINER_BINDING_MISMATCH",
+            "Task-load retention containerImage and containerDigest must match.",
+        )
+    if runtime.get("packageLockDigest") != base_profile["runtime"]["packageLockDigest"]:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_PACKAGE_LOCK_MISMATCH",
+            "Task-load retention must use the base Profile package lock.",
+        )
+    if profile.get("artifactPolicy") != {
+        "checkpoint": "research_only",
+        "distribution": "internal_only",
+    }:
+        raise TrainingError(
+            "TASK_LOAD_RETENTION_ARTIFACT_POLICY_INVALID",
+            "Task-load retention outputs must remain internal research artifacts.",
+        )
+
+
 def make_midterm_training_profile(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
@@ -795,6 +1025,127 @@ def make_task_load_training_profile(
     return effective
 
 
+def make_task_load_retention_training_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    """Build the full-load, dual-teacher effective training Profile."""
+
+    validate_task_load_retention_profile(base_profile, profile)
+    effective = copy.deepcopy(base_profile)
+    effective["runtime"]["containerDigest"] = profile["runtime"]["containerDigest"]
+    effective["runtime"]["packageLockDigest"] = profile["runtime"]["packageLockDigest"]
+    effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
+    effective["training"].update(profile["trainingOverrides"])
+    effective["training"]["hyperparameterStatus"] = "research_task_load_retention_override"
+    effective["training"]["commandDistribution"] = copy.deepcopy(
+        profile["environment"]["commandDistribution"]
+    )
+    effective["trainingEnvironment"] = copy.deepcopy(profile["environment"])
+    effective["validation"] = copy.deepcopy(profile["qualityGates"])
+    return effective
+
+
+def assess_checkpoint_candidate(
+    step: int,
+    mean_episode_length: float,
+    tests: list[dict[str, Any]],
+    gates: dict[str, Any],
+) -> dict[str, Any]:
+    """Score one saved checkpoint without weakening any formal gate."""
+
+    passed_tests = sum(item.get("result") == "pass" for item in tests)
+    expected_tests = gates["requiredConsecutivePasses"] * 2
+    deterministic_gate = len(tests) == expected_tests and passed_tests == expected_tests
+    episode_gate = mean_episode_length >= gates["minimumFinalMeanEpisodeLength"]
+    violation = 0.0
+    for item in tests:
+        metrics = item["metrics"]
+        if metrics["doneSeen"]:
+            violation += 10.0
+        violation += 10.0 * float(metrics["nonFiniteSamples"])
+        violation += max(
+            0.0,
+            (gates["minimumBaseHeight"] - metrics["minimumBaseHeight"])
+            / gates["minimumBaseHeight"],
+        )
+        violation += max(
+            0.0,
+            (gates["minimumUprightCosine"] - metrics["minimumUprightCosine"])
+            / gates["minimumUprightCosine"],
+        )
+        if item["suite"] == "walk_settle":
+            violation += max(
+                0.0,
+                (gates["minimumForwardDisplacement"] - metrics["forwardDisplacement"])
+                / gates["minimumForwardDisplacement"],
+            )
+            violation += max(
+                0.0,
+                (metrics["forwardDisplacement"] - gates["maximumForwardDisplacement"])
+                / gates["maximumForwardDisplacement"],
+            )
+            violation += max(
+                0.0,
+                (metrics["lateralDrift"] - gates["maximumLateralDrift"])
+                / gates["maximumLateralDrift"],
+            )
+            violation += max(
+                0.0,
+                (metrics["trackingRmse"] - gates["maximumTrackingRmse"])
+                / gates["maximumTrackingRmse"],
+            )
+            violation += max(
+                0.0,
+                (metrics["maximumSettleLinearSpeed"] - gates["maximumSettleLinearSpeed"])
+                / gates["maximumSettleLinearSpeed"],
+            )
+            violation += max(
+                0.0,
+                (metrics["maximumSettleAngularSpeed"] - gates["maximumSettleAngularSpeed"])
+                / gates["maximumSettleAngularSpeed"],
+            )
+        else:
+            violation += max(
+                0.0,
+                (metrics["maximumPlanarDrift"] - gates["maximumStandPlanarDrift"])
+                / gates["maximumStandPlanarDrift"],
+            )
+    return {
+        "step": int(step),
+        "meanEpisodeLength": float(mean_episode_length),
+        "meanEpisodeLengthGate": episode_gate,
+        "deterministicSuiteGate": deterministic_gate,
+        "passedTestCount": passed_tests,
+        "expectedTestCount": expected_tests,
+        "normalizedViolationScore": float(violation),
+        "formalGate": episode_gate and deterministic_gate,
+    }
+
+
+def select_checkpoint_candidate(
+    candidates: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Choose the strongest candidate with a deterministic, fail-closed rank."""
+
+    if not candidates:
+        raise TrainingError(
+            "MIDTERM_CHECKPOINT_CANDIDATES_MISSING",
+            "PPO did not produce any checkpoint candidate.",
+        )
+    return max(
+        candidates,
+        key=lambda item: (
+            bool(item["formalGate"]),
+            int(item["passedTestCount"]),
+            bool(item["meanEpisodeLengthGate"]),
+            -float(item["normalizedViolationScore"]),
+            float(item["meanEpisodeLength"]),
+            -int(item["step"]),
+        ),
+    )
+
+
 def _load_deterministic_teacher_policy(
     selected_step: Path,
     initialization: dict[str, Any],
@@ -842,6 +1193,7 @@ def run_midterm_calibration(
     output_dir: Path,
     warm_start_archive: Path,
     retention_teacher_archive: Path | None = None,
+    settle_teacher_archive: Path | None = None,
 ) -> dict[str, Any]:
     """Warm-start, train, evaluate, and retain a midterm checkpoint."""
 
@@ -861,6 +1213,13 @@ def run_midterm_calibration(
             )
     elif profile.get("stage") == "loaded_track_settle_task_load":
         effective = make_task_load_training_profile(base_profile, profile)
+    elif profile.get("stage") == "loaded_track_settle_task_load_retention":
+        effective = make_task_load_retention_training_profile(base_profile, profile)
+        if retention_teacher_archive is None or settle_teacher_archive is None:
+            raise TrainingError(
+                "TASK_LOAD_RETENTION_TEACHER_ARCHIVE_MISSING",
+                "Task-load retention requires both stand and settle teacher archives.",
+            )
     else:
         effective = make_midterm_training_profile(base_profile, profile)
     static = static_preflight(base_profile, bundle_dir)
@@ -903,6 +1262,12 @@ def run_midterm_calibration(
         value_obs_key="state",
     )
     teacher_initialization: dict[str, Any] | None = None
+    settle_teacher_initialization: dict[str, Any] | None = None
+    selected_tests: list[dict[str, Any]] = []
+    selected_traces: list[dict[str, Any]] = []
+    checkpoint_assessments: list[dict[str, Any]] = []
+    selected_checkpoint_step = 0
+    selected_mean_episode_length = 0.0
     with tempfile.TemporaryDirectory(prefix="worldspec-h1-warm-start-") as temporary:
         selected_step, initialization = materialize_warm_start(
             warm_start_archive,
@@ -912,7 +1277,12 @@ def run_midterm_calibration(
         )
         teacher_policy = None
         if retention_teacher_archive is not None:
-            teacher_spec = profile["retentionTeacher"]
+            teacher_spec = profile.get("retentionTeacher", profile.get("standTeacher"))
+            if teacher_spec is None:
+                raise TrainingError(
+                    "MIDTERM_TEACHER_SPEC_MISSING",
+                    "A teacher archive was supplied without a matching teacher spec.",
+                )
             teacher_step, teacher_initialization = materialize_warm_start(
                 retention_teacher_archive,
                 Path(temporary) / "stand-teacher",
@@ -929,10 +1299,35 @@ def run_midterm_calibration(
                 "mode": teacher_spec["mode"],
                 "scope": teacher_spec["scope"],
             }
+        settle_teacher_policy = None
+        if settle_teacher_archive is not None:
+            settle_teacher_spec = profile.get("settleTeacher")
+            if settle_teacher_spec is None:
+                raise TrainingError(
+                    "MIDTERM_SETTLE_TEACHER_SPEC_MISSING",
+                    "A settle teacher archive was supplied without a settleTeacher spec.",
+                )
+            settle_teacher_step, settle_teacher_initialization = materialize_warm_start(
+                settle_teacher_archive,
+                Path(temporary) / "settle-teacher",
+                settle_teacher_spec["checkpointDigest"],
+                settle_teacher_spec["checkpointSizeBytes"],
+            )
+            settle_teacher_policy = _load_deterministic_teacher_policy(
+                settle_teacher_step,
+                settle_teacher_initialization,
+                network_factory,
+            )
+            settle_teacher_initialization = {
+                **settle_teacher_initialization,
+                "mode": settle_teacher_spec["mode"],
+                "scope": settle_teacher_spec["scope"],
+            }
         environment = make_environment(
             effective,
             training_model,
             stand_teacher_policy=teacher_policy,
+            settle_teacher_policy=settle_teacher_policy,
         )
         observation_size = _flat_observation_size(environment.observation_size["state"])
         action_size = int(environment.action_size)
@@ -940,6 +1335,12 @@ def run_midterm_calibration(
         if teacher_initialization is not None:
             validate_network_compatibility(
                 teacher_initialization,
+                observation_size,
+                action_size,
+            )
+        if settle_teacher_initialization is not None:
+            validate_network_compatibility(
+                settle_teacher_initialization,
                 observation_size,
                 action_size,
             )
@@ -970,35 +1371,114 @@ def run_midterm_calibration(
             wrap_env_fn=wrapper.wrap_for_brax_training,
             num_eval_envs=min(128, training["numEnvs"]),
         )
-    if len(progress_records) < 2:
-        raise TrainingError(
-            "MIDTERM_PROGRESS_MISSING",
-            "Midterm calibration did not report enough progress records.",
-        )
-    final_progress = progress_records[-1]
-    final_mean_episode_length = final_progress["metrics"].get("eval/avg_episode_length")
-    if final_mean_episode_length is None:
-        raise TrainingError(
-            "MIDTERM_EPISODE_METRIC_MISSING",
-            "Midterm calibration did not report eval/avg_episode_length.",
-        )
-    tests, traces = evaluate_policy_suite(
-        effective,
-        environment,
-        make_inference_fn,
-        params,
-    )
-    checkpoint_archive = output_dir / "midterm-checkpoint.zip"
-    _deterministic_zip(checkpoint_dir, checkpoint_archive)
+        if len(progress_records) < 2:
+            raise TrainingError(
+                "MIDTERM_PROGRESS_MISSING",
+                "Midterm calibration did not report enough progress records.",
+            )
+        final_progress = progress_records[-1]
+        final_mean_episode_length = final_progress["metrics"].get("eval/avg_episode_length")
+        if final_mean_episode_length is None:
+            raise TrainingError(
+                "MIDTERM_EPISODE_METRIC_MISSING",
+                "Midterm calibration did not report eval/avg_episode_length.",
+            )
+        if profile.get("stage") == "loaded_track_settle_task_load_retention":
+            from brax.training.agents.ppo import checkpoint as ppo_checkpoint
+
+            checkpoint_steps = sorted(
+                (
+                    path
+                    for path in checkpoint_dir.iterdir()
+                    if path.is_dir() and path.name.isdigit()
+                ),
+                key=lambda path: int(path.name),
+            )
+            candidate_details: list[dict[str, Any]] = []
+            for checkpoint_step in checkpoint_steps:
+                step = int(checkpoint_step.name)
+                matching_progress = min(
+                    progress_records,
+                    key=lambda item: abs(int(item["step"]) - step),
+                )
+                mean_episode_length = matching_progress["metrics"].get("eval/avg_episode_length")
+                if mean_episode_length is None:
+                    raise TrainingError(
+                        "MIDTERM_CANDIDATE_EPISODE_METRIC_MISSING",
+                        "A saved PPO checkpoint has no associated episode metric.",
+                        {"step": step},
+                    )
+                candidate_params = ppo_checkpoint.load(checkpoint_step)
+                candidate_tests, candidate_traces = evaluate_policy_suite(
+                    effective,
+                    environment,
+                    make_inference_fn,
+                    candidate_params,
+                )
+                assessment = assess_checkpoint_candidate(
+                    step,
+                    float(mean_episode_length),
+                    candidate_tests,
+                    profile["qualityGates"],
+                )
+                checkpoint_assessments.append(assessment)
+                candidate_details.append(
+                    {
+                        "assessment": assessment,
+                        "tests": candidate_tests,
+                        "traces": candidate_traces,
+                        "path": checkpoint_step,
+                    }
+                )
+            selected_assessment = select_checkpoint_candidate(checkpoint_assessments)
+            selected_detail = next(
+                item
+                for item in candidate_details
+                if item["assessment"]["step"] == selected_assessment["step"]
+            )
+            selected_tests = selected_detail["tests"]
+            selected_traces = selected_detail["traces"]
+            selected_checkpoint_step = selected_assessment["step"]
+            selected_mean_episode_length = selected_assessment["meanEpisodeLength"]
+            selected_checkpoint_root = output_dir / "selected-checkpoint"
+            selected_checkpoint_root.mkdir()
+            shutil.copytree(
+                selected_detail["path"],
+                selected_checkpoint_root / selected_detail["path"].name,
+            )
+            checkpoint_archive = output_dir / "midterm-checkpoint.zip"
+            _deterministic_zip(selected_checkpoint_root, checkpoint_archive)
+        else:
+            selected_tests, selected_traces = evaluate_policy_suite(
+                effective,
+                environment,
+                make_inference_fn,
+                params,
+            )
+            selected_mean_episode_length = float(final_mean_episode_length)
+            checkpoint_steps = sorted(
+                (
+                    path
+                    for path in checkpoint_dir.iterdir()
+                    if path.is_dir() and path.name.isdigit()
+                ),
+                key=lambda path: int(path.name),
+            )
+            selected_checkpoint_step = int(checkpoint_steps[-1].name) if checkpoint_steps else 0
+            checkpoint_archive = output_dir / "midterm-checkpoint.zip"
+            _deterministic_zip(checkpoint_dir, checkpoint_archive)
     with (output_dir / "evaluation-traces.jsonl").open("w", encoding="utf-8") as stream:
         import json
 
-        for record in traces:
+        for record in selected_traces:
             stream.write(json.dumps(record, sort_keys=True) + "\n")
     expected_tests = profile["qualityGates"]["requiredConsecutivePasses"] * 2
-    tests_gate = len(tests) == expected_tests and all(item["result"] == "pass" for item in tests)
+    tests_gate = len(selected_tests) == expected_tests and all(
+        item["result"] == "pass" for item in selected_tests
+    )
     episode_gate = (
-        float(final_mean_episode_length) >= profile["qualityGates"]["minimumFinalMeanEpisodeLength"]
+        float(selected_mean_episode_length)
+        >= profile["qualityGates"]["minimumFinalMeanEpisodeLength"]
     )
     quality_passed = tests_gate and episode_gate
     result = {
@@ -1034,13 +1514,19 @@ def run_midterm_calibration(
         },
         "qualityAssessment": {
             "status": "passed" if quality_passed else "failed",
-            "finalMeanEpisodeLength": float(final_mean_episode_length),
+            "finalMeanEpisodeLength": float(selected_mean_episode_length),
+            "assessmentBasis": (
+                "selected_saved_checkpoint"
+                if checkpoint_assessments
+                else "terminal_training_checkpoint"
+            ),
+            "terminalMeanEpisodeLength": float(final_mean_episode_length),
             "minimumFinalMeanEpisodeLength": profile["qualityGates"][
                 "minimumFinalMeanEpisodeLength"
             ],
             "meanEpisodeLengthGate": episode_gate,
             "deterministicSuiteGate": tests_gate,
-            "tests": tests,
+            "tests": selected_tests,
         },
         "researchCheckpoint": {
             "path": checkpoint_archive.name,
@@ -1055,7 +1541,22 @@ def run_midterm_calibration(
         },
     }
     if teacher_initialization is not None:
-        result["retentionTeacher"] = teacher_initialization
+        if profile.get("stage") == "loaded_track_settle_task_load_retention":
+            result["standTeacher"] = teacher_initialization
+        else:
+            result["retentionTeacher"] = teacher_initialization
+    if settle_teacher_initialization is not None:
+        result["settleTeacher"] = settle_teacher_initialization
+    if checkpoint_assessments:
+        result["checkpointSelection"] = {
+            "mode": profile["checkpointSelection"]["mode"],
+            "selectedStep": selected_checkpoint_step,
+            "candidateCount": len(checkpoint_assessments),
+            "selectedFormalGate": quality_passed,
+            "candidates": checkpoint_assessments,
+        }
     if profile.get("stage") == "loaded_track_settle_task_load":
+        result["taskLoadCurriculum"] = copy.deepcopy(profile["environment"]["taskLoadCurriculum"])
+    if profile.get("stage") == "loaded_track_settle_task_load_retention":
         result["taskLoadCurriculum"] = copy.deepcopy(profile["environment"]["taskLoadCurriculum"])
     return result

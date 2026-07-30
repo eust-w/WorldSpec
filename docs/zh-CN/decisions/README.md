@@ -37,5 +37,7 @@ last-verified: 2026-07-30
 - [ADR-0027 H1 任务几何工作空间校准](0027-h1-ergonomic-task-geometry.md)
 - [ADR-0028 H1 任务原点基座恢复](0028-h1-task-origin-base-recovery.md)
 - [ADR-0029 H1 纵向前进域内基座恢复](0029-h1-forward-only-base-recovery.md)
+- [ADR-0030 H1 任务载荷感知下肢策略](0030-h1-task-load-aware-locomotion.md)
+- [ADR-0031 H1 任务载荷保持与 Checkpoint 选择](0031-h1-task-load-retention-and-checkpoint-selection.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

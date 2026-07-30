@@ -11,13 +11,17 @@ import pytest
 from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.midterm import (
+    assess_checkpoint_candidate,
     make_midterm_training_profile,
     make_retention_training_profile,
+    make_task_load_retention_training_profile,
     make_task_load_training_profile,
     make_transition_training_profile,
+    select_checkpoint_candidate,
     validate_midterm_profile,
     validate_retention_profile,
     validate_task_load_profile,
+    validate_task_load_retention_profile,
     validate_transition_profile,
 )
 
@@ -27,6 +31,9 @@ MIDTERM_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-midterm-profile
 TRANSITION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-transition-profile.json"
 RETENTION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-retention-profile.json"
 TASK_LOAD_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-profile.json"
+TASK_LOAD_RETENTION_PROFILE = (
+    ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-retention-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -248,6 +255,91 @@ def test_task_load_rejects_relaxed_gate() -> None:
 
     with pytest.raises(TrainingError, match="quality gates"):
         validate_task_load_profile(base, task_load)
+
+
+def test_task_load_retention_binds_two_teachers_and_full_load() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_RETENTION_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_task_load_retention_training_profile(base, profile)
+
+    assert effective["training"]["hyperparameterStatus"] == (
+        "research_task_load_retention_override"
+    )
+    assert effective["training"]["learningRate"] == 0.00005
+    assert effective["training"]["entropyCost"] == 0.001
+    assert effective["trainingEnvironment"]["taskLoadCurriculum"]["heldTargetScale"] == [1.0, 1.0]
+    assert effective["trainingEnvironment"]["taskLoadCurriculum"]["initialBaseVelocityX"] == [
+        0.0,
+        0.0,
+    ]
+    assert effective["trainingEnvironment"]["reward"]["standDistillation"] == 4.0
+    assert effective["trainingEnvironment"]["reward"]["settleDistillation"] == 4.0
+    assert profile["standTeacher"]["scope"] == "stand_replay_only"
+    assert profile["settleTeacher"]["scope"] == "transition_settle_only"
+
+
+def test_task_load_retention_rejects_teacher_or_gate_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_RETENTION_PROFILE.read_text(encoding="utf-8"))
+    profile["settleTeacher"]["checkpointDigest"] = "sha256:" + ("0" * 64)
+
+    with pytest.raises(TrainingError, match="capture policy"):
+        validate_task_load_retention_profile(base, profile)
+
+    profile = json.loads(TASK_LOAD_RETENTION_PROFILE.read_text(encoding="utf-8"))
+    profile["qualityGates"]["maximumSettleLinearSpeed"] = 0.3
+    with pytest.raises(TrainingError, match="cannot relax"):
+        validate_task_load_retention_profile(base, profile)
+
+
+def _candidate_tests(*, passing: bool) -> list[dict]:
+    metrics = {
+        "completedSteps": 200,
+        "requiredSteps": 200,
+        "forwardDisplacement": 1.4,
+        "lateralDrift": 0.05,
+        "maximumPlanarDrift": 0.1,
+        "trackingRmse": 0.1,
+        "minimumBaseHeight": 0.95,
+        "minimumUprightCosine": 0.95,
+        "maximumSettleLinearSpeed": 0.1 if passing else 0.5,
+        "maximumSettleAngularSpeed": 0.2,
+        "maximumTeacherActionMse": 0.0,
+        "nonFiniteSamples": 0,
+        "doneSeen": False,
+        "terminalReasons": [],
+    }
+    return [
+        {
+            "id": f"test://worldspec/h1-policy/{suite}/{index}",
+            "suite": suite,
+            "result": "pass" if passing else "fail",
+            "metrics": dict(metrics),
+        }
+        for suite in ("walk_settle", "stand_regression")
+        for index in range(5)
+    ]
+
+
+def test_checkpoint_selection_prefers_a_formal_earlier_candidate() -> None:
+    gates = json.loads(TASK_LOAD_RETENTION_PROFILE.read_text(encoding="utf-8"))["qualityGates"]
+    passing = assess_checkpoint_candidate(
+        2_457_600,
+        930.0,
+        _candidate_tests(passing=True),
+        gates,
+    )
+    degraded = assess_checkpoint_candidate(
+        17_203_200,
+        980.0,
+        _candidate_tests(passing=False),
+        gates,
+    )
+
+    assert passing["formalGate"] is True
+    assert degraded["formalGate"] is False
+    assert select_checkpoint_candidate([degraded, passing]) == passing
 
 
 def test_teacher_policy_loader_rebuilds_the_verified_network(

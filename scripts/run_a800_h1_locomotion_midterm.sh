@@ -17,6 +17,8 @@ STAND_REPORT="${WORLD_SPEC_WARM_START_REPORT:-${ROOT_DIR}/examples/h1-kitchen/lo
 STAND_CHECKPOINT="${WORLD_SPEC_WARM_START_CHECKPOINT:-${WORLD_SPEC_STAND_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-calibration-4mklr/calibration-checkpoint.zip}}"
 RETENTION_TEACHER_REPORT="${WORLD_SPEC_RETENTION_TEACHER_REPORT:-}"
 RETENTION_TEACHER_CHECKPOINT="${WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT:-}"
+SETTLE_TEACHER_REPORT="${WORLD_SPEC_SETTLE_TEACHER_REPORT:-}"
+SETTLE_TEACHER_CHECKPOINT="${WORLD_SPEC_SETTLE_TEACHER_CHECKPOINT:-}"
 SUPERVISOR_STAND_REPORT="${WORLD_SPEC_SUPERVISOR_STAND_REPORT:-}"
 SUPERVISOR_STAND_CHECKPOINT="${WORLD_SPEC_SUPERVISOR_STAND_CHECKPOINT:-}"
 DIAGNOSTIC_REPLAY_PROFILE="${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE:-}"
@@ -27,6 +29,7 @@ A5C_BASELINE_TRACE="${WORLD_SPEC_A5C_BASELINE_TRACE:-${ROOT_DIR}/runs/a800/world
 MIDTERM_PROFILE_FILENAME="$(basename "${MIDTERM_PROFILE}")"
 WARM_START_REPORT_FILENAME="$(basename "${STAND_REPORT}")"
 RETENTION_TEACHER_REPORT_FILENAME=""
+SETTLE_TEACHER_REPORT_FILENAME=""
 SUPERVISOR_STAND_REPORT_FILENAME=""
 DIAGNOSTIC_REPLAY_PROFILE_FILENAME=""
 A5CI_MODE=false
@@ -152,6 +155,7 @@ if [[ "${A5CI_MODE}" == "true" ]]; then
   GATE_FIELD=formalDiagnosticReplayGate
 fi
 if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
   [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
@@ -165,6 +169,16 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
     fi
   done
   RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
+fi
+if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]]; then
+  for required in "${SETTLE_TEACHER_REPORT}" "${SETTLE_TEACHER_CHECKPOINT}"; do
+    if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
+      printf 'ERROR: settle teacher input is not readable: %s\n' \
+        "${required:-unset}" >&2
+      exit 2
+    fi
+  done
+  SETTLE_TEACHER_REPORT_FILENAME="$(basename "${SETTLE_TEACHER_REPORT}")"
 fi
 if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
@@ -249,6 +263,7 @@ if (
     raise SystemExit("stand checkpoint identity mismatch")
 if profile["stage"] in {
     "loaded_track_settle_retention",
+    "loaded_track_settle_task_load_retention",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -270,7 +285,12 @@ if profile["stage"] in {
             else (
                 profile["motionTeacher"]
                 if profile["stage"] == "loaded_track_settle_capture"
-                else profile["retentionTeacher"]
+                else (
+                    profile["standTeacher"]
+                    if profile["stage"]
+                    == "loaded_track_settle_task_load_retention"
+                    else profile["retentionTeacher"]
+                )
             )
         )
     )
@@ -305,6 +325,30 @@ if profile["stage"] in {
     ):
         raise SystemExit("supervisor stand checkpoint identity mismatch")
 PY
+
+if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]]; then
+  python3 - \
+    "${MIDTERM_PROFILE}" \
+    "${SETTLE_TEACHER_REPORT}" \
+    "${SETTLE_TEACHER_CHECKPOINT}" <<'PY'
+import hashlib
+import json
+import pathlib
+import sys
+
+profile = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+spec = profile["settleTeacher"]
+report = pathlib.Path(sys.argv[2]).read_bytes()
+checkpoint = pathlib.Path(sys.argv[3]).read_bytes()
+if f"sha256:{hashlib.sha256(report).hexdigest()}" != spec["sourceReportDigest"]:
+    raise SystemExit("settle teacher report digest mismatch")
+if (
+    f"sha256:{hashlib.sha256(checkpoint).hexdigest()}" != spec["checkpointDigest"]
+    or len(checkpoint) != spec["checkpointSizeBytes"]
+):
+    raise SystemExit("settle teacher checkpoint identity mismatch")
+PY
+fi
 
 if [[ "${A5CI_MODE}" == "true" ]]; then
   python3 - \
@@ -540,6 +584,7 @@ sed \
   -e "s|__MIDTERM_PROFILE_FILENAME__|${MIDTERM_PROFILE_FILENAME}|g" \
   -e "s|__WARM_START_REPORT_FILENAME__|${WARM_START_REPORT_FILENAME}|g" \
   -e "s|__RETENTION_TEACHER_REPORT_FILENAME__|${RETENTION_TEACHER_REPORT_FILENAME}|g" \
+  -e "s|__SETTLE_TEACHER_REPORT_FILENAME__|${SETTLE_TEACHER_REPORT_FILENAME}|g" \
   -e "s|__SUPERVISOR_STAND_REPORT_FILENAME__|${SUPERVISOR_STAND_REPORT_FILENAME}|g" \
   -e "s|__DIAGNOSTIC_REPLAY_PROFILE_FILENAME__|${DIAGNOSTIC_REPLAY_PROFILE_FILENAME}|g" \
   -e "s|__SCRIPT_CONFIGMAP__|${script_configmap}|g" \
@@ -618,6 +663,7 @@ PY
         --expected-size "${checkpoint_size}" \
         --expected-digest "${checkpoint_digest}"
       if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
@@ -656,6 +702,41 @@ PY
           --remote-path /scratch/inputs/stand-teacher-checkpoint.zip \
           --expected-size "${teacher_checkpoint_size}" \
           --expected-digest "${teacher_checkpoint_digest}"
+      fi
+      if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]]; then
+        read -r settle_report_size settle_report_digest \
+          settle_checkpoint_size settle_checkpoint_digest < <(
+          python3 - \
+            "${SETTLE_TEACHER_REPORT}" \
+            "${SETTLE_TEACHER_CHECKPOINT}" <<'PY'
+import hashlib
+import pathlib
+import sys
+values = []
+for value in sys.argv[1:]:
+    payload = pathlib.Path(value).read_bytes()
+    values.extend((str(len(payload)), f"sha256:{hashlib.sha256(payload).hexdigest()}"))
+print(*values)
+PY
+        )
+        python3 "${CHUNK_UPLOAD}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --source "${SETTLE_TEACHER_REPORT}" \
+          --remote-path /scratch/inputs/settle-teacher-report.json \
+          --expected-size "${settle_report_size}" \
+          --expected-digest "${settle_report_digest}"
+        python3 "${CHUNK_UPLOAD}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --source "${SETTLE_TEACHER_CHECKPOINT}" \
+          --remote-path /scratch/inputs/settle-teacher-checkpoint.zip \
+          --expected-size "${settle_checkpoint_size}" \
+          --expected-digest "${settle_checkpoint_digest}"
       fi
       if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||

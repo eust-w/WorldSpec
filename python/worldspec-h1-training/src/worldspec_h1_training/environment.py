@@ -28,6 +28,7 @@ def make_environment(
     profile: dict[str, Any],
     training_model: Path,
     stand_teacher_policy: Any | None = None,
+    settle_teacher_policy: Any | None = None,
     capture_state_bank: dict[str, Any] | None = None,
 ):
     """Create an MJX environment bound to the derived composition model."""
@@ -164,8 +165,10 @@ def make_environment(
             self._task_load_curriculum = None
             self._capture_state_bank = None
             self._stand_teacher_policy = stand_teacher_policy
+            self._settle_teacher_policy = settle_teacher_policy
             self._stand_replay_probability = 0.0
             self._stand_distillation_sigma = 1.0
+            self._settle_distillation_sigma = 1.0
             if capture_state_bank is not None:
                 required = {"qpos", "qvel", "last_action"}
                 if set(capture_state_bank) != required:
@@ -226,12 +229,23 @@ def make_environment(
                     self._stand_distillation_sigma = float(
                         self._reward_sigmas.get("standDistillation", 1.0)
                     )
+                    self._settle_distillation_sigma = float(
+                        self._reward_sigmas.get("settleDistillation", 1.0)
+                    )
                     if self._stand_replay_probability > 0.0 and (
                         self._stand_teacher_policy is None
                     ):
                         raise TrainingError(
                             "TRAINING_STAND_TEACHER_MISSING",
                             "Stand replay with distillation requires a bound teacher policy.",
+                        )
+                    if (
+                        float(self._reward_config.get("settleDistillation", 0.0)) > 0.0
+                        and self._settle_teacher_policy is None
+                    ):
+                        raise TrainingError(
+                            "TRAINING_SETTLE_TEACHER_MISSING",
+                            "Settle distillation requires a bound capture teacher policy.",
                         )
                 capture = training_environment.get("captureCurriculum")
                 if isinstance(capture, dict):
@@ -399,6 +413,7 @@ def make_environment(
                 "reward/settle_linear": jp.zeros(()),
                 "reward/settle_yaw": jp.zeros(()),
                 "reward/stand_distillation": jp.zeros(()),
+                "reward/settle_distillation": jp.zeros(()),
                 "cost/upright": jp.zeros(()),
                 "cost/vertical_velocity": jp.zeros(()),
                 "cost/angular_velocity_xy": jp.zeros(()),
@@ -406,6 +421,8 @@ def make_environment(
                 "cost/torque": jp.zeros(()),
                 "cost/action_rate": jp.zeros(()),
                 "cost/teacher_action_mse": jp.zeros(()),
+                "cost/stand_teacher_action_mse": jp.zeros(()),
+                "cost/settle_teacher_action_mse": jp.zeros(()),
                 "termination/joint_limit": jp.zeros(()),
                 "termination/fall_height": jp.zeros(()),
                 "termination/fall_upright": jp.zeros(()),
@@ -490,7 +507,10 @@ def make_environment(
             settle_linear_reward = jp.zeros(())
             settle_yaw_reward = jp.zeros(())
             stand_distillation_reward = jp.zeros(())
+            settle_distillation_reward = jp.zeros(())
             teacher_action_mse = jp.zeros(())
+            stand_teacher_action_mse = jp.zeros(())
+            settle_teacher_action_mse = jp.zeros(())
             if self._calibration_enabled:
                 base_height = data.xpos[self._pelvis_body, 2]
                 survival_reward = jp.ones(())
@@ -524,11 +544,32 @@ def make_environment(
                             teacher_observation,
                             state.info["rng"],
                         )
-                        teacher_action_mse = jp.mean(jp.square(action - teacher_action))
+                        stand_teacher_action_mse = jp.mean(jp.square(action - teacher_action))
                         stand_distillation_reward = (
-                            jp.exp(-teacher_action_mse / self._stand_distillation_sigma)
+                            jp.exp(-stand_teacher_action_mse / self._stand_distillation_sigma)
                             * stand_replay_active
                         )
+                    if (
+                        self._transition_curriculum is not None
+                        and self._settle_teacher_policy is not None
+                    ):
+                        settle_observation = dict(state.obs)
+                        settle_observation["state"] = settle_observation["state"].at[-3:].set(0.0)
+                        settle_teacher_action, _ = self._settle_teacher_policy(
+                            settle_observation,
+                            state.info["rng"],
+                        )
+                        settle_teacher_action_mse = jp.mean(
+                            jp.square(action - settle_teacher_action)
+                        )
+                        settle_distillation_reward = (
+                            jp.exp(-settle_teacher_action_mse / self._settle_distillation_sigma)
+                            * transition_settle
+                        )
+                    teacher_action_mse = jp.maximum(
+                        stand_teacher_action_mse,
+                        settle_teacher_action_mse,
+                    )
                 else:
                     action_rate_scale = 1.0
                 reward = jp.clip(
@@ -543,6 +584,8 @@ def make_environment(
                         + float(self._reward_config.get("settleYaw", 0.0)) * settle_yaw_reward
                         + float(self._reward_config.get("standDistillation", 0.0))
                         * stand_distillation_reward
+                        + float(self._reward_config.get("settleDistillation", 0.0))
+                        * settle_distillation_reward
                         - float(self._reward_config["verticalVelocityCost"]) * vertical_cost
                         - float(self._reward_config["angularVelocityXYCost"])
                         * angular_velocity_xy_cost
@@ -664,6 +707,7 @@ def make_environment(
                     "reward/settle_linear": settle_linear_reward,
                     "reward/settle_yaw": settle_yaw_reward,
                     "reward/stand_distillation": stand_distillation_reward,
+                    "reward/settle_distillation": settle_distillation_reward,
                     "cost/upright": upright_cost,
                     "cost/vertical_velocity": vertical_cost,
                     "cost/angular_velocity_xy": angular_velocity_xy_cost,
@@ -671,6 +715,8 @@ def make_environment(
                     "cost/torque": torque_cost,
                     "cost/action_rate": action_rate_cost,
                     "cost/teacher_action_mse": teacher_action_mse,
+                    "cost/stand_teacher_action_mse": stand_teacher_action_mse,
+                    "cost/settle_teacher_action_mse": settle_teacher_action_mse,
                     "termination/joint_limit": joint_violation.astype(reward.dtype),
                     "termination/fall_height": fall_height.astype(reward.dtype),
                     "termination/fall_upright": fall_upright.astype(reward.dtype),

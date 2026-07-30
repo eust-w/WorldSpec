@@ -324,6 +324,9 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert environment["WORLD_SPEC_RETENTION_TEACHER_REPORT_FILENAME"] == (
         "__RETENTION_TEACHER_REPORT_FILENAME__"
     )
+    assert environment["WORLD_SPEC_SETTLE_TEACHER_REPORT_FILENAME"] == (
+        "__SETTLE_TEACHER_REPORT_FILENAME__"
+    )
     assert container["name"] == "midterm"
     assert container["image"] == "__RUNTIME_IMAGE__"
     assert container["securityContext"]["readOnlyRootFilesystem"] is True
@@ -411,6 +414,33 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     )
     assert "A5-CK trace record count mismatch" in task_load_launcher
     assert "run_a800_h1_locomotion_midterm.sh" in task_load_launcher
+
+    task_load_retention_launcher = (
+        ROOT
+        / "scripts"
+        / "run_a800_h1_task_load_retention_calibration.sh"
+    ).read_text(encoding="utf-8")
+    assert "locomotion-task-load-retention-profile.json" in (
+        task_load_retention_launcher
+    )
+    assert "locomotion-retention.a800.failed.json" in (
+        task_load_retention_launcher
+    )
+    assert "locomotion-calibration.a800.passed.json" in (
+        task_load_retention_launcher
+    )
+    assert "locomotion-capture.a800.passed.json" in (
+        task_load_retention_launcher
+    )
+    assert "WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT" in (
+        task_load_retention_launcher
+    )
+    assert "WORLD_SPEC_SETTLE_TEACHER_CHECKPOINT" in (
+        task_load_retention_launcher
+    )
+    assert "run_a800_h1_locomotion_midterm.sh" in (
+        task_load_retention_launcher
+    )
 
 
 def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:

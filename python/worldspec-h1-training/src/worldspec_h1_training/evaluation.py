@@ -39,6 +39,8 @@ def evaluate_policy_suite(
         maximum_settle_linear_speed = 0.0
         maximum_settle_angular_speed = 0.0
         maximum_teacher_action_mse = 0.0
+        maximum_stand_teacher_action_mse = 0.0
+        maximum_settle_teacher_action_mse = 0.0
         squared_tracking_error = 0.0
         tracking_samples = 0
         nonfinite = 0
@@ -68,6 +70,12 @@ def evaluate_policy_suite(
             teacher_action_mse = float(
                 np.asarray(state.metrics.get("cost/teacher_action_mse", 0.0))
             )
+            stand_teacher_action_mse = float(
+                np.asarray(state.metrics.get("cost/stand_teacher_action_mse", 0.0))
+            )
+            settle_teacher_action_mse = float(
+                np.asarray(state.metrics.get("cost/settle_teacher_action_mse", 0.0))
+            )
             position = np.asarray(qpos[:2], dtype=float)
             minimum_height = min(minimum_height, height)
             minimum_upright = min(minimum_upright, upright)
@@ -78,6 +86,14 @@ def evaluate_policy_suite(
             maximum_teacher_action_mse = max(
                 maximum_teacher_action_mse,
                 teacher_action_mse,
+            )
+            maximum_stand_teacher_action_mse = max(
+                maximum_stand_teacher_action_mse,
+                stand_teacher_action_mse,
+            )
+            maximum_settle_teacher_action_mse = max(
+                maximum_settle_teacher_action_mse,
+                settle_teacher_action_mse,
             )
             nonfinite += 0 if finite else 1
             completed_steps += 1
@@ -105,6 +121,9 @@ def evaluate_policy_suite(
                     "localVelocity": [float(value) for value in local_velocity],
                     "angularVelocity": [float(value) for value in angular_velocity],
                     "teacherActionMse": teacher_action_mse,
+                    "standTeacherActionMse": stand_teacher_action_mse,
+                    "settleTeacherActionMse": settle_teacher_action_mse,
+                    "taskLoadScale": float(np.asarray(state.info.get("task_load_scale", 0.0))),
                     "done": done,
                     "finite": finite,
                 }
@@ -158,6 +177,8 @@ def evaluate_policy_suite(
                 "maximumSettleLinearSpeed": maximum_settle_linear_speed,
                 "maximumSettleAngularSpeed": maximum_settle_angular_speed,
                 "maximumTeacherActionMse": maximum_teacher_action_mse,
+                "maximumStandTeacherActionMse": (maximum_stand_teacher_action_mse),
+                "maximumSettleTeacherActionMse": (maximum_settle_teacher_action_mse),
                 "nonFiniteSamples": nonfinite,
                 "doneSeen": done_seen,
                 "terminalReasons": sorted(terminal_reasons),

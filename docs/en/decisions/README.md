@@ -39,5 +39,7 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0027 H1 ergonomic task-geometry calibration](0027-h1-ergonomic-task-geometry.md)
 - [ADR-0028 H1 task-origin base recovery](0028-h1-task-origin-base-recovery.md)
 - [ADR-0029 H1 forward-only base recovery](0029-h1-forward-only-base-recovery.md)
+- [ADR-0030 H1 task-load-aware locomotion](0030-h1-task-load-aware-locomotion.md)
+- [ADR-0031 H1 task-load retention and Checkpoint selection](0031-h1-task-load-retention-and-checkpoint-selection.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

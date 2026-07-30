@@ -188,7 +188,10 @@ python - \
   "${INPUT_DIR}/a5c-baseline-report.json" \
   "${INPUT_DIR}/a5c-baseline-controller.json" \
   "${INPUT_DIR}/a5c-baseline-trace.jsonl" \
-  "${WORLD_SPEC_IMAGE_SOURCE_REVISION}" <<'PY'
+  "${WORLD_SPEC_IMAGE_SOURCE_REVISION}" \
+  "${WORLD_SPEC_SETTLE_TEACHER_REPORT_FILENAME:-}" \
+  "${INPUT_DIR}/settle-teacher-report.json" \
+  "${INPUT_DIR}/settle-teacher-checkpoint.zip" <<'PY'
 import copy
 import hashlib
 import json
@@ -260,6 +263,15 @@ elif source["sourceStage"] == "loaded-track-settle-transition-v2-failed":
         or report["training"]["profileStage"] != "loaded_track_settle_transition"
     ):
         raise SystemExit("retention source report is not the frozen failed evidence")
+elif source["sourceStage"] == "loaded-track-settle-retention-v3-failed":
+    if (
+        report["qualityAssessment"]["status"] != "failed"
+        or report["formalTrainingGate"] != "failed"
+        or report["policyStatus"] != "non_publishable"
+        or report["training"]["profileStage"]
+        != "loaded_track_settle_retention"
+    ):
+        raise SystemExit("task-load retention source is not frozen failed evidence")
 else:
     raise SystemExit("unsupported warm-start source stage")
 if report["researchCheckpoint"]["digest"] != checkpoint_digest:
@@ -270,6 +282,7 @@ if not replay_filename and profile["runtime"]["packageLockDigest"] != sys.argv[6
     raise SystemExit("midterm Profile package lock mismatch")
 if stage in {
     "loaded_track_settle_retention",
+    "loaded_track_settle_task_load_retention",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -289,7 +302,11 @@ if stage in {
             else (
                 profile["motionTeacher"]
                 if stage == "loaded_track_settle_capture"
-                else profile["retentionTeacher"]
+                else (
+                    profile["standTeacher"]
+                    if stage == "loaded_track_settle_task_load_retention"
+                    else profile["retentionTeacher"]
+                )
             )
         )
     )
@@ -346,6 +363,42 @@ if stage in {
             raise SystemExit("capture policy is not the frozen passing A3 evidence")
     else:
         raise SystemExit("unsupported auxiliary policy source stage")
+if stage == "loaded_track_settle_task_load_retention":
+    settle_filename = sys.argv[20]
+    if not settle_filename:
+        raise SystemExit("settle teacher report filename is missing")
+    settle_checked_path = (
+        pathlib.Path(sys.argv[7])
+        / "examples"
+        / "h1-kitchen"
+        / settle_filename
+    )
+    settle_input_report_path = pathlib.Path(sys.argv[21])
+    settle_checkpoint_path = pathlib.Path(sys.argv[22])
+    settle_checked = settle_checked_path.read_bytes()
+    settle_input_report = settle_input_report_path.read_bytes()
+    if settle_input_report != settle_checked:
+        raise SystemExit("uploaded settle teacher report differs from repository evidence")
+    settle = profile["settleTeacher"]
+    settle_report_digest = digest_bytes(settle_input_report)
+    settle_checkpoint = settle_checkpoint_path.read_bytes()
+    settle_checkpoint_digest = digest_bytes(settle_checkpoint)
+    if settle_report_digest != settle["sourceReportDigest"]:
+        raise SystemExit("settle teacher report digest mismatch")
+    if (
+        settle_checkpoint_digest != settle["checkpointDigest"]
+        or len(settle_checkpoint) != settle["checkpointSizeBytes"]
+    ):
+        raise SystemExit("settle teacher checkpoint identity mismatch")
+    settle_report = json.loads(settle_input_report)
+    if (
+        settle_report["qualityAssessment"]["status"] != "passed"
+        or settle_report["formalCaptureGate"] != "passed"
+        or settle_report["policyStatus"] != "capture_candidate"
+        or settle_report["researchCheckpoint"]["digest"]
+        != settle_checkpoint_digest
+    ):
+        raise SystemExit("settle teacher is not the frozen passing capture evidence")
 if stage in {
     "phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
@@ -651,7 +704,17 @@ else:
         Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
         (
             Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip"
-            if midterm_profile["stage"] == "loaded_track_settle_retention"
+            if midterm_profile["stage"]
+            in {
+                "loaded_track_settle_retention",
+                "loaded_track_settle_task_load_retention",
+            }
+            else None
+        ),
+        (
+            Path(os.environ["INPUT_DIR"]) / "settle-teacher-checkpoint.zip"
+            if midterm_profile["stage"]
+            == "loaded_track_settle_task_load_retention"
             else None
         ),
     )
