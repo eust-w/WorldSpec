@@ -428,10 +428,16 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "locomotion-task-load-survival.a800.failed.json" in (
         task_load_deployment_eval_launcher
     )
+    assert "task-load-deployment-eval-training-image-build.a800.passed.json" in (
+        task_load_deployment_eval_launcher
+    )
     assert "worldspec-h1-midterm-59n24/midterm-checkpoint.zip" in (
         task_load_deployment_eval_launcher
     )
     assert "loaded_track_settle_task_load_deployment_eval" in (
+        task_load_deployment_eval_launcher
+    )
+    assert 'export WORLD_SPEC_IMAGE_SOURCE_REVISION="${image_source_revision}"' in (
         task_load_deployment_eval_launcher
     )
     assert "run_a800_h1_locomotion_midterm.sh" in (

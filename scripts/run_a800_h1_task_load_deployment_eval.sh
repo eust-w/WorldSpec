@@ -3,6 +3,7 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="${WORLD_SPEC_TASK_LOAD_CALIBRATION_PROFILE:-${ROOT_DIR}/examples/h1-kitchen/locomotion-task-load-deployment-eval-profile.json}"
+IMAGE_BUILD_REPORT="${ROOT_DIR}/examples/h1-kitchen/task-load-deployment-eval-training-image-build.a800.passed.json"
 SOURCE_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-task-load-survival.a800.failed.json"
 SOURCE_CHECKPOINT="${WORLD_SPEC_TASK_LOAD_RETENTION_WARM_START_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-59n24/midterm-checkpoint.zip}"
 STAND_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json"
@@ -17,6 +18,7 @@ PRIOR_CHECKPOINT="${WORLD_SPEC_TASK_LOAD_PRIOR_CHECKPOINT:-${ROOT_DIR}/runs/a800
 
 for required in \
   "${PROFILE}" \
+  "${IMAGE_BUILD_REPORT}" \
   "${SOURCE_REPORT}" \
   "${SOURCE_CHECKPOINT}" \
   "${STAND_REPORT}" \
@@ -32,6 +34,23 @@ for required in \
     exit 2
   fi
 done
+
+read -r image_source_revision built_image profile_image < <(
+  python3 - "${IMAGE_BUILD_REPORT}" "${PROFILE}" <<'PY'
+import json
+import pathlib
+import sys
+
+build = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+profile = json.loads(pathlib.Path(sys.argv[2]).read_text(encoding="utf-8"))
+print(build["sourceCommit"], build["image"], profile["runtime"]["containerImage"])
+PY
+)
+if [[ "${built_image}" != "${profile_image}" ]]; then
+  echo "ERROR: deployment-evaluation Profile is not bound to its image build report" >&2
+  exit 2
+fi
+export WORLD_SPEC_IMAGE_SOURCE_REVISION="${image_source_revision}"
 
 if python3 - "${PROFILE}" <<'PY'
 import json
