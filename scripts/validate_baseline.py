@@ -361,6 +361,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/manipulation-unbounded-recovery-checkpoint-portfolio-v12-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/manipulation-unbounded-recovery-frozen-bank-checkpoint-portfolio-v13-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/manipulation-unbounded-recovery-frozen-bank-checkpoint-portfolio-v13r1-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
+        "h1-kitchen/manipulation-hard-negative-replay-checkpoint-portfolio-v14-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/locomotion-manipulation-v10-bootstrap.a800.configuration-failed-summary.json": "h1-locomotion-manipulation-bootstrap-configuration-failure-summary.schema.json",
         "h1-kitchen/locomotion-manipulation-suite-isolation.a800.runtime-failed-summary.json": "h1-locomotion-manipulation-suite-isolation-runtime-failure-summary.schema.json",
         "h1-kitchen/locomotion-manipulation-suite-isolated.a800.quality-failed-summary.json": "h1-locomotion-manipulation-suite-isolated-quality-failure-summary.schema.json",

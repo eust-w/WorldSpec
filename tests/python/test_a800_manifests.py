@@ -681,7 +681,7 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
     assert '"selectedStep"] != 4_915_200' in entrypoint
     assert 'report["checkpoint"]' in entrypoint
     assert (
-        "manipulation-unbounded-recovery-frozen-bank-checkpoint-portfolio-v13r1-training-image-build.a800.passed.json"
+        "manipulation-hard-negative-replay-checkpoint-portfolio-v14-training-image-build.a800.passed.json"
         in wrapper
     )
     assert (
@@ -699,7 +699,7 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
             ROOT
             / "examples"
             / "h1-kitchen"
-            / "manipulation-unbounded-recovery-frozen-bank-checkpoint-portfolio-v13r1-training-image-build.a800.passed.json"
+            / "manipulation-hard-negative-replay-checkpoint-portfolio-v14-training-image-build.a800.passed.json"
         ).read_text(encoding="utf-8")
     )
     assert profile["runtime"]["containerImage"] == build["image"]
