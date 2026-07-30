@@ -759,6 +759,7 @@ profile = json.loads(
 print(profile["stage"])
 PY
 )"
+run_model_dir="${MODEL_DIR}"
 if [[ "${midterm_stage}" == "loaded_track_settle_manipulation_balance" ]]; then
   stage manipulation_portfolio_training
   env \
@@ -801,11 +802,15 @@ print(
 )
 PY
   stage manipulation_portfolio_evaluation
+  # The model materializer is intentionally fail-closed and will not overwrite
+  # the training process' derived bundle.  Evaluation is a fresh process with
+  # its own immutable derived-model directory.
+  run_model_dir="${MODEL_DIR}-evaluation"
 fi
 env \
   SOURCE_DIR="${SOURCE_DIR}" \
   BUNDLE_DIR="${BUNDLE_DIR}" \
-  MODEL_DIR="${MODEL_DIR}" \
+  MODEL_DIR="${run_model_dir}" \
   INPUT_DIR="${INPUT_DIR}" \
   RESULT_DIR="${RESULT_DIR}" \
   ARTIFACT_DIR="${ARTIFACT_DIR}" \

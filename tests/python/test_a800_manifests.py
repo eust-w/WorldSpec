@@ -356,6 +356,8 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "artifact-copied" in entrypoint
     assert "run_midterm_calibration" in entrypoint
     assert '"policyStatus": "non_publishable"' in entrypoint
+    assert 'run_model_dir="${MODEL_DIR}-evaluation"' in entrypoint
+    assert 'MODEL_DIR="${run_model_dir}"' in entrypoint
 
     launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(
         encoding="utf-8"

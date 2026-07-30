@@ -186,6 +186,16 @@ def test_post_walk_evaluation_disables_rest_mixture() -> None:
     assert "jax.clear_caches()" in source
 
 
+def test_portfolio_evaluation_uses_an_independent_model_directory() -> None:
+    entrypoint = (
+        ROOT / "ops" / "a800" / "h1-locomotion-midterm-entrypoint.sh"
+    ).read_text(encoding="utf-8")
+
+    assert 'run_model_dir="${MODEL_DIR}"' in entrypoint
+    assert 'run_model_dir="${MODEL_DIR}-evaluation"' in entrypoint
+    assert 'MODEL_DIR="${run_model_dir}"' in entrypoint
+
+
 def _tests(post_walk_passes: int, from_rest_passes: int) -> list[dict]:
     tests: list[dict] = []
     for suite, passes in (

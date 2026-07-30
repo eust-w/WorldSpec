@@ -52,3 +52,14 @@ Checkpoint，并证明训练进程退出后成功启动了新的评估进程。�
 
 v9 只修正这个导入路径，并增加源码回归断言。进程边界、训练、候选、随机种子
 和质量门均保持不变。
+
+## v9 运行结果与 v10 修正
+
+v9 作业 `worldspec-h1-midterm-lj499` 再次完成七个 Checkpoint 的真实 A800
+训练，并进入全新评估进程。评估在候选测试前调用 fail-closed 模型物化器时，
+因为训练进程已在 `/scratch/h1-training-model/target-bundle` 留下派生模型而
+被拒绝覆盖。该错误仍不产生策略质量结论。
+
+v10 只为评估进程使用独立的
+`/scratch/h1-training-model-evaluation` 目录；训练、候选、输入、随机种子、
+排序和全部质量门保持不变。

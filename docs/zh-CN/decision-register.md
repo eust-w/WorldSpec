@@ -73,5 +73,6 @@ last-verified: 2026-07-30
 | D-061 | checkpoint-portfolio-v6 已保存七个 Checkpoint，但逐候选评估因 JAX 缓存挤占 Warp 显存而在正式门前 OOM；选择 platform allocator、训练后/套件间/候选间清缓存的显存隔离，训练与全部质量门不变 | Accepted Design | [ADR-0042](decisions/0042-h1-manipulation-checkpoint-memory-isolation.md) |
 | D-062 | memory-isolated-v7 完成 17,203,200 步和七个 Checkpoint 后仍因同进程 JAX/XLA/Warp 生命周期在正式门前 OOM；选择训练进程正常退出后用全新进程只读评估，全部训练语义和质量门不变 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
 | D-063 | process-isolated-v8 已证明训练/评估进程边界生效，但评估在候选测试前因 Brax `running_statistics` 导入路径错误终止；v9 只修正为现有代码已使用的 `brax.training.acme` 路径，其他语义不变 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
+| D-064 | process-isolated-v9 已进入全新评估进程，但 fail-closed 模型物化器拒绝覆盖训练进程留下的派生目录；v10 为评估使用独立派生模型目录，不改变训练、候选、种子或质量门 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

@@ -61,3 +61,15 @@ has no policy-quality meaning.
 v9 changes only that import path and adds a source regression assertion. The
 process boundary, training, candidates, seed, and quality gates remain
 unchanged.
+
+## v9 outcome and v10 correction
+
+The v9 job `worldspec-h1-midterm-lj499` again completed the real A800 training
+run with seven Checkpoints and entered the fresh evaluation process. Before any
+candidate test, the fail-closed model materializer refused to overwrite
+`/scratch/h1-training-model/target-bundle`, which had been left by the training
+process. This error still provides no policy-quality result.
+
+v10 changes only the evaluation process to use the independent
+`/scratch/h1-training-model-evaluation` directory. Training, candidates,
+inputs, seed, ranking, and every quality gate remain unchanged.
