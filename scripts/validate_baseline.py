@@ -266,6 +266,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/diagnostic-replay-image-build.a800.attempt-03.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/diagnostic-replay-image-build.a800.attempt-04.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/diagnostic-replay-image-build.a800.attempt-05.passed.json": "h1-image-build-report.schema.json",
+        "h1-kitchen/whole-body-base-anchor-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/whole-body-diagnostic-replay-receipt.example.json": "h1-whole-body-diagnostic-replay-receipt.schema.json",
         "h1-kitchen/kitchen-task-preflight.darwin-arm64.passed.json": "h1-kitchen-task-preflight.schema.json",
         "h1-kitchen/locomotion-training-result.blocked.json": "h1-locomotion-training-result.schema.json",
