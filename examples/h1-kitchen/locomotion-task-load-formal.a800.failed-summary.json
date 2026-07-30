@@ -1,0 +1,57 @@
+{
+  "id": "attempt://worldspec/h1/task-load-formal/a800-81df2ed0dc81",
+  "status": "failed",
+  "executionEvidence": "executed",
+  "job": "worldspec-h1-midterm-cdbm5",
+  "probeRevision": "81df2ed0dc81c2f866a5c2ed2ce4fa897bd85a15",
+  "imageSourceRevision": "f999f61684d746ff4f4e4311e40ed95118202b28",
+  "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:fda98c9a9623fdd6be96bfdb551b53257d10e3950c85cff1094052546b4381d1",
+  "profileDigest": "sha256:533754ca58229a104fdd86fb9a4f0584da6daa594cfd40bea8b0a8d00c965feb",
+  "formalTrainingGate": "failed",
+  "policyStatus": "non_publishable",
+  "failure": {
+    "reason": "stand_regression_planar_drift",
+    "failedSuite": "stand_regression",
+    "failedTestCount": 5,
+    "expectedTestCount": 10,
+    "maximumAllowedPlanarDrift": 0.2,
+    "observedPlanarDriftRange": [
+      0.3140335989476501,
+      0.3239158569971614
+    ]
+  },
+  "metrics": {
+    "maximumReportedStep": 100270080,
+    "meanEpisodeLength": 996.484375,
+    "meanEpisodeLengthGate": true,
+    "walkSettlePassed": 5,
+    "standRegressionPassed": 0,
+    "logDiagnosticsClean": true
+  },
+  "artifacts": {
+    "report": {
+      "digest": "sha256:2d055f3acb64ea9139b76820afd312cacd1d2f8ee94a1f20411b438462e00538",
+      "sizeBytes": 29583
+    },
+    "checkpoint": {
+      "digest": "sha256:61ebfa89d0fa5e7d7fc6488c524cf21c742c6a25efb5854a2bd689a61c895016",
+      "sizeBytes": 1260210
+    },
+    "trace": {
+      "digest": "sha256:4d8e893e93c69852cc8472979bec7dc63e42fdad5f2bd35edb79bcc231c8d0bd",
+      "sizeBytes": 1147803,
+      "recordCount": 2000
+    },
+    "log": {
+      "digest": "sha256:264a695ce8d930c745be0c379f0032dc894d20973972729b0bf1c693308ff483",
+      "sizeBytes": 41999
+    }
+  },
+  "claimBoundary": {
+    "training100M": "completed",
+    "policyCandidate": false,
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "automaticRetry": "forbidden"
+  }
+}

@@ -332,7 +332,10 @@
       ],
       "properties": {
         "mode": {
-          "const": "deterministic_gate_rank_v1"
+          "enum": [
+            "deterministic_gate_rank_v1",
+            "terminal_gate_v1"
+          ]
         },
         "selectedStep": {
           "type": "integer",

@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-formal-failure-summary.schema.json",
+  "title": "WorldSpec H1 Formal Locomotion Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "executionEvidence",
+    "job",
+    "probeRevision",
+    "imageSourceRevision",
+    "containerImage",
+    "profileDigest",
+    "formalTrainingGate",
+    "policyStatus",
+    "failure",
+    "metrics",
+    "artifacts",
+    "claimBoundary"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "status": { "const": "failed" },
+    "executionEvidence": { "const": "executed" },
+    "job": {
+      "type": "string",
+      "pattern": "^worldspec-h1-midterm-[a-z0-9]{5}$"
+    },
+    "probeRevision": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "imageSourceRevision": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "containerImage": {
+      "type": "string",
+      "pattern": "@sha256:[a-f0-9]{64}$"
+    },
+    "profileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "formalTrainingGate": { "const": "failed" },
+    "policyStatus": { "const": "non_publishable" },
+    "failure": {
+      "type": "object",
+      "required": [
+        "reason",
+        "failedSuite",
+        "failedTestCount",
+        "expectedTestCount",
+        "maximumAllowedPlanarDrift",
+        "observedPlanarDriftRange"
+      ],
+      "properties": {
+        "reason": { "const": "stand_regression_planar_drift" },
+        "failedSuite": { "const": "stand_regression" },
+        "failedTestCount": { "const": 5 },
+        "expectedTestCount": { "const": 10 },
+        "maximumAllowedPlanarDrift": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "observedPlanarDriftRange": {
+          "type": "array",
+          "prefixItems": [
+            { "type": "number", "minimum": 0 },
+            { "type": "number", "minimum": 0 }
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "maximumReportedStep",
+        "meanEpisodeLength",
+        "meanEpisodeLengthGate",
+        "walkSettlePassed",
+        "standRegressionPassed",
+        "logDiagnosticsClean"
+      ],
+      "properties": {
+        "maximumReportedStep": { "type": "integer", "minimum": 100000000 },
+        "meanEpisodeLength": { "type": "number", "minimum": 0 },
+        "meanEpisodeLengthGate": { "const": true },
+        "walkSettlePassed": { "const": 5 },
+        "standRegressionPassed": { "const": 0 },
+        "logDiagnosticsClean": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["report", "checkpoint", "trace", "log"],
+      "properties": {
+        "report": { "$ref": "#/$defs/artifact" },
+        "checkpoint": { "$ref": "#/$defs/artifact" },
+        "trace": {
+          "allOf": [
+            { "$ref": "#/$defs/artifact" },
+            {
+              "type": "object",
+              "required": ["recordCount"],
+              "properties": {
+                "recordCount": { "const": 2000 }
+              }
+            }
+          ]
+        },
+        "log": { "$ref": "#/$defs/artifact" }
+      },
+      "additionalProperties": false
+    },
+    "claimBoundary": {
+      "type": "object",
+      "required": [
+        "training100M",
+        "policyCandidate",
+        "fullTaskClaim",
+        "l3Claim",
+        "automaticRetry"
+      ],
+      "properties": {
+        "training100M": { "const": "completed" },
+        "policyCandidate": { "const": false },
+        "fullTaskClaim": { "const": "forbidden" },
+        "l3Claim": { "const": "forbidden" },
+        "automaticRetry": { "const": "forbidden" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["digest", "sizeBytes"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 },
+        "recordCount": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

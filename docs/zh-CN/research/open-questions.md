@@ -19,8 +19,9 @@ last-verified: 2026-07-30
 7. **Predicate**：semantic truth 与 execution truth 的偏差检测。
 8. **成本**：Time-to-SimReady、Human Minutes、GPU Cost、Certification Pass Rate。
 9. **CAD/USD**：PMI、GD&T、特征历史和专有 Schema 的 round-trip 可验证范围。
-10. **H1 全身控制**：在新 ADR 授权任何后续 A800 Attempt 前，如何让诊断产物在
-    运行后处理失败时仍可交接，以及如何重新获得 `joint_limit`、`fall_height`、
-    `fall_upright`、`nonfinite` 的真实终止证据。
+10. **H1 负载步态**：正式 100M 策略已完成训练与证据交接，但零命令站立的
+    平面漂移为 `0.314–0.324 m`，高于 `0.20 m` 门槛。下一步需要实验比较：
+    将其作为 Motion Policy 接入既有 Capture/Stand Supervisor，或给单策略增加
+    显式零命令位移状态与保持奖励。新 ADR 前禁止自动重试。
 
 每个实验必须冻结输入 Corpus、工具版本、硬件、指标和失败样本。

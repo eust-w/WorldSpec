@@ -21,9 +21,11 @@ These require spikes or benchmarks and must not be written as solved in normativ
 7. **Predicates**: detection of semantic-truth versus execution-truth divergence.
 8. **Cost**: Time-to-SimReady, Human Minutes, GPU Cost, and Certification Pass Rate.
 9. **CAD/USD**: verifiable round-trip scope for PMI, GD&T, feature history, and proprietary schemas.
-10. **H1 whole-body control**: before a new ADR authorizes any further A800
-    Attempt, make diagnostic artifacts recoverable despite post-processing
-    failure and reacquire real `joint_limit`, `fall_height`, `fall_upright`,
-    and `nonfinite` termination evidence.
+10. **H1 load-aware locomotion**: the formal 100M policy completed training and
+    evidence handoff, but zero-command stand planar drift was `0.314–0.324 m`,
+    above the `0.20 m` gate. A new experiment must compare using it as a Motion
+    Policy under the existing Capture/Stand Supervisor versus adding explicit
+    zero-command displacement state and retention reward to a single policy.
+    Automatic retry is forbidden before a new ADR.
 
 Every experiment freezes its input corpus, tool version, hardware, metrics, and failure examples.

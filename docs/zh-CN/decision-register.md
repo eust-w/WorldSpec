@@ -63,5 +63,6 @@ last-verified: 2026-07-30
 | D-051 | task-load-retention 在 A800 上的 Episode 存活继续退化，且历史评估错误地把完整一秒减速段作为静止门；选择最后 0.2 秒终端保持测量、显式终止惩罚与教师动作成本，所有数值门槛不变，并只运行一次 survival 校准 | Accepted Design | [ADR-0032](decisions/0032-h1-terminal-hold-and-survival-shaping.md) |
 | D-052 | task-load-survival 的确定性十项行为测试全部通过，但 Brax 平均 Episode 门仍在使用默认随机评估；选择显式确定性部署评估，并把 Warm Start 纳入同一候选排序，所有控制参数和质量门保持不变 | Accepted Design | [ADR-0033](decisions/0033-h1-deterministic-deployment-evaluation.md) |
 | D-053 | 确定性部署评估在 A800 上最高只达 801.82/1000 且后期 KL 漂移；长时域修正已真实执行并选择 12,288,000 步 Checkpoint，平均 Episode 长度 996.01/1000、十项行为测试全过，策略仍为 internal_only，未启动 100M/A5/L3 | Accepted | [ADR-0034](decisions/0034-h1-long-horizon-survival-credit.md) |
+| D-054 | 正式 100M 已在 A800 完成并回传可恢复 Checkpoint；5/5 行走—停稳通过但 0/5 零命令站立回归因 0.314–0.324 m 漂移失败，策略保持 non_publishable，禁止自动调参、重试或 L3 声明 | Accepted | [ADR-0035](decisions/0035-h1-formal-100m-training-result.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

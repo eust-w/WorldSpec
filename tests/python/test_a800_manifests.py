@@ -514,6 +514,56 @@ def test_task_load_horizon_a800_evidence_passes_without_publication_claim() -> N
     assert report["researchCheckpoint"]["distribution"] == "internal_only"
 
 
+def test_midterm_report_schema_accepts_ranked_and_terminal_checkpoint_selection() -> None:
+    schema = json.loads(
+        (
+            ROOT
+            / "schemas"
+            / "0.1"
+            / "h1-locomotion-midterm-report.schema.json"
+        ).read_text(encoding="utf-8")
+    )
+    report = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "locomotion-task-load-horizon.a800.passed.json"
+        ).read_text(encoding="utf-8")
+    )
+    validator = Draft202012Validator(schema["properties"]["checkpointSelection"])
+
+    validator.validate(report["checkpointSelection"])
+    report["checkpointSelection"]["mode"] = "terminal_gate_v1"
+    validator.validate(report["checkpointSelection"])
+
+    report["checkpointSelection"]["mode"] = "unknown_selection_mode"
+    assert list(validator.iter_errors(report["checkpointSelection"]))
+
+
+def test_formal_100m_failure_evidence_is_non_publishable() -> None:
+    evidence = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "locomotion-task-load-formal.a800.failed-summary.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert evidence["metrics"]["maximumReportedStep"] >= 100_000_000
+    assert evidence["metrics"]["walkSettlePassed"] == 5
+    assert evidence["metrics"]["standRegressionPassed"] == 0
+    assert evidence["failure"]["reason"] == "stand_regression_planar_drift"
+    assert min(evidence["failure"]["observedPlanarDriftRange"]) > (
+        evidence["failure"]["maximumAllowedPlanarDrift"]
+    )
+    assert evidence["formalTrainingGate"] == "failed"
+    assert evidence["policyStatus"] == "non_publishable"
+    assert evidence["claimBoundary"]["policyCandidate"] is False
+    assert evidence["claimBoundary"]["automaticRetry"] == "forbidden"
+
+
 def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
         encoding="utf-8"
