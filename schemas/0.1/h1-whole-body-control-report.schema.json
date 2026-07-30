@@ -80,6 +80,9 @@
     "dynamicArmTracking": {
       "$ref": "h1-whole-body-control-profile.schema.json#/properties/dynamicArmTracking"
     },
+    "taskGeometryCalibration": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/taskGeometryCalibration"
+    },
     "qualityAssessment": {
       "type": "object",
       "required": ["status", "tests"],

@@ -96,11 +96,9 @@ def run(args: argparse.Namespace) -> dict:
             profile.get("dynamicArmTracking"),
         )
         settled_base = np.asarray(args.settled_base, dtype=float)
-        target = (
-            np.asarray([1.87, -0.21, 1.075], dtype=float)
-            - settled_base
-            + np.asarray(model.qpos0[:3], dtype=float)
-        )
+        drawer_center = np.asarray(profile["scene"]["drawer"]["closedCenter"], dtype=float)
+        handle_target = drawer_center + np.asarray([-0.19, 0.0, 0.055], dtype=float)
+        target = handle_target - settled_base + np.asarray(model.qpos0[:3], dtype=float)
         samples: list[dict] = []
         for step in range(args.steps):
             solution = controller.solve(

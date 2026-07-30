@@ -11,6 +11,7 @@ import pytest
 from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.kitchen_task import (
+    ERGONOMIC_TASK_SCENE,
     PHASES,
     TASK_CAPACITY,
     TASK_CONTROLLER,
@@ -27,10 +28,7 @@ TASK = ROOT / "examples" / "h1-kitchen" / "kitchen-task-profile.json"
 
 
 def _profiles() -> tuple[dict, dict, dict]:
-    return tuple(
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in (BASE, SUPERVISOR, TASK)
-    )
+    return tuple(json.loads(path.read_text(encoding="utf-8")) for path in (BASE, SUPERVISOR, TASK))
 
 
 def _digest(payload: bytes) -> str:
@@ -146,7 +144,8 @@ def test_task_state_machine_is_ordered_and_fail_closed() -> None:
             state.observe(
                 target_error=0.0,
                 drawer_position=0.2 if phase != "push_drawer" else 0.0,
-                cup_inside=phase in {"insert_cup", "release_cup", "retract", "push_drawer", "final_hold"},
+                cup_inside=phase
+                in {"insert_cup", "release_cup", "retract", "push_drawer", "final_hold"},
                 cup_linear_speed=0.0,
                 cup_angular_speed=0.0,
             )
@@ -188,16 +187,36 @@ def test_task_scene_is_derived_without_hidden_constraint(tmp_path: Path) -> None
     assert "No weld" in derivation["dynamicsStatement"]
 
 
+def test_ergonomic_task_scene_moves_physics_and_derivation_together(
+    tmp_path: Path,
+) -> None:
+    profile, bundle = _fixture_bundle(tmp_path)
+
+    model, derivation = prepare_kitchen_task_model(
+        profile,
+        bundle,
+        tmp_path / "work",
+        ERGONOMIC_TASK_SCENE,
+    )
+    root = ET.parse(model).getroot()
+    drawer = root.find(".//body[@name='worldspec_task_drawer']")
+    cup = root.find(".//body[@name='worldspec_task_cup']")
+    support = root.find(".//geom[@name='worldspec_cup_support']")
+
+    assert drawer is not None and drawer.get("pos") == "2.03 -0.21 1.085"
+    assert cup is not None and cup.get("pos") == "1.85 -0.21 1.26"
+    assert support is not None and support.get("pos") == "1.85 -0.21 1.22"
+    assert derivation["taskScene"] == ERGONOMIC_TASK_SCENE
+
+
 def test_a800_a5_launcher_is_gated_and_does_not_start_training() -> None:
-    entrypoint = (
-        ROOT / "ops" / "a800" / "h1-locomotion-midterm-entrypoint.sh"
-    ).read_text(encoding="utf-8")
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
-    ).read_text(encoding="utf-8")
-    wrapper = (
-        ROOT / "scripts" / "run_a800_h1_fixed_kitchen_task_probe.sh"
-    ).read_text(encoding="utf-8")
+    entrypoint = (ROOT / "ops" / "a800" / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_a800_h1_fixed_kitchen_task_probe.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert "run_fixed_kitchen_task_probe" in entrypoint
     assert "WORLDSPEC_A800_KITCHEN_TASK_RESULT=" in entrypoint

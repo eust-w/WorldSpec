@@ -1,0 +1,52 @@
+{
+  "id": "attempt://worldspec/h1/a5cg-dynamic-arm/a800-21599ea17cd2",
+  "status": "failed",
+  "executionEvidence": "executed",
+  "job": "worldspec-h1-midterm-9zmdg",
+  "probeRevision": "21599ea17cd2453ccb86446e4fde412db830d1f4",
+  "imageSourceRevision": "cfca94f1cc2bed23a81cc488881d4a8171991c9d",
+  "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:98047160285074d7df2e29ace889c1326c7ab13072d81604b69ce1eb9f2813db",
+  "controlProfileDigest": "sha256:994c9a7e9b3e6312e3e1e8b13c5cc97f9a2b69e3798682a36d57a79f4153cb0d",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "failure": {
+    "reason": "robot_termination:fall_height",
+    "terminalReasons": ["fall_height"],
+    "terminalJoints": [],
+    "traceRecordCount": 301,
+    "taskPolicyFinalPhase": "stand",
+    "taskPolicyHandoffFailed": false,
+    "dynamicArmTrackingEnabled": true
+  },
+  "metrics": {
+    "minimumBaseHeight": 0.7998566031455994,
+    "minimumUprightCosine": 0.8307641744613647,
+    "baseTranslation": 0.6682429122581282,
+    "baseLateralDrift": 0.08220538217574358,
+    "finalTargetErrorMeters": 0.6898472710505568,
+    "finalTcpSpeed": 2.408718877598232,
+    "maximumProjectedGradient": 0.000013906614281578022,
+    "nonFiniteSamples": 0
+  },
+  "artifacts": {
+    "report": {
+      "digest": "sha256:56a804482e903e64d11092b0d5c1f60fa50466b6581d3de56f08d1aca1ae957f",
+      "sizeBytes": 13306
+    },
+    "controller": {
+      "digest": "sha256:d7a3b176e08a9a14dc1b0331bfb7bd3a09bab03b46080451249d104f7d7dc7b2",
+      "sizeBytes": 2740
+    },
+    "trace": {
+      "digest": "sha256:8cc84091b367ece380b8f500a9481d9d6567a937ae4199241ef90f19cc507b08",
+      "sizeBytes": 2319805,
+      "recordCount": 301
+    }
+  },
+  "claimBoundary": {
+    "controlCandidate": false,
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "training100M": "not_started"
+  }
+}

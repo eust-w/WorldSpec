@@ -42,6 +42,19 @@ Profile Digest 为 `sha256:2fd53b...02a54`。交接修复达到了预期：
 6. 先通过固定底座 MuJoCo CPU 跟踪门，再构建新镜像并只执行一次单卡 A800
    控制 Spike。
 
+## 执行结果
+
+A5-CG Job `worldspec-h1-midterm-9zmdg` 在真实 A800 上完成，Profile Digest
+为 `sha256:994c9a...3cb0d`。动态臂隔离与 Stand Policy 均按设计启用，
+没有关节越限、NaN 或交接失败，但在第 301 条 Trace 触发 `fall_height`，
+因此控制门失败且 Controller 保持 `non_publishable`。
+
+新 Trace 进一步表明：TCP 在约
+`[1.8351, -0.1891, 1.1411] m` 已短暂稳定，而旧把手目标仍为
+`[1.87, -0.21, 1.075] m`。QP 为继续追逐低位目标进入近奇异屈肘姿态，
+随后基座在直立状态下持续向后滑移。A5-CG 由此证明“锁定底座命令和躯干”
+仍不足以补偿不合适的任务几何。
+
 ## 放行边界
 
 - 通过只产生内部 `control_candidate`；

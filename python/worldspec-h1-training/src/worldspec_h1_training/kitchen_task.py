@@ -11,6 +11,7 @@ import functools
 import json
 import tempfile
 import xml.etree.ElementTree as ET
+from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -47,6 +48,31 @@ TASK_SCENE = {
     "support": {
         "type": "fixed_box",
         "center": [1.88, -0.21, 1.155],
+        "halfSize": [0.10, 0.09, 0.015],
+    },
+    "graspModel": "physical_contact_only",
+    "hiddenAttachment": False,
+}
+
+ERGONOMIC_TASK_SCENE = {
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v3-ergonomic",
+    "evidenceStatus": "generated",
+    "distribution": "internal_only",
+    "drawer": {
+        "closedCenter": [2.03, -0.21, 1.085],
+        "slideAxis": [-1.0, 0.0, 0.0],
+        "range": [0.0, 0.24],
+        "openThreshold": 0.18,
+        "closedThreshold": 0.03,
+    },
+    "cup": {
+        "initialCenter": [1.85, -0.21, 1.26],
+        "proxy": "short_cylinder",
+        "massKg": 0.18,
+    },
+    "support": {
+        "type": "fixed_box",
+        "center": [1.85, -0.21, 1.22],
         "halfSize": [0.10, 0.09, 0.015],
     },
     "graspModel": "physical_contact_only",
@@ -156,9 +182,10 @@ class KitchenTaskState:
 
     @property
     def completed(self) -> bool:
-        return self.phase == "final_hold" and self.phase_steps >= TASK_CONTROLLER[
-            "phaseMinimumSteps"
-        ]["final_hold"]
+        return (
+            self.phase == "final_hold"
+            and self.phase_steps >= TASK_CONTROLLER["phaseMinimumSteps"]["final_hold"]
+        )
 
     def _advance(self) -> None:
         if self.phase_index < len(PHASES) - 1:
@@ -184,13 +211,14 @@ class KitchenTaskState:
         if self.phase in {"stand_ready", "close_handle", "release_handle", "close_cup"}:
             ready = self.phase_steps >= minimum
         elif self.phase in {"reach_handle", "reach_cup", "lift_cup", "retract"}:
-            ready = self.phase_steps >= minimum and target_error <= TASK_CONTROLLER[
-                "positionToleranceMeters"
-            ]
+            ready = (
+                self.phase_steps >= minimum
+                and target_error <= TASK_CONTROLLER["positionToleranceMeters"]
+            )
         elif self.phase == "pull_drawer":
-            ready = self.phase_steps >= minimum and drawer_position >= TASK_GATES[
-                "drawerOpenThreshold"
-            ]
+            ready = (
+                self.phase_steps >= minimum and drawer_position >= TASK_GATES["drawerOpenThreshold"]
+            )
         elif self.phase == "insert_cup":
             ready = self.phase_steps >= minimum and cup_inside
         elif self.phase == "release_cup":
@@ -205,9 +233,10 @@ class KitchenTaskState:
                 and self.cup_stable_steps >= TASK_GATES["minimumStableSteps"]
             )
         elif self.phase == "push_drawer":
-            ready = self.phase_steps >= minimum and drawer_position <= TASK_GATES[
-                "drawerClosedThreshold"
-            ]
+            ready = (
+                self.phase_steps >= minimum
+                and drawer_position <= TASK_GATES["drawerClosedThreshold"]
+            )
         elif self.phase == "final_hold":
             return
         if ready:
@@ -320,6 +349,7 @@ def prepare_kitchen_task_model(
     base_profile: dict[str, Any],
     bundle_dir: Path,
     work_dir: Path,
+    task_scene: Mapping[str, Any] = TASK_SCENE,
 ) -> tuple[Path, dict[str, Any]]:
     """Add a deterministic, distributable drawer/cup task scene."""
 
@@ -352,7 +382,7 @@ def prepare_kitchen_task_model(
                 "friction": "0.8 0.01 0.001",
             },
         )
-    support = TASK_SCENE["support"]
+    support = task_scene["support"]
     ET.SubElement(
         cabinet,
         "geom",
@@ -369,7 +399,10 @@ def prepare_kitchen_task_model(
     drawer = ET.SubElement(
         worldbody,
         "body",
-        {"name": "worldspec_task_drawer", "pos": "2.06 -0.21 1.02"},
+        {
+            "name": "worldspec_task_drawer",
+            "pos": " ".join(str(value) for value in task_scene["drawer"]["closedCenter"]),
+        },
     )
     ET.SubElement(
         drawer,
@@ -443,7 +476,10 @@ def prepare_kitchen_task_model(
     cup = ET.SubElement(
         worldbody,
         "body",
-        {"name": "worldspec_task_cup", "pos": "1.88 -0.21 1.195"},
+        {
+            "name": "worldspec_task_cup",
+            "pos": " ".join(str(value) for value in task_scene["cup"]["initialCenter"]),
+        },
     )
     ET.SubElement(cup, "freejoint", {"name": "worldspec_cup_free"})
     ET.SubElement(
@@ -477,7 +513,7 @@ def prepare_kitchen_task_model(
         "parentDerivation": parent_derivation,
         "derivedModel": task_model.name,
         "derivedModelDigest": digest_bytes(task_model.read_bytes()),
-        "taskScene": copy.deepcopy(TASK_SCENE),
+        "taskScene": copy.deepcopy(task_scene),
         "transformations": [
             "add_self_authored_static_cabinet",
             "add_prismatic_drawer_and_handle",
@@ -515,10 +551,7 @@ class JacobianImpedanceController:
         )
         names = TASK_CONTROLLER["controlledJoints"]
         self._joint_ids = np.asarray(
-            [
-                mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name)
-                for name in names
-            ],
+            [mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_JOINT, name) for name in names],
             dtype=int,
         )
         if self._site < 0 or (self._joint_ids < 0).any():
@@ -660,9 +693,7 @@ class JacobianImpedanceController:
         minimum_margin = min(result["jointLimitMarginRadians"] for result in results)
         return {
             "status": (
-                "passed"
-                if all(result["status"] == "passed" for result in results)
-                else "failed"
+                "passed" if all(result["status"] == "passed" for result in results) else "failed"
             ),
             "method": "fixed_base_four_joint_iterative_dls",
             "maximumResidualMeters": maximum_residual,
@@ -671,7 +702,11 @@ class JacobianImpedanceController:
         }
 
 
-def _task_metrics(env, state) -> dict[str, Any]:
+def _task_metrics(
+    env,
+    state,
+    task_scene: Mapping[str, Any] = TASK_SCENE,
+) -> dict[str, Any]:
     import mujoco
     import numpy as np
 
@@ -689,19 +724,15 @@ def _task_metrics(env, state) -> dict[str, Any]:
     cup_dof = int(model.jnt_dofadr[cup_joint])
     drawer_position = float(qpos[drawer_qpos])
     cup_position = qpos[cup_qpos : cup_qpos + 3]
-    drawer_center = np.asarray(TASK_SCENE["drawer"]["closedCenter"], dtype=float)
+    drawer_center = np.asarray(task_scene["drawer"]["closedCenter"], dtype=float)
     drawer_center[0] -= drawer_position
     margin = TASK_GATES["cupInsideMargin"]
     inside = bool(
-        drawer_center[0] - 0.145 + margin
-        <= cup_position[0]
-        <= drawer_center[0] + 0.145 - margin
+        drawer_center[0] - 0.145 + margin <= cup_position[0] <= drawer_center[0] + 0.145 - margin
         and drawer_center[1] - 0.165 + margin
         <= cup_position[1]
         <= drawer_center[1] + 0.165 - margin
-        and drawer_center[2] + 0.02
-        <= cup_position[2]
-        <= drawer_center[2] + 0.115
+        and drawer_center[2] + 0.02 <= cup_position[2] <= drawer_center[2] + 0.115
     )
     return {
         "drawerPosition": drawer_position,
@@ -712,29 +743,39 @@ def _task_metrics(env, state) -> dict[str, Any]:
     }
 
 
-def _target_for_phase(phase: str, metrics: dict[str, Any]) -> list[float]:
+def _target_for_phase(
+    phase: str,
+    metrics: dict[str, Any],
+    task_scene: Mapping[str, Any] = TASK_SCENE,
+) -> list[float]:
+    drawer_offset = [
+        task_scene["drawer"]["closedCenter"][index] - TASK_SCENE["drawer"]["closedCenter"][index]
+        for index in range(3)
+    ]
+
+    def shifted(target: list[float]) -> list[float]:
+        return [target[index] + drawer_offset[index] for index in range(3)]
+
     if phase in {"stand_ready", "final_hold"}:
         return [1.72, -0.21, 1.16]
     if phase in {"reach_handle", "close_handle"}:
-        return [
-            1.87 - metrics["drawerPosition"],
-            -0.21,
-            1.075,
-        ]
+        target = shifted([1.87, -0.21, 1.075])
+        target[0] -= metrics["drawerPosition"]
+        return target
     if phase == "pull_drawer":
-        return [1.63, -0.21, 1.075]
+        return shifted([1.63, -0.21, 1.075])
     if phase == "release_handle":
-        return [1.58, -0.21, 1.12]
+        return shifted([1.58, -0.21, 1.12])
     if phase in {"reach_cup", "close_cup"}:
         return metrics["cupPosition"]
     if phase == "lift_cup":
-        return [1.80, -0.21, 1.27]
+        return shifted([1.80, -0.21, 1.27])
     if phase in {"insert_cup", "release_cup"}:
-        return [1.78, -0.21, 1.065]
+        return shifted([1.78, -0.21, 1.065])
     if phase == "retract":
-        return [1.58, -0.21, 1.22]
+        return shifted([1.58, -0.21, 1.22])
     if phase == "push_drawer":
-        return [1.91, -0.21, 1.075]
+        return shifted([1.91, -0.21, 1.075])
     raise TrainingError("KITCHEN_TASK_PHASE_INVALID", f"Unsupported task phase: {phase}")
 
 
@@ -1070,9 +1111,8 @@ def run_fixed_kitchen_task_probe(
     }
     controller_path = output_dir / "kitchen-task-controller.json"
     controller_path.write_bytes(canonical_bytes(controller_artifact))
-    full_gate = (
-        len(tests) == TASK_GATES["acceptanceRuns"]
-        and all(item["result"] == "pass" for item in tests)
+    full_gate = len(tests) == TASK_GATES["acceptanceRuns"] and all(
+        item["result"] == "pass" for item in tests
     )
     return {
         "baseTrainingProfileDigest": digest_json(base_profile),

@@ -55,5 +55,6 @@ last-verified: 2026-07-29
 | D-043 | Attempt-05 在 Drobodata A800 完成单次等价诊断重放和完整产物交接，`formalDiagnosticReplayGate=passed`；控制门仍因 `right_hip_yaw` 关节限位失败，Controller 保持 `non_publishable`，停止在 A5/5-of-5/100M 之前 | Accepted | [ADR-0024](decisions/0024-h1-a5ci-corrected-replay.md) |
 | D-044 | 选择 A5-CF：保持 A5-C 的 QP、策略、场景、范围、终止条件和质量门不变；任务阶段用 `0.05/0.02` 迟滞触发 Motion，并复用已验证的 Capture 稳定门和 5 步 Blend 完成 Motion→Stand 交接；先单次 A800 Spike，不自动调参或启动 A5/100M | Accepted Design | [ADR-0025](decisions/0025-h1-task-policy-handoff-fix.md) |
 | D-045 | A5-CF 在 A800 上消除了 `right_hip_yaw` 交接越限，但任务阶段因躯干/右臂运动导致 `fall_height`，未成为控制候选；选择 A5-CG，锁定底座和躯干，只用四个右臂关节 QP 与显式偏置力前馈做一次门控 | Accepted Design | [ADR-0026](decisions/0026-h1-dynamic-arm-tracking.md) |
+| D-046 | A5-CG 在 A800 上保持 Stand Policy 与四关节动态臂隔离，但仍因低位把手目标诱发近奇异屈肘、基座后滑和 `fall_height`；选择 A5-CH，将自制任务几何整体移入已观测的稳定工作空间，门槛和 Controller 不变 | Accepted Design | [ADR-0027](decisions/0027-h1-ergonomic-task-geometry.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

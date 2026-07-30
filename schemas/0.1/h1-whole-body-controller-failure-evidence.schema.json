@@ -1,0 +1,122 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-whole-body-controller-failure-evidence.schema.json",
+  "title": "WorldSpec H1 Whole-Body Controller Failure Evidence 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "executionEvidence",
+    "job",
+    "probeRevision",
+    "imageSourceRevision",
+    "containerImage",
+    "controlProfileDigest",
+    "formalControlGate",
+    "controllerStatus",
+    "failure",
+    "metrics",
+    "artifacts",
+    "claimBoundary"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "status": { "const": "failed" },
+    "executionEvidence": { "const": "executed" },
+    "job": { "type": "string", "minLength": 1 },
+    "probeRevision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "imageSourceRevision": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "containerImage": {
+      "type": "string",
+      "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+    },
+    "controlProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "formalControlGate": { "const": "failed" },
+    "controllerStatus": { "const": "non_publishable" },
+    "failure": {
+      "type": "object",
+      "required": [
+        "reason",
+        "terminalReasons",
+        "terminalJoints",
+        "traceRecordCount",
+        "taskPolicyFinalPhase",
+        "taskPolicyHandoffFailed"
+      ],
+      "properties": {
+        "reason": { "type": "string", "minLength": 1 },
+        "terminalReasons": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "terminalJoints": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "traceRecordCount": { "type": "integer", "minimum": 1 },
+        "taskPolicyFinalPhase": {
+          "enum": ["motion", "capture", "blend", "stand"]
+        },
+        "taskPolicyHandoffFailed": { "type": "boolean" },
+        "dynamicArmTrackingEnabled": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "required": [
+        "minimumBaseHeight",
+        "minimumUprightCosine",
+        "baseTranslation",
+        "baseLateralDrift",
+        "finalTargetErrorMeters",
+        "finalTcpSpeed",
+        "maximumProjectedGradient",
+        "nonFiniteSamples"
+      ],
+      "additionalProperties": { "type": "number" }
+    },
+    "artifacts": {
+      "type": "object",
+      "required": ["report", "controller", "trace"],
+      "properties": {
+        "report": { "$ref": "#/$defs/artifact" },
+        "controller": { "$ref": "#/$defs/artifact" },
+        "trace": {
+          "type": "object",
+          "required": ["digest", "sizeBytes", "recordCount"],
+          "properties": {
+            "digest": { "$ref": "common.schema.json#/$defs/digest" },
+            "sizeBytes": { "type": "integer", "minimum": 1 },
+            "recordCount": { "type": "integer", "minimum": 1 }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "claimBoundary": {
+      "const": {
+        "controlCandidate": false,
+        "fullTaskClaim": "forbidden",
+        "l3Claim": "forbidden",
+        "training100M": "not_started"
+      }
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["digest", "sizeBytes"],
+      "properties": {
+        "digest": { "$ref": "common.schema.json#/$defs/digest" },
+        "sizeBytes": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

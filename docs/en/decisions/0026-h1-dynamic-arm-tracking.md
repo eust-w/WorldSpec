@@ -50,6 +50,21 @@ Adopt the minimal A5-CG variant:
 6. Pass the fixed-base MuJoCo CPU tracking gate before building a new image and
    running exactly one single-GPU A800 control Spike.
 
+## Executed result
+
+A5-CG Job `worldspec-h1-midterm-9zmdg` completed on a real A800 with Profile
+Digest `sha256:994c9a...3cb0d`. Dynamic-arm isolation and the Stand Policy were
+active as designed, with no joint-limit violation, NaN, or handoff failure, but
+the 301st Trace record triggered `fall_height`. The control gate therefore
+failed and the Controller remained `non_publishable`.
+
+The new Trace further shows that the TCP was briefly stable near
+`[1.8351, -0.1891, 1.1411] m`, while the old handle target remained
+`[1.87, -0.21, 1.075] m`. Continuing toward the low target drove the QP into a
+near-singular elbow configuration, after which the upright base slid
+backward. A5-CG therefore proves that locking base command and torso alone
+does not compensate for unsuitable task geometry.
+
 ## Release boundary
 
 - A pass creates only an internal `control_candidate`.

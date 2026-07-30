@@ -23,6 +23,7 @@ from typing import Any
 from .contract import canonical_bytes, digest_bytes, digest_json, validate_profile
 from .errors import TrainingError
 from .kitchen_task import (
+    ERGONOMIC_TASK_SCENE,
     TASK_CAPACITY,
     TASK_SCENE,
     _target_for_phase,
@@ -143,6 +144,32 @@ DYNAMIC_ARM_TRACKING = {
     "uncontrolledHeldTargets": "profile_defaults",
     "legPolicy": "stand",
     "feedforward": "mujoco_qfrc_bias",
+}
+
+A5CG_FAILURE_EVIDENCE = {
+    "job": "worldspec-h1-midterm-9zmdg",
+    "controlProfileDigest": (
+        "sha256:994c9a7e9b3e6312e3e1e8b13c5cc97f9a2b69e3798682a36d57a79f4153cb0d"
+    ),
+    "reportDigest": "sha256:56a804482e903e64d11092b0d5c1f60fa50466b6581d3de56f08d1aca1ae957f",
+    "controllerDigest": ("sha256:d7a3b176e08a9a14dc1b0331bfb7bd3a09bab03b46080451249d104f7d7dc7b2"),
+    "traceDigest": "sha256:8cc84091b367ece380b8f500a9481d9d6567a937ae4199241ef90f19cc507b08",
+    "traceRecordCount": 301,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "stand",
+    "taskPolicyHandoffFailed": False,
+    "dynamicArmTrackingEnabled": True,
+    "formalControlGate": "failed",
+}
+
+TASK_GEOMETRY_CALIBRATION = {
+    "mode": "measured_stable_workspace_alignment",
+    "sourceJob": "worldspec-h1-midterm-9zmdg",
+    "sourceTraceDigest": A5CG_FAILURE_EVIDENCE["traceDigest"],
+    "sourceStableTcpPosition": [1.835095491188453, -0.18911960748591475, 1.1411498880156772],
+    "sceneTranslation": [-0.03, 0.0, 0.065],
+    "calibratedHandleTarget": [1.84, -0.21, 1.14],
+    "qualityGatesChanged": False,
 }
 
 DIAGNOSTIC_TERMINATION_CHANNELS = (
@@ -1220,11 +1247,30 @@ def validate_whole_body_profile(
                 "WHOLE_BODY_POLICY_LINEAGE_MISMATCH",
                 "A5-C must reuse the frozen A4 policy identities.",
             )
-    if profile.get("scene") != TASK_SCENE:
+    task_geometry_calibration = profile.get("taskGeometryCalibration")
+    a5cg_evidence = profile.get("a5cgEvidence")
+    if (task_geometry_calibration is None) != (a5cg_evidence is None):
+        raise TrainingError(
+            "WHOLE_BODY_TASK_GEOMETRY_LINEAGE_INCOMPLETE",
+            "A5-CH requires both the task geometry calibration and A5-CG failure evidence.",
+        )
+    expected_scene = ERGONOMIC_TASK_SCENE if task_geometry_calibration is not None else TASK_SCENE
+    if profile.get("scene") != expected_scene:
         raise TrainingError(
             "WHOLE_BODY_SCENE_INVALID",
-            "A5-C must reuse the repaired A5-R primitive scene.",
+            "A5-C must use the primitive scene selected by its frozen lineage.",
         )
+    if task_geometry_calibration is not None:
+        if task_geometry_calibration != TASK_GEOMETRY_CALIBRATION:
+            raise TrainingError(
+                "WHOLE_BODY_TASK_GEOMETRY_INVALID",
+                "A5-CH must use the frozen measured stable-workspace calibration.",
+            )
+        if a5cg_evidence != A5CG_FAILURE_EVIDENCE:
+            raise TrainingError(
+                "WHOLE_BODY_TASK_GEOMETRY_EVIDENCE_MISMATCH",
+                "A5-CH must remain bound to the archived A5-CG fall-height evidence.",
+            )
     if profile.get("controller") != WHOLE_BODY_CONTROLLER:
         raise TrainingError(
             "WHOLE_BODY_CONTROLLER_INVALID",
@@ -1276,6 +1322,11 @@ def validate_whole_body_profile(
                 "WHOLE_BODY_DYNAMIC_ARM_EVIDENCE_MISMATCH",
                 "A5-CG must remain bound to the archived A5-CF fall-height evidence.",
             )
+    if task_geometry_calibration is not None and dynamic_arm_tracking is None:
+        raise TrainingError(
+            "WHOLE_BODY_TASK_GEOMETRY_CONTROLLER_MISSING",
+            "A5-CH must preserve the A5-CG dynamic arm controller.",
+        )
     runtime = profile.get("runtime", {})
     if (
         runtime.get("ccdIterations") != 50
@@ -1329,6 +1380,7 @@ def evaluate_whole_body_control_spike(
     stand_policy,
     task_policy_handoff: Mapping[str, Any] | None = None,
     dynamic_arm_tracking: Mapping[str, Any] | None = None,
+    task_scene: Mapping[str, Any] = TASK_SCENE,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     import jax
     import jax.numpy as jp
@@ -1405,9 +1457,9 @@ def evaluate_whole_body_control_spike(
                 initial_task_base = np.asarray(state.data.qpos[:3], dtype=float).copy()
             settle_end = supervisor_settle_end + WHOLE_BODY_GATES["settleSteps"]
             phase = "whole_body_settle" if index < settle_end else "track_handle"
-            metrics = _task_metrics(env, state)
+            metrics = _task_metrics(env, state, task_scene)
             target_phase = "stand_ready" if phase == "whole_body_settle" else "reach_handle"
-            target = _target_for_phase(target_phase, metrics)
+            target = _target_for_phase(target_phase, metrics, task_scene)
             control = controller.solve(
                 np.asarray(state.data.qpos),
                 np.asarray(state.data.qvel),
@@ -1504,9 +1556,9 @@ def evaluate_whole_body_control_spike(
                 )
                 if task_supervisor.handoff_failed:
                     failure = failure or "task_policy_handoff_timeout"
-            metrics = _task_metrics(env, state)
+            metrics = _task_metrics(env, state, task_scene)
             target_phase = "stand_ready" if phase == "whole_body_settle" else "reach_handle"
-            target = _target_for_phase(target_phase, metrics)
+            target = _target_for_phase(target_phase, metrics, task_scene)
             site = controller.site_state(qpos, qvel, target)
             final_site = site
             within = (
@@ -1610,6 +1662,7 @@ def evaluate_whole_body_control_spike(
                     task_supervisor.handoff_failed if task_supervisor is not None else False
                 ),
                 "dynamicArmTrackingEnabled": dynamic_arm_tracking is not None,
+                "taskGeometryCalibrationEnabled": task_scene == ERGONOMIC_TASK_SCENE,
             },
         },
         traces,
@@ -1637,7 +1690,12 @@ def run_whole_body_control_spike(
         profile,
     )
     static = static_preflight(base_profile, bundle_dir)
-    task_model, derivation = prepare_kitchen_task_model(base_profile, bundle_dir, model_dir)
+    task_model, derivation = prepare_kitchen_task_model(
+        base_profile,
+        bundle_dir,
+        model_dir,
+        profile["scene"],
+    )
     runtime = runtime_preflight(effective, task_model)
     output_dir.mkdir(parents=True, exist_ok=True)
     network_factory = functools.partial(
@@ -1681,6 +1739,7 @@ def run_whole_body_control_spike(
             policies["stand"],
             profile.get("taskPolicyHandoff"),
             profile.get("dynamicArmTracking"),
+            profile["scene"],
         )
     trace_path = output_dir / "evaluation-traces.jsonl"
     with trace_path.open("w", encoding="utf-8") as stream:
@@ -1702,7 +1761,12 @@ def run_whole_body_control_spike(
             if "dynamicArmTracking" in profile
             else {}
         ),
-        "scene": copy.deepcopy(TASK_SCENE),
+        **(
+            {"taskGeometryCalibration": copy.deepcopy(profile["taskGeometryCalibration"])}
+            if "taskGeometryCalibration" in profile
+            else {}
+        ),
+        "scene": copy.deepcopy(profile["scene"]),
         "policies": {
             role: {
                 "checkpointDigest": value["archiveDigest"],
@@ -1730,7 +1794,7 @@ def run_whole_body_control_spike(
             "observationSize": observation_size,
             "actionSize": action_size,
         },
-        "scene": copy.deepcopy(TASK_SCENE),
+        "scene": copy.deepcopy(profile["scene"]),
         "controller": copy.deepcopy(WHOLE_BODY_CONTROLLER),
         **(
             {"taskPolicyHandoff": copy.deepcopy(profile["taskPolicyHandoff"])}
@@ -1740,6 +1804,11 @@ def run_whole_body_control_spike(
         **(
             {"dynamicArmTracking": copy.deepcopy(profile["dynamicArmTracking"])}
             if "dynamicArmTracking" in profile
+            else {}
+        ),
+        **(
+            {"taskGeometryCalibration": copy.deepcopy(profile["taskGeometryCalibration"])}
+            if "taskGeometryCalibration" in profile
             else {}
         ),
         "qualityAssessment": {

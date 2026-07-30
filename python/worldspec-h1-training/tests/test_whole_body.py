@@ -11,9 +11,11 @@ from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.whole_body import (
     A5CF_FAILURE_EVIDENCE,
+    A5CG_FAILURE_EVIDENCE,
     A5CI_DIAGNOSTIC_EVIDENCE,
     A5R_FAILED_REPORT_DIGEST,
     DYNAMIC_ARM_TRACKING,
+    TASK_GEOMETRY_CALIBRATION,
     TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
     WHOLE_BODY_GATES,
@@ -35,6 +37,7 @@ SUPERVISOR = ROOT / "examples" / "h1-kitchen" / "locomotion-supervisor-profile.j
 CONTROL = ROOT / "examples" / "h1-kitchen" / "whole-body-control-profile.json"
 HANDOFF = ROOT / "examples" / "h1-kitchen" / "whole-body-policy-handoff-profile.json"
 DYNAMIC_ARM = ROOT / "examples" / "h1-kitchen" / "whole-body-dynamic-arm-profile.json"
+ERGONOMIC_HANDLE = ROOT / "examples" / "h1-kitchen" / "whole-body-ergonomic-handle-profile.json"
 
 
 def _profiles() -> tuple[dict, dict, dict]:
@@ -131,6 +134,44 @@ def test_a5cg_rejects_missing_handoff_and_contract_drift() -> None:
         validate_whole_body_profile(base, supervisor, profile)
 
     assert captured.value.code == "WHOLE_BODY_DYNAMIC_ARM_INVALID"
+
+
+def test_a5ch_profile_binds_exact_a5cg_evidence_and_task_geometry() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(ERGONOMIC_HANDLE.read_text(encoding="utf-8"))
+
+    validate_whole_body_profile(base, supervisor, profile)
+
+    assert profile["a5cgEvidence"] == A5CG_FAILURE_EVIDENCE
+    assert profile["taskGeometryCalibration"] == TASK_GEOMETRY_CALIBRATION
+    assert profile["qualityGates"] == WHOLE_BODY_GATES
+
+
+@pytest.mark.parametrize("missing", ["a5cgEvidence", "taskGeometryCalibration"])
+def test_a5ch_rejects_partial_task_geometry_lineage(missing: str) -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(ERGONOMIC_HANDLE.read_text(encoding="utf-8"))
+    profile.pop(missing)
+
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+
+    assert captured.value.code == "WHOLE_BODY_TASK_GEOMETRY_LINEAGE_INCOMPLETE"
+
+
+def test_a5ch_rejects_scene_or_calibration_drift() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(ERGONOMIC_HANDLE.read_text(encoding="utf-8"))
+    profile["scene"]["drawer"]["closedCenter"][2] = 1.02
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+    assert captured.value.code == "WHOLE_BODY_SCENE_INVALID"
+
+    profile = json.loads(ERGONOMIC_HANDLE.read_text(encoding="utf-8"))
+    profile["taskGeometryCalibration"]["qualityGatesChanged"] = True
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+    assert captured.value.code == "WHOLE_BODY_TASK_GEOMETRY_INVALID"
 
 
 def test_task_policy_handoff_uses_hysteresis_capture_and_blend() -> None:
@@ -566,3 +607,10 @@ def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
     assert "whole-body-dynamic-arm-profile.json" in dynamic_arm_wrapper
     assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in dynamic_arm_wrapper
     assert "100000000" not in dynamic_arm_wrapper
+
+    ergonomic_handle_wrapper = (
+        ROOT / "scripts" / "run_a800_h1_whole_body_ergonomic_handle_spike.sh"
+    ).read_text(encoding="utf-8")
+    assert "whole-body-ergonomic-handle-profile.json" in ergonomic_handle_wrapper
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in ergonomic_handle_wrapper
+    assert "100000000" not in ergonomic_handle_wrapper
