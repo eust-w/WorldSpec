@@ -706,6 +706,40 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
     assert profile["runtime"]["containerDigest"] == build["image"].rsplit("@", 1)[1]
 
 
+def test_hard_negative_replay_failure_is_archived_and_stops_gate_chain() -> None:
+    summary = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "locomotion-manipulation-hard-negative-replay.a800.quality-failed-summary.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert summary["job"] == "worldspec-h1-midterm-2pn45"
+    assert summary["execution"]["savedCheckpointCount"] == 7
+    assert summary["execution"]["isolatedSuiteResultCount"] == 14
+    assert summary["execution"]["candidatePostWalkPassCounts"] == [4] * 7
+    assert summary["execution"]["candidateFromRestPassCounts"] == [5] * 7
+    assert summary["execution"]["trainingResetDistribution"] == {
+        "fromRestProbability": 0.5,
+        "criticalSnapshotProbability": 0.25,
+        "uniformSnapshotProbability": 0.25,
+        "criticalSnapshotIndex": 565,
+    }
+    assert summary["execution"]["selectedStep"] == 7_372_800
+    assert summary["execution"]["comparisonToV13Selected"]["gateResultChanged"] is False
+    assert summary["decision"] == {
+        "policyStatus": "non_publishable",
+        "fullKitchenSingleAllowed": False,
+        "fiveOfFiveAllowed": False,
+        "hundredMillionTrainingAllowed": False,
+        "nextStep": "new_control_design_decision_required",
+        "qualityGatesChanged": False,
+        "automaticRetryAllowed": False,
+    }
+
+
 def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     (job,) = _documents("h1-locomotion-midterm-job.yaml")
     assert job["spec"]["backoffLimit"] == 0

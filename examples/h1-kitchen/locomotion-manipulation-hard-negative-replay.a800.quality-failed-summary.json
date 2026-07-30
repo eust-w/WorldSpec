@@ -1,0 +1,92 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-hard-negative-replay/2pn45",
+  "status": "quality_failed",
+  "job": "worldspec-h1-midterm-2pn45",
+  "probeRevision": "154b3e6b1da0b99acef517336d511bbde8e3b0f2",
+  "imageSourceRevision": "c04bcf009c8e98d6c310a3cee75599c46d828509",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:7d445d05d3d27ecf7dc2a8de67edfef40e8ce4f119eeb18b8154d8a753e2a73d",
+  "artifacts": {
+    "report": {
+      "digest": "sha256:1757154e2d4eae03dac11b39b803f3a31d3f5ff5bd91328ed854b148878381ac",
+      "sizeBytes": 37933
+    },
+    "checkpoint": {
+      "digest": "sha256:b40d6287440f3a0761fe4b3fedc15da21e53d881ada3f0931f2b34a9f59b7fae",
+      "sizeBytes": 1254893
+    },
+    "trace": {
+      "digest": "sha256:2b29a5bed65fee7073fefd7621ae5bd961d9247b2fe3d15306c86ca5815782b0",
+      "sizeBytes": 436245
+    },
+    "snapshotBank": {
+      "digest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+      "sizeBytes": 1192118
+    },
+    "log": {
+      "digest": "sha256:feaf01a952b6091980aef22c3ca579ff885eaf48ec4aa3c52183554710c05702",
+      "sizeBytes": 102678
+    },
+    "jobManifest": {
+      "digest": "sha256:7c6b102eaedcc6973e45ff664bcd4d55bfcdcb3f96836341077b992f319e063a",
+      "sizeBytes": 5949
+    },
+    "podManifest": {
+      "digest": "sha256:d693421ccf1595188c939d3c1536ad2c18165b1ec832dc7e9e4be8a384922adb",
+      "sizeBytes": 8059
+    },
+    "podDescription": {
+      "digest": "sha256:693295ab5c9fc2ba8aabf7151f9adffcb8967d7323690fd5c27acaed4d16b618",
+      "sizeBytes": 5765
+    }
+  },
+  "execution": {
+    "device": "NVIDIA A800-SXM4-80GB",
+    "savedCheckpointCount": 7,
+    "isolatedSuiteResultCount": 14,
+    "formalManipulationBalanceGate": "failed",
+    "selectedStep": 7372800,
+    "selectedMeanEpisodeLength": 99.5,
+    "selectedPostWalkTestsPassed": 4,
+    "selectedFromRestTestsPassed": 5,
+    "candidatePostWalkPassCounts": [4, 4, 4, 4, 4, 4, 4],
+    "candidateFromRestPassCounts": [5, 5, 5, 5, 5, 5, 5],
+    "trainingResetDistribution": {
+      "fromRestProbability": 0.5,
+      "criticalSnapshotProbability": 0.25,
+      "uniformSnapshotProbability": 0.25,
+      "criticalSnapshotIndex": 565
+    },
+    "failedTest": {
+      "suite": "post_walk_capture",
+      "run": 2,
+      "completedSteps": 100,
+      "requiredSteps": 100,
+      "terminalReason": null,
+      "minimumBaseHeight": 0.7160465121269226,
+      "minimumUprightCosine": 0.7536250352859497,
+      "maximumBaseTranslation": 0.8543086872960323,
+      "maximumBaseLateralDrift": 0.5395923405885696,
+      "maximumTerminalLinearSpeed": 2.8207999699295074,
+      "maximumTerminalAngularSpeed": 2.125552847801331
+    },
+    "comparisonToV13Selected": {
+      "minimumBaseHeightDelta": 0.1643214821815491,
+      "minimumUprightCosineDelta": 0.170767605304718,
+      "maximumBaseTranslationDelta": -0.1463726056688507,
+      "maximumBaseLateralDriftDelta": -0.1450424209855938,
+      "maximumTerminalLinearSpeedDelta": -0.7411535199954283,
+      "maximumTerminalAngularSpeedDelta": -0.4442893066918312,
+      "gateResultChanged": false
+    }
+  },
+  "decision": {
+    "policyStatus": "non_publishable",
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "hundredMillionTrainingAllowed": false,
+    "nextStep": "new_control_design_decision_required",
+    "qualityGatesChanged": false,
+    "automaticRetryAllowed": false
+  },
+  "generatedAt": "2026-07-30T22:39:24.888357Z"
+}

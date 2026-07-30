@@ -82,5 +82,6 @@ last-verified: 2026-07-30
 | D-070 | v12 修复后在 PPO 前因把操作平衡 Checkpoint 误作 Capture 教师而无法生成全有效状态库；v13 直接复用 v11 已验证的 4096 状态 Blob，并对 Digest、形状、有限值和零终止证据 fail closed，其余训练与质量门不变 | Accepted Design | [ADR-0045](decisions/0045-h1-manipulation-frozen-snapshot-bank.md) |
 | D-071 | v13 首次运行已验证五份输入，但在 PPO 前因将 XML Path 当作已加载模型读取 `nq/nv` 而配置失败；仅改为从实例化环境的 `mj_model` 读取维度后允许重启，Profile、状态库、参数和门槛不变 | Accepted | [ADR-0045](decisions/0045-h1-manipulation-frozen-snapshot-bank.md) |
 | D-072 | 修正后的 v13 在真实 A800 完成七候选和 14/14 隔离评测，但全部候选均为步行后 4/5、静态 5/5，且固定第 2 条评测映射到状态库索引 565；v14 只把训练重置改为 50% 静态、25% 索引 565、25% 均匀状态库，正式评测仍使用原均匀映射和不变门槛 | Accepted Design | [ADR-0046](decisions/0046-h1-manipulation-hard-negative-replay.md) |
+| D-073 | v14 在真实 A800 完成七候选和 14/14 隔离评测，所有候选仍为步行后 4/5、静态 5/5；固定困难状态的六项指标虽改善但正式门未改变，因此策略保持 non_publishable，禁止完整厨房、5/5、100M 和自动重试，下一步必须先新建控制设计 ADR | Accepted | [ADR-0047](decisions/0047-h1-hard-negative-replay-result.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

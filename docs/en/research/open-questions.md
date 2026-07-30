@@ -27,5 +27,12 @@ These require spikes or benchmarks and must not be written as solved in normativ
     Policy under the existing Capture/Stand Supervisor versus adding explicit
     zero-command displacement state and retention reward to a single policy.
     Automatic retry is forbidden before a new ADR.
+11. **H1 post-walk manipulation recovery**: after v14 raised frozen hard-state
+    index `565` to 25% of training resets, all seven candidates still reached
+    only post-walk `4/5` and from-rest `5/5`. Height, orientation, translation,
+    drift, and terminal-speed metrics improved without passing the gate. The
+    next experiment must first distinguish controller viability, observation
+    aliasing, and the need for an independent recovery Supervisor. Automatic
+    retry and gate relaxation remain forbidden before a new ADR.
 
 Every experiment freezes its input corpus, tool version, hardware, metrics, and failure examples.

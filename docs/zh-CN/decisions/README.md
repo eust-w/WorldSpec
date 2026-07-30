@@ -54,5 +54,6 @@ last-verified: 2026-07-30
 - [ADR-0044 H1 操作平衡无界恢复成本](0044-h1-manipulation-unbounded-recovery.md)
 - [ADR-0045 H1 操作平衡冻结状态库](0045-h1-manipulation-frozen-snapshot-bank.md)
 - [ADR-0046 H1 操作平衡固定困难状态重放](0046-h1-manipulation-hard-negative-replay.md)
+- [ADR-0047 H1 操作平衡困难状态重放结果](0047-h1-hard-negative-replay-result.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。
