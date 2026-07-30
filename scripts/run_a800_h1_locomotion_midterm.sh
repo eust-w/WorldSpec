@@ -138,6 +138,11 @@ elif [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]]; the
   REPORT_MARKER=WORLDSPEC_A800_MANIPULATION_BALANCE_RESULT=
   REPORT_SCHEMA=h1-locomotion-manipulation-balance-report.schema.json
   GATE_FIELD=formalManipulationBalanceGate
+elif [[ "${profile_stage}" == "loaded_track_settle_manipulation_viability" ]]; then
+  REPORT_FILENAME=manipulation-viability-report.json
+  REPORT_MARKER=WORLDSPEC_A800_MANIPULATION_VIABILITY_RESULT=
+  REPORT_SCHEMA=h1-manipulation-viability-report.schema.json
+  GATE_FIELD=formalViabilityDiagnosticGate
 elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
   REPORT_FILENAME=supervisor-report.json
   REPORT_MARKER=WORLDSPEC_A800_SUPERVISOR_RESULT=
@@ -198,7 +203,10 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   done
   RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
 fi
-if [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]] &&
+if {
+  [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]] ||
+    [[ "${profile_stage}" == "loaded_track_settle_manipulation_viability" ]]
+} &&
   [[ ! -r "${MANIPULATION_SNAPSHOT_BANK}" ]]; then
   printf 'ERROR: manipulation snapshot bank is not readable: %s\n' \
     "${MANIPULATION_SNAPSHOT_BANK:-unset}" >&2
@@ -777,7 +785,8 @@ PY
           --expected-size "${teacher_checkpoint_size}" \
           --expected-digest "${teacher_checkpoint_digest}"
       fi
-      if [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]]; then
+      if [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_manipulation_viability" ]]; then
         read -r manipulation_bank_size manipulation_bank_digest < <(
           python3 - "${MANIPULATION_SNAPSHOT_BANK}" <<'PY'
 import hashlib
@@ -977,6 +986,15 @@ if gate_field == "formalDiagnosticReplayGate":
     )
     report["controllerStatus"] = "non_publishable"
     report["artifactTransferStatus"] = "pending"
+elif gate_field == "formalViabilityDiagnosticGate":
+    diagnostic_clean = (
+        report["diagnosticAssessment"]["status"] == "passed"
+        and report["diagnosticAssessment"]["baselineReproduced"] is True
+        and report["diagnosticAssessment"]["searchCompleted"] is True
+        and ccd == capacity == abnormal == joint == nonfinite == 0
+    )
+    report[gate_field] = "passed" if diagnostic_clean else "failed"
+    report["controllerStatus"] = "non_publishable"
 else:
     report[gate_field] = (
         "passed"
@@ -1032,7 +1050,44 @@ report_path.write_text(
     encoding="utf-8",
 )
 PY
-      if [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
+      if [[ "${profile_stage}" == "loaded_track_settle_manipulation_viability" ]]; then
+        while read -r artifact_name artifact_size artifact_digest; do
+          python3 "${CHUNK_COPY}" \
+            --kubeconfig "${KUBECONFIG_PATH}" \
+            --namespace "${K8S_NAMESPACE}" \
+            --pod "${pod_name}" \
+            --container midterm \
+            --remote-path "/scratch/results/artifacts/${artifact_name}" \
+            --destination "${local_result_dir}/${artifact_name}" \
+            --expected-size "${artifact_size}" \
+            --expected-digest "${artifact_digest}" \
+            --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+            --retries "${OUTPUT_COPY_RETRIES}"
+        done < <(
+          python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
+import json
+import pathlib
+import sys
+
+report = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+for field in ("candidateArtifact", "searchProgressArtifact"):
+    artifact = report[field]
+    print(artifact["path"], artifact["sizeBytes"], artifact["digest"])
+trace = report["traceArtifact"]
+print(trace["path"], trace["sizeBytes"], trace["digest"])
+PY
+        )
+        trace_size="$(
+          python3 -c \
+            'import json,sys; print(json.load(open(sys.argv[1]))["traceArtifact"]["sizeBytes"])' \
+            "${local_result_dir}/${REPORT_FILENAME}"
+        )"
+        trace_digest="$(
+          python3 -c \
+            'import json,sys; print(json.load(open(sys.argv[1]))["traceArtifact"]["digest"])' \
+            "${local_result_dir}/${REPORT_FILENAME}"
+        )"
+      elif [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
@@ -1148,17 +1203,19 @@ PY
             --retries "${OUTPUT_COPY_RETRIES}"
         fi
       fi
-      python3 "${CHUNK_COPY}" \
-        --kubeconfig "${KUBECONFIG_PATH}" \
-        --namespace "${K8S_NAMESPACE}" \
-        --pod "${pod_name}" \
-        --container midterm \
-        --remote-path /scratch/results/artifacts/evaluation-traces.jsonl \
-        --destination "${local_result_dir}/evaluation-traces.jsonl" \
-        --expected-size "${trace_size}" \
-        --expected-digest "${trace_digest}" \
-        --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
-        --retries "${OUTPUT_COPY_RETRIES}"
+      if [[ "${profile_stage}" != "loaded_track_settle_manipulation_viability" ]]; then
+        python3 "${CHUNK_COPY}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --remote-path /scratch/results/artifacts/evaluation-traces.jsonl \
+          --destination "${local_result_dir}/evaluation-traces.jsonl" \
+          --expected-size "${trace_size}" \
+          --expected-digest "${trace_digest}" \
+          --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
+          --retries "${OUTPUT_COPY_RETRIES}"
+      fi
       if [[ "${A5CI_MODE}" == "true" ]]; then
         read -r equivalence_size equivalence_digest < <(
           python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'

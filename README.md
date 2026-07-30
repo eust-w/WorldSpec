@@ -2,7 +2,7 @@
 
 WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真器编译中间层。目标是把现有资产或图像/视频生成结果整理为可追溯、可验证、损失透明的 SimReady 资产。
 
-> 当前仓库状态：包含 v0.1 双语文档、91 个 JSON Schema、正负示例、Rust
+> 当前仓库状态：包含 v0.1 双语文档、105 个 JSON Schema、正负示例、Rust
 > Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、CLI 与
 > loopback 异步 API。MuJoCo/Three.js 参考编译、Digest 绑定的 L2
 > Conformance/Certificate、L3 TaskRun/RuntimeRecord 证据核验、Reference
@@ -27,7 +27,9 @@ WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真�
 > 静态、25% 固定困难状态索引 565、25% 均匀冻结状态库完成真实 A800 训练
 > 和全部 14/14 隔离评测；七个候选仍全部为步行后 `4/5`、静态 `5/5`。
 > 固定困难测试的六项指标虽改善，但正式操作平衡门未改变，策略仍为
-> `non_publishable`。下一步必须先形成新的控制设计 ADR；当前不允许自动
+> `non_publishable`。ADR-0048 已选择路线 A：先在冻结状态 565、冻结 v14
+> 策略和不变质量门下搜索构造性恢复 Witness。该诊断目前只有实现和本地测试，
+> 尚未形成真实 A800 结果；搜索未命中只能记为 `unknown`。当前不允许自动
 > 重试、启动完整厨房单次、厨房 5/5、100M 或声明
 > L3。真实
 > A800/H100 图像/视频生成、完整 CAD/USD 原生运行、授权明确的真实厨房联合

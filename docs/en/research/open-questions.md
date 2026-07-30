@@ -27,12 +27,11 @@ These require spikes or benchmarks and must not be written as solved in normativ
     Policy under the existing Capture/Stand Supervisor versus adding explicit
     zero-command displacement state and retention reward to a single policy.
     Automatic retry is forbidden before a new ADR.
-11. **H1 post-walk manipulation recovery**: after v14 raised frozen hard-state
-    index `565` to 25% of training resets, all seven candidates still reached
-    only post-walk `4/5` and from-rest `5/5`. Height, orientation, translation,
-    drift, and terminal-speed metrics improved without passing the gate. The
-    next experiment must first distinguish controller viability, observation
-    aliasing, and the need for an independent recovery Supervisor. Automatic
-    retry and gate relaxation remain forbidden before a new ADR.
+11. **H1 post-walk manipulation recovery**: ADR-0048 selects a constructive
+    viability search on fixed state `565`. A found witness proves only that a
+    recovery trajectory exists under the frozen contract; a miss is recorded
+    only as `unknown`. After real A800 evidence exists, a separate decision must
+    determine whether to turn the witness into a recovery Supervisor and whether
+    observation aliasing still needs investigation.
 
 Every experiment freezes its input corpus, tool version, hardware, metrics, and failure examples.

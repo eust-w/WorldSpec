@@ -436,6 +436,29 @@ elif (
         raise SystemExit(
             "hard-negative replay source is not frozen v13 quality-failure evidence"
         )
+elif (
+    source["sourceStage"]
+    == "loaded-track-settle-manipulation-hard-negative-replay-v14-failed"
+):
+    if (
+        report["status"] != "quality_failed"
+        or report["execution"]["formalManipulationBalanceGate"] != "failed"
+        or report["execution"]["isolatedSuiteResultCount"] != 14
+        or report["execution"]["selectedStep"] != 7_372_800
+        or report["execution"]["selectedPostWalkTestsPassed"] != 4
+        or report["execution"]["selectedFromRestTestsPassed"] != 5
+        or report["execution"]["trainingResetDistribution"][
+            "criticalSnapshotIndex"
+        ]
+        != 565
+        or report["decision"]["policyStatus"] != "non_publishable"
+        or report["decision"]["fullKitchenSingleAllowed"] is not False
+        or report["decision"]["qualityGatesChanged"] is not False
+        or report["decision"]["automaticRetryAllowed"] is not False
+    ):
+        raise SystemExit(
+            "viability source is not frozen v14 quality-failure evidence"
+        )
 else:
     raise SystemExit("unsupported warm-start source stage")
 reported_checkpoint = (
@@ -445,6 +468,7 @@ reported_checkpoint = (
         "loaded-track-settle-task-load-formal-v1-failed",
         "loaded-track-settle-manipulation-suite-isolated-v11-failed",
         "loaded-track-settle-manipulation-frozen-bank-v13-failed",
+        "loaded-track-settle-manipulation-hard-negative-replay-v14-failed",
     }
     else (
         report["checkpoint"]
@@ -908,6 +932,8 @@ PY
   stage manipulation_portfolio_aggregation
   # Aggregation is CPU-only and reads the exact 14 isolated suite results.
   run_model_dir="${MODEL_DIR}-aggregation"
+elif [[ "${midterm_stage}" == "loaded_track_settle_manipulation_viability" ]]; then
+  stage manipulation_viability_search
 fi
 env \
   SOURCE_DIR="${SOURCE_DIR}" \
@@ -944,6 +970,7 @@ from worldspec_h1_training.manipulation_balance import (
 )
 from worldspec_h1_training.midterm import run_midterm_calibration
 from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
+from worldspec_h1_training.viability import run_manipulation_viability_diagnostic
 from worldspec_h1_training.whole_body import (
     assess_diagnostic_trace,
     compare_whole_body_traces,
@@ -1007,6 +1034,22 @@ elif midterm_profile["stage"] == "loaded_track_settle_manipulation_balance":
         artifact_dir,
         Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
         Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+    )
+elif midterm_profile["stage"] == "loaded_track_settle_manipulation_viability":
+    result = run_manipulation_viability_diagnostic(
+        base_profile,
+        read_json(
+            source_dir
+            / "examples"
+            / "h1-kitchen"
+            / "locomotion-manipulation-balance-profile.json"
+        ),
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "manipulation-state-bank.npz",
     )
 elif midterm_profile["stage"] in {
     "phase_aware_supervisor_probe",
@@ -1459,6 +1502,30 @@ elif midterm_profile["stage"] == "loaded_track_settle_manipulation_balance":
     }
     print(
         "WORLDSPEC_A800_MANIPULATION_BALANCE_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "loaded_track_settle_manipulation_viability":
+    report = {
+        "id": (
+            "viability-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_fixed_state_manipulation_viability_diagnostic",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_diagnostic",
+        "controllerStatus": "non_publishable",
+        "formalViabilityDiagnosticGate": (
+            "passed"
+            if result["diagnosticAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        "formalWitnessGate": result["witnessAssessment"]["formalWitnessGate"],
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_MANIPULATION_VIABILITY_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 elif midterm_profile["stage"] == "phase_aware_supervisor_probe":

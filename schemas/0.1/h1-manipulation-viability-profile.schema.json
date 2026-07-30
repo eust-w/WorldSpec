@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-manipulation-viability-profile.schema.json",
+  "title": "WorldSpec H1 Manipulation Viability Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "baseTrainingProfileDigest",
+    "sourceManipulationProfileDigest",
+    "sourceFailure",
+    "warmStart",
+    "snapshotBank",
+    "search",
+    "baselineReproduction",
+    "qualityGates",
+    "runtime",
+    "claimBoundary"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "profileVersion": {
+      "const": "0.1.0"
+    },
+    "status": {
+      "const": "research"
+    },
+    "stage": {
+      "const": "loaded_track_settle_manipulation_viability"
+    },
+    "baseTrainingProfileDigest": {
+      "const": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6"
+    },
+    "sourceManipulationProfileDigest": {
+      "const": "sha256:7987a974551ddf4de019c04e7fefaae3b433cdd47cca20692db031db4f459a44"
+    },
+    "sourceFailure": {
+      "type": "object"
+    },
+    "warmStart": {
+      "type": "object"
+    },
+    "snapshotBank": {
+      "type": "object"
+    },
+    "search": {
+      "type": "object"
+    },
+    "baselineReproduction": {
+      "type": "object"
+    },
+    "qualityGates": {
+      "type": "object"
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "packageLockDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "ccdIterations": {
+          "const": 50
+        }
+      },
+      "additionalProperties": false
+    },
+    "claimBoundary": {
+      "const": {
+        "witnessFoundProvesRecoverableUnderFrozenContract": true,
+        "witnessNotFoundProvesUnrecoverable": false,
+        "policyCandidateAllowed": false,
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "hundredMillionTrainingAllowed": false,
+        "automaticRetryAllowed": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

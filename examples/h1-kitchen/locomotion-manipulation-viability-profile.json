@@ -1,0 +1,96 @@
+{
+  "id": "viabilityprofile://worldspec/h1-menagerie-right-robotiq/state-565-cem-v1",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "loaded_track_settle_manipulation_viability",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "sourceManipulationProfileDigest": "sha256:7987a974551ddf4de019c04e7fefaae3b433cdd47cca20692db031db4f459a44",
+  "sourceFailure": {
+    "job": "worldspec-h1-midterm-2pn45",
+    "probeRevision": "154b3e6b1da0b99acef517336d511bbde8e3b0f2",
+    "sourceReportDigest": "sha256:83b063ac28c0174beab24ff94e1f4a9b67cf7b0ffd464101af32405c8207f542",
+    "runtimeReportDigest": "sha256:1757154e2d4eae03dac11b39b803f3a31d3f5ff5bd91328ed854b148878381ac",
+    "checkpointDigest": "sha256:b40d6287440f3a0761fe4b3fedc15da21e53d881ada3f0931f2b34a9f59b7fae",
+    "checkpointSizeBytes": 1254893,
+    "checkpointStep": 7372800,
+    "traceDigest": "sha256:2b29a5bed65fee7073fefd7621ae5bd961d9247b2fe3d15306c86ca5815782b0",
+    "snapshotBankDigest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+    "snapshotBankSizeBytes": 1192118,
+    "criticalSnapshotIndex": 565,
+    "evaluationRun": 2,
+    "evaluationSeed": 2,
+    "formalGate": "failed",
+    "qualityGatesChanged": false
+  },
+  "warmStart": {
+    "sourceStage": "loaded-track-settle-manipulation-hard-negative-replay-v14-failed",
+    "sourceReportDigest": "sha256:83b063ac28c0174beab24ff94e1f4a9b67cf7b0ffd464101af32405c8207f542",
+    "checkpointDigest": "sha256:b40d6287440f3a0761fe4b3fedc15da21e53d881ada3f0931f2b34a9f59b7fae",
+    "checkpointSizeBytes": 1254893,
+    "checkpointStep": 7372800,
+    "distribution": "internal_only"
+  },
+  "snapshotBank": {
+    "digest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+    "sizeBytes": 1192118,
+    "snapshotCount": 4096,
+    "criticalSnapshotIndex": 565
+  },
+  "search": {
+    "algorithm": "cem_closed_loop_policy_residual_shooting_v1",
+    "searchSeed": 20260731,
+    "population": 4096,
+    "eliteCount": 128,
+    "maximumIterations": 12,
+    "horizonSteps": 100,
+    "residualKnots": 10,
+    "initialStddev": 0.2,
+    "minimumStddev": 0.02,
+    "maximumResidual": 0.5,
+    "actionMinimum": -1.0,
+    "actionMaximum": 1.0,
+    "baselineCandidateIncluded": true
+  },
+  "baselineReproduction": {
+    "metrics": {
+      "completedSteps": 100,
+      "requiredSteps": 100,
+      "minimumBaseHeight": 0.7160465121269226,
+      "minimumUprightCosine": 0.7536250352859497,
+      "maximumBaseTranslation": 0.8543086872960323,
+      "maximumBaseLateralDrift": 0.5395923405885696,
+      "maximumTerminalLinearSpeed": 2.8207999699295074,
+      "maximumTerminalAngularSpeed": 2.125552847801331,
+      "nonFiniteSamples": 0,
+      "doneSeen": false
+    },
+    "absoluteTolerance": 0.001
+  },
+  "qualityGates": {
+    "minimumFinalMeanEpisodeLength": 90.0,
+    "requiredConsecutivePasses": 5,
+    "episodeSteps": 100,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "maximumBaseTranslation": 0.2,
+    "maximumBaseLateralDrift": 0.12,
+    "maximumTerminalLinearSpeed": 0.2,
+    "maximumTerminalAngularSpeed": 0.4,
+    "maximumNonFiniteSamples": 0
+  },
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:7d445d05d3d27ecf7dc2a8de67edfef40e8ce4f119eeb18b8154d8a753e2a73d",
+    "containerDigest": "sha256:7d445d05d3d27ecf7dc2a8de67edfef40e8ce4f119eeb18b8154d8a753e2a73d",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50
+  },
+  "claimBoundary": {
+    "witnessFoundProvesRecoverableUnderFrozenContract": true,
+    "witnessNotFoundProvesUnrecoverable": false,
+    "policyCandidateAllowed": false,
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "hundredMillionTrainingAllowed": false,
+    "automaticRetryAllowed": false
+  }
+}

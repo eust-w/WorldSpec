@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-manipulation-viability-report.schema.json",
+  "title": "WorldSpec H1 Manipulation Viability Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "controllerStatus",
+    "formalViabilityDiagnosticGate",
+    "formalWitnessGate",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "profileDigest",
+    "sourceManipulationProfileDigest",
+    "sourceFailure",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "checkpoint",
+    "snapshotBank",
+    "search",
+    "diagnosticAssessment",
+    "witnessAssessment",
+    "qualityAssessment",
+    "candidateArtifact",
+    "searchProgressArtifact",
+    "traceArtifact",
+    "claimBoundary",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "reportVersion": {
+      "const": "0.1.0"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "scope": {
+      "const": "h1_fixed_state_manipulation_viability_diagnostic"
+    },
+    "executionEvidence": {
+      "const": "executed"
+    },
+    "runtimeAcceptance": {
+      "const": "research_diagnostic"
+    },
+    "controllerStatus": {
+      "const": "non_publishable"
+    },
+    "formalViabilityDiagnosticGate": {
+      "enum": ["passed", "failed"]
+    },
+    "formalWitnessGate": {
+      "enum": ["passed", "failed"]
+    },
+    "probeDefinition": {
+      "type": "object"
+    },
+    "imageSource": {
+      "type": "object"
+    },
+    "probeInput": {
+      "type": "object"
+    },
+    "container": {
+      "type": "object"
+    },
+    "platform": {
+      "type": "object"
+    },
+    "gpu": {
+      "type": "object"
+    },
+    "packages": {
+      "type": "object"
+    },
+    "packageLockDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "profileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "sourceManipulationProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "sourceFailure": {
+      "type": "object"
+    },
+    "staticPreflight": {
+      "type": "object"
+    },
+    "runtimePreflight": {
+      "type": "object"
+    },
+    "target": {
+      "type": "object"
+    },
+    "checkpoint": {
+      "type": "object"
+    },
+    "snapshotBank": {
+      "type": "object"
+    },
+    "search": {
+      "type": "object"
+    },
+    "diagnosticAssessment": {
+      "type": "object",
+      "required": [
+        "status",
+        "baselineReproduced",
+        "baselineMetricAbsoluteDeltas",
+        "searchCompleted"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["passed", "failed"]
+        },
+        "baselineReproduced": {
+          "type": "boolean"
+        },
+        "baselineMetricAbsoluteDeltas": {
+          "type": "object"
+        },
+        "searchCompleted": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "witnessAssessment": {
+      "type": "object",
+      "required": [
+        "status",
+        "recoverabilityConclusion",
+        "formalWitnessGate",
+        "notFoundIsInfeasibilityProof"
+      ],
+      "properties": {
+        "status": {
+          "enum": ["found", "not_found"]
+        },
+        "recoverabilityConclusion": {
+          "enum": ["constructive_witness", "unknown"]
+        },
+        "formalWitnessGate": {
+          "enum": ["passed", "failed"]
+        },
+        "notFoundIsInfeasibilityProof": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "qualityAssessment": {
+      "type": "object",
+      "required": ["status", "tests"],
+      "properties": {
+        "status": {
+          "enum": ["passed", "failed"]
+        },
+        "tests": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "object"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "candidateArtifact": {
+      "$ref": "#/$defs/artifact"
+    },
+    "searchProgressArtifact": {
+      "$ref": "#/$defs/artifact"
+    },
+    "traceArtifact": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/artifact"
+        },
+        {
+          "type": "object",
+          "required": ["recordCount"]
+        }
+      ]
+    },
+    "claimBoundary": {
+      "type": "object"
+    },
+    "logDiagnostics": {
+      "type": "object"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": ["path", "digest", "sizeBytes", "distribution"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "const": "internal_only"
+        },
+        "recordCount": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -340,6 +340,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-capture-profile.json": "h1-locomotion-capture-profile.schema.json",
         "h1-kitchen/locomotion-capture.a800.passed.json": "h1-locomotion-capture-report.schema.json",
         "h1-kitchen/locomotion-manipulation-balance-profile.json": "h1-locomotion-manipulation-balance-profile.schema.json",
+        "h1-kitchen/locomotion-manipulation-viability-profile.json": "h1-manipulation-viability-profile.schema.json",
         "h1-kitchen/locomotion-supervisor-profile.json": "h1-locomotion-supervisor-profile.schema.json",
         "h1-kitchen/locomotion-supervisor.a800.passed.json": "h1-locomotion-supervisor-report.schema.json",
         "h1-kitchen/locomotion-task-load-supervisor-profile.json": "h1-locomotion-task-load-supervisor-profile.schema.json",

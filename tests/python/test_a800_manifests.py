@@ -740,6 +740,66 @@ def test_hard_negative_replay_failure_is_archived_and_stops_gate_chain() -> None
     }
 
 
+def test_manipulation_viability_is_constructive_and_diagnostic_only() -> None:
+    profile = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "locomotion-manipulation-viability-profile.json"
+        ).read_text(encoding="utf-8")
+    )
+    wrapper = (
+        ROOT / "scripts" / "run_a800_h1_manipulation_viability.sh"
+    ).read_text(encoding="utf-8")
+    launcher = (
+        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
+    ).read_text(encoding="utf-8")
+    entrypoint = (
+        A800 / "h1-locomotion-midterm-entrypoint.sh"
+    ).read_text(encoding="utf-8")
+
+    assert profile["stage"] == "loaded_track_settle_manipulation_viability"
+    assert profile["sourceFailure"]["job"] == "worldspec-h1-midterm-2pn45"
+    assert profile["sourceFailure"]["criticalSnapshotIndex"] == 565
+    assert profile["sourceFailure"]["evaluationSeed"] == 2
+    assert profile["sourceFailure"]["qualityGatesChanged"] is False
+    assert profile["search"] == {
+        "algorithm": "cem_closed_loop_policy_residual_shooting_v1",
+        "searchSeed": 20260731,
+        "population": 4096,
+        "eliteCount": 128,
+        "maximumIterations": 12,
+        "horizonSteps": 100,
+        "residualKnots": 10,
+        "initialStddev": 0.2,
+        "minimumStddev": 0.02,
+        "maximumResidual": 0.5,
+        "actionMinimum": -1.0,
+        "actionMaximum": 1.0,
+        "baselineCandidateIncluded": True,
+    }
+    assert profile["claimBoundary"] == {
+        "witnessFoundProvesRecoverableUnderFrozenContract": True,
+        "witnessNotFoundProvesUnrecoverable": False,
+        "policyCandidateAllowed": False,
+        "fullKitchenSingleAllowed": False,
+        "fiveOfFiveAllowed": False,
+        "hundredMillionTrainingAllowed": False,
+        "automaticRetryAllowed": False,
+    }
+    assert "manipulation-viability-training-image-build.a800.passed.json" in wrapper
+    assert "worldspec-h1-midterm-2pn45/midterm-checkpoint.zip" in wrapper
+    assert "worldspec-h1-midterm-2pn45/manipulation-state-bank.npz" in wrapper
+    assert "REPORT_SCHEMA=h1-manipulation-viability-report.schema.json" in launcher
+    assert "GATE_FIELD=formalViabilityDiagnosticGate" in launcher
+    assert "candidateArtifact" in launcher
+    assert "searchProgressArtifact" in launcher
+    assert "loaded_track_settle_manipulation_viability" in entrypoint
+    assert "run_manipulation_viability_diagnostic" in entrypoint
+    assert "WORLDSPEC_A800_MANIPULATION_VIABILITY_RESULT=" in entrypoint
+
+
 def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     (job,) = _documents("h1-locomotion-midterm-job.yaml")
     assert job["spec"]["backoffLimit"] == 0

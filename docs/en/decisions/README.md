@@ -57,5 +57,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0045 H1 manipulation frozen snapshot bank](0045-h1-manipulation-frozen-snapshot-bank.md)
 - [ADR-0046 H1 fixed hard-state manipulation replay](0046-h1-manipulation-hard-negative-replay.md)
 - [ADR-0047 H1 hard-negative manipulation replay result](0047-h1-hard-negative-replay-result.md)
+- [ADR-0048 H1 fixed hard-state viability diagnostic](0048-h1-fixed-state-viability-diagnostic.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.
