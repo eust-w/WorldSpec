@@ -165,6 +165,45 @@
       },
       "additionalProperties": false
     },
+    "taskLoadCurriculum": {
+      "const": {
+        "mode": "static_right_arm_pose_and_base_disturbance",
+        "sourceJob": "worldspec-h1-midterm-5nn2q",
+        "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+        "heldTargetScale": [
+          0.5,
+          1.0
+        ],
+        "initialBaseVelocityX": [
+          -0.1,
+          0.1
+        ],
+        "heldTargets": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.1543052911758423,
+          0.09892238825658843,
+          -0.006488978405079102,
+          -0.19852599334400028
+        ],
+        "heldFeedforward": [
+          0.032988220529269176,
+          -1.1402555002525037,
+          0.08486267857762098,
+          0.012800121336152957,
+          -1.0451398037469817,
+          -0.9578816827225751,
+          0.837737275364864,
+          0.46023224988862355,
+          -4.402542577541209
+        ],
+        "observationAugmentation": "none",
+        "qualityGatesChanged": false
+      }
+    },
     "runtimeCapacity": { "type": "object" },
     "staticPreflight": { "type": "object" },
     "runtimePreflight": { "type": "object" },
@@ -191,7 +230,8 @@
           "enum": [
             "loaded_track_settle",
             "loaded_track_settle_transition",
-            "loaded_track_settle_retention"
+            "loaded_track_settle_retention",
+            "loaded_track_settle_task_load"
           ]
         }
       }
@@ -305,6 +345,27 @@
     }
   },
   "allOf": [
+    {
+      "if": {
+        "properties": {
+          "training": {
+            "properties": {
+              "profileStage": {
+                "const": "loaded_track_settle_task_load"
+              }
+            },
+            "required": [
+              "profileStage"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "taskLoadCurriculum"
+        ]
+      }
+    },
     {
       "if": {
         "properties": {

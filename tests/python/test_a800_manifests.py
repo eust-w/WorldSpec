@@ -385,6 +385,20 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT" in retention_launcher
     assert "run_a800_h1_locomotion_midterm.sh" in retention_launcher
 
+    task_load_launcher = (
+        ROOT / "scripts" / "run_a800_h1_task_load_calibration.sh"
+    ).read_text(encoding="utf-8")
+    assert "locomotion-task-load-profile.json" in task_load_launcher
+    assert "locomotion-transition.a800.failed.json" in task_load_launcher
+    assert "worldspec-h1-midterm-nxszt/midterm-checkpoint.zip" in (
+        task_load_launcher
+    )
+    assert "task-load warm-start report digest mismatch" in task_load_launcher
+    assert "task-load warm-start checkpoint identity mismatch" in (
+        task_load_launcher
+    )
+    assert "run_a800_h1_locomotion_midterm.sh" in task_load_launcher
+
 
 def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(

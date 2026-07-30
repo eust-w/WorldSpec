@@ -112,6 +112,66 @@ RETENTION_TEACHER = {
     "scope": "stand_replay_only",
 }
 
+A5CK_FAILURE_EVIDENCE = {
+    "job": "worldspec-h1-midterm-5nn2q",
+    "controlProfileDigest": (
+        "sha256:23fcf6908136c57880871ac0a1f9e1f13339b5d8f562eb0af8d710362f75efa8"
+    ),
+    "reportDigest": "sha256:a9d4458eb2ed16186c73e41dbdb16e1753e35ee32e30b0407eae981931f0256b",
+    "controllerDigest": ("sha256:0f1ffed386123d21cb45eb5708c2ed849cd22f7244e7a9ceb05a6df1bae8f0db"),
+    "traceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+    "traceRecordCount": 386,
+    "terminalReason": "fall_height",
+    "maximumForwardCommand": 0.5,
+    "maximumBackwardVelocity": -2.459172010421753,
+    "formalControlGate": "failed",
+}
+
+TASK_LOAD_TRAINING_OVERRIDES = {
+    "numTimesteps": 16_777_216,
+    "numEnvs": 4096,
+    "numEvals": 8,
+    "episodeLength": 1000,
+    "unrollLength": 20,
+    "numMinibatches": 16,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256,
+}
+
+TASK_LOAD_CURRICULUM = {
+    "mode": "static_right_arm_pose_and_base_disturbance",
+    "sourceJob": "worldspec-h1-midterm-5nn2q",
+    "sourceTraceDigest": (
+        "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9"
+    ),
+    "heldTargetScale": [0.5, 1.0],
+    "initialBaseVelocityX": [-0.1, 0.1],
+    "heldTargets": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.1543052911758423,
+        0.09892238825658843,
+        -0.006488978405079102,
+        -0.19852599334400028,
+    ],
+    "heldFeedforward": [
+        0.032988220529269176,
+        -1.1402555002525037,
+        0.08486267857762098,
+        0.012800121336152957,
+        -1.0451398037469817,
+        -0.9578816827225751,
+        0.837737275364864,
+        0.46023224988862355,
+        -4.402542577541209,
+    ],
+    "observationAugmentation": "none",
+    "qualityGatesChanged": False,
+}
+
 
 def validate_midterm_profile(
     base_profile: dict[str, Any],
@@ -514,6 +574,152 @@ def validate_retention_profile(
         )
 
 
+def validate_task_load_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> None:
+    """Validate the task-load-aware lower-body calibration contract."""
+
+    validate_profile(base_profile)
+    if (
+        profile.get("profileVersion") != "0.1.0"
+        or profile.get("status") != "research"
+        or profile.get("stage") != "loaded_track_settle_task_load"
+    ):
+        raise TrainingError(
+            "TASK_LOAD_PROFILE_UNSUPPORTED",
+            "Task-load calibration must use loaded_track_settle_task_load v0.1.",
+        )
+    if profile.get("baseTrainingProfileDigest") != digest_json(base_profile):
+        raise TrainingError(
+            "TASK_LOAD_BASE_PROFILE_MISMATCH",
+            "Task-load calibration is not bound to the exact base training Profile.",
+        )
+    if profile.get("a5ckEvidence") != A5CK_FAILURE_EVIDENCE:
+        raise TrainingError(
+            "TASK_LOAD_FAILURE_EVIDENCE_MISMATCH",
+            "Task-load calibration must bind the archived A5-CK in-domain recovery failure.",
+        )
+    source = profile.get("warmStart", {})
+    if (
+        source.get("sourceStage") != "loaded-track-settle-transition-v2-failed"
+        or source.get("sourceReportDigest") != FAILED_TRANSITION_REPORT_DIGEST
+        or source.get("checkpointDigest") != FAILED_TRANSITION_CHECKPOINT_DIGEST
+        or source.get("checkpointSizeBytes") != FAILED_TRANSITION_CHECKPOINT_SIZE
+    ):
+        raise TrainingError(
+            "TASK_LOAD_WARM_START_EVIDENCE_MISMATCH",
+            "Task-load calibration must warm-start from the frozen transition-v2 policy.",
+        )
+    if source.get("optimizerState") != "reset" or source.get("restore") != {
+        "normalizer": True,
+        "policy": True,
+        "value": True,
+    }:
+        raise TrainingError(
+            "TASK_LOAD_WARM_START_INVALID",
+            "Task-load calibration must restore normalizer/policy/value and reset optimizer.",
+        )
+    if source.get("distribution") != "internal_only":
+        raise TrainingError(
+            "TASK_LOAD_WARM_START_DISTRIBUTION_INVALID",
+            "Task-load warm-start input must remain internal-only.",
+        )
+    if profile.get("trainingOverrides") != TASK_LOAD_TRAINING_OVERRIDES:
+        raise TrainingError(
+            "TASK_LOAD_TRAINING_OVERRIDES_INVALID",
+            "Task-load calibration budget and topology are frozen.",
+        )
+    environment = profile.get("environment", {})
+    if environment.get("commandDistribution") != TRANSITION_COMMAND:
+        raise TrainingError(
+            "TASK_LOAD_COMMAND_INVALID",
+            "Task-load calibration must preserve the kitchen command range.",
+        )
+    if environment.get("transitionCurriculum") != TRANSITION_CURRICULUM:
+        raise TrainingError(
+            "TASK_LOAD_TRANSITION_CURRICULUM_INVALID",
+            "Task-load calibration must preserve the move-to-zero curriculum.",
+        )
+    if environment.get("taskLoadCurriculum") != TASK_LOAD_CURRICULUM:
+        raise TrainingError(
+            "TASK_LOAD_CURRICULUM_INVALID",
+            "Task-load calibration must use the frozen A5-CK arm-load curriculum.",
+        )
+    expected_reward = {
+        "survival": 3.0,
+        "trackingLinear": 6.0,
+        "trackingYaw": 2.0,
+        "upright": 3.0,
+        "baseHeight": 2.0,
+        "pose": 0.5,
+        "verticalVelocityCost": 1.0,
+        "angularVelocityXYCost": 0.5,
+        "torqueCost": 0.000002,
+        "actionRateCost": 0.03,
+        **TRANSITION_REWARD_ADDITIONS,
+    }
+    if environment.get("reward") != expected_reward:
+        raise TrainingError(
+            "TASK_LOAD_REWARD_INVALID",
+            "Task-load calibration must preserve the transition reward contract.",
+        )
+    if (
+        environment.get("termination")
+        != {
+            "minimumBaseHeight": 0.5,
+            "minimumUprightCosine": 0.25,
+            "jointLimitToleranceRadians": 0.02,
+        }
+        or environment.get("targets") != {"baseHeight": 0.98}
+        or environment.get("sigmas")
+        != {
+            "tracking": 0.2,
+            "upright": 0.05,
+            "baseHeight": 0.02,
+            "pose": 0.2,
+            "settleTracking": 0.05,
+        }
+        or environment.get("commandResampleSteps") != 200
+    ):
+        raise TrainingError(
+            "TASK_LOAD_TIMING_INVALID",
+            "Task-load timing, termination, and reward targets are frozen.",
+        )
+    if profile.get("qualityGates") != TRANSITION_QUALITY_GATES:
+        raise TrainingError(
+            "TASK_LOAD_QUALITY_GATES_INVALID",
+            "Task-load calibration must preserve the existing quality gates.",
+        )
+    runtime = profile.get("runtime", {})
+    if runtime.get("ccdIterations") != 50:
+        raise TrainingError(
+            "TASK_LOAD_CCD_ITERATIONS_INVALID",
+            "Task-load calibration requires CCD=50.",
+        )
+    if (
+        runtime.get("containerDigest")
+        != (runtime.get("containerImage", "").rsplit("@", maxsplit=1)[-1])
+    ):
+        raise TrainingError(
+            "TASK_LOAD_CONTAINER_BINDING_MISMATCH",
+            "Task-load containerImage and containerDigest must identify one OCI image.",
+        )
+    if runtime.get("packageLockDigest") != base_profile["runtime"]["packageLockDigest"]:
+        raise TrainingError(
+            "TASK_LOAD_PACKAGE_LOCK_MISMATCH",
+            "Task-load calibration must use the base Profile package lock.",
+        )
+    if profile.get("artifactPolicy") != {
+        "checkpoint": "research_only",
+        "distribution": "internal_only",
+    }:
+        raise TrainingError(
+            "TASK_LOAD_ARTIFACT_POLICY_INVALID",
+            "Task-load outputs must remain internal research artifacts.",
+        )
+
+
 def make_midterm_training_profile(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
@@ -562,6 +768,25 @@ def make_retention_training_profile(
     effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
     effective["training"].update(profile["trainingOverrides"])
     effective["training"]["hyperparameterStatus"] = "research_retention_override"
+    effective["training"]["commandDistribution"] = copy.deepcopy(
+        profile["environment"]["commandDistribution"]
+    )
+    effective["trainingEnvironment"] = copy.deepcopy(profile["environment"])
+    effective["validation"] = copy.deepcopy(profile["qualityGates"])
+    return effective
+
+
+def make_task_load_training_profile(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+) -> dict[str, Any]:
+    validate_task_load_profile(base_profile, profile)
+    effective = copy.deepcopy(base_profile)
+    effective["runtime"]["containerDigest"] = profile["runtime"]["containerDigest"]
+    effective["runtime"]["packageLockDigest"] = profile["runtime"]["packageLockDigest"]
+    effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
+    effective["training"].update(profile["trainingOverrides"])
+    effective["training"]["hyperparameterStatus"] = "research_task_load_override"
     effective["training"]["commandDistribution"] = copy.deepcopy(
         profile["environment"]["commandDistribution"]
     )
@@ -634,6 +859,8 @@ def run_midterm_calibration(
                 "RETENTION_TEACHER_ARCHIVE_MISSING",
                 "Retention calibration requires the stand-v2.1 teacher archive.",
             )
+    elif profile.get("stage") == "loaded_track_settle_task_load":
+        effective = make_task_load_training_profile(base_profile, profile)
     else:
         effective = make_midterm_training_profile(base_profile, profile)
     static = static_preflight(base_profile, bundle_dir)
@@ -829,4 +1056,6 @@ def run_midterm_calibration(
     }
     if teacher_initialization is not None:
         result["retentionTeacher"] = teacher_initialization
+    if profile.get("stage") == "loaded_track_settle_task_load":
+        result["taskLoadCurriculum"] = copy.deepcopy(profile["environment"]["taskLoadCurriculum"])
     return result

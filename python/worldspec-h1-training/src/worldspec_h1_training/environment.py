@@ -161,6 +161,7 @@ def make_environment(
             self._calibration_enabled = isinstance(training_environment, dict)
             self._transition_curriculum = None
             self._capture_curriculum = None
+            self._task_load_curriculum = None
             self._capture_state_bank = None
             self._stand_teacher_policy = stand_teacher_policy
             self._stand_replay_probability = 0.0
@@ -236,6 +237,15 @@ def make_environment(
                 if isinstance(capture, dict):
                     self._capture_curriculum = capture
                     self._capture_steps = int(capture["captureSteps"])
+                task_load = training_environment.get("taskLoadCurriculum")
+                if isinstance(task_load, dict):
+                    self._task_load_curriculum = task_load
+                    self._task_load_scale_low = float(task_load["heldTargetScale"][0])
+                    self._task_load_scale_high = float(task_load["heldTargetScale"][1])
+                    self._task_load_velocity_low = float(task_load["initialBaseVelocityX"][0])
+                    self._task_load_velocity_high = float(task_load["initialBaseVelocityX"][1])
+                    self._task_load_targets = jp.asarray(task_load["heldTargets"])
+                    self._task_load_feedforward = jp.asarray(task_load["heldFeedforward"])
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
                 self._minimum_upright = float(validation["minimumUprightCosine"])
@@ -310,6 +320,7 @@ def make_environment(
 
         def reset(self, rng):
             rng, command_rng, bank_rng = jax.random.split(rng, 3)
+            task_load_scale = jp.zeros(())
             if self._capture_state_bank is not None:
                 bank_size = self._capture_state_bank["qpos"].shape[0]
                 bank_index = jax.random.randint(bank_rng, (), 0, bank_size)
@@ -326,6 +337,28 @@ def make_environment(
                 last_action = jp.zeros(self.action_size)
                 command, transition_active, stand_replay_active = self.sample_cycle(command_rng)
                 capture_active = jp.asarray(self._capture_curriculum is not None)
+            held_targets = self._held_targets
+            held_feedforward = self._held_feedforward
+            if self._task_load_curriculum is not None:
+                rng, task_load_rng, velocity_rng = jax.random.split(rng, 3)
+                task_load_scale = jax.random.uniform(
+                    task_load_rng,
+                    shape=(),
+                    minval=self._task_load_scale_low,
+                    maxval=self._task_load_scale_high,
+                )
+                held_targets = self._held_targets + task_load_scale * (
+                    self._task_load_targets - self._held_targets
+                )
+                held_feedforward = task_load_scale * self._task_load_feedforward
+                qpos = qpos.at[self._held_qpos].set(held_targets)
+                initial_velocity_x = jax.random.uniform(
+                    velocity_rng,
+                    shape=(),
+                    minval=self._task_load_velocity_low,
+                    maxval=self._task_load_velocity_high,
+                )
+                qvel = qvel.at[0].set(initial_velocity_x)
             data = mjx_env.make_data(
                 self.mj_model,
                 qpos=qpos,
@@ -340,8 +373,9 @@ def make_environment(
             info = {
                 "rng": rng,
                 "command": command,
-                "held_targets": self._held_targets,
-                "held_feedforward": self._held_feedforward,
+                "held_targets": held_targets,
+                "held_feedforward": held_feedforward,
+                "task_load_scale": task_load_scale,
                 "gripper_commands": self._gripper_commands,
                 "transition_active": transition_active,
                 "stand_replay_active": stand_replay_active,
@@ -381,6 +415,7 @@ def make_environment(
                 "state/transition_settle": jp.zeros(()),
                 "state/stand_replay": jp.zeros(()),
                 "state/capture": jp.zeros(()),
+                "state/task_load_scale": task_load_scale,
             }
             observation = {"state": self._observation(data, info["last_action"], info["command"])}
             return mjx_env.State(
@@ -645,6 +680,10 @@ def make_environment(
                     "state/transition_settle": transition_settle.astype(reward.dtype),
                     "state/stand_replay": stand_replay_active.astype(reward.dtype),
                     "state/capture": capture_active.astype(reward.dtype),
+                    "state/task_load_scale": state.info.get(
+                        "task_load_scale",
+                        jp.zeros(()),
+                    ),
                 },
             )
             observation = {"state": self._observation(data, action, next_command)}

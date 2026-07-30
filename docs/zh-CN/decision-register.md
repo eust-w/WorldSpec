@@ -58,5 +58,6 @@ last-verified: 2026-07-30
 | D-046 | A5-CG 在 A800 上保持 Stand Policy 与四关节动态臂隔离，但仍因低位把手目标诱发近奇异屈肘、基座后滑和 `fall_height`；选择 A5-CH，将自制任务几何整体移入已观测的稳定工作空间，门槛和 Controller 不变 | Accepted Design | [ADR-0027](decisions/0027-h1-ergonomic-task-geometry.md) |
 | D-047 | A5-CH 在 A800 上仍因右臂扰动后的基座后滑触发 `fall_height`；选择 A5-CJ，以任务原点 PD 命令复用 Motion/Capture/Stand 策略恢复基座，恢复期间冻结右臂目标，全部质量门保持不变 | Accepted Design | [ADR-0028](decisions/0028-h1-task-origin-base-recovery.md) |
 | D-048 | A5-CJ 在 A800 上因 PD 产生训练域外负向 `vx` 并最终触发 `fall_height`；选择 A5-CK，仅把纵向恢复命令限制到冻结 Motion Policy 的非负训练域，其他控制语义和质量门不变 | Accepted Design | [ADR-0029](decisions/0029-h1-forward-only-base-recovery.md) |
+| D-049 | A5-CK 在域内 `+0.5 m/s` 命令下仍因右臂任务载荷持续后滑并触发 `fall_height`；选择任务载荷感知校准，以 A5-CK held 姿态/力前馈和小幅基座扰动重训下肢策略，不改变观察 ABI 或质量门 | Accepted Design | [ADR-0030](decisions/0030-h1-task-load-aware-locomotion.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

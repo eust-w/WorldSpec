@@ -13,9 +13,11 @@ from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.midterm import (
     make_midterm_training_profile,
     make_retention_training_profile,
+    make_task_load_training_profile,
     make_transition_training_profile,
     validate_midterm_profile,
     validate_retention_profile,
+    validate_task_load_profile,
     validate_transition_profile,
 )
 
@@ -24,6 +26,7 @@ BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.j
 MIDTERM_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-midterm-profile.json"
 TRANSITION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-transition-profile.json"
 RETENTION_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-retention-profile.json"
+TASK_LOAD_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-profile.json"
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -172,6 +175,79 @@ def test_retention_rejects_relaxed_original_gate() -> None:
 
     with pytest.raises(TrainingError, match="quality gates"):
         validate_retention_profile(base, retention)
+
+
+def test_task_load_contract_binds_a5ck_and_preserves_gates() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    task_load = json.loads(TASK_LOAD_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_task_load_training_profile(base, task_load)
+
+    assert effective["training"]["hyperparameterStatus"] == ("research_task_load_override")
+    assert effective["training"]["numTimesteps"] == 16_777_216
+    assert effective["trainingEnvironment"]["taskLoadCurriculum"] == {
+        "mode": "static_right_arm_pose_and_base_disturbance",
+        "sourceJob": "worldspec-h1-midterm-5nn2q",
+        "sourceTraceDigest": (
+            "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9"
+        ),
+        "heldTargetScale": [0.5, 1.0],
+        "initialBaseVelocityX": [-0.1, 0.1],
+        "heldTargets": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1543052911758423,
+            0.09892238825658843,
+            -0.006488978405079102,
+            -0.19852599334400028,
+        ],
+        "heldFeedforward": [
+            0.032988220529269176,
+            -1.1402555002525037,
+            0.08486267857762098,
+            0.012800121336152957,
+            -1.0451398037469817,
+            -0.9578816827225751,
+            0.837737275364864,
+            0.46023224988862355,
+            -4.402542577541209,
+        ],
+        "observationAugmentation": "none",
+        "qualityGatesChanged": False,
+    }
+    assert effective["validation"]["minimumBaseHeight"] == 0.8
+    assert effective["validation"]["maximumSettleLinearSpeed"] == 0.2
+    assert task_load["a5ckEvidence"]["maximumBackwardVelocity"] == (-2.459172010421753)
+
+
+def test_task_load_rejects_a5ck_evidence_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    task_load = json.loads(TASK_LOAD_PROFILE.read_text(encoding="utf-8"))
+    task_load["a5ckEvidence"]["traceRecordCount"] = 385
+
+    with pytest.raises(TrainingError, match="A5-CK"):
+        validate_task_load_profile(base, task_load)
+
+
+def test_task_load_rejects_curriculum_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    task_load = json.loads(TASK_LOAD_PROFILE.read_text(encoding="utf-8"))
+    task_load["environment"]["taskLoadCurriculum"]["heldTargetScale"] = [0.0, 1.0]
+
+    with pytest.raises(TrainingError, match="arm-load curriculum"):
+        validate_task_load_profile(base, task_load)
+
+
+def test_task_load_rejects_relaxed_gate() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    task_load = json.loads(TASK_LOAD_PROFILE.read_text(encoding="utf-8"))
+    task_load["qualityGates"]["minimumBaseHeight"] = 0.75
+
+    with pytest.raises(TrainingError, match="quality gates"):
+        validate_task_load_profile(base, task_load)
 
 
 def test_teacher_policy_loader_rebuilds_the_verified_network(

@@ -1,0 +1,60 @@
+{
+  "id": "failureevidence://worldspec/h1-kitchen/a5-ck-forward-only-base-anchor",
+  "status": "failed",
+  "executionEvidence": "executed",
+  "job": "worldspec-h1-midterm-5nn2q",
+  "probeRevision": "144c81f225e017f7e18d823d44581c3642639e8b",
+  "imageSourceRevision": "b309a90fb7e9907161b1e72bd55d9927a95f7208",
+  "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:9d928bcdd44dc75b66a94a261b785299c35b8ad3c127858fa81ade2ba72cea97",
+  "controlProfileDigest": "sha256:23fcf6908136c57880871ac0a1f9e1f13339b5d8f562eb0af8d710362f75efa8",
+  "formalControlGate": "failed",
+  "controllerStatus": "non_publishable",
+  "failure": {
+    "reason": "The forward-only in-domain recovery command saturated at +0.5 m/s while the frozen locomotion policy accelerated backward under the extended-arm task load and terminated on fall_height.",
+    "terminalReasons": [
+      "fall_height"
+    ],
+    "terminalJoints": [],
+    "traceRecordCount": 386,
+    "taskPolicyFinalPhase": "motion",
+    "taskPolicyHandoffFailed": false,
+    "dynamicArmTrackingEnabled": true,
+    "taskGeometryCalibrationEnabled": true,
+    "baseAnchorRecoveryEnabled": true
+  },
+  "metrics": {
+    "minimumBaseHeight": 0.7847973704338074,
+    "minimumUprightCosine": 0.881192147731781,
+    "baseTranslation": 0.7003561639659832,
+    "baseLateralDrift": 0.029913434758782387,
+    "finalTargetErrorMeters": 0.873659332821721,
+    "finalTcpSpeed": 2.312896667178824,
+    "maximumProjectedGradient": 1.721936887244535e-7,
+    "maximumBaseAnchorCommand": 0.5099019513592785,
+    "maximumForwardCommand": 0.5,
+    "maximumBackwardVelocity": -2.459172010421753,
+    "baseAnchorRecoverySteps": 160,
+    "nonFiniteSamples": 0
+  },
+  "artifacts": {
+    "report": {
+      "digest": "sha256:a9d4458eb2ed16186c73e41dbdb16e1753e35ee32e30b0407eae981931f0256b",
+      "sizeBytes": 14502
+    },
+    "controller": {
+      "digest": "sha256:0f1ffed386123d21cb45eb5708c2ed849cd22f7244e7a9ceb05a6df1bae8f0db",
+      "sizeBytes": 3536
+    },
+    "trace": {
+      "digest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+      "sizeBytes": 3137010,
+      "recordCount": 386
+    }
+  },
+  "claimBoundary": {
+    "controlCandidate": false,
+    "fullTaskClaim": "forbidden",
+    "l3Claim": "forbidden",
+    "training100M": "not_started"
+  }
+}
