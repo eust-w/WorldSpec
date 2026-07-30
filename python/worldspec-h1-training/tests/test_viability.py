@@ -108,3 +108,4 @@ def test_viability_search_uses_constructive_witness_semantics() -> None:
     assert '"notFoundIsInfeasibilityProof": False' in source
     assert "criticalSnapshotIndex" in source
     assert "baselineReproduced" in source
+    assert '_flat_observation_size(env.observation_size["state"])' in source

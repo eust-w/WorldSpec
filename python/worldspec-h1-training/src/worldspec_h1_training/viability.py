@@ -269,7 +269,7 @@ def run_manipulation_viability_diagnostic(
         training_model,
         capture_state_bank=bank,
     )
-    observation_size = _flat_observation_size(env.observation_size)
+    observation_size = _flat_observation_size(env.observation_size["state"])
     action_size = int(env.action_size)
     checkpoint_path, checkpoint_metadata = materialize_warm_start(
         checkpoint_archive,
