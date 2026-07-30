@@ -895,8 +895,8 @@ def train_manipulation_balance_portfolio(
         observation_size = _flat_observation_size(shape_env.observation_size["state"])
         action_size = int(shape_env.action_size)
         expected_shapes = {
-            "qpos": (FROZEN_SNAPSHOT_BANK["snapshotCount"], training_model.nq),
-            "qvel": (FROZEN_SNAPSHOT_BANK["snapshotCount"], training_model.nv),
+            "qpos": (FROZEN_SNAPSHOT_BANK["snapshotCount"], int(shape_env.mj_model.nq)),
+            "qvel": (FROZEN_SNAPSHOT_BANK["snapshotCount"], int(shape_env.mj_model.nv)),
             "last_action": (FROZEN_SNAPSHOT_BANK["snapshotCount"], action_size),
         }
         actual_shapes = {key: tuple(value.shape) for key, value in bank.items()}

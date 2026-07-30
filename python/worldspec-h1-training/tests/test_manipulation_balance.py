@@ -169,6 +169,22 @@ def test_manipulation_balance_rejects_frozen_snapshot_bank_drift() -> None:
         validate_manipulation_balance_profile(base, profile)
 
 
+def test_frozen_snapshot_bank_shape_uses_loaded_model_not_xml_path() -> None:
+    source = (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "manipulation_balance.py"
+    ).read_text(encoding="utf-8")
+
+    assert "shape_env.mj_model.nq" in source
+    assert "shape_env.mj_model.nv" in source
+    assert "training_model.nq" not in source
+    assert "training_model.nv" not in source
+
+
 def test_manipulation_balance_adds_unbounded_recovery_costs() -> None:
     base, profile = _profiles()
 

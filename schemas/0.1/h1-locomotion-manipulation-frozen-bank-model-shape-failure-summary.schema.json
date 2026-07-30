@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-frozen-bank-model-shape-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation Frozen-Bank Model Shape Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "imageSourceRevision",
+    "image",
+    "stage",
+    "failure",
+    "ppoTrainingStarted",
+    "formalGate",
+    "verifiedInputCount",
+    "artifacts",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "runtime_failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-thr9l"
+    },
+    "probeRevision": {
+      "const": "03029386f45aa769140ca1a4a222dda1f1470ff3"
+    },
+    "imageSourceRevision": {
+      "const": "a7fc2595cf5ea1fd4a92d2d3f53b4687d953daf1"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:e6f9302817ea73b77d6a010f448dc2621e639608dee571f2a92d1948724191ca"
+    },
+    "stage": {
+      "const": "manipulation_portfolio_training"
+    },
+    "failure": {
+      "const": "xml_path_used_as_loaded_model_for_shape_validation"
+    },
+    "ppoTrainingStarted": {
+      "const": false
+    },
+    "formalGate": {
+      "const": "not_evaluated"
+    },
+    "verifiedInputCount": {
+      "const": 5
+    },
+    "artifacts": {
+      "const": {
+        "jobLog": {
+          "digest": "sha256:42cb46f6c5e20b6d03827723213dff4b93a9c1ac637ccfbd01cbd06ff04d198b",
+          "sizeBytes": 16561
+        },
+        "jobManifest": {
+          "digest": "sha256:bc4b1fbe8e2ebd859770dd3a7c308cedf4d036754ec4a45c46450e177b17b7ba",
+          "sizeBytes": 5909
+        },
+        "podManifest": {
+          "digest": "sha256:895a5b3f619b194f96c6b8eb8e3e9580d5a1afd9161945a961f768a974fcf49f",
+          "sizeBytes": 8026
+        },
+        "podDescription": {
+          "digest": "sha256:620ef5cf69f3b02d01871798a7ca713b666a44938cd5f12f0460ccb315f076ec",
+          "sizeBytes": 5763
+        }
+      }
+    },
+    "decision": {
+      "const": {
+        "strategyResult": "not_evaluated",
+        "readDimensionsFromInstantiatedModel": true,
+        "profileChanged": false,
+        "snapshotBankChanged": false,
+        "qualityGatesChanged": false,
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "hundredMillionTrainingAllowed": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

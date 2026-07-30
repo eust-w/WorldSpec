@@ -52,6 +52,13 @@ Add `unbounded-recovery-frozen-bank-checkpoint-portfolio-v13`:
 This makes the v13 post-walk training distribution identical to v11 and limits
 the sole experimental variable to the ADR-0044 unbounded recovery costs.
 
+The first v13 run, `worldspec-h1-midterm-thr9l`, verified all five inputs but
+terminated before PPO because the shape check treated the training-model XML
+`Path` as a loaded model and read `nq/nv` from it. The correction only obtains
+those dimensions from the same instantiated environment's `mj_model.nq/nv`;
+it changes no Profile, snapshot bank, training parameter, or quality gate.
+That run is not a strategy result.
+
 ## Gates
 
 - v13 must still pass post-walk `5/5`, from-rest `5/5`, and the frozen Episode
