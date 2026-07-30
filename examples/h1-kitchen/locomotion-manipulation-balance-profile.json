@@ -1,5 +1,5 @@
 {
-  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/post-walk-dynamic-arm-v1",
+  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/post-walk-anchor-recovery-v2",
   "profileVersion": "0.1.0",
   "status": "research",
   "stage": "loaded_track_settle_manipulation_balance",
@@ -46,6 +46,23 @@
     "completedPhase": "reach_handle",
     "taskBaseTranslation": 0.9462899017731613,
     "taskBaseLateralDrift": 0.4680730141699314,
+    "qualityGatesChanged": false
+  },
+  "previousAttempt": {
+    "job": "worldspec-h1-midterm-w2f8x",
+    "probeRevision": "d6588e5fc7ca7495a13fa234a5bd4c0507256968",
+    "reportDigest": "sha256:7b4097e9bc146ed75bbaa908648098cafacf6261fbb16604d21fa9eb74364a8d",
+    "reportSizeBytes": 29947,
+    "checkpointDigest": "sha256:d9113bd0479962bb65401f9441efbd26e43f08abefd9756bebe26745281cd127",
+    "checkpointSizeBytes": 8796078,
+    "traceDigest": "sha256:2640534b31d9cd14d1bea8d0d74989b45d0f6081746a5a2f9d4fda465ac611b5",
+    "traceSizeBytes": 431676,
+    "snapshotBankDigest": "sha256:dcd23fcae13430b8761338dd049f8e4e4cc0bab229da6a22f09c0a9521453ccd",
+    "snapshotBankSizeBytes": 1190016,
+    "formalGate": "failed",
+    "finalMeanEpisodeLength": 88.875,
+    "fromRestMaximumBaseTranslation": 0.4705555733358963,
+    "fromRestMaximumTerminalLinearSpeed": 1.5863483127264932,
     "qualityGatesChanged": false
   },
   "trainingOverrides": {
@@ -95,6 +112,15 @@
       "sourceTraceDigest": "sha256:45b859d08f12d2940b7065ad63684141dee60d030807466cc291916afe2f6b94",
       "episodeSteps": 100,
       "trajectoryScale": [0.75, 1.0],
+      "anchorRecovery": {
+        "mode": "pelvis_yaw_local_velocity_command_v1",
+        "frame": "pelvis_yaw_local",
+        "linearGain": 2.0,
+        "yawGain": 2.0,
+        "maximumLinearVelocityX": 0.6,
+        "maximumLinearVelocityY": 0.3,
+        "maximumAngularVelocityYaw": 0.4
+      },
       "trajectoryKnots": [
         {
           "step": 0,
@@ -164,7 +190,7 @@
       "baseHeight": 0.02,
       "pose": 0.2,
       "settleTracking": 0.05,
-      "baseAnchor": 0.01
+      "baseAnchor": 0.04
     },
     "commandResampleSteps": 100
   },

@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-balance-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation-Balance Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "image",
+    "report",
+    "checkpoint",
+    "trace",
+    "snapshotBank",
+    "training",
+    "quality",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-w2f8x"
+    },
+    "probeRevision": {
+      "const": "d6588e5fc7ca7495a13fa234a5bd4c0507256968"
+    },
+    "image": {
+      "type": "string",
+      "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+    },
+    "report": {
+      "$ref": "#/$defs/artifact"
+    },
+    "checkpoint": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "trace": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "snapshotBank": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/internalArtifact"
+        },
+        {
+          "type": "object",
+          "required": [
+            "snapshotCount",
+            "terminatedSnapshotCount"
+          ],
+          "properties": {
+            "snapshotCount": {
+              "const": 4096
+            },
+            "terminatedSnapshotCount": {
+              "const": 0
+            }
+          }
+        }
+      ]
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "maximumReportedStep",
+        "finalMeanEpisodeLength",
+        "minimumRequiredMeanEpisodeLength"
+      ],
+      "properties": {
+        "maximumReportedStep": {
+          "minimum": 16777216
+        },
+        "finalMeanEpisodeLength": {
+          "const": 88.875
+        },
+        "minimumRequiredMeanEpisodeLength": {
+          "const": 90.0
+        }
+      },
+      "additionalProperties": false
+    },
+    "quality": {
+      "type": "object",
+      "required": [
+        "formalManipulationBalanceGate",
+        "policyStatus",
+        "deterministicTestsPassed",
+        "deterministicTestsRequired",
+        "fromRestMaximumBaseTranslation",
+        "fromRestMaximumTerminalLinearSpeed",
+        "nonFiniteSamples"
+      ],
+      "properties": {
+        "formalManipulationBalanceGate": {
+          "const": "failed"
+        },
+        "policyStatus": {
+          "const": "non_publishable"
+        },
+        "deterministicTestsPassed": {
+          "const": 0
+        },
+        "deterministicTestsRequired": {
+          "const": 10
+        },
+        "fromRestMaximumBaseTranslation": {
+          "type": "number",
+          "exclusiveMinimum": 0.2
+        },
+        "fromRestMaximumTerminalLinearSpeed": {
+          "type": "number",
+          "exclusiveMinimum": 0.2
+        },
+        "nonFiniteSamples": {
+          "const": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "const": {
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "nextStep": "anchor_recovery_command_calibration",
+        "qualityGatesChanged": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "internalArtifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes",
+        "distribution"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "const": "internal_only"
+        },
+        "snapshotCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "terminatedSnapshotCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

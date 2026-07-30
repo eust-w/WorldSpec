@@ -1,0 +1,49 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-balance/w2f8x",
+  "status": "failed",
+  "job": "worldspec-h1-midterm-w2f8x",
+  "probeRevision": "d6588e5fc7ca7495a13fa234a5bd4c0507256968",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:9f0f06194494bbb11c0bdbae43ff4818394a94a7fa2c621790df2df286102031",
+  "report": {
+    "digest": "sha256:7b4097e9bc146ed75bbaa908648098cafacf6261fbb16604d21fa9eb74364a8d",
+    "sizeBytes": 29947
+  },
+  "checkpoint": {
+    "digest": "sha256:d9113bd0479962bb65401f9441efbd26e43f08abefd9756bebe26745281cd127",
+    "sizeBytes": 8796078,
+    "distribution": "internal_only"
+  },
+  "trace": {
+    "digest": "sha256:2640534b31d9cd14d1bea8d0d74989b45d0f6081746a5a2f9d4fda465ac611b5",
+    "sizeBytes": 431676,
+    "distribution": "internal_only"
+  },
+  "snapshotBank": {
+    "digest": "sha256:dcd23fcae13430b8761338dd049f8e4e4cc0bab229da6a22f09c0a9521453ccd",
+    "sizeBytes": 1190016,
+    "snapshotCount": 4096,
+    "terminatedSnapshotCount": 0,
+    "distribution": "internal_only"
+  },
+  "training": {
+    "maximumReportedStep": 17203200,
+    "finalMeanEpisodeLength": 88.875,
+    "minimumRequiredMeanEpisodeLength": 90.0
+  },
+  "quality": {
+    "formalManipulationBalanceGate": "failed",
+    "policyStatus": "non_publishable",
+    "deterministicTestsPassed": 0,
+    "deterministicTestsRequired": 10,
+    "fromRestMaximumBaseTranslation": 0.4705555733358963,
+    "fromRestMaximumTerminalLinearSpeed": 1.5863483127264932,
+    "nonFiniteSamples": 0
+  },
+  "decision": {
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "nextStep": "anchor_recovery_command_calibration",
+    "qualityGatesChanged": false
+  },
+  "generatedAt": "2026-07-30T14:24:07.445864Z"
+}

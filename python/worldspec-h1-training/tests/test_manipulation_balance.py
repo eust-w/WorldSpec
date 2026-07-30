@@ -10,9 +10,11 @@ from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.manipulation_balance import (
     A6K1_CAPTURE_FAILURE,
+    ANCHOR_RECOVERY,
     CAPTURE_WARM_START,
     DYNAMIC_ARM_CURRICULUM,
     MOTION_TEACHER,
+    PREVIOUS_ATTEMPT,
     QUALITY_GATES,
     SNAPSHOT_CURRICULUM,
     make_manipulation_balance_training_profile,
@@ -45,6 +47,7 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
     assert profile["warmStart"] == CAPTURE_WARM_START
     assert profile["motionTeacher"] == MOTION_TEACHER
     assert profile["a6k1CaptureFailure"] == A6K1_CAPTURE_FAILURE
+    assert profile["previousAttempt"] == PREVIOUS_ATTEMPT
     assert effective["training"]["numTimesteps"] == 16_777_216
     assert effective["training"]["numEnvs"] == 4096
     assert effective["training"]["episodeLength"] == 100
@@ -55,6 +58,10 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
     assert (
         effective["trainingEnvironment"]["dynamicArmCurriculum"]
         == DYNAMIC_ARM_CURRICULUM
+    )
+    assert (
+        effective["trainingEnvironment"]["dynamicArmCurriculum"]["anchorRecovery"]
+        == ANCHOR_RECOVERY
     )
     assert effective["validation"] == QUALITY_GATES
 
@@ -80,6 +87,22 @@ def test_manipulation_balance_rejects_dynamic_arm_relaxation() -> None:
     profile["environment"]["dynamicArmCurriculum"]["trajectoryScale"] = [0.5, 1.0]
 
     with pytest.raises(TrainingError, match="environment"):
+        validate_manipulation_balance_profile(base, profile)
+
+
+def test_manipulation_balance_rejects_anchor_recovery_drift() -> None:
+    base, profile = _profiles()
+    profile["environment"]["dynamicArmCurriculum"]["anchorRecovery"]["linearGain"] = 1.0
+
+    with pytest.raises(TrainingError, match="environment"):
+        validate_manipulation_balance_profile(base, profile)
+
+
+def test_manipulation_balance_rejects_previous_attempt_drift() -> None:
+    base, profile = _profiles()
+    profile["previousAttempt"]["formalGate"] = "passed"
+
+    with pytest.raises(TrainingError, match="previousAttempt"):
         validate_manipulation_balance_profile(base, profile)
 
 

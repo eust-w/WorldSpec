@@ -314,6 +314,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-task-load-deployment-eval.a800.failed.json": "h1-locomotion-midterm-report.schema.json",
         "h1-kitchen/locomotion-task-load-horizon.a800.passed.json": "h1-locomotion-midterm-report.schema.json",
         "h1-kitchen/locomotion-task-load-formal.a800.failed-summary.json": "h1-locomotion-formal-failure-summary.schema.json",
+        "h1-kitchen/locomotion-manipulation-balance.a800.failed-summary.json": "h1-locomotion-manipulation-balance-failure-summary.schema.json",
         "h1-kitchen/locked-runtime.a800.passed.json": "h1-locked-runtime-report.schema.json",
         "h1-kitchen/capacity-scale.a800.passed.json": "h1-capacity-scale-report.schema.json",
         "h1-kitchen/ppo-smoke.a800.passed.json": "h1-ppo-smoke-report.schema.json",

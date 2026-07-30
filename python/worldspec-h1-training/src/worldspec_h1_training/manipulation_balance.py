@@ -64,6 +64,34 @@ A6K1_CAPTURE_FAILURE = {
     "qualityGatesChanged": False,
 }
 
+PREVIOUS_ATTEMPT = {
+    "job": "worldspec-h1-midterm-w2f8x",
+    "probeRevision": "d6588e5fc7ca7495a13fa234a5bd4c0507256968",
+    "reportDigest": "sha256:7b4097e9bc146ed75bbaa908648098cafacf6261fbb16604d21fa9eb74364a8d",
+    "reportSizeBytes": 29_947,
+    "checkpointDigest": "sha256:d9113bd0479962bb65401f9441efbd26e43f08abefd9756bebe26745281cd127",
+    "checkpointSizeBytes": 8_796_078,
+    "traceDigest": "sha256:2640534b31d9cd14d1bea8d0d74989b45d0f6081746a5a2f9d4fda465ac611b5",
+    "traceSizeBytes": 431_676,
+    "snapshotBankDigest": "sha256:dcd23fcae13430b8761338dd049f8e4e4cc0bab229da6a22f09c0a9521453ccd",
+    "snapshotBankSizeBytes": 1_190_016,
+    "formalGate": "failed",
+    "finalMeanEpisodeLength": 88.875,
+    "fromRestMaximumBaseTranslation": 0.4705555733358963,
+    "fromRestMaximumTerminalLinearSpeed": 1.5863483127264932,
+    "qualityGatesChanged": False,
+}
+
+ANCHOR_RECOVERY = {
+    "mode": "pelvis_yaw_local_velocity_command_v1",
+    "frame": "pelvis_yaw_local",
+    "linearGain": 2.0,
+    "yawGain": 2.0,
+    "maximumLinearVelocityX": 0.6,
+    "maximumLinearVelocityY": 0.3,
+    "maximumAngularVelocityYaw": 0.4,
+}
+
 ZERO_COMMAND = {
     "linearVelocityX": [0.0, 0.0],
     "linearVelocityY": [0.0, 0.0],
@@ -91,6 +119,7 @@ DYNAMIC_ARM_CURRICULUM = {
     "sourceTraceDigest": A6K1_CAPTURE_FAILURE["traceDigest"],
     "episodeSteps": 100,
     "trajectoryScale": [0.75, 1.0],
+    "anchorRecovery": ANCHOR_RECOVERY,
     "trajectoryKnots": [
         {
             "step": 0,
@@ -311,6 +340,7 @@ def validate_manipulation_balance_profile(
         "warmStart": CAPTURE_WARM_START,
         "motionTeacher": MOTION_TEACHER,
         "a6k1CaptureFailure": A6K1_CAPTURE_FAILURE,
+        "previousAttempt": PREVIOUS_ATTEMPT,
         "trainingOverrides": TRAINING_OVERRIDES,
         "environment": {
             "commandDistribution": ZERO_COMMAND,
@@ -330,7 +360,7 @@ def validate_manipulation_balance_profile(
                 "baseHeight": 0.02,
                 "pose": 0.2,
                 "settleTracking": 0.05,
-                "baseAnchor": 0.01,
+                "baseAnchor": 0.04,
             },
             "commandResampleSteps": 100,
         },
@@ -801,6 +831,7 @@ def run_manipulation_balance_calibration(
             "selectedRole": MOTION_TEACHER["selectedRole"],
         },
         "a6k1CaptureFailure": copy.deepcopy(A6K1_CAPTURE_FAILURE),
+        "previousAttempt": copy.deepcopy(PREVIOUS_ATTEMPT),
         "snapshotBank": snapshot_artifact,
         "runtimeCapacity": {
             **base_profile["runtime"]["mjxCapacity"],

@@ -130,6 +130,46 @@
     "a6k1CaptureFailure": {
       "type": "object"
     },
+    "previousAttempt": {
+      "type": "object",
+      "required": [
+        "job",
+        "probeRevision",
+        "reportDigest",
+        "checkpointDigest",
+        "traceDigest",
+        "snapshotBankDigest",
+        "formalGate",
+        "qualityGatesChanged"
+      ],
+      "properties": {
+        "job": {
+          "const": "worldspec-h1-midterm-w2f8x"
+        },
+        "probeRevision": {
+          "const": "d6588e5fc7ca7495a13fa234a5bd4c0507256968"
+        },
+        "reportDigest": {
+          "const": "sha256:7b4097e9bc146ed75bbaa908648098cafacf6261fbb16604d21fa9eb74364a8d"
+        },
+        "checkpointDigest": {
+          "const": "sha256:d9113bd0479962bb65401f9441efbd26e43f08abefd9756bebe26745281cd127"
+        },
+        "traceDigest": {
+          "const": "sha256:2640534b31d9cd14d1bea8d0d74989b45d0f6081746a5a2f9d4fda465ac611b5"
+        },
+        "snapshotBankDigest": {
+          "const": "sha256:dcd23fcae13430b8761338dd049f8e4e4cc0bab229da6a22f09c0a9521453ccd"
+        },
+        "formalGate": {
+          "const": "failed"
+        },
+        "qualityGatesChanged": {
+          "const": false
+        }
+      },
+      "additionalProperties": true
+    },
     "snapshotBank": {
       "type": "object",
       "required": [

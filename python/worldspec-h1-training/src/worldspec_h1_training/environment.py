@@ -164,6 +164,7 @@ def make_environment(
             self._capture_curriculum = None
             self._task_load_curriculum = None
             self._dynamic_arm_curriculum = None
+            self._anchor_recovery = None
             self._capture_state_bank = None
             self._stand_teacher_policy = stand_teacher_policy
             self._settle_teacher_policy = settle_teacher_policy
@@ -285,6 +286,9 @@ def make_environment(
                     self._dynamic_arm_scale_low = float(dynamic_arm["trajectoryScale"][0])
                     self._dynamic_arm_scale_high = float(dynamic_arm["trajectoryScale"][1])
                     self._dynamic_arm_episode_steps = int(dynamic_arm["episodeSteps"])
+                    anchor_recovery = dynamic_arm.get("anchorRecovery")
+                    if isinstance(anchor_recovery, dict):
+                        self._anchor_recovery = anchor_recovery
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
                 self._minimum_upright = float(validation["minimumUprightCosine"])
@@ -386,6 +390,49 @@ def make_environment(
                 feedforward_start + scale * (feedforward - feedforward_start),
             )
 
+        @staticmethod
+        def _yaw(quaternion):
+            w, x, y, z = quaternion
+            return jp.arctan2(
+                2.0 * (w * z + x * y),
+                1.0 - 2.0 * (y * y + z * z),
+            )
+
+        def _anchor_recovery_command(self, data, info):
+            error_world = data.qpos[:2] - info["base_anchor_xy"]
+            yaw = self._yaw(data.qpos[3:7])
+            cosine = jp.cos(yaw)
+            sine = jp.sin(yaw)
+            error_local = jp.asarray(
+                [
+                    cosine * error_world[0] + sine * error_world[1],
+                    -sine * error_world[0] + cosine * error_world[1],
+                ]
+            )
+            yaw_error = jp.arctan2(
+                jp.sin(yaw - info["base_anchor_yaw"]),
+                jp.cos(yaw - info["base_anchor_yaw"]),
+            )
+            return jp.asarray(
+                [
+                    jp.clip(
+                        -float(self._anchor_recovery["linearGain"]) * error_local[0],
+                        -float(self._anchor_recovery["maximumLinearVelocityX"]),
+                        float(self._anchor_recovery["maximumLinearVelocityX"]),
+                    ),
+                    jp.clip(
+                        -float(self._anchor_recovery["linearGain"]) * error_local[1],
+                        -float(self._anchor_recovery["maximumLinearVelocityY"]),
+                        float(self._anchor_recovery["maximumLinearVelocityY"]),
+                    ),
+                    jp.clip(
+                        -float(self._anchor_recovery["yawGain"]) * yaw_error,
+                        -float(self._anchor_recovery["maximumAngularVelocityYaw"]),
+                        float(self._anchor_recovery["maximumAngularVelocityYaw"]),
+                    ),
+                ]
+            )
+
         def reset(self, rng):
             rng, command_rng, bank_rng, arm_rng = jax.random.split(rng, 4)
             task_load_scale = jp.zeros(())
@@ -459,6 +506,7 @@ def make_environment(
                 "task_load_scale": task_load_scale,
                 "dynamic_arm_scale": dynamic_arm_scale,
                 "base_anchor_xy": qpos[:2],
+                "base_anchor_yaw": self._yaw(qpos[3:7]),
                 "gripper_commands": self._gripper_commands,
                 "transition_active": transition_active,
                 "stand_replay_active": stand_replay_active,
@@ -612,12 +660,19 @@ def make_environment(
                     or self._dynamic_arm_curriculum is not None
                 ):
                     settle_sigma = float(self._reward_sigmas["settleTracking"])
-                    settle_linear_reward = (
-                        jp.exp(-jp.sum(jp.square(local_velocity[:2])) / settle_sigma)
-                        * transition_settle
+                    settle_command = (
+                        command
+                        if self._dynamic_arm_curriculum is not None
+                        and self._anchor_recovery is not None
+                        else jp.zeros(3)
                     )
+                    settle_linear_reward = jp.exp(
+                        -jp.sum(jp.square(settle_command[:2] - local_velocity[:2]))
+                        / settle_sigma
+                    ) * transition_settle
                     settle_yaw_reward = (
-                        jp.exp(-jp.square(gyro[2]) / settle_sigma) * transition_settle
+                        jp.exp(-jp.square(settle_command[2] - gyro[2]) / settle_sigma)
+                        * transition_settle
                     )
                     action_rate_scale = jp.where(
                         transition_settle,
@@ -774,7 +829,11 @@ def make_environment(
                 next_stand_replay_active = jp.asarray(False)
             elif self._dynamic_arm_curriculum is not None:
                 resample = step >= self._dynamic_arm_episode_steps
-                next_command = jp.zeros(3)
+                next_command = (
+                    self._anchor_recovery_command(data, state.info)
+                    if self._anchor_recovery is not None
+                    else jp.zeros(3)
+                )
                 next_transition_active = jp.asarray(False)
                 next_stand_replay_active = jp.asarray(False)
             else:
