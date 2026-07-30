@@ -17,8 +17,8 @@
     "formalControlGate": "failed"
   },
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:9d928bcdd44dc75b66a94a261b785299c35b8ad3c127858fa81ade2ba72cea97",
-    "containerDigest": "sha256:9d928bcdd44dc75b66a94a261b785299c35b8ad3c127858fa81ade2ba72cea97",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:162a5d9521a085e6ca0e916e4d4fb84a1050880192168b3d02577586c891b978",
+    "containerDigest": "sha256:162a5d9521a085e6ca0e916e4d4fb84a1050880192168b3d02577586c891b978",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50
   },
