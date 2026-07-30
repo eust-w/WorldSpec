@@ -108,6 +108,26 @@ FULL_TASK_PHASE_CONTROLLER = {
     "phaseMaximumSteps": copy.deepcopy(TASK_CONTROLLER["phaseMaximumSteps"]),
 }
 
+FULL_TASK_LOCOMOTION_HANDOFF = copy.deepcopy(SUPERVISOR)
+FULL_TASK_LOCOMOTION_HANDOFF["captureGate"]["maximumSteps"] = 50
+FULL_TASK_HANDOFF_EVIDENCE = {
+    "job": "worldspec-h1-midterm-brj2f",
+    "reportDigest": (
+        "sha256:3147789c6573a6fdb017bfe59cf865a2344379843bffdf275376bcdddb0c7ac5"
+    ),
+    "reportSizeBytes": 16_408,
+    "traceDigest": (
+        "sha256:f9e1b25de7b630f194cd85a03282577b4a63b0e368e47de14771c9d56f777697"
+    ),
+    "traceSizeBytes": 1_424_163,
+    "diagnosticStatus": "passed",
+    "failedReason": "locomotion_handoff_timeout",
+    "captureStepsObserved": 40,
+    "stableStepsAtTerminal": 2,
+    "firstStableStep": 188,
+    "qualityGatesChanged": False,
+}
+
 
 def validate_full_task_single_profile(
     base_profile: dict[str, Any],
@@ -157,6 +177,8 @@ def validate_full_task_single_profile(
         ("dynamicArmTracking", DYNAMIC_ARM_TRACKING),
         ("taskGeometryCalibration", TASK_GEOMETRY_CALIBRATION),
         ("baseAnchorRecovery", FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+        ("taskSceneLocomotionHandoff", FULL_TASK_LOCOMOTION_HANDOFF),
+        ("taskSceneHandoffEvidence", FULL_TASK_HANDOFF_EVIDENCE),
         ("phaseController", FULL_TASK_PHASE_CONTROLLER),
         ("qualityGates", FULL_TASK_SINGLE_GATES),
     )
@@ -241,7 +263,7 @@ def evaluate_full_task_single(
     )
     rng = jax.random.PRNGKey(profile["training"]["seed"])
     state = reset(rng)
-    locomotion = SupervisorState()
+    locomotion = SupervisorState(contract=FULL_TASK_LOCOMOTION_HANDOFF)
     task_policy = TaskPolicyHandoffState()
     task = KitchenTaskState()
     traces: list[dict[str, Any]] = []
@@ -658,6 +680,8 @@ def run_task_load_full_kitchen_single_probe(
         "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
         "taskGeometryCalibration": copy.deepcopy(TASK_GEOMETRY_CALIBRATION),
         "baseAnchorRecovery": copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+        "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
+        "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "scene": copy.deepcopy(ERGONOMIC_TASK_SCENE),
         "policies": {
@@ -680,6 +704,7 @@ def run_task_load_full_kitchen_single_probe(
         "taskProfileDigest": digest_json(profile),
         "supervisorEvidence": copy.deepcopy(A6_SUPERVISOR_EVIDENCE),
         "controlLineage": copy.deepcopy(A5CK_CONTROL_LINEAGE),
+        "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "policies": loaded,
         "staticPreflight": static,
         "runtimePreflight": runtime,
@@ -695,6 +720,7 @@ def run_task_load_full_kitchen_single_probe(
             "taskPolicyHandoff": copy.deepcopy(TASK_POLICY_HANDOFF),
             "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
             "baseAnchorRecovery": copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+            "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
             "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         },
         "qualityAssessment": {

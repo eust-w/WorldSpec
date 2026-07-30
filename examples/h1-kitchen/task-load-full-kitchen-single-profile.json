@@ -156,6 +156,40 @@
     "qualityGatesChanged": false,
     "longitudinalCommandDomain": "forward_only"
   },
+  "taskSceneLocomotionHandoff": {
+    "mode": "phase_aware_velocity_stability_gate",
+    "motionCommandThreshold": 0.05,
+    "moveSteps": 150,
+    "settleSteps": 50,
+    "captureGate": {
+      "minimumSteps": 20,
+      "maximumSteps": 50,
+      "maximumLinearSpeed": 0.12,
+      "maximumAngularSpeed": 0.2,
+      "requiredConsecutiveStableSteps": 5
+    },
+    "handoff": {
+      "mode": "linear_action_blend",
+      "blendSteps": 5,
+      "durationSeconds": 0.1,
+      "observationCommand": [0.0, 0.0, 0.0]
+    },
+    "minimumStandDwellSteps": 10,
+    "standRegressionPolicy": "standPolicy"
+  },
+  "taskSceneHandoffEvidence": {
+    "job": "worldspec-h1-midterm-brj2f",
+    "reportDigest": "sha256:3147789c6573a6fdb017bfe59cf865a2344379843bffdf275376bcdddb0c7ac5",
+    "reportSizeBytes": 16408,
+    "traceDigest": "sha256:f9e1b25de7b630f194cd85a03282577b4a63b0e368e47de14771c9d56f777697",
+    "traceSizeBytes": 1424163,
+    "diagnosticStatus": "passed",
+    "failedReason": "locomotion_handoff_timeout",
+    "captureStepsObserved": 40,
+    "stableStepsAtTerminal": 2,
+    "firstStableStep": 188,
+    "qualityGatesChanged": false
+  },
   "phaseController": {
     "phases": [
       "stand_ready",

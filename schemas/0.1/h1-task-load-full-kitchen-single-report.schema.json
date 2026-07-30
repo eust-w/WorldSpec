@@ -68,6 +68,7 @@
     "taskProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
     "supervisorEvidence": { "type": "object" },
     "controlLineage": { "type": "object" },
+    "taskSceneHandoffEvidence": { "type": "object" },
     "policies": {
       "type": "object",
       "required": ["motion", "capture", "stand"],

@@ -11,6 +11,8 @@ from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.full_task import (
     A5CK_CONTROL_LINEAGE,
     A6_SUPERVISOR_EVIDENCE,
+    FULL_TASK_HANDOFF_EVIDENCE,
+    FULL_TASK_LOCOMOTION_HANDOFF,
     FULL_TASK_PHASE_CONTROLLER,
     FULL_TASK_SINGLE_GATES,
     make_full_task_single_evaluation_profile,
@@ -58,6 +60,8 @@ def _profiles() -> tuple[dict, dict, dict]:
         "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
         "taskGeometryCalibration": copy.deepcopy(TASK_GEOMETRY_CALIBRATION),
         "baseAnchorRecovery": copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY),
+        "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
+        "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "qualityGates": copy.deepcopy(FULL_TASK_SINGLE_GATES),
         "runtime": {
@@ -150,6 +154,12 @@ def test_full_task_single_effective_profile_preserves_task_load() -> None:
         (
             lambda profile: profile["qualityGates"].update({"probeRuns": 5}),
             "qualityGates contract changed",
+        ),
+        (
+            lambda profile: profile["taskSceneLocomotionHandoff"]["captureGate"].update(
+                {"maximumSteps": 51}
+            ),
+            "taskSceneLocomotionHandoff contract changed",
         ),
         (
             lambda profile: profile["artifactPolicy"].update(

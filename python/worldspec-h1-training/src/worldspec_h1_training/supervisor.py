@@ -6,7 +6,8 @@ import copy
 import functools
 import json
 import tempfile
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -161,6 +162,7 @@ QUALITY_GATES = {
 class SupervisorState:
     """Small deterministic state machine used by the reference supervisor."""
 
+    contract: Mapping[str, Any] = field(default_factory=lambda: SUPERVISOR)
     phase: str = "motion"
     capture_steps: int = 0
     stable_steps: int = 0
@@ -183,7 +185,7 @@ class SupervisorState:
         if self.phase == "capture":
             return capture_action, "capture", 0.0
         if self.phase == "blend":
-            blend_total = SUPERVISOR["handoff"]["blendSteps"]
+            blend_total = self.contract["handoff"]["blendSteps"]
             alpha = (self.blend_steps + 1) / blend_total
             return (
                 (1.0 - alpha) * capture_action + alpha * stand_action,
@@ -200,7 +202,7 @@ class SupervisorState:
     def observe(self, active_phase: str, linear_speed: float, angular_speed: float) -> None:
         """Advance the state machine after observing the executed physics step."""
 
-        capture = SUPERVISOR["captureGate"]
+        capture = self.contract["captureGate"]
         if active_phase == "capture":
             self.capture_steps += 1
             stable = (
@@ -218,7 +220,7 @@ class SupervisorState:
                 self.handoff_failed = True
         elif active_phase == "blend":
             self.blend_steps += 1
-            if self.blend_steps >= SUPERVISOR["handoff"]["blendSteps"]:
+            if self.blend_steps >= self.contract["handoff"]["blendSteps"]:
                 self.phase = "stand"
         elif active_phase == "stand":
             self.stand_steps += 1
