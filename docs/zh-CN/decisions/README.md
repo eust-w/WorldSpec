@@ -49,5 +49,6 @@ last-verified: 2026-07-30
 - [ADR-0039 H1 操作平衡步行后偏置重置](0039-h1-manipulation-post-walk-biased-reset.md)
 - [ADR-0040 H1 操作平衡同策略状态库续训](0040-h1-manipulation-on-policy-continuation.md)
 - [ADR-0041 H1 操作平衡 Checkpoint 组合门控](0041-h1-manipulation-checkpoint-portfolio.md)
+- [ADR-0042 H1 Checkpoint 组合评估显存隔离](0042-h1-manipulation-checkpoint-memory-isolation.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

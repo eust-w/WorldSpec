@@ -78,6 +78,8 @@ spec:
               value: cuda
             - name: XLA_PYTHON_CLIENT_PREALLOCATE
               value: "false"
+            - name: XLA_PYTHON_CLIENT_ALLOCATOR
+              value: platform
             - name: CUDA_VISIBLE_DEVICES
               value: "0"
           resources:

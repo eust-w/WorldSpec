@@ -17,6 +17,7 @@ from worldspec_h1_training.manipulation_balance import (
     MOTION_TEACHER,
     PREVIOUS_ATTEMPT,
     QUALITY_GATES,
+    RUNTIME_FAILURE,
     SNAPSHOT_CURRICULUM,
     assess_manipulation_checkpoint_candidate,
     make_manipulation_balance_training_profile,
@@ -48,6 +49,7 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
     assert profile["motionTeacher"] == MOTION_TEACHER
     assert profile["a6k1CaptureFailure"] == A6K1_CAPTURE_FAILURE
     assert profile["previousAttempt"] == PREVIOUS_ATTEMPT
+    assert profile["runtimeFailure"] == RUNTIME_FAILURE
     assert profile["checkpointSelection"] == CHECKPOINT_SELECTION
     assert effective["training"]["numTimesteps"] == 16_777_216
     assert effective["training"]["numEnvs"] == 4096
@@ -121,6 +123,14 @@ def test_manipulation_balance_rejects_checkpoint_selection_drift() -> None:
         validate_manipulation_balance_profile(base, profile)
 
 
+def test_manipulation_balance_rejects_runtime_failure_lineage_drift() -> None:
+    base, profile = _profiles()
+    profile["runtimeFailure"]["savedCheckpointCount"] = 6
+
+    with pytest.raises(TrainingError, match="runtimeFailure"):
+        validate_manipulation_balance_profile(base, profile)
+
+
 def test_manipulation_balance_rejects_quality_gate_relaxation() -> None:
     base, profile = _profiles()
     profile["qualityGates"]["minimumBaseHeight"] = 0.7
@@ -169,6 +179,8 @@ def test_post_walk_evaluation_disables_rest_mixture() -> None:
     assert "] = 0.0" in source
     assert "if int(item[\"step\"]) == step" in source
     assert "MANIPULATION_CANDIDATE_PROGRESS_MISSING" in source
+    assert "platform_allocator_and_jax_cache_clear_v1" in source
+    assert "jax.clear_caches()" in source
 
 
 def _tests(post_walk_passes: int, from_rest_passes: int) -> list[dict]:

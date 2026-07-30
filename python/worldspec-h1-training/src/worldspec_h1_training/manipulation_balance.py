@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import copy
 import functools
+import gc
 import json
 import shutil
 import tempfile
@@ -89,10 +90,23 @@ PREVIOUS_ATTEMPT = {
     "qualityGatesChanged": False,
 }
 
+RUNTIME_FAILURE = {
+    "job": "worldspec-h1-midterm-xzrb5",
+    "probeRevision": "00f0525482f924e64cabb880a8ad3c5cc962bd2a",
+    "imageDigest": "sha256:3de0caf6b170f16e026d774cd650f3ef85e5a2a5fddc990d0ebab6d1fa9cad63",
+    "logDigest": "sha256:a743d881e4e8aba816cce41764bbf9579f802ad5d1d28a0b15d5b7a612257f21",
+    "logSizeBytes": 23_688,
+    "failure": "gpu_oom_during_checkpoint_portfolio_evaluation",
+    "savedCheckpointCount": 7,
+    "formalGate": "not_evaluated",
+    "qualityGatesChanged": False,
+}
+
 CHECKPOINT_SELECTION = {
     "mode": "formal_gate_then_pass_count_then_episode_length",
     "evaluateAllSavedCheckpoints": True,
     "expectedCandidateCount": 7,
+    "memoryIsolation": "platform_allocator_and_jax_cache_clear_v1",
 }
 
 ANCHOR_RECOVERY = {
@@ -355,6 +369,7 @@ def validate_manipulation_balance_profile(
         "motionTeacher": MOTION_TEACHER,
         "a6k1CaptureFailure": A6K1_CAPTURE_FAILURE,
         "previousAttempt": PREVIOUS_ATTEMPT,
+        "runtimeFailure": RUNTIME_FAILURE,
         "checkpointSelection": CHECKPOINT_SELECTION,
         "trainingOverrides": TRAINING_OVERRIDES,
         "environment": {
@@ -665,6 +680,11 @@ def evaluate_manipulation_balance_suite(
     required = gates["requiredConsecutivePasses"]
     for index in range(required):
         tests.append(run(index, "post_walk_capture", snapshot_env))
+    # The training executable and the two evaluation environments use distinct
+    # MJX/Warp shapes.  Clear compiled JAX executables before switching to the
+    # from-rest environment so Warp can reclaim device memory deterministically.
+    jax.clear_caches()
+    gc.collect()
     for index in range(required):
         tests.append(run(index, "from_rest", rest_env))
     return tests, traces
@@ -854,6 +874,14 @@ def run_manipulation_balance_calibration(
             wrap_env_fn=wrapper.wrap_for_brax_training,
             num_eval_envs=min(128, training["numEnvs"]),
         )
+        # The platform allocator returns released JAX buffers to CUDA.  Drop
+        # training-only policy/environment references and compiled executables
+        # before creating the two deterministic gate environments.
+        import jax
+
+        del training_env, rollout_env, capture_teacher, motion_teacher
+        jax.clear_caches()
+        gc.collect()
         snapshot_eval_profile = copy.deepcopy(effective)
         snapshot_eval_profile["trainingEnvironment"]["snapshotCurriculum"][
             "fromRestProbability"
@@ -929,6 +957,9 @@ def run_manipulation_balance_calibration(
                     "path": checkpoint_step,
                 }
             )
+            del checkpoint_policy, checkpoint_params
+            jax.clear_caches()
+            gc.collect()
         selected_assessment = select_manipulation_checkpoint_candidate(
             [item["assessment"] for item in candidate_details]
         )
@@ -982,6 +1013,7 @@ def run_manipulation_balance_calibration(
         },
         "a6k1CaptureFailure": copy.deepcopy(A6K1_CAPTURE_FAILURE),
         "previousAttempt": copy.deepcopy(PREVIOUS_ATTEMPT),
+        "runtimeFailure": copy.deepcopy(RUNTIME_FAILURE),
         "checkpointSelection": {
             **copy.deepcopy(CHECKPOINT_SELECTION),
             "selectedStep": selected_assessment["step"],

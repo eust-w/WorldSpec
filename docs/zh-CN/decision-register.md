@@ -70,5 +70,6 @@ last-verified: 2026-07-30
 | D-058 | mixed-reset-v3 把静态起步提高到 5/5，但仍有一个步行后初态失败，且步行后评测错误继承了训练混合；选择 75% 步行后、25% 静态训练，并强制两个评测套件使用纯分布，质量门不变 | Accepted Design | [ADR-0039](decisions/0039-h1-manipulation-post-walk-biased-reset.md) |
 | D-059 | post-walk-biased-v4 在纯分布评测中退化为步行后 3/5、静态 5/5；选择从最佳 mixed-reset-v3 Checkpoint Warm Start，用同一操作平衡策略重建 Capture 状态库并恢复 50/50 训练，全部质量门不变 | Accepted Design | [ADR-0040](decisions/0040-h1-manipulation-on-policy-continuation.md) |
 | D-060 | on-policy-continuation-v5 的终端阶段仅通过步行后 3/5、静态 5/5，但归档保留七个阶段；选择在同运行、同状态库和不变门槛下评估全部已保存 Checkpoint，仅正式通过的候选才可解锁完整厨房单次门 | Accepted Design | [ADR-0041](decisions/0041-h1-manipulation-checkpoint-portfolio.md) |
+| D-061 | checkpoint-portfolio-v6 已保存七个 Checkpoint，但逐候选评估因 JAX 缓存挤占 Warp 显存而在正式门前 OOM；选择 platform allocator、训练后/套件间/候选间清缓存的显存隔离，训练与全部质量门不变 | Accepted Design | [ADR-0042](decisions/0042-h1-manipulation-checkpoint-memory-isolation.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。
