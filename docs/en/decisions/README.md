@@ -41,5 +41,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0029 H1 forward-only base recovery](0029-h1-forward-only-base-recovery.md)
 - [ADR-0030 H1 task-load-aware locomotion](0030-h1-task-load-aware-locomotion.md)
 - [ADR-0031 H1 task-load retention and Checkpoint selection](0031-h1-task-load-retention-and-checkpoint-selection.md)
+- [ADR-0032 H1 terminal-hold measurement and survival shaping](0032-h1-terminal-hold-and-survival-shaping.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

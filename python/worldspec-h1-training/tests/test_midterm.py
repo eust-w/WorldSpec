@@ -34,6 +34,9 @@ TASK_LOAD_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-pro
 TASK_LOAD_RETENTION_PROFILE = (
     ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-retention-profile.json"
 )
+TASK_LOAD_SURVIVAL_PROFILE = (
+    ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-survival-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -290,6 +293,30 @@ def test_task_load_retention_rejects_teacher_or_gate_drift() -> None:
     profile = json.loads(TASK_LOAD_RETENTION_PROFILE.read_text(encoding="utf-8"))
     profile["qualityGates"]["maximumSettleLinearSpeed"] = 0.3
     with pytest.raises(TrainingError, match="cannot relax"):
+        validate_task_load_retention_profile(base, profile)
+
+
+def test_task_load_survival_adds_fail_closed_survival_shaping() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_SURVIVAL_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_task_load_retention_training_profile(base, profile)
+
+    assert effective["training"]["learningRate"] == 0.00002
+    assert effective["training"]["entropyCost"] == 0.0005
+    assert effective["training"]["hyperparameterStatus"] == "research_task_load_survival_override"
+    assert effective["trainingEnvironment"]["reward"]["terminationPenalty"] == 25.0
+    assert effective["validation"]["settleWindowSeconds"] == 1.0
+    assert effective["validation"]["settleMeasurementWindowSeconds"] == 0.2
+    assert effective["validation"]["maximumSettleLinearSpeed"] == 0.2
+
+
+def test_task_load_survival_rejects_prior_attempt_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_SURVIVAL_PROFILE.read_text(encoding="utf-8"))
+    profile["priorAttempt"]["sourceReportSizeBytes"] += 1
+
+    with pytest.raises(TrainingError, match="frozen failed retention attempt"):
         validate_task_load_retention_profile(base, profile)
 
 

@@ -423,6 +423,7 @@ def make_environment(
                 "cost/teacher_action_mse": jp.zeros(()),
                 "cost/stand_teacher_action_mse": jp.zeros(()),
                 "cost/settle_teacher_action_mse": jp.zeros(()),
+                "cost/termination": jp.zeros(()),
                 "termination/joint_limit": jp.zeros(()),
                 "termination/fall_height": jp.zeros(()),
                 "termination/fall_upright": jp.zeros(()),
@@ -586,6 +587,12 @@ def make_environment(
                         * stand_distillation_reward
                         + float(self._reward_config.get("settleDistillation", 0.0))
                         * settle_distillation_reward
+                        - float(self._reward_config.get("standTeacherActionCost", 0.0))
+                        * stand_teacher_action_mse
+                        * stand_replay_active
+                        - float(self._reward_config.get("settleTeacherActionCost", 0.0))
+                        * settle_teacher_action_mse
+                        * transition_settle
                         - float(self._reward_config["verticalVelocityCost"]) * vertical_cost
                         - float(self._reward_config["angularVelocityXYCost"])
                         * angular_velocity_xy_cost
@@ -636,6 +643,12 @@ def make_environment(
             finite = jp.all(jp.isfinite(data.qpos)) & jp.all(jp.isfinite(data.qvel))
             nonfinite = ~finite
             done = (joint_violation | fall_height | fall_upright | nonfinite).astype(reward.dtype)
+            termination_cost = (
+                done * float(self._reward_config.get("terminationPenalty", 0.0))
+                if self._calibration_enabled
+                else jp.zeros(())
+            )
+            reward -= termination_cost
             step = state.info["step"] + 1
             if self._transition_curriculum is not None:
                 (
@@ -717,6 +730,7 @@ def make_environment(
                     "cost/teacher_action_mse": teacher_action_mse,
                     "cost/stand_teacher_action_mse": stand_teacher_action_mse,
                     "cost/settle_teacher_action_mse": settle_teacher_action_mse,
+                    "cost/termination": termination_cost,
                     "termination/joint_limit": joint_violation.astype(reward.dtype),
                     "termination/fall_height": fall_height.astype(reward.dtype),
                     "termination/fall_upright": fall_upright.astype(reward.dtype),

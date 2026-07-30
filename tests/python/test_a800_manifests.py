@@ -58,8 +58,7 @@ def test_runtime_spike_job_is_tokenless_digest_ready_and_ephemeral() -> None:
     assert environment["TMPDIR"] == "/scratch/tmp"
 
     volume_kinds = {
-        next(key for key in volume if key != "name")
-        for volume in pod["volumes"]
+        next(key for key in volume if key != "name") for volume in pod["volumes"]
     }
     assert volume_kinds == {"emptyDir", "configMap"}
     assert sum("configMap" in volume for volume in pod["volumes"]) == 2
@@ -86,7 +85,9 @@ def test_h1_image_builder_contains_registry_secret_to_build_namespace() -> None:
     (container,) = pod["containers"]
     assert "@sha256:" in container["image"]
     assert "--digest-file=/dev/termination-log" in container["args"]
-    assert any(argument.startswith("--destination=__") for argument in container["args"])
+    assert any(
+        argument.startswith("--destination=__") for argument in container["args"]
+    )
     assert container["securityContext"]["allowPrivilegeEscalation"] is False
     assert container["securityContext"]["capabilities"]["drop"] == ["ALL"]
     assert container["securityContext"]["capabilities"]["add"] == [
@@ -144,7 +145,9 @@ def test_locked_runtime_probe_uses_digest_without_credentials_or_installs() -> N
     assert "serviceAccountTokenMounted" in entrypoint
 
 
-def test_capacity_scale_probe_is_isolated_and_uses_canonical_environment_count() -> None:
+def test_capacity_scale_probe_is_isolated_and_uses_canonical_environment_count() -> (
+    None
+):
     (job,) = _documents("h1-capacity-scale-probe-job.yaml")
     assert job["metadata"]["namespace"] == "worldspec-a800-poc"
     assert job["metadata"]["labels"]["app.kubernetes.io/name"] == (
@@ -194,10 +197,7 @@ def test_ccd_iterations_probe_is_single_candidate_and_fail_closed() -> None:
     assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
-    assert all(
-        "persistentVolumeClaim" not in volume
-        for volume in pod["volumes"]
-    )
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
 
     entrypoint = (A800 / "h1-locked-runtime-probe-entrypoint.sh").read_text(
         encoding="utf-8"
@@ -208,9 +208,9 @@ def test_ccd_iterations_probe_is_single_candidate_and_fail_closed() -> None:
     assert "rollout_steps = 200" in entrypoint
     assert "WORLDSPEC_A800_CCD_ITERATIONS_RESULT=" in entrypoint
 
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locked_runtime_probe.sh"
-    ).read_text(encoding="utf-8")
+    launcher = (ROOT / "scripts" / "run_a800_h1_locked_runtime_probe.sh").read_text(
+        encoding="utf-8"
+    )
     assert '"ccd_iterations, currently set" in line' in launcher
     assert '"needs to be increased" in line' in launcher
     assert 'report["status"] = "passed" if report["logDiagnostics"]["clean"]' in (
@@ -273,14 +273,11 @@ def test_locomotion_calibration_is_isolated_and_research_only() -> None:
     assert container["resources"]["requests"]["memory"] == "32Gi"
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
-    assert all(
-        "persistentVolumeClaim" not in volume
-        for volume in pod["volumes"]
-    )
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
 
-    entrypoint = (
-        A800 / "h1-locomotion-calibration-entrypoint.sh"
-    ).read_text(encoding="utf-8")
+    entrypoint = (A800 / "h1-locomotion-calibration-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
     assert '"runtimeAcceptance": "research_calibration"' in entrypoint
     assert '"policyStatus": "non_publishable"' in entrypoint
     assert '"canonicalTrainingStatus": "not_executed"' in entrypoint
@@ -289,9 +286,9 @@ def test_locomotion_calibration_is_isolated_and_research_only() -> None:
     assert "stage artifact_ready" in entrypoint
     assert "launcher did not acknowledge checkpoint retrieval" in entrypoint
 
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_calibration.sh"
-    ).read_text(encoding="utf-8")
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_calibration.sh").read_text(
+        encoding="utf-8"
+    )
     assert 'current_stage}" == "artifact_ready"' in launcher
     assert "/scratch/results/artifact-copied" in launcher
     assert "copy_kubernetes_file.py" in launcher
@@ -334,10 +331,7 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
-    assert all(
-        "persistentVolumeClaim" not in volume
-        for volume in pod["volumes"]
-    )
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
 
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
         encoding="utf-8"
@@ -349,9 +343,9 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "run_midterm_calibration" in entrypoint
     assert '"policyStatus": "non_publishable"' in entrypoint
 
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
-    ).read_text(encoding="utf-8")
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(
+        encoding="utf-8"
+    )
     assert "upload_kubernetes_file.py" in launcher
     assert "copy_kubernetes_file.py" in launcher
     assert "A800_CAPACITY_BLOCKED" in launcher
@@ -371,9 +365,7 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
         transition_launcher
     )
     assert 'report.get("container", {}).get("image")' in transition_launcher
-    assert '"selectionPolicy": "single_predeclared_candidate"' in (
-        transition_launcher
-    )
+    assert '"selectionPolicy": "single_predeclared_candidate"' in (transition_launcher)
     assert 'report.get("logDiagnostics", {}).get("clean") is not True' in (
         transition_launcher
     )
@@ -393,53 +385,39 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     ).read_text(encoding="utf-8")
     assert "locomotion-task-load-profile.json" in task_load_launcher
     assert "locomotion-transition.a800.failed.json" in task_load_launcher
-    assert "worldspec-h1-midterm-nxszt/midterm-checkpoint.zip" in (
-        task_load_launcher
-    )
+    assert "worldspec-h1-midterm-nxszt/midterm-checkpoint.zip" in (task_load_launcher)
     assert "task-load warm-start report digest mismatch" in task_load_launcher
-    assert "task-load warm-start checkpoint identity mismatch" in (
-        task_load_launcher
-    )
+    assert "task-load warm-start checkpoint identity mismatch" in (task_load_launcher)
     assert '("report", pathlib.Path(sys.argv[4]), "reportDigest")' in (
         task_load_launcher
     )
     assert '("controller", pathlib.Path(sys.argv[5]), "controllerDigest")' in (
         task_load_launcher
     )
-    assert '("trace", pathlib.Path(sys.argv[6]), "traceDigest")' in (
-        task_load_launcher
-    )
-    assert 'raise SystemExit(f"A5-CK {label} digest mismatch")' in (
-        task_load_launcher
-    )
+    assert '("trace", pathlib.Path(sys.argv[6]), "traceDigest")' in (task_load_launcher)
+    assert 'raise SystemExit(f"A5-CK {label} digest mismatch")' in (task_load_launcher)
     assert "A5-CK trace record count mismatch" in task_load_launcher
     assert "run_a800_h1_locomotion_midterm.sh" in task_load_launcher
 
     task_load_retention_launcher = (
-        ROOT
-        / "scripts"
-        / "run_a800_h1_task_load_retention_calibration.sh"
+        ROOT / "scripts" / "run_a800_h1_task_load_retention_calibration.sh"
     ).read_text(encoding="utf-8")
     assert "locomotion-task-load-retention-profile.json" in (
         task_load_retention_launcher
     )
-    assert "locomotion-retention.a800.failed.json" in (
-        task_load_retention_launcher
-    )
-    assert "locomotion-calibration.a800.passed.json" in (
-        task_load_retention_launcher
-    )
-    assert "locomotion-capture.a800.passed.json" in (
-        task_load_retention_launcher
-    )
-    assert "WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT" in (
-        task_load_retention_launcher
-    )
-    assert "WORLD_SPEC_SETTLE_TEACHER_CHECKPOINT" in (
-        task_load_retention_launcher
-    )
-    assert "run_a800_h1_locomotion_midterm.sh" in (
-        task_load_retention_launcher
+    assert "locomotion-retention.a800.failed.json" in (task_load_retention_launcher)
+    assert "locomotion-calibration.a800.passed.json" in (task_load_retention_launcher)
+    assert "locomotion-capture.a800.passed.json" in (task_load_retention_launcher)
+    assert "WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT" in (task_load_retention_launcher)
+    assert "WORLD_SPEC_SETTLE_TEACHER_CHECKPOINT" in (task_load_retention_launcher)
+    assert "prior attempt report identity mismatch" in (task_load_retention_launcher)
+    assert "run_a800_h1_locomotion_midterm.sh" in (task_load_retention_launcher)
+    task_load_survival_launcher = (
+        ROOT / "scripts" / "run_a800_h1_task_load_survival_calibration.sh"
+    ).read_text(encoding="utf-8")
+    assert "locomotion-task-load-survival-profile.json" in (task_load_survival_launcher)
+    assert "run_a800_h1_task_load_retention_calibration.sh" in (
+        task_load_survival_launcher
     )
 
 
@@ -447,19 +425,19 @@ def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
         encoding="utf-8"
     )
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
-    ).read_text(encoding="utf-8")
-    wrapper = (
-        ROOT / "scripts" / "run_a800_h1_dual_policy_probe.sh"
-    ).read_text(encoding="utf-8")
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(
+        encoding="utf-8"
+    )
+    wrapper = (ROOT / "scripts" / "run_a800_h1_dual_policy_probe.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert 'stage == "dual_policy_switch_probe"' in entrypoint
     assert "run_dual_policy_probe" in entrypoint
     assert "WORLDSPEC_A800_DUAL_POLICY_RESULT=" in entrypoint
     assert '"controllerStatus"' in entrypoint
-    assert 'REPORT_SCHEMA=h1-locomotion-dual-policy-report.schema.json' in launcher
-    assert 'GATE_FIELD=formalProbeGate' in launcher
+    assert "REPORT_SCHEMA=h1-locomotion-dual-policy-report.schema.json" in launcher
+    assert "GATE_FIELD=formalProbeGate" in launcher
     assert "/scratch/results/artifacts/dual-policy-controller.json" in launcher
     assert "locomotion-transition.a800.failed.json" in wrapper
     assert "locomotion-calibration.a800.passed.json" in wrapper
@@ -506,10 +484,7 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     )
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
-    assert all(
-        "persistentVolumeClaim" not in volume
-        for volume in pod["volumes"]
-    )
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
 
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
         encoding="utf-8"
@@ -521,9 +496,7 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert 'midterm_profile["control"]' not in entrypoint
     assert "whole_body_profile_semantic_projection" in entrypoint
     assert '"role": "report_only_not_equivalence_proof"' in entrypoint
-    assert '"staticSemanticEquivalent": equivalence_status == "passed"' in (
-        entrypoint
-    )
+    assert '"staticSemanticEquivalent": equivalence_status == "passed"' in (entrypoint)
     assert '"basis": "static_semantic_projection"' not in entrypoint
     assert "WORLDSPEC_A800_WHOLE_BODY_DIAGNOSTIC_REPLAY_RESULT=" in entrypoint
     assert '"controllerStatus": "non_publishable"' in entrypoint
@@ -533,9 +506,9 @@ def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     assert "diagnostic-failure.json" in entrypoint
     assert "run_training" not in entrypoint
 
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
-    ).read_text(encoding="utf-8")
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(
+        encoding="utf-8"
+    )
     assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" in launcher
     assert "a5c-baseline-summary.json" in launcher
     assert "a5c-baseline-report.json" in launcher
@@ -597,34 +570,32 @@ def test_a5ci_attempt_05_locks_the_corrected_immutable_runtime() -> None:
     )
     attempt_04 = json.loads(
         (
-            example_dir
-            / "whole-body-diagnostic-replay-profile.attempt-04.json"
+            example_dir / "whole-body-diagnostic-replay-profile.attempt-04.json"
         ).read_text(encoding="utf-8")
     )
     build = json.loads(
-        (
-            example_dir
-            / "diagnostic-replay-image-build.a800.passed.json"
-        ).read_text(encoding="utf-8")
+        (example_dir / "diagnostic-replay-image-build.a800.passed.json").read_text(
+            encoding="utf-8"
+        )
     )
 
     assert attempt_04["attemptId"].endswith("replay-04")
     assert current["attemptId"].endswith("replay-05")
-    assert current["baseControlProfileDigest"] == (
-        attempt_04["baseControlProfileDigest"]
+    assert (
+        current["baseControlProfileDigest"] == (attempt_04["baseControlProfileDigest"])
     )
     assert current["baselineEvidence"] == attempt_04["baselineEvidence"]
     assert current["baselineBindings"] == attempt_04["baselineBindings"]
-    assert current["semanticProfileProjectionDigest"] == (
-        attempt_04["semanticProfileProjectionDigest"]
+    assert (
+        current["semanticProfileProjectionDigest"]
+        == (attempt_04["semanticProfileProjectionDigest"])
     )
-    assert current["controllerSemanticProjectionDigest"] == (
-        attempt_04["controllerSemanticProjectionDigest"]
+    assert (
+        current["controllerSemanticProjectionDigest"]
+        == (attempt_04["controllerSemanticProjectionDigest"])
     )
     assert current["runtime"]["containerImage"] == build["image"]
-    assert current["runtime"]["containerDigest"] == (
-        build["image"].rsplit("@", 1)[1]
-    )
+    assert current["runtime"]["containerDigest"] == (build["image"].rsplit("@", 1)[1])
     assert current["runtime"]["imageSourceRevision"] == build["sourceCommit"]
     assert current["runtime"]["imageSourceRevision"] == (
         "1e89b640158e39aa429130d1f73fc8d5ba2da5fe"
@@ -649,10 +620,7 @@ def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> N
     assert container["resources"]["requests"]["nvidia.com/gpu"] == "1"
     assert container["resources"]["limits"]["nvidia.com/gpu"] == "1"
     assert all("secret" not in volume for volume in pod["volumes"])
-    assert all(
-        "persistentVolumeClaim" not in volume
-        for volume in pod["volumes"]
-    )
+    assert all("persistentVolumeClaim" not in volume for volume in pod["volumes"])
 
     entrypoint = (A800 / "h1-locomotion-formal-entrypoint.sh").read_text(
         encoding="utf-8"
@@ -671,9 +639,9 @@ def test_locomotion_formal_job_is_single_gpu_tokenless_and_evidence_first() -> N
     assert 'formalTrainingGate") != "passed"' in orchestrator
     assert "run_a800_h1_locomotion_formal.py" in orchestrator
 
-    formal_launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_formal.py"
-    ).read_text(encoding="utf-8")
+    formal_launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_formal.py").read_text(
+        encoding="utf-8"
+    )
     assert "CCD_OVERFLOW" in formal_launcher
     assert "CAPACITY_OR_BUFFER_OVERFLOW" in formal_launcher
     assert "ABNORMAL_CONTACT" in formal_launcher

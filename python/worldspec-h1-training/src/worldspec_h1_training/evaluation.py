@@ -25,6 +25,13 @@ def evaluate_policy_suite(
     duration_steps = max(1, round(validation["nominalDurationSeconds"] / dt))
     move_steps = max(1, round(validation["moveDurationSeconds"] / dt))
     settle_steps = max(1, round(validation["settleWindowSeconds"] / dt))
+    settle_measurement_seconds = validation.get(
+        "settleMeasurementWindowSeconds",
+        validation["settleWindowSeconds"],
+    )
+    settle_measurement_steps = max(1, round(settle_measurement_seconds / dt))
+    if settle_measurement_steps > settle_steps:
+        raise ValueError("settle measurement window cannot exceed the settle phase")
     required = validation["requiredConsecutivePasses"]
     tests: list[dict[str, Any]] = []
     traces: list[dict[str, Any]] = []
@@ -100,7 +107,7 @@ def evaluate_policy_suite(
             if moving:
                 squared_tracking_error += float((local_velocity[0] - 0.5) ** 2)
                 tracking_samples += 1
-            if index >= duration_steps - settle_steps:
+            if index >= duration_steps - settle_measurement_steps:
                 maximum_settle_linear_speed = max(
                     maximum_settle_linear_speed,
                     float(np.linalg.norm(local_velocity)),
@@ -176,6 +183,7 @@ def evaluate_policy_suite(
                 "minimumUprightCosine": minimum_upright,
                 "maximumSettleLinearSpeed": maximum_settle_linear_speed,
                 "maximumSettleAngularSpeed": maximum_settle_angular_speed,
+                "settleMeasurementWindowSeconds": settle_measurement_seconds,
                 "maximumTeacherActionMse": maximum_teacher_action_mse,
                 "maximumStandTeacherActionMse": (maximum_stand_teacher_action_mse),
                 "maximumSettleTeacherActionMse": (maximum_settle_teacher_action_mse),

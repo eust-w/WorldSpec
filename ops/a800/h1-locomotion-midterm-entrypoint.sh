@@ -283,6 +283,7 @@ if not replay_filename and profile["runtime"]["packageLockDigest"] != sys.argv[6
 if stage in {
     "loaded_track_settle_retention",
     "loaded_track_settle_task_load_retention",
+    "loaded_track_settle_task_load_survival",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -304,7 +305,11 @@ if stage in {
                 if stage == "loaded_track_settle_capture"
                 else (
                     profile["standTeacher"]
-                    if stage == "loaded_track_settle_task_load_retention"
+                    if stage
+                    in {
+                        "loaded_track_settle_task_load_retention",
+                        "loaded_track_settle_task_load_survival",
+                    }
                     else profile["retentionTeacher"]
                 )
             )
@@ -363,7 +368,10 @@ if stage in {
             raise SystemExit("capture policy is not the frozen passing A3 evidence")
     else:
         raise SystemExit("unsupported auxiliary policy source stage")
-if stage == "loaded_track_settle_task_load_retention":
+if stage in {
+    "loaded_track_settle_task_load_retention",
+    "loaded_track_settle_task_load_survival",
+}:
     settle_filename = sys.argv[20]
     if not settle_filename:
         raise SystemExit("settle teacher report filename is missing")
@@ -708,13 +716,17 @@ else:
             in {
                 "loaded_track_settle_retention",
                 "loaded_track_settle_task_load_retention",
+                "loaded_track_settle_task_load_survival",
             }
             else None
         ),
         (
             Path(os.environ["INPUT_DIR"]) / "settle-teacher-checkpoint.zip"
             if midterm_profile["stage"]
-            == "loaded_track_settle_task_load_retention"
+            in {
+                "loaded_track_settle_task_load_retention",
+                "loaded_track_settle_task_load_survival",
+            }
             else None
         ),
     )

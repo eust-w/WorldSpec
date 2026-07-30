@@ -415,7 +415,8 @@
             "loaded_track_settle_transition",
             "loaded_track_settle_retention",
             "loaded_track_settle_task_load",
-            "loaded_track_settle_task_load_retention"
+            "loaded_track_settle_task_load_retention",
+            "loaded_track_settle_task_load_survival"
           ]
         }
       }
@@ -544,7 +545,10 @@
           "training": {
             "properties": {
               "profileStage": {
-                "const": "loaded_track_settle_task_load_retention"
+                "enum": [
+                  "loaded_track_settle_task_load_retention",
+                  "loaded_track_settle_task_load_survival"
+                ]
               }
             },
             "required": [

@@ -111,7 +111,9 @@ def validate_instance(
     )
     return [
         f"{'/'.join(str(part) for part in error.absolute_path) or '<root>'}: {error.message}"
-        for error in sorted(validator.iter_errors(instance), key=lambda item: list(item.absolute_path))
+        for error in sorted(
+            validator.iter_errors(instance), key=lambda item: list(item.absolute_path)
+        )
     ]
 
 
@@ -179,12 +181,17 @@ def semantic_world_errors(document: dict[str, Any]) -> set[str]:
     return codes
 
 
-def semantic_loss_errors(report: dict[str, Any], target: dict[str, Any] | None = None) -> set[str]:
+def semantic_loss_errors(
+    report: dict[str, Any], target: dict[str, Any] | None = None
+) -> set[str]:
     codes: set[str] = set()
     coverage = report["coverage"]
     if coverage["reportedItemCount"] != len(report["entries"]):
         codes.add("LOSS_REPORTED_COUNT_MISMATCH")
-    if coverage["complete"] and coverage["sourceItemCount"] != coverage["reportedItemCount"]:
+    if (
+        coverage["complete"]
+        and coverage["sourceItemCount"] != coverage["reportedItemCount"]
+    ):
         codes.add("LOSS_COVERAGE_MISMATCH")
     if target is not None:
         reported = {entry["capability"] for entry in report["entries"]}
@@ -239,6 +246,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/whole-body-forward-only-base-anchor-profile.json": "h1-whole-body-control-profile.schema.json",
         "h1-kitchen/locomotion-task-load-profile.json": "h1-locomotion-task-load-profile.schema.json",
         "h1-kitchen/locomotion-task-load-retention-profile.json": "h1-locomotion-task-load-retention-profile.schema.json",
+        "h1-kitchen/locomotion-task-load-survival-profile.json": "h1-locomotion-task-load-survival-profile.schema.json",
         "h1-kitchen/whole-body-control.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-policy-handoff.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-dynamic-arm.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
@@ -331,7 +339,9 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
     loss_errors = semantic_loss_errors(positive_loss, positive_target)
     if loss_errors:
         raise Failure(f"POSITIVE_LOSS: {sorted(loss_errors)}")
-    training_profile = read_json(EXAMPLES / "h1-kitchen/locomotion-training-profile.json")
+    training_profile = read_json(
+        EXAMPLES / "h1-kitchen/locomotion-training-profile.json"
+    )
     training_result = read_json(
         EXAMPLES / "h1-kitchen/locomotion-training-result.blocked.json"
     )
@@ -403,11 +413,15 @@ def check_docs() -> None:
             found = metadata(path)
             missing = required - found.keys()
             if missing:
-                raise Failure(f"MISSING_METADATA {path.relative_to(ROOT)}: {sorted(missing)}")
+                raise Failure(
+                    f"MISSING_METADATA {path.relative_to(ROOT)}: {sorted(missing)}"
+                )
             mirror = (path.parent / found["mirror"]).resolve()
             expected = en_path.resolve() if path == zh_path else zh_path.resolve()
             if mirror != expected:
-                raise Failure(f"BAD_MIRROR {path.relative_to(ROOT)} -> {found['mirror']}")
+                raise Failure(
+                    f"BAD_MIRROR {path.relative_to(ROOT)} -> {found['mirror']}"
+                )
         en_text = en_path.read_text(encoding="utf-8")
         if "The Chinese document is the normative source" not in en_text:
             raise Failure(f"ENGLISH_AUTHORITY_MISSING {en_path.relative_to(ROOT)}")
@@ -416,7 +430,9 @@ def check_docs() -> None:
         text = path.read_text(encoding="utf-8")
         for target in MARKDOWN_LINK.findall(text):
             target = target.split("#", 1)[0]
-            if not target or target.startswith(("http://", "https://", "mailto:", "chatgpt-")):
+            if not target or target.startswith(
+                ("http://", "https://", "mailto:", "chatgpt-")
+            ):
                 continue
             local = (path.parent / target).resolve()
             if not local.exists():

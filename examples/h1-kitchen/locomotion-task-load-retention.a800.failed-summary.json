@@ -1,0 +1,48 @@
+{
+  "id": "evidence-summary://worldspec/h1/task-load-retention-v2/a800-8deab2078b4d",
+  "summaryVersion": "0.1.0",
+  "status": "failed",
+  "executionEvidence": "executed",
+  "job": "worldspec-h1-midterm-6hgm8",
+  "probeRevision": "8deab2078b4d308e2297829d482eded356581355",
+  "imageSourceRevision": "0c7998df21638e24ccfcd7e242092e4be3da007c",
+  "containerDigest": "sha256:3b8b20e13350872ee7c8a892a488794d050a04713e2b95136705819f885ba766",
+  "report": {
+    "digest": "sha256:9bce23e1c4bf26edff4db38c862e7da1b84b749d046bc7cbb480328cdaac38a0",
+    "sizeBytes": 30761
+  },
+  "checkpoint": {
+    "digest": "sha256:c5360ff126c3eb716710f43f615ee7f1be7604c36af95c4fd07e9f9048b7e15b",
+    "sizeBytes": 1258786,
+    "selectedStep": 12288000,
+    "distribution": "internal_only"
+  },
+  "trace": {
+    "digest": "sha256:f80e16b6dff76f50bee017f1dffbb320195511ee3795fc15112a4def8014e976",
+    "sizeBytes": 1155003,
+    "recordCount": 2000
+  },
+  "quality": {
+    "formalTrainingGate": "failed",
+    "selectedMeanEpisodeLength": 500.7890625,
+    "terminalMeanEpisodeLength": 387.9921875,
+    "minimumRequiredMeanEpisodeLength": 900.0,
+    "standRegressionPasses": 5,
+    "walkSettlePassesUnderHistoricalWholeWindowMetric": 0,
+    "terminalHoldRecalculation": {
+      "windowSeconds": 0.2,
+      "linearSpeedRange": [0.04801375494973832, 0.07816836284930548],
+      "angularSpeedRange": [0.08294874355636093, 0.11255819774699444],
+      "thresholdsUnchanged": true
+    },
+    "dominantTrainingTermination": "fall_height",
+    "logDiagnosticsClean": true
+  },
+  "claimBoundary": {
+    "policyCandidate": false,
+    "formalTraining": "not_started",
+    "fullA5": "not_executed",
+    "fiveOfFiveKitchenTask": "not_executed",
+    "l3": "not_claimed"
+  }
+}

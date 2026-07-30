@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROFILE="${ROOT_DIR}/examples/h1-kitchen/locomotion-task-load-retention-profile.json"
+PROFILE="${WORLD_SPEC_TASK_LOAD_CALIBRATION_PROFILE:-${ROOT_DIR}/examples/h1-kitchen/locomotion-task-load-retention-profile.json}"
 SOURCE_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-retention.a800.failed.json"
 SOURCE_CHECKPOINT="${WORLD_SPEC_TASK_LOAD_RETENTION_WARM_START_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-fwn8f/midterm-checkpoint.zip}"
 STAND_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-calibration.a800.passed.json"
@@ -12,6 +12,8 @@ SETTLE_CHECKPOINT="${WORLD_SPEC_TASK_LOAD_RETENTION_SETTLE_CHECKPOINT:-${ROOT_DI
 A5CK_REPORT="${WORLD_SPEC_A5CK_REPORT:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-5nn2q/whole-body-control-report.json}"
 A5CK_CONTROLLER="${WORLD_SPEC_A5CK_CONTROLLER:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-5nn2q/whole-body-controller.json}"
 A5CK_TRACE="${WORLD_SPEC_A5CK_TRACE:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-5nn2q/evaluation-traces.jsonl}"
+PRIOR_REPORT="${WORLD_SPEC_TASK_LOAD_PRIOR_REPORT:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-6hgm8/midterm-report.json}"
+PRIOR_CHECKPOINT="${WORLD_SPEC_TASK_LOAD_PRIOR_CHECKPOINT:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-6hgm8/midterm-checkpoint.zip}"
 
 for required in \
   "${PROFILE}" \
@@ -31,6 +33,27 @@ for required in \
   fi
 done
 
+if python3 - "${PROFILE}" <<'PY'
+import json
+import pathlib
+import sys
+raise SystemExit(
+    0
+    if json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))["stage"]
+    == "loaded_track_settle_task_load_survival"
+    else 1
+)
+PY
+then
+  for required in "${PRIOR_REPORT}" "${PRIOR_CHECKPOINT}"; do
+    if [[ ! -r "${required}" ]]; then
+      printf 'ERROR: required prior-attempt evidence is not readable: %s\n' \
+        "${required}" >&2
+      exit 2
+    fi
+  done
+fi
+
 python3 - \
   "${PROFILE}" \
   "${SOURCE_REPORT}" \
@@ -41,7 +64,9 @@ python3 - \
   "${SETTLE_CHECKPOINT}" \
   "${A5CK_REPORT}" \
   "${A5CK_CONTROLLER}" \
-  "${A5CK_TRACE}" <<'PY'
+  "${A5CK_TRACE}" \
+  "${PRIOR_REPORT}" \
+  "${PRIOR_CHECKPOINT}" <<'PY'
 import hashlib
 import json
 import pathlib
@@ -81,6 +106,22 @@ trace_records = sum(
 )
 if trace_records != evidence["traceRecordCount"]:
     raise SystemExit("A5-CK trace record count mismatch")
+if profile["stage"] == "loaded_track_settle_task_load_survival":
+    prior = profile["priorAttempt"]
+    report = pathlib.Path(sys.argv[11]).read_bytes()
+    checkpoint = pathlib.Path(sys.argv[12]).read_bytes()
+    if (
+        f"sha256:{hashlib.sha256(report).hexdigest()}"
+        != prior["sourceReportDigest"]
+        or len(report) != prior["sourceReportSizeBytes"]
+    ):
+        raise SystemExit("prior attempt report identity mismatch")
+    if (
+        f"sha256:{hashlib.sha256(checkpoint).hexdigest()}"
+        != prior["checkpointDigest"]
+        or len(checkpoint) != prior["checkpointSizeBytes"]
+    ):
+        raise SystemExit("prior attempt checkpoint identity mismatch")
 PY
 
 export WORLD_SPEC_MIDTERM_PROFILE="${PROFILE}"
