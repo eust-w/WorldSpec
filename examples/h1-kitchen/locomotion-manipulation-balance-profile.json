@@ -5,8 +5,8 @@
   "stage": "loaded_track_settle_manipulation_balance",
   "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:3de0caf6b170f16e026d774cd650f3ef85e5a2a5fddc990d0ebab6d1fa9cad63",
-    "containerDigest": "sha256:3de0caf6b170f16e026d774cd650f3ef85e5a2a5fddc990d0ebab6d1fa9cad63",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:2656ac9ec5627cb0160719a6e1eec2d9914b95323519148247b4579da4bcb93b",
+    "containerDigest": "sha256:2656ac9ec5627cb0160719a6e1eec2d9914b95323519148247b4579da4bcb93b",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50
   },

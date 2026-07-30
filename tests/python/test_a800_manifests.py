@@ -653,7 +653,7 @@ def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None
     assert "loaded-track-settle-manipulation-mixed-reset-v3-failed" in entrypoint
     assert 'report["checkpoint"]' in entrypoint
     assert (
-        "manipulation-checkpoint-portfolio-training-image-build.a800.passed.json"
+        "manipulation-memory-isolated-checkpoint-portfolio-training-image-build.a800.passed.json"
         in wrapper
     )
     assert "locomotion-manipulation-mixed-reset.a800.failed-summary.json" in wrapper
@@ -665,7 +665,7 @@ def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None
             ROOT
             / "examples"
             / "h1-kitchen"
-            / "manipulation-checkpoint-portfolio-training-image-build.a800.passed.json"
+            / "manipulation-memory-isolated-checkpoint-portfolio-training-image-build.a800.passed.json"
         ).read_text(encoding="utf-8")
     )
     assert profile["runtime"]["containerImage"] == build["image"]
