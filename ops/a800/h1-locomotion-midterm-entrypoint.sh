@@ -381,6 +381,13 @@ elif source["sourceStage"] == "loaded-track-settle-task-load-formal-v1-failed":
         or report["claimBoundary"]["policyCandidate"] is not False
     ):
         raise SystemExit("task-load supervisor source is not the frozen 100M evidence")
+elif source["sourceStage"] == "loaded-track-settle-capture-v1-passed":
+    if (
+        report["qualityAssessment"]["status"] != "passed"
+        or report["formalCaptureGate"] != "passed"
+        or report["policyStatus"] != "capture_candidate"
+    ):
+        raise SystemExit("manipulation-balance warm start is not frozen capture evidence")
 else:
     raise SystemExit("unsupported warm-start source stage")
 reported_checkpoint = (
@@ -406,6 +413,7 @@ if stage in {
     "loaded_track_settle_task_load_formal",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
+    "loaded_track_settle_manipulation_balance",
     "phase_aware_supervisor_probe",
     "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
@@ -426,7 +434,11 @@ if stage in {
             }
             else (
                 profile["motionTeacher"]
-                if stage == "loaded_track_settle_capture"
+                if stage
+                in {
+                    "loaded_track_settle_capture",
+                    "loaded_track_settle_manipulation_balance",
+                }
                 else (
                     profile["standTeacher"]
                     if stage
@@ -472,7 +484,13 @@ if stage in {
     ):
         raise SystemExit("retention teacher checkpoint identity mismatch")
     teacher_report = json.loads(teacher_input_report)
-    if teacher_report["researchCheckpoint"]["digest"] != teacher_checkpoint_digest:
+    teacher_reported_checkpoint = (
+        teacher_report["artifacts"]["checkpoint"]
+        if teacher["sourceStage"]
+        == "loaded-track-settle-task-load-formal-v1-failed"
+        else teacher_report["researchCheckpoint"]
+    )
+    if teacher_reported_checkpoint["digest"] != teacher_checkpoint_digest:
         raise SystemExit("auxiliary policy report/checkpoint lineage mismatch")
     if teacher["sourceStage"] == "stand-v2.1":
         if teacher_report["qualityAssessment"]["status"] != "passed":
@@ -493,6 +511,17 @@ if stage in {
             or teacher_report["policyStatus"] != "capture_candidate"
         ):
             raise SystemExit("capture policy is not the frozen passing A3 evidence")
+    elif teacher["sourceStage"] == "loaded-track-settle-task-load-formal-v1-failed":
+        if (
+            teacher_report["status"] != "failed"
+            or teacher_report["formalTrainingGate"] != "failed"
+            or teacher_report["policyStatus"] != "non_publishable"
+            or teacher_report["metrics"]["maximumReportedStep"] < 100_000_000
+            or teacher_report["metrics"]["walkSettlePassed"] != 5
+            or teacher_report["metrics"]["standRegressionPassed"] != 0
+            or teacher_report["claimBoundary"]["policyCandidate"] is not False
+        ):
+            raise SystemExit("motion teacher is not the frozen 100M motion evidence")
     else:
         raise SystemExit("unsupported auxiliary policy source stage")
 if stage in {
@@ -727,6 +756,9 @@ from worldspec_h1_training.capture import run_capture_calibration
 from worldspec_h1_training.dual_policy import run_dual_policy_probe
 from worldspec_h1_training.full_task import run_task_load_full_kitchen_single_probe
 from worldspec_h1_training.kitchen_task import run_fixed_kitchen_task_probe
+from worldspec_h1_training.manipulation_balance import (
+    run_manipulation_balance_calibration,
+)
 from worldspec_h1_training.midterm import run_midterm_calibration
 from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
 from worldspec_h1_training.whole_body import (
@@ -775,6 +807,16 @@ if midterm_profile["stage"] == "dual_policy_switch_probe":
     )
 elif midterm_profile["stage"] == "loaded_track_settle_capture":
     result = run_capture_calibration(
+        base_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+    )
+elif midterm_profile["stage"] == "loaded_track_settle_manipulation_balance":
+    result = run_manipulation_balance_calibration(
         base_profile,
         midterm_profile,
         Path(os.environ["BUNDLE_DIR"]),
@@ -1207,6 +1249,33 @@ elif midterm_profile["stage"] == "loaded_track_settle_capture":
     }
     print(
         "WORLDSPEC_A800_CAPTURE_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "loaded_track_settle_manipulation_balance":
+    report = {
+        "id": (
+            "manipulation-balance-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_manipulation_balance_calibration",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_manipulation_balance",
+        "policyStatus": (
+            "manipulation_balance_candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalManipulationBalanceGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_MANIPULATION_BALANCE_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 elif midterm_profile["stage"] == "phase_aware_supervisor_probe":

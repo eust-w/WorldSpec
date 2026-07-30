@@ -1,0 +1,344 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-balance-profile.schema.json",
+  "title": "WorldSpec H1 Manipulation-Balance Calibration Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "baseTrainingProfileDigest",
+    "runtime",
+    "warmStart",
+    "motionTeacher",
+    "a6k1CaptureFailure",
+    "trainingOverrides",
+    "environment",
+    "qualityGates",
+    "artifactPolicy",
+    "evidenceStatus"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "profileVersion": {
+      "const": "0.1.0"
+    },
+    "status": {
+      "const": "research"
+    },
+    "stage": {
+      "const": "loaded_track_settle_manipulation_balance"
+    },
+    "baseTrainingProfileDigest": {
+      "const": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6"
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "packageLockDigest": {
+          "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+        },
+        "ccdIterations": {
+          "const": 50
+        }
+      },
+      "additionalProperties": false
+    },
+    "warmStart": {
+      "const": {
+        "sourceStage": "loaded-track-settle-capture-v1-passed",
+        "sourceReportDigest": "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f",
+        "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+        "checkpointSizeBytes": 6280278,
+        "distribution": "internal_only",
+        "restore": {
+          "normalizer": true,
+          "policy": true,
+          "value": true
+        },
+        "optimizerState": "reset"
+      }
+    },
+    "motionTeacher": {
+      "const": {
+        "sourceStage": "loaded-track-settle-task-load-formal-v1-failed",
+        "sourceReportDigest": "sha256:31e4991a33721928df2b2887f00dccd339dfe261dfbf1aaec4597579c6c784d9",
+        "checkpointDigest": "sha256:61ebfa89d0fa5e7d7fc6488c524cf21c742c6a25efb5854a2bd689a61c895016",
+        "checkpointSizeBytes": 1260210,
+        "distribution": "internal_only",
+        "selectedRole": "motion",
+        "mode": "deterministic_motion_to_capture_snapshot_generation"
+      }
+    },
+    "a6k1CaptureFailure": {
+      "type": "object",
+      "required": [
+        "job",
+        "probeRevision",
+        "reportDigest",
+        "reportSizeBytes",
+        "traceDigest",
+        "traceSizeBytes",
+        "controllerDigest",
+        "controllerSizeBytes",
+        "activePolicy",
+        "terminalReason",
+        "completedPhase",
+        "taskBaseTranslation",
+        "taskBaseLateralDrift",
+        "qualityGatesChanged"
+      ],
+      "properties": {
+        "job": {
+          "const": "worldspec-h1-midterm-dct4w"
+        },
+        "probeRevision": {
+          "const": "06edd7ca1132fcf46536b3048f645c2a551e835c"
+        },
+        "reportDigest": {
+          "const": "sha256:45e91743b7ee4e7d36a960c03be72c0cc547b9f2beede2b980a763d967820358"
+        },
+        "reportSizeBytes": {
+          "const": 19361
+        },
+        "traceDigest": {
+          "const": "sha256:45b859d08f12d2940b7065ad63684141dee60d030807466cc291916afe2f6b94"
+        },
+        "traceSizeBytes": {
+          "const": 2224266
+        },
+        "controllerDigest": {
+          "const": "sha256:3fd09437d407edceaece3f1827ccd124b45d8fb3947646290e8f07d00257fdf8"
+        },
+        "controllerSizeBytes": {
+          "const": 7549
+        },
+        "activePolicy": {
+          "const": "capture"
+        },
+        "terminalReason": {
+          "const": "fall_height"
+        },
+        "completedPhase": {
+          "const": "reach_handle"
+        },
+        "taskBaseTranslation": {
+          "const": 0.9462899017731613
+        },
+        "taskBaseLateralDrift": {
+          "const": 0.4680730141699314
+        },
+        "qualityGatesChanged": {
+          "const": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "trainingOverrides": {
+      "const": {
+        "numTimesteps": 16777216,
+        "numEnvs": 4096,
+        "numEvals": 8,
+        "episodeLength": 100,
+        "unrollLength": 20,
+        "numMinibatches": 16,
+        "numUpdatesPerBatch": 4,
+        "batchSize": 256,
+        "learningRate": 0.00001,
+        "entropyCost": 0.0002,
+        "discounting": 0.995
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "commandDistribution",
+        "snapshotCurriculum",
+        "taskLoadCurriculum",
+        "dynamicArmCurriculum",
+        "termination",
+        "reward",
+        "targets",
+        "sigmas",
+        "commandResampleSteps"
+      ],
+      "properties": {
+        "commandDistribution": {
+          "const": {
+            "linearVelocityX": [0.0, 0.0],
+            "linearVelocityY": [0.0, 0.0],
+            "angularVelocityYaw": [0.0, 0.0],
+            "zeroCommandProbability": 1.0
+          }
+        },
+        "snapshotCurriculum": {
+          "const": {
+            "mode": "loaded_motion_capture_snapshot",
+            "snapshotCount": 4096,
+            "motionSteps": 150,
+            "captureStepRange": [35, 50],
+            "motionCommandDistribution": {
+              "linearVelocityX": [0.4, 0.6],
+              "linearVelocityY": [-0.05, 0.05],
+              "angularVelocityYaw": [-0.1, 0.1]
+            }
+          }
+        },
+        "taskLoadCurriculum": {
+          "type": "object"
+        },
+        "dynamicArmCurriculum": {
+          "type": "object",
+          "required": [
+            "mode",
+            "sourceTraceDigest",
+            "episodeSteps",
+            "trajectoryScale",
+            "trajectoryKnots"
+          ],
+          "properties": {
+            "mode": {
+              "const": "evidence_bound_right_arm_reach_v1"
+            },
+            "sourceTraceDigest": {
+              "const": "sha256:45b859d08f12d2940b7065ad63684141dee60d030807466cc291916afe2f6b94"
+            },
+            "episodeSteps": {
+              "const": 100
+            },
+            "trajectoryScale": {
+              "const": [0.75, 1.0]
+            },
+            "trajectoryKnots": {
+              "type": "array",
+              "minItems": 7,
+              "maxItems": 7,
+              "items": {
+                "$ref": "#/$defs/trajectoryKnot"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "termination": {
+          "const": {
+            "minimumBaseHeight": 0.5,
+            "minimumUprightCosine": 0.25,
+            "jointLimitToleranceRadians": 0.02
+          }
+        },
+        "reward": {
+          "const": {
+            "survival": 3.0,
+            "trackingLinear": 6.0,
+            "trackingYaw": 2.0,
+            "upright": 4.0,
+            "baseHeight": 3.0,
+            "pose": 0.5,
+            "baseAnchor": 12.0,
+            "verticalVelocityCost": 1.0,
+            "angularVelocityXYCost": 0.5,
+            "torqueCost": 0.000002,
+            "actionRateCost": 0.03,
+            "settleLinear": 12.0,
+            "settleYaw": 5.0,
+            "settleActionRateScale": 0.2,
+            "terminationPenalty": 100.0
+          }
+        },
+        "targets": {
+          "const": {
+            "baseHeight": 0.98
+          }
+        },
+        "sigmas": {
+          "const": {
+            "tracking": 0.2,
+            "upright": 0.05,
+            "baseHeight": 0.02,
+            "pose": 0.2,
+            "settleTracking": 0.05,
+            "baseAnchor": 0.01
+          }
+        },
+        "commandResampleSteps": {
+          "const": 100
+        }
+      },
+      "additionalProperties": false
+    },
+    "qualityGates": {
+      "const": {
+        "minimumFinalMeanEpisodeLength": 90.0,
+        "requiredConsecutivePasses": 5,
+        "episodeSteps": 100,
+        "minimumBaseHeight": 0.8,
+        "minimumUprightCosine": 0.8,
+        "maximumBaseTranslation": 0.2,
+        "maximumBaseLateralDrift": 0.12,
+        "maximumTerminalLinearSpeed": 0.2,
+        "maximumTerminalAngularSpeed": 0.4,
+        "maximumNonFiniteSamples": 0
+      }
+    },
+    "artifactPolicy": {
+      "const": {
+        "checkpoint": "research_only",
+        "snapshotBank": "research_only",
+        "distribution": "internal_only"
+      }
+    },
+    "evidenceStatus": {
+      "const": "derived"
+    }
+  },
+  "$defs": {
+    "vector9": {
+      "type": "array",
+      "minItems": 9,
+      "maxItems": 9,
+      "items": {
+        "type": "number"
+      }
+    },
+    "trajectoryKnot": {
+      "type": "object",
+      "required": [
+        "step",
+        "heldTargets",
+        "heldFeedforward"
+      ],
+      "properties": {
+        "step": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "heldTargets": {
+          "$ref": "#/$defs/vector9"
+        },
+        "heldFeedforward": {
+          "$ref": "#/$defs/vector9"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,496 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-balance-report.schema.json",
+  "title": "WorldSpec H1 Manipulation-Balance Calibration Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "policyStatus",
+    "formalManipulationBalanceGate",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "baseTrainingProfileDigest",
+    "manipulationBalanceProfileDigest",
+    "effectiveTrainingProfileDigest",
+    "warmStart",
+    "motionTeacher",
+    "a6k1CaptureFailure",
+    "snapshotBank",
+    "runtimeCapacity",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "training",
+    "qualityAssessment",
+    "researchCheckpoint",
+    "traceArtifact",
+    "dynamicArmCurriculum",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "reportVersion": {
+      "const": "0.1.0"
+    },
+    "status": {
+      "const": "completed"
+    },
+    "scope": {
+      "const": "h1_manipulation_balance_calibration"
+    },
+    "executionEvidence": {
+      "const": "executed"
+    },
+    "runtimeAcceptance": {
+      "const": "research_manipulation_balance"
+    },
+    "policyStatus": {
+      "enum": [
+        "manipulation_balance_candidate",
+        "non_publishable"
+      ]
+    },
+    "formalManipulationBalanceGate": {
+      "enum": [
+        "passed",
+        "failed"
+      ]
+    },
+    "probeDefinition": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "imageSource": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "probeInput": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/probeInput"
+    },
+    "container": {
+      "type": "object"
+    },
+    "platform": {
+      "type": "object"
+    },
+    "gpu": {
+      "type": "object"
+    },
+    "packages": {
+      "type": "object"
+    },
+    "packageLockDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "baseTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "manipulationBalanceProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "effectiveTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "warmStart": {
+      "$ref": "#/$defs/initialization"
+    },
+    "motionTeacher": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/initialization"
+        },
+        {
+          "properties": {
+            "mode": {
+              "const": "deterministic_motion_to_capture_snapshot_generation"
+            },
+            "selectedRole": {
+              "const": "motion"
+            }
+          },
+          "required": [
+            "mode",
+            "selectedRole"
+          ]
+        }
+      ]
+    },
+    "a6k1CaptureFailure": {
+      "type": "object"
+    },
+    "snapshotBank": {
+      "type": "object",
+      "required": [
+        "path",
+        "digest",
+        "sizeBytes",
+        "distribution",
+        "snapshotCount",
+        "motionSteps",
+        "captureStepMinimum",
+        "captureStepMaximum",
+        "motionCommandMinimum",
+        "motionCommandMaximum",
+        "terminatedSnapshotCount",
+        "seed"
+      ],
+      "properties": {
+        "path": {
+          "const": "manipulation-state-bank.npz"
+        },
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "const": "internal_only"
+        },
+        "snapshotCount": {
+          "const": 4096
+        },
+        "motionSteps": {
+          "const": 150
+        },
+        "captureStepMinimum": {
+          "type": "integer",
+          "minimum": 35,
+          "maximum": 50
+        },
+        "captureStepMaximum": {
+          "type": "integer",
+          "minimum": 35,
+          "maximum": 50
+        },
+        "motionCommandMinimum": {
+          "$ref": "#/$defs/vector3"
+        },
+        "motionCommandMaximum": {
+          "$ref": "#/$defs/vector3"
+        },
+        "terminatedSnapshotCount": {
+          "const": 0
+        },
+        "seed": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "runtimeCapacity": {
+      "type": "object"
+    },
+    "staticPreflight": {
+      "type": "object"
+    },
+    "runtimePreflight": {
+      "type": "object"
+    },
+    "target": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/target"
+    },
+    "training": {
+      "type": "object",
+      "required": [
+        "profileStage",
+        "progressRecordCount",
+        "maximumReportedStep",
+        "elapsedSeconds",
+        "firstProgress",
+        "finalProgress"
+      ],
+      "properties": {
+        "profileStage": {
+          "const": "loaded_track_settle_manipulation_balance"
+        },
+        "progressRecordCount": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "maximumReportedStep": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "elapsedSeconds": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "firstProgress": {
+          "type": "object"
+        },
+        "finalProgress": {
+          "type": "object"
+        }
+      },
+      "additionalProperties": false
+    },
+    "qualityAssessment": {
+      "type": "object",
+      "required": [
+        "status",
+        "finalMeanEpisodeLength",
+        "minimumFinalMeanEpisodeLength",
+        "meanEpisodeLengthGate",
+        "deterministicSuiteGate",
+        "tests"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "passed",
+            "failed"
+          ]
+        },
+        "finalMeanEpisodeLength": {
+          "type": "number"
+        },
+        "minimumFinalMeanEpisodeLength": {
+          "const": 90.0
+        },
+        "meanEpisodeLengthGate": {
+          "type": "boolean"
+        },
+        "deterministicSuiteGate": {
+          "type": "boolean"
+        },
+        "tests": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/test"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "researchCheckpoint": {
+      "$ref": "#/$defs/artifact"
+    },
+    "traceArtifact": {
+      "$ref": "#/$defs/artifact"
+    },
+    "dynamicArmCurriculum": {
+      "type": "object"
+    },
+    "logDiagnostics": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/logDiagnostics"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "initialization": {
+      "type": "object",
+      "required": [
+        "archiveDigest",
+        "archiveSizeBytes",
+        "selectedStep",
+        "networkConfig",
+        "restored",
+        "optimizerState"
+      ],
+      "properties": {
+        "archiveDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "archiveSizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "selectedStep": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "networkConfig": {
+          "type": "object"
+        },
+        "restored": {
+          "type": "object",
+          "required": [
+            "normalizer",
+            "policy",
+            "value",
+            "optimizer"
+          ],
+          "properties": {
+            "normalizer": {
+              "const": true
+            },
+            "policy": {
+              "const": true
+            },
+            "value": {
+              "const": true
+            },
+            "optimizer": {
+              "const": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "optimizerState": {
+          "const": "reset"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "selectedRole": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "vector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "number"
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "path",
+        "digest",
+        "sizeBytes"
+      ],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "not": {
+            "pattern": "(^/|(^|/)\\.\\.(/|$))"
+          }
+        },
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "test": {
+      "type": "object",
+      "required": [
+        "id",
+        "suite",
+        "result",
+        "metrics"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "common.schema.json#/$defs/id"
+        },
+        "suite": {
+          "enum": [
+            "post_walk_capture",
+            "from_rest"
+          ]
+        },
+        "result": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "metrics": {
+          "type": "object",
+          "required": [
+            "completedSteps",
+            "requiredSteps",
+            "minimumBaseHeight",
+            "minimumUprightCosine",
+            "maximumBaseTranslation",
+            "maximumBaseLateralDrift",
+            "maximumTerminalLinearSpeed",
+            "maximumTerminalAngularSpeed",
+            "nonFiniteSamples",
+            "doneSeen",
+            "terminalReasons"
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "formalManipulationBalanceGate": {
+            "const": "passed"
+          }
+        },
+        "required": [
+          "formalManipulationBalanceGate"
+        ]
+      },
+      "then": {
+        "properties": {
+          "policyStatus": {
+            "const": "manipulation_balance_candidate"
+          },
+          "qualityAssessment": {
+            "properties": {
+              "status": {
+                "const": "passed"
+              },
+              "meanEpisodeLengthGate": {
+                "const": true
+              },
+              "deterministicSuiteGate": {
+                "const": true
+              },
+              "tests": {
+                "not": {
+                  "contains": {
+                    "properties": {
+                      "result": {
+                        "const": "fail"
+                      }
+                    },
+                    "required": [
+                      "result"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "logDiagnostics": {
+            "properties": {
+              "clean": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

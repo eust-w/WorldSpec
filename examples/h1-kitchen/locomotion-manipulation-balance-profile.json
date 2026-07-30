@@ -1,0 +1,189 @@
+{
+  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/post-walk-dynamic-arm-v1",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "loaded_track_settle_manipulation_balance",
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:8bba0fc545a69da26d37f3a25539e8abc9834939cad05f09349d87789d9947f0",
+    "containerDigest": "sha256:8bba0fc545a69da26d37f3a25539e8abc9834939cad05f09349d87789d9947f0",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50
+  },
+  "warmStart": {
+    "sourceStage": "loaded-track-settle-capture-v1-passed",
+    "sourceReportDigest": "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f",
+    "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "checkpointSizeBytes": 6280278,
+    "distribution": "internal_only",
+    "restore": {
+      "normalizer": true,
+      "policy": true,
+      "value": true
+    },
+    "optimizerState": "reset"
+  },
+  "motionTeacher": {
+    "sourceStage": "loaded-track-settle-task-load-formal-v1-failed",
+    "sourceReportDigest": "sha256:31e4991a33721928df2b2887f00dccd339dfe261dfbf1aaec4597579c6c784d9",
+    "checkpointDigest": "sha256:61ebfa89d0fa5e7d7fc6488c524cf21c742c6a25efb5854a2bd689a61c895016",
+    "checkpointSizeBytes": 1260210,
+    "distribution": "internal_only",
+    "selectedRole": "motion",
+    "mode": "deterministic_motion_to_capture_snapshot_generation"
+  },
+  "a6k1CaptureFailure": {
+    "job": "worldspec-h1-midterm-dct4w",
+    "probeRevision": "06edd7ca1132fcf46536b3048f645c2a551e835c",
+    "reportDigest": "sha256:45e91743b7ee4e7d36a960c03be72c0cc547b9f2beede2b980a763d967820358",
+    "reportSizeBytes": 19361,
+    "traceDigest": "sha256:45b859d08f12d2940b7065ad63684141dee60d030807466cc291916afe2f6b94",
+    "traceSizeBytes": 2224266,
+    "controllerDigest": "sha256:3fd09437d407edceaece3f1827ccd124b45d8fb3947646290e8f07d00257fdf8",
+    "controllerSizeBytes": 7549,
+    "activePolicy": "capture",
+    "terminalReason": "fall_height",
+    "completedPhase": "reach_handle",
+    "taskBaseTranslation": 0.9462899017731613,
+    "taskBaseLateralDrift": 0.4680730141699314,
+    "qualityGatesChanged": false
+  },
+  "trainingOverrides": {
+    "numTimesteps": 16777216,
+    "numEnvs": 4096,
+    "numEvals": 8,
+    "episodeLength": 100,
+    "unrollLength": 20,
+    "numMinibatches": 16,
+    "numUpdatesPerBatch": 4,
+    "batchSize": 256,
+    "learningRate": 0.00001,
+    "entropyCost": 0.0002,
+    "discounting": 0.995
+  },
+  "environment": {
+    "commandDistribution": {
+      "linearVelocityX": [0.0, 0.0],
+      "linearVelocityY": [0.0, 0.0],
+      "angularVelocityYaw": [0.0, 0.0],
+      "zeroCommandProbability": 1.0
+    },
+    "snapshotCurriculum": {
+      "mode": "loaded_motion_capture_snapshot",
+      "snapshotCount": 4096,
+      "motionSteps": 150,
+      "captureStepRange": [35, 50],
+      "motionCommandDistribution": {
+        "linearVelocityX": [0.4, 0.6],
+        "linearVelocityY": [-0.05, 0.05],
+        "angularVelocityYaw": [-0.1, 0.1]
+      }
+    },
+    "taskLoadCurriculum": {
+      "mode": "static_right_arm_pose",
+      "sourceJob": "worldspec-h1-midterm-5nn2q",
+      "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+      "heldTargetScale": [1.0, 1.0],
+      "initialBaseVelocityX": [0.0, 0.0],
+      "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, 0.1543052911758423, 0.09892238825658843, -0.006488978405079102, -0.19852599334400028],
+      "heldFeedforward": [0.032988220529269176, -1.1402555002525037, 0.08486267857762098, 0.012800121336152957, -1.0451398037469817, -0.9578816827225751, 0.837737275364864, 0.46023224988862355, -4.402542577541209],
+      "observationAugmentation": "none",
+      "qualityGatesChanged": false
+    },
+    "dynamicArmCurriculum": {
+      "mode": "evidence_bound_right_arm_reach_v1",
+      "sourceTraceDigest": "sha256:45b859d08f12d2940b7065ad63684141dee60d030807466cc291916afe2f6b94",
+      "episodeSteps": 100,
+      "trajectoryScale": [0.75, 1.0],
+      "trajectoryKnots": [
+        {
+          "step": 0,
+          "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, 0.1543052911758423, 0.09892238825658843, -0.006488978405079102, -0.19852599334400028],
+          "heldFeedforward": [0.032988220529269176, -1.1402555002525037, 0.08486267857762098, 0.012800121336152957, -1.0451398037469817, -0.9578816827225751, 0.837737275364864, 0.46023224988862355, -4.402542577541209]
+        },
+        {
+          "step": 5,
+          "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, -0.09965808987617492, 0.028872416728217234, -0.12167143662028922, 0.009739961959215448],
+          "heldFeedforward": [0.1680696747004276, -1.1976452358824279, 0.18025528145452352, 0.03468204546459902, -1.0455716430862962, -2.971125293979, 0.9348745896661494, 0.5760253329945153, -4.390410456315016]
+        },
+        {
+          "step": 15,
+          "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, -0.5035227378799308, -0.11494406030366155, -0.18123974089336659, 0.4604156196117401],
+          "heldFeedforward": [0.2706931324063241, -1.2807947720821096, 0.11847126498638527, 0.019756445082189822, -1.0468542988132297, -8.86953962193507, -0.6851127323639048, 0.09892613004358708, -6.236283393464163]
+        },
+        {
+          "step": 25,
+          "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, -0.6864341108398805, -0.15760063317480932, -0.20137286481171396, 0.7752665891538756],
+          "heldFeedforward": [0.15884798470550893, -1.3692005635435809, 0.20766792465892703, 0.03957326203048639, -1.0458039394642151, -10.768232067572505, -3.3756956180844444, -0.3438746830214372, -4.711641829904508]
+        },
+        {
+          "step": 30,
+          "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, -0.8783807639104484, -0.2135736363672297, -0.22131405366572254, 0.9845652461051941],
+          "heldFeedforward": [0.6398647991487194, -1.455280253508255, 0.277696297026198, 0.05503073351652549, -1.0478031838393067, -11.055074955449417, -3.3823736684530052, -0.27764824651269127, -4.392885623670252]
+        },
+        {
+          "step": 45,
+          "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, -1.147033125595145, -0.22617855939133252, -0.21083969044251988, 1.4936201707446037],
+          "heldFeedforward": [0.4601545329644471, -1.60370468229885, 0.3163013461889479, 0.06409719139713749, -1.0472194346579262, -12.111874935635354, -4.110418722734953, -0.12760540258622655, -4.307221465824047]
+        },
+        {
+          "step": 100,
+          "heldTargets": [0.0, 0.0, 0.0, 0.0, 0.0, -1.147033125595145, -0.22617855939133252, -0.21083969044251988, 1.4936201707446037],
+          "heldFeedforward": [0.4601545329644471, -1.60370468229885, 0.3163013461889479, 0.06409719139713749, -1.0472194346579262, -12.111874935635354, -4.110418722734953, -0.12760540258622655, -4.307221465824047]
+        }
+      ]
+    },
+    "termination": {
+      "minimumBaseHeight": 0.5,
+      "minimumUprightCosine": 0.25,
+      "jointLimitToleranceRadians": 0.02
+    },
+    "reward": {
+      "survival": 3.0,
+      "trackingLinear": 6.0,
+      "trackingYaw": 2.0,
+      "upright": 4.0,
+      "baseHeight": 3.0,
+      "pose": 0.5,
+      "baseAnchor": 12.0,
+      "verticalVelocityCost": 1.0,
+      "angularVelocityXYCost": 0.5,
+      "torqueCost": 0.000002,
+      "actionRateCost": 0.03,
+      "settleLinear": 12.0,
+      "settleYaw": 5.0,
+      "settleActionRateScale": 0.2,
+      "terminationPenalty": 100.0
+    },
+    "targets": {
+      "baseHeight": 0.98
+    },
+    "sigmas": {
+      "tracking": 0.2,
+      "upright": 0.05,
+      "baseHeight": 0.02,
+      "pose": 0.2,
+      "settleTracking": 0.05,
+      "baseAnchor": 0.01
+    },
+    "commandResampleSteps": 100
+  },
+  "qualityGates": {
+    "minimumFinalMeanEpisodeLength": 90.0,
+    "requiredConsecutivePasses": 5,
+    "episodeSteps": 100,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "maximumBaseTranslation": 0.2,
+    "maximumBaseLateralDrift": 0.12,
+    "maximumTerminalLinearSpeed": 0.2,
+    "maximumTerminalAngularSpeed": 0.4,
+    "maximumNonFiniteSamples": 0
+  },
+  "artifactPolicy": {
+    "checkpoint": "research_only",
+    "snapshotBank": "research_only",
+    "distribution": "internal_only"
+  },
+  "evidenceStatus": "derived"
+}

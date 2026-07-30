@@ -163,6 +163,7 @@ def make_environment(
             self._transition_curriculum = None
             self._capture_curriculum = None
             self._task_load_curriculum = None
+            self._dynamic_arm_curriculum = None
             self._capture_state_bank = None
             self._stand_teacher_policy = stand_teacher_policy
             self._settle_teacher_policy = settle_teacher_policy
@@ -260,6 +261,30 @@ def make_environment(
                     self._task_load_velocity_high = float(task_load["initialBaseVelocityX"][1])
                     self._task_load_targets = jp.asarray(task_load["heldTargets"])
                     self._task_load_feedforward = jp.asarray(task_load["heldFeedforward"])
+                dynamic_arm = training_environment.get("dynamicArmCurriculum")
+                if isinstance(dynamic_arm, dict):
+                    self._dynamic_arm_curriculum = dynamic_arm
+                    self._dynamic_arm_steps = jp.asarray(
+                        [knot["step"] for knot in dynamic_arm["trajectoryKnots"]],
+                        dtype=jp.float32,
+                    )
+                    self._dynamic_arm_targets = jp.asarray(
+                        [knot["heldTargets"] for knot in dynamic_arm["trajectoryKnots"]]
+                    )
+                    self._dynamic_arm_feedforward = jp.asarray(
+                        [knot["heldFeedforward"] for knot in dynamic_arm["trajectoryKnots"]]
+                    )
+                    if (
+                        self._dynamic_arm_targets.shape[1] != len(self._held_joint_ids)
+                        or self._dynamic_arm_feedforward.shape != self._dynamic_arm_targets.shape
+                    ):
+                        raise TrainingError(
+                            "DYNAMIC_ARM_CURRICULUM_SHAPE_INVALID",
+                            "Dynamic-arm target and feed-forward knots must match held joints.",
+                        )
+                    self._dynamic_arm_scale_low = float(dynamic_arm["trajectoryScale"][0])
+                    self._dynamic_arm_scale_high = float(dynamic_arm["trajectoryScale"][1])
+                    self._dynamic_arm_episode_steps = int(dynamic_arm["episodeSteps"])
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
                 self._minimum_upright = float(validation["minimumUprightCosine"])
@@ -332,9 +357,39 @@ def make_environment(
                 ]
             )
 
+        def _dynamic_arm_values(self, step, scale):
+            """Interpolate the evidence-bound arm disturbance without changing the policy ABI."""
+
+            knots = self._dynamic_arm_steps
+            upper = jp.searchsorted(knots, step.astype(jp.float32), side="right")
+            upper = jp.clip(upper, 1, knots.shape[0] - 1)
+            lower = upper - 1
+            lower_step = knots[lower]
+            upper_step = knots[upper]
+            alpha = jp.clip(
+                (step.astype(jp.float32) - lower_step)
+                / jp.maximum(upper_step - lower_step, 1.0),
+                0.0,
+                1.0,
+            )
+            target_start = self._dynamic_arm_targets[0]
+            feedforward_start = self._dynamic_arm_feedforward[0]
+            target = self._dynamic_arm_targets[lower] + alpha * (
+                self._dynamic_arm_targets[upper] - self._dynamic_arm_targets[lower]
+            )
+            feedforward = self._dynamic_arm_feedforward[lower] + alpha * (
+                self._dynamic_arm_feedforward[upper]
+                - self._dynamic_arm_feedforward[lower]
+            )
+            return (
+                target_start + scale * (target - target_start),
+                feedforward_start + scale * (feedforward - feedforward_start),
+            )
+
         def reset(self, rng):
-            rng, command_rng, bank_rng = jax.random.split(rng, 3)
+            rng, command_rng, bank_rng, arm_rng = jax.random.split(rng, 4)
             task_load_scale = jp.zeros(())
+            dynamic_arm_scale = jp.ones(())
             if self._capture_state_bank is not None:
                 bank_size = self._capture_state_bank["qpos"].shape[0]
                 bank_index = jax.random.randint(bank_rng, (), 0, bank_size)
@@ -373,6 +428,18 @@ def make_environment(
                     maxval=self._task_load_velocity_high,
                 )
                 qvel = qvel.at[0].set(initial_velocity_x)
+            if self._dynamic_arm_curriculum is not None:
+                dynamic_arm_scale = jax.random.uniform(
+                    arm_rng,
+                    shape=(),
+                    minval=self._dynamic_arm_scale_low,
+                    maxval=self._dynamic_arm_scale_high,
+                )
+                held_targets, held_feedforward = self._dynamic_arm_values(
+                    jp.zeros((), dtype=jp.int32),
+                    dynamic_arm_scale,
+                )
+                qpos = qpos.at[self._held_qpos].set(held_targets)
             data = mjx_env.make_data(
                 self.mj_model,
                 qpos=qpos,
@@ -390,6 +457,8 @@ def make_environment(
                 "held_targets": held_targets,
                 "held_feedforward": held_feedforward,
                 "task_load_scale": task_load_scale,
+                "dynamic_arm_scale": dynamic_arm_scale,
+                "base_anchor_xy": qpos[:2],
                 "gripper_commands": self._gripper_commands,
                 "transition_active": transition_active,
                 "stand_replay_active": stand_replay_active,
@@ -434,6 +503,9 @@ def make_environment(
                 "state/stand_replay": jp.zeros(()),
                 "state/capture": jp.zeros(()),
                 "state/task_load_scale": task_load_scale,
+                "reward/base_anchor": jp.zeros(()),
+                "state/base_anchor_error": jp.zeros(()),
+                "state/dynamic_arm_scale": dynamic_arm_scale,
             }
             observation = {"state": self._observation(data, info["last_action"], info["command"])}
             return mjx_env.State(
@@ -458,6 +530,11 @@ def make_environment(
                 "held_feedforward",
                 self._held_feedforward,
             )
+            if self._dynamic_arm_curriculum is not None:
+                held_targets, held_feedforward = self._dynamic_arm_values(
+                    state.info["step"],
+                    state.info["dynamic_arm_scale"],
+                )
             gripper_commands = state.info.get(
                 "gripper_commands",
                 self._gripper_commands,
@@ -487,6 +564,12 @@ def make_environment(
             policy_q = data.qpos[self._policy_qpos]
             held_q = data.qpos[self._held_qpos]
             pose_cost = jp.sum(jp.square(policy_q - self._default_angles))
+            base_anchor_error = jp.sum(
+                jp.square(data.qpos[:2] - state.info.get("base_anchor_xy", data.qpos[:2]))
+            )
+            base_anchor_reward = jp.exp(
+                -base_anchor_error / float(self._reward_sigmas.get("baseAnchor", 0.01))
+            )
             angular_velocity_xy_cost = jp.sum(jp.square(gyro[:2]))
             raw_torque_cost = jp.sum(jp.square(policy_torque))
             raw_action_rate_cost = jp.sum(jp.square(action - state.info["last_action"]))
@@ -503,6 +586,8 @@ def make_environment(
                     self._transition_cycle_steps,
                 )
                 transition_settle = transition_active & settle_phase
+            elif self._dynamic_arm_curriculum is not None:
+                transition_settle = jp.asarray(True)
             else:
                 transition_settle = capture_active
             settle_linear_reward = jp.zeros(())
@@ -521,7 +606,11 @@ def make_environment(
                     -height_error / float(self._reward_sigmas["baseHeight"])
                 )
                 pose_reward = jp.exp(-pose_cost / float(self._reward_sigmas["pose"]))
-                if self._transition_curriculum is not None or self._capture_curriculum is not None:
+                if (
+                    self._transition_curriculum is not None
+                    or self._capture_curriculum is not None
+                    or self._dynamic_arm_curriculum is not None
+                ):
                     settle_sigma = float(self._reward_sigmas["settleTracking"])
                     settle_linear_reward = (
                         jp.exp(-jp.sum(jp.square(local_velocity[:2])) / settle_sigma)
@@ -581,6 +670,8 @@ def make_environment(
                         + float(self._reward_config["upright"]) * upright_reward
                         + float(self._reward_config["baseHeight"]) * base_height_reward
                         + float(self._reward_config["pose"]) * pose_reward
+                        + float(self._reward_config.get("baseAnchor", 0.0))
+                        * base_anchor_reward
                         + float(self._reward_config.get("settleLinear", 0.0)) * settle_linear_reward
                         + float(self._reward_config.get("settleYaw", 0.0)) * settle_yaw_reward
                         + float(self._reward_config.get("standDistillation", 0.0))
@@ -681,6 +772,11 @@ def make_environment(
                 next_command = jp.zeros(3)
                 next_transition_active = jp.asarray(False)
                 next_stand_replay_active = jp.asarray(False)
+            elif self._dynamic_arm_curriculum is not None:
+                resample = step >= self._dynamic_arm_episode_steps
+                next_command = jp.zeros(3)
+                next_transition_active = jp.asarray(False)
+                next_stand_replay_active = jp.asarray(False)
             else:
                 resample = step >= self._command_resample_steps
                 next_command = jp.where(resample, self.sample_command(command_rng), command)
@@ -717,6 +813,7 @@ def make_environment(
                     "reward/upright": upright_reward,
                     "reward/base_height": base_height_reward,
                     "reward/pose": pose_reward,
+                    "reward/base_anchor": base_anchor_reward,
                     "reward/settle_linear": settle_linear_reward,
                     "reward/settle_yaw": settle_yaw_reward,
                     "reward/stand_distillation": stand_distillation_reward,
@@ -743,6 +840,11 @@ def make_environment(
                     "state/task_load_scale": state.info.get(
                         "task_load_scale",
                         jp.zeros(()),
+                    ),
+                    "state/base_anchor_error": base_anchor_error,
+                    "state/dynamic_arm_scale": state.info.get(
+                        "dynamic_arm_scale",
+                        jp.ones(()),
                     ),
                 },
             )

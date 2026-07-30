@@ -132,6 +132,11 @@ elif [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_CAPTURE_RESULT=
   REPORT_SCHEMA=h1-locomotion-capture-report.schema.json
   GATE_FIELD=formalCaptureGate
+elif [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]]; then
+  REPORT_FILENAME=manipulation-balance-report.json
+  REPORT_MARKER=WORLDSPEC_A800_MANIPULATION_BALANCE_RESULT=
+  REPORT_SCHEMA=h1-locomotion-manipulation-balance-report.schema.json
+  GATE_FIELD=formalManipulationBalanceGate
 elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
   REPORT_FILENAME=supervisor-report.json
   REPORT_MARKER=WORLDSPEC_A800_SUPERVISOR_RESULT=
@@ -177,6 +182,7 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]] ||
   [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
@@ -299,6 +305,7 @@ if profile["stage"] in {
     "loaded_track_settle_task_load_formal",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
+    "loaded_track_settle_manipulation_balance",
     "phase_aware_supervisor_probe",
     "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
@@ -321,7 +328,11 @@ if profile["stage"] in {
             }
             else (
                 profile["motionTeacher"]
-                if profile["stage"] == "loaded_track_settle_capture"
+                if profile["stage"]
+                in {
+                    "loaded_track_settle_capture",
+                    "loaded_track_settle_manipulation_balance",
+                }
                 else (
                     profile["standTeacher"]
                     if profile["stage"]
@@ -719,6 +730,7 @@ PY
         [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]] ||
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
@@ -951,6 +963,12 @@ elif gate_field == "formalCaptureGate":
     report["policyStatus"] = (
         "capture_candidate" if report[gate_field] == "passed" else "non_publishable"
     )
+elif gate_field == "formalManipulationBalanceGate":
+    report["policyStatus"] = (
+        "manipulation_balance_candidate"
+        if report[gate_field] == "passed"
+        else "non_publishable"
+    )
 elif gate_field == "formalSupervisorGate":
     report["controllerStatus"] = (
         "supervisor_candidate"
@@ -1065,7 +1083,8 @@ PY
           --expected-digest "${checkpoint_digest}" \
           --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
           --retries "${OUTPUT_COPY_RETRIES}"
-        if [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
+        if [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
+          [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]]; then
           read -r snapshot_size snapshot_digest < <(
             python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
 import json
@@ -1081,8 +1100,20 @@ PY
             --namespace "${K8S_NAMESPACE}" \
             --pod "${pod_name}" \
             --container midterm \
-            --remote-path /scratch/results/artifacts/capture-state-bank.npz \
-            --destination "${local_result_dir}/capture-state-bank.npz" \
+            --remote-path "$(
+              if [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
+                printf '/scratch/results/artifacts/capture-state-bank.npz'
+              else
+                printf '/scratch/results/artifacts/manipulation-state-bank.npz'
+              fi
+            )" \
+            --destination "$(
+              if [[ "${profile_stage}" == "loaded_track_settle_capture" ]]; then
+                printf '%s/capture-state-bank.npz' "${local_result_dir}"
+              else
+                printf '%s/manipulation-state-bank.npz' "${local_result_dir}"
+              fi
+            )" \
             --expected-size "${snapshot_size}" \
             --expected-digest "${snapshot_digest}" \
             --chunk-size "${OUTPUT_CHUNK_SIZE_BYTES}" \
