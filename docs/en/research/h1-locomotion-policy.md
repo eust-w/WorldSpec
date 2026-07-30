@@ -345,3 +345,21 @@ fell before the robot arrived, and the log contained 1,069 contact-capacity
 overflows. The system did not execute the other four runs and did not start
 100M. See [ADR-0021](../decisions/0021-h1-a5-failure-response.md) for the
 complete conclusion and the next decision.
+
+### 2026-07-30 task-load long-horizon calibration
+
+With the final H1 plus right Robotiq model, the full A5-CK task load, and every
+behavior gate unchanged, this calibration moved discount/GAE to `0.995/0.99`,
+increased termination cost, froze the restored normalization statistics, and
+used adaptive KL to bound Warm Start drift. The real one-A800 run completed
+`17,203,200` reported steps and selected the step-`12,288,000` checkpoint.
+Deterministic mean Episode length reached `996.0078/1000`, while the terminal
+checkpoint remained at `991.3672/1000`.
+
+All five walk-settle and five loaded-stand regressions passed, with no NaN,
+joint-limit violation, capacity overflow, or abnormal contact diagnostic. See
+the normalized
+[`locomotion-task-load-horizon.a800.passed.json`](../../../examples/h1-kitchen/locomotion-task-load-horizon.a800.passed.json)
+evidence. The policy remains `non_publishable / internal_only`; this result is
+not proof of the complete kitchen A5, 5-of-5, 100M, randomized robustness, or
+real-robot safety.

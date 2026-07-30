@@ -269,3 +269,17 @@ MuJoCo 3.6.0 原生加载和 IK 绑定测试。
 `reach_handle` 超时；杯子在机器人到达前掉落，且日志出现 1069 次接触容量溢出。
 系统按约定没有执行其余四次，也没有启动 100M。完整结论和下一轮选择见
 [ADR-0021](../decisions/0021-h1-a5-failure-response.md)。
+
+### 2026-07-30 任务载荷长时域校准
+
+在保留最终 H1 + 右手 Robotiq、完整 A5-CK 任务载荷和全部行为门的前提下，
+长时域校准把 discount/GAE 调整为 `0.995/0.99`，提高终止代价、冻结已恢复的
+归一化统计，并以自适应 KL 限制 Warm Start 漂移。真实单 A800 运行完成
+`17,203,200` 个报告步，选择 `12,288,000` 步 Checkpoint；确定性平均 Episode
+长度达到 `996.0078/1000`，末期仍为 `991.3672/1000`。
+
+五次行走—停稳和五次负载站立回归全部通过，运行诊断无 NaN、关节越限、容量溢出
+或异常接触。规范证据见
+[`locomotion-task-load-horizon.a800.passed.json`](../../../examples/h1-kitchen/locomotion-task-load-horizon.a800.passed.json)。
+该策略仍为 `non_publishable / internal_only`；本结果不等于完整厨房 A5、5/5、
+100M、随机鲁棒性或真机安全性证明。

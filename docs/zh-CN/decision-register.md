@@ -62,6 +62,6 @@ last-verified: 2026-07-30
 | D-050 | 首轮任务载荷校准在 A800 上无数值异常但出现末期退化、停稳超速和负载站立漂移；选择 retention-v3 Warm Start、Stand/Capture 双教师、完整 A5-CK 载荷与逐 Checkpoint 正式门选择，质量门保持不变 | Accepted Design | [ADR-0031](decisions/0031-h1-task-load-retention-and-checkpoint-selection.md) |
 | D-051 | task-load-retention 在 A800 上的 Episode 存活继续退化，且历史评估错误地把完整一秒减速段作为静止门；选择最后 0.2 秒终端保持测量、显式终止惩罚与教师动作成本，所有数值门槛不变，并只运行一次 survival 校准 | Accepted Design | [ADR-0032](decisions/0032-h1-terminal-hold-and-survival-shaping.md) |
 | D-052 | task-load-survival 的确定性十项行为测试全部通过，但 Brax 平均 Episode 门仍在使用默认随机评估；选择显式确定性部署评估，并把 Warm Start 纳入同一候选排序，所有控制参数和质量门保持不变 | Accepted Design | [ADR-0033](decisions/0033-h1-deterministic-deployment-evaluation.md) |
-| D-053 | 确定性部署评估在 A800 上最高只达 801.82/1000 且后期 KL 漂移；选择延长 discount/GAE 信用时域、提高终止代价、冻结归一化并用自适应 KL 限制 PPO 漂移，900/1000 与全部行为门不变 | Accepted Design | [ADR-0034](decisions/0034-h1-long-horizon-survival-credit.md) |
+| D-053 | 确定性部署评估在 A800 上最高只达 801.82/1000 且后期 KL 漂移；长时域修正已真实执行并选择 12,288,000 步 Checkpoint，平均 Episode 长度 996.01/1000、十项行为测试全过，策略仍为 internal_only，未启动 100M/A5/L3 | Accepted | [ADR-0034](decisions/0034-h1-long-horizon-survival-credit.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

@@ -463,6 +463,31 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "horizon-calibration source is not frozen failed evidence" in entrypoint
 
 
+def test_task_load_horizon_a800_evidence_passes_without_publication_claim() -> None:
+    report = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "locomotion-task-load-horizon.a800.passed.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert report["formalTrainingGate"] == "passed"
+    assert report["qualityAssessment"]["status"] == "passed"
+    assert report["qualityAssessment"]["finalMeanEpisodeLength"] >= 900.0
+    assert report["qualityAssessment"]["terminalMeanEpisodeLength"] >= 900.0
+    assert report["checkpointSelection"]["selectedStep"] == 12_288_000
+    assert report["checkpointSelection"]["selectedFormalGate"] is True
+    assert len(report["qualityAssessment"]["tests"]) == 10
+    assert all(
+        test["result"] == "pass" for test in report["qualityAssessment"]["tests"]
+    )
+    assert report["logDiagnostics"]["clean"] is True
+    assert report["policyStatus"] == "non_publishable"
+    assert report["researchCheckpoint"]["distribution"] == "internal_only"
+
+
 def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
         encoding="utf-8"
