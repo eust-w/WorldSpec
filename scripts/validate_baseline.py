@@ -355,6 +355,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/manipulation-memory-isolated-checkpoint-portfolio-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/manipulation-process-isolated-checkpoint-portfolio-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/manipulation-process-isolated-checkpoint-portfolio-v9-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
+        "h1-kitchen/manipulation-process-isolated-checkpoint-portfolio-v10-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "../third_party/h1-training.lock.json": "h1-training-source-lock.schema.json",
     }
     for relative, schema_name in positive.items():

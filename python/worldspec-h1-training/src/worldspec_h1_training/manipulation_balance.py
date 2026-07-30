@@ -91,12 +91,12 @@ PREVIOUS_ATTEMPT = {
 }
 
 RUNTIME_FAILURE = {
-    "job": "worldspec-h1-midterm-j6zgw",
-    "probeRevision": "3646f7f09493773816d34ba6cd82104666c3004c",
-    "imageDigest": "sha256:82090c3b4f4b98625c34b7e9f2e8c446db2c61991c72bba0a37257d1be8136fd",
-    "logDigest": "sha256:2a88f3162b380d5dc4e1509666bb445753cec84ced181231bfa30fe036259f9d",
-    "logSizeBytes": 20_003,
-    "failure": "evaluation_running_statistics_import_error",
+    "job": "worldspec-h1-midterm-lj499",
+    "probeRevision": "cd44b2460a8369ab27252cd30de3741e71bf5f41",
+    "imageDigest": "sha256:3966881562b303008459cd6a91805f2ab8db16cb8ea5ae739a500df879339f37",
+    "logDigest": "sha256:f9e680c4c5673c641a3a1a6fdf16eb0cb03d6d5b00ce2af88c738da181e158a7",
+    "logSizeBytes": 20_286,
+    "failure": "evaluation_model_workdir_collision",
     "savedCheckpointCount": 7,
     "formalGate": "not_evaluated",
     "qualityGatesChanged": False,
@@ -106,7 +106,7 @@ CHECKPOINT_SELECTION = {
     "mode": "formal_gate_then_pass_count_then_episode_length",
     "evaluateAllSavedCheckpoints": True,
     "expectedCandidateCount": 7,
-    "memoryIsolation": "training_and_evaluation_process_boundary_v2",
+    "memoryIsolation": "training_and_evaluation_process_boundary_v3",
 }
 
 PORTFOLIO_STATE_FILENAME = "manipulation-portfolio-state.json"

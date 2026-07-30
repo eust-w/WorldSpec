@@ -649,13 +649,13 @@ def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None
         "mode": "formal_gate_then_pass_count_then_episode_length",
         "evaluateAllSavedCheckpoints": True,
         "expectedCandidateCount": 7,
-        "memoryIsolation": "training_and_evaluation_process_boundary_v2",
+        "memoryIsolation": "training_and_evaluation_process_boundary_v3",
     }
     assert profile["previousAttempt"]["job"] == "worldspec-h1-midterm-hftjt"
     assert "loaded-track-settle-manipulation-mixed-reset-v3-failed" in entrypoint
     assert 'report["checkpoint"]' in entrypoint
     assert (
-        "manipulation-process-isolated-checkpoint-portfolio-v9-training-image-build.a800.passed.json"
+        "manipulation-process-isolated-checkpoint-portfolio-v10-training-image-build.a800.passed.json"
         in wrapper
     )
     assert "locomotion-manipulation-mixed-reset.a800.failed-summary.json" in wrapper
@@ -667,7 +667,7 @@ def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None
             ROOT
             / "examples"
             / "h1-kitchen"
-            / "manipulation-process-isolated-checkpoint-portfolio-v9-training-image-build.a800.passed.json"
+                / "manipulation-process-isolated-checkpoint-portfolio-v10-training-image-build.a800.passed.json"
         ).read_text(encoding="utf-8")
     )
     assert profile["runtime"]["containerImage"] == build["image"]
