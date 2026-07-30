@@ -461,6 +461,19 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     )
     assert "loaded_track_settle_task_load_horizon" in task_load_horizon_launcher
     assert "horizon-calibration source is not frozen failed evidence" in entrypoint
+    formal_launcher = (
+        ROOT / "scripts" / "run_a800_h1_task_load_formal_training.sh"
+    ).read_text(encoding="utf-8")
+    assert "locomotion-task-load-formal-profile.json" in formal_launcher
+    assert "locomotion-task-load-horizon.a800.passed.json" in formal_launcher
+    assert "task-load-formal-training-image-build.a800.passed.json" in formal_launcher
+    assert "worldspec-h1-midterm-dsl8l/midterm-checkpoint.zip" in formal_launcher
+    assert "loaded_track_settle_task_load_formal" in formal_launcher
+    assert "run_a800_h1_locomotion_midterm.sh" in formal_launcher
+    assert "formal-training source is not the frozen passing horizon evidence" in (
+        entrypoint
+    )
+    assert "WORLDSPEC_A800_FORMAL_TRAINING_RESULT=" in entrypoint
 
 
 def test_task_load_horizon_a800_evidence_passes_without_publication_claim() -> None:

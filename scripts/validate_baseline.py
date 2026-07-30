@@ -249,6 +249,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-task-load-survival-profile.json": "h1-locomotion-task-load-survival-profile.schema.json",
         "h1-kitchen/locomotion-task-load-deployment-eval-profile.json": "h1-locomotion-task-load-deployment-eval-profile.schema.json",
         "h1-kitchen/locomotion-task-load-horizon-profile.json": "h1-locomotion-task-load-horizon-profile.schema.json",
+        "h1-kitchen/locomotion-task-load-formal-profile.json": "h1-locomotion-task-load-formal-profile.schema.json",
         "h1-kitchen/whole-body-control.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-policy-handoff.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",
         "h1-kitchen/whole-body-dynamic-arm.cpu-preflight.passed.json": "h1-whole-body-cpu-preflight.schema.json",

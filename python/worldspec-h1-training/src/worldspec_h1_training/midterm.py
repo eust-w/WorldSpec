@@ -285,6 +285,23 @@ TASK_LOAD_HORIZON_PRIOR_ATTEMPT = {
     "formalTrainingGate": "failed",
     "distribution": "internal_only",
 }
+PASSED_TASK_LOAD_HORIZON_REPORT_DIGEST = (
+    "sha256:33ab736bf9fab3eece7491628352ebc3f143dc0dba334c0cd693b34a5dcbedb7"
+)
+PASSED_TASK_LOAD_HORIZON_REPORT_SIZE = 31_625
+PASSED_TASK_LOAD_HORIZON_CHECKPOINT_DIGEST = (
+    "sha256:d5ddb461d27366e6959c22dac928d81ab0039b55030427c80e9ab6ffb09b1943"
+)
+PASSED_TASK_LOAD_HORIZON_CHECKPOINT_SIZE = 1_259_927
+TASK_LOAD_FORMAL_PRIOR_ATTEMPT = {
+    "sourceStage": "loaded-track-settle-task-load-horizon-v5-passed",
+    "sourceReportDigest": PASSED_TASK_LOAD_HORIZON_REPORT_DIGEST,
+    "sourceReportSizeBytes": PASSED_TASK_LOAD_HORIZON_REPORT_SIZE,
+    "checkpointDigest": PASSED_TASK_LOAD_HORIZON_CHECKPOINT_DIGEST,
+    "checkpointSizeBytes": PASSED_TASK_LOAD_HORIZON_CHECKPOINT_SIZE,
+    "formalTrainingGate": "passed",
+    "distribution": "internal_only",
+}
 TASK_LOAD_SURVIVAL_TRAINING_OVERRIDES = {
     **TASK_LOAD_RETENTION_TRAINING_OVERRIDES,
     "learningRate": 0.00002,
@@ -306,6 +323,19 @@ TASK_LOAD_HORIZON_TRAINING_OVERRIDES = {
     "learningRateScheduleMin": 0.0000025,
     "learningRateScheduleMax": 0.00001,
     "normalizeUntilCount": 1,
+}
+TASK_LOAD_FORMAL_TRAINING_OVERRIDES = {
+    **TASK_LOAD_HORIZON_TRAINING_OVERRIDES,
+    "numTimesteps": 100_000_000,
+    "numEnvs": 8192,
+    "numEvals": 10,
+    "numMinibatches": 32,
+}
+TASK_LOAD_FORMAL_COMMAND = {
+    "linearVelocityX": [0.0, 0.8],
+    "linearVelocityY": [-0.15, 0.15],
+    "angularVelocityYaw": [-0.35, 0.35],
+    "zeroCommandProbability": 0.2,
 }
 TASK_LOAD_SURVIVAL_REWARD_ADDITIONS = {
     **TASK_LOAD_RETENTION_REWARD_ADDITIONS,
@@ -881,6 +911,7 @@ def validate_task_load_retention_profile(
     survival_stage = stage == "loaded_track_settle_task_load_survival"
     deployment_eval_stage = stage == "loaded_track_settle_task_load_deployment_eval"
     horizon_stage = stage == "loaded_track_settle_task_load_horizon"
+    formal_stage = stage == "loaded_track_settle_task_load_formal"
     if (
         profile.get("profileVersion") != "0.1.0"
         or profile.get("status") != "research"
@@ -890,6 +921,7 @@ def validate_task_load_retention_profile(
             "loaded_track_settle_task_load_survival",
             "loaded_track_settle_task_load_deployment_eval",
             "loaded_track_settle_task_load_horizon",
+            "loaded_track_settle_task_load_formal",
         }
     ):
         raise TrainingError(
@@ -924,6 +956,12 @@ def validate_task_load_retention_profile(
                 "TASK_LOAD_HORIZON_PRIOR_ATTEMPT_MISMATCH",
                 "Task-load horizon calibration must bind the frozen failed deployment evaluation.",
             )
+    elif formal_stage:
+        if profile.get("priorAttempt") != TASK_LOAD_FORMAL_PRIOR_ATTEMPT:
+            raise TrainingError(
+                "TASK_LOAD_FORMAL_PRIOR_ATTEMPT_MISMATCH",
+                "Formal task-load training must bind the passing horizon evidence.",
+            )
     elif "priorAttempt" in profile:
         raise TrainingError(
             "TASK_LOAD_RETENTION_PRIOR_ATTEMPT_FORBIDDEN",
@@ -931,6 +969,14 @@ def validate_task_load_retention_profile(
         )
     source = profile.get("warmStart", {})
     expected_source = (
+        {
+            "sourceStage": "loaded-track-settle-task-load-horizon-v5-passed",
+            "sourceReportDigest": PASSED_TASK_LOAD_HORIZON_REPORT_DIGEST,
+            "checkpointDigest": PASSED_TASK_LOAD_HORIZON_CHECKPOINT_DIGEST,
+            "checkpointSizeBytes": PASSED_TASK_LOAD_HORIZON_CHECKPOINT_SIZE,
+        }
+        if formal_stage
+        else (
         {
             "sourceStage": "loaded-track-settle-task-load-deployment-eval-v4-failed",
             "sourceReportDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_DIGEST,
@@ -952,7 +998,7 @@ def validate_task_load_retention_profile(
                 "checkpointDigest": FAILED_RETENTION_CHECKPOINT_DIGEST,
                 "checkpointSizeBytes": FAILED_RETENTION_CHECKPOINT_SIZE,
             }
-        )
+        ))
     )
     if any(source.get(key) != value for key, value in expected_source.items()):
         raise TrainingError(
@@ -984,9 +1030,12 @@ def validate_task_load_retention_profile(
             "Task-load retention must bind the passing capture policy as settle teacher.",
         )
     expected_training = (
-        TASK_LOAD_HORIZON_TRAINING_OVERRIDES
-        if horizon_stage
+        TASK_LOAD_FORMAL_TRAINING_OVERRIDES
+        if formal_stage
         else (
+            TASK_LOAD_HORIZON_TRAINING_OVERRIDES
+            if horizon_stage
+            else (
             TASK_LOAD_DEPLOYMENT_EVAL_TRAINING_OVERRIDES
             if deployment_eval_stage
             else (
@@ -994,7 +1043,7 @@ def validate_task_load_retention_profile(
                 if survival_stage
                 else TASK_LOAD_RETENTION_TRAINING_OVERRIDES
             )
-        )
+        ))
     )
     if profile.get("trainingOverrides") != expected_training:
         raise TrainingError(
@@ -1006,7 +1055,7 @@ def validate_task_load_retention_profile(
         "evaluateAllSavedCheckpoints": True,
         "packageSelectedOnly": True,
     }
-    if deployment_eval_stage or horizon_stage:
+    if deployment_eval_stage or horizon_stage or formal_stage:
         expected_checkpoint_selection["includeWarmStart"] = True
     if profile.get("checkpointSelection") != expected_checkpoint_selection:
         raise TrainingError(
@@ -1014,7 +1063,8 @@ def validate_task_load_retention_profile(
             "Task-load retention must evaluate every saved checkpoint and package one.",
         )
     environment = profile.get("environment", {})
-    if environment.get("commandDistribution") != TRANSITION_COMMAND:
+    expected_command = TASK_LOAD_FORMAL_COMMAND if formal_stage else TRANSITION_COMMAND
+    if environment.get("commandDistribution") != expected_command:
         raise TrainingError(
             "TASK_LOAD_RETENTION_COMMAND_INVALID",
             "Task-load retention must preserve the kitchen command range.",
@@ -1031,7 +1081,7 @@ def validate_task_load_retention_profile(
         )
     expected_reward_additions = (
         TASK_LOAD_HORIZON_REWARD_ADDITIONS
-        if horizon_stage
+        if horizon_stage or formal_stage
         else (
             TASK_LOAD_SURVIVAL_REWARD_ADDITIONS
             if survival_stage or deployment_eval_stage
@@ -1082,7 +1132,7 @@ def validate_task_load_retention_profile(
         )
     expected_quality_gates = (
         TASK_LOAD_SURVIVAL_QUALITY_GATES
-        if survival_stage or deployment_eval_stage or horizon_stage
+        if survival_stage or deployment_eval_stage or horizon_stage or formal_stage
         else TRANSITION_QUALITY_GATES
     )
     if profile.get("qualityGates") != expected_quality_gates:
@@ -1109,10 +1159,13 @@ def validate_task_load_retention_profile(
             "TASK_LOAD_RETENTION_PACKAGE_LOCK_MISMATCH",
             "Task-load retention must use the base Profile package lock.",
         )
-    if profile.get("artifactPolicy") != {
-        "checkpoint": "research_only",
+    expected_artifact_policy = {
+        "checkpoint": (
+            "policy_candidate_if_passed" if formal_stage else "research_only"
+        ),
         "distribution": "internal_only",
-    }:
+    }
+    if profile.get("artifactPolicy") != expected_artifact_policy:
         raise TrainingError(
             "TASK_LOAD_RETENTION_ARTIFACT_POLICY_INVALID",
             "Task-load retention outputs must remain internal research artifacts.",
@@ -1207,9 +1260,12 @@ def make_task_load_retention_training_profile(
     effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
     effective["training"].update(profile["trainingOverrides"])
     effective["training"]["hyperparameterStatus"] = (
-        "research_task_load_horizon_override"
-        if profile["stage"] == "loaded_track_settle_task_load_horizon"
+        "formal_task_load_override"
+        if profile["stage"] == "loaded_track_settle_task_load_formal"
         else (
+            "research_task_load_horizon_override"
+            if profile["stage"] == "loaded_track_settle_task_load_horizon"
+            else (
             "research_task_load_deployment_eval_override"
             if profile["stage"] == "loaded_track_settle_task_load_deployment_eval"
             else (
@@ -1217,7 +1273,7 @@ def make_task_load_retention_training_profile(
                 if profile["stage"] == "loaded_track_settle_task_load_survival"
                 else "research_task_load_retention_override"
             )
-        )
+        ))
     )
     effective["training"]["commandDistribution"] = copy.deepcopy(
         profile["environment"]["commandDistribution"]
@@ -1399,6 +1455,7 @@ def run_midterm_calibration(
         "loaded_track_settle_task_load_survival",
         "loaded_track_settle_task_load_deployment_eval",
         "loaded_track_settle_task_load_horizon",
+        "loaded_track_settle_task_load_formal",
     }:
         effective = make_task_load_retention_training_profile(base_profile, profile)
         if retention_teacher_archive is None or settle_teacher_archive is None:
@@ -1588,6 +1645,7 @@ def run_midterm_calibration(
             "loaded_track_settle_task_load_survival",
             "loaded_track_settle_task_load_deployment_eval",
             "loaded_track_settle_task_load_horizon",
+            "loaded_track_settle_task_load_formal",
         }:
             from brax.training.agents.ppo import checkpoint as ppo_checkpoint
 
@@ -1782,6 +1840,7 @@ def run_midterm_calibration(
             "loaded_track_settle_task_load_survival",
             "loaded_track_settle_task_load_deployment_eval",
             "loaded_track_settle_task_load_horizon",
+            "loaded_track_settle_task_load_formal",
         }:
             result["standTeacher"] = teacher_initialization
         else:
@@ -1803,6 +1862,7 @@ def run_midterm_calibration(
         "loaded_track_settle_task_load_survival",
         "loaded_track_settle_task_load_deployment_eval",
         "loaded_track_settle_task_load_horizon",
+        "loaded_track_settle_task_load_formal",
     }:
         result["taskLoadCurriculum"] = copy.deepcopy(profile["environment"]["taskLoadCurriculum"])
     return result

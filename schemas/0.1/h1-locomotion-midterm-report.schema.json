@@ -39,10 +39,19 @@
     "id": { "$ref": "common.schema.json#/$defs/id" },
     "reportVersion": { "const": "0.1.0" },
     "status": { "const": "completed" },
-    "scope": { "const": "h1_loaded_track_settle_midterm" },
+    "scope": {
+      "enum": [
+        "h1_loaded_track_settle_midterm",
+        "h1_task_load_formal_training"
+      ]
+    },
     "executionEvidence": { "const": "executed" },
-    "runtimeAcceptance": { "const": "research_midterm" },
-    "policyStatus": { "const": "non_publishable" },
+    "runtimeAcceptance": {
+      "enum": ["research_midterm", "formal_policy_candidate"]
+    },
+    "policyStatus": {
+      "enum": ["non_publishable", "policy_candidate"]
+    },
     "formalTrainingGate": { "enum": ["passed", "failed"] },
     "probeDefinition": { "$ref": "#/$defs/revision" },
     "imageSource": { "$ref": "#/$defs/revision" },
@@ -418,7 +427,8 @@
             "loaded_track_settle_task_load_retention",
             "loaded_track_settle_task_load_survival",
             "loaded_track_settle_task_load_deployment_eval",
-            "loaded_track_settle_task_load_horizon"
+            "loaded_track_settle_task_load_horizon",
+            "loaded_track_settle_task_load_formal"
           ]
         }
       }
@@ -551,7 +561,8 @@
                   "loaded_track_settle_task_load_retention",
                   "loaded_track_settle_task_load_survival",
                   "loaded_track_settle_task_load_deployment_eval",
-                  "loaded_track_settle_task_load_horizon"
+                  "loaded_track_settle_task_load_horizon",
+                  "loaded_track_settle_task_load_formal"
                 ]
               }
             },

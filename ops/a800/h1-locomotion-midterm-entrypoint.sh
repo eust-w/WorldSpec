@@ -290,6 +290,15 @@ elif source["sourceStage"] == "loaded-track-settle-task-load-deployment-eval-v4-
         != "loaded_track_settle_task_load_deployment_eval"
     ):
         raise SystemExit("horizon-calibration source is not frozen failed evidence")
+elif source["sourceStage"] == "loaded-track-settle-task-load-horizon-v5-passed":
+    if (
+        report["qualityAssessment"]["status"] != "passed"
+        or report["formalTrainingGate"] != "passed"
+        or report["policyStatus"] != "non_publishable"
+        or report["training"]["profileStage"]
+        != "loaded_track_settle_task_load_horizon"
+    ):
+        raise SystemExit("formal-training source is not the frozen passing horizon evidence")
 else:
     raise SystemExit("unsupported warm-start source stage")
 if report["researchCheckpoint"]["digest"] != checkpoint_digest:
@@ -304,6 +313,7 @@ if stage in {
     "loaded_track_settle_task_load_survival",
     "loaded_track_settle_task_load_deployment_eval",
     "loaded_track_settle_task_load_horizon",
+    "loaded_track_settle_task_load_formal",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -331,6 +341,7 @@ if stage in {
                         "loaded_track_settle_task_load_survival",
                         "loaded_track_settle_task_load_deployment_eval",
                         "loaded_track_settle_task_load_horizon",
+                        "loaded_track_settle_task_load_formal",
                     }
                     else profile["retentionTeacher"]
                 )
@@ -395,6 +406,7 @@ if stage in {
     "loaded_track_settle_task_load_survival",
     "loaded_track_settle_task_load_deployment_eval",
     "loaded_track_settle_task_load_horizon",
+    "loaded_track_settle_task_load_formal",
 }:
     settle_filename = sys.argv[20]
     if not settle_filename:
@@ -743,6 +755,7 @@ else:
                 "loaded_track_settle_task_load_survival",
                 "loaded_track_settle_task_load_deployment_eval",
                 "loaded_track_settle_task_load_horizon",
+                "loaded_track_settle_task_load_formal",
             }
             else None
         ),
@@ -754,6 +767,7 @@ else:
                 "loaded_track_settle_task_load_survival",
                 "loaded_track_settle_task_load_deployment_eval",
                 "loaded_track_settle_task_load_horizon",
+                "loaded_track_settle_task_load_formal",
             }
             else None
         ),
@@ -1214,6 +1228,33 @@ elif midterm_profile["stage"] == "whole_body_task_space_control_spike":
             "WORLDSPEC_A800_WHOLE_BODY_RESULT="
             + json.dumps(report, separators=(",", ":"))
         )
+elif midterm_profile["stage"] == "loaded_track_settle_task_load_formal":
+    report = {
+        "id": (
+            "formal-training-report://worldspec/h1-task-load/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_task_load_formal_training",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "formal_policy_candidate",
+        "policyStatus": (
+            "policy_candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalTrainingGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_FORMAL_TRAINING_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
 else:
     report = {
         "id": (

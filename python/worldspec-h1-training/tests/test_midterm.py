@@ -43,6 +43,9 @@ TASK_LOAD_DEPLOYMENT_EVAL_PROFILE = (
 TASK_LOAD_HORIZON_PROFILE = (
     ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-horizon-profile.json"
 )
+TASK_LOAD_FORMAL_PROFILE = (
+    ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-formal-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -400,6 +403,51 @@ def test_task_load_horizon_rejects_ppo_horizon_or_penalty_drift() -> None:
     profile = json.loads(TASK_LOAD_HORIZON_PROFILE.read_text(encoding="utf-8"))
     profile["environment"]["reward"]["terminationPenalty"] = 25.0
     with pytest.raises(TrainingError, match="reward"):
+        validate_task_load_retention_profile(base, profile)
+
+
+def test_task_load_formal_promotes_passing_horizon_to_locked_100m() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_FORMAL_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_task_load_retention_training_profile(base, profile)
+
+    assert effective["training"]["hyperparameterStatus"] == "formal_task_load_override"
+    assert effective["training"]["numTimesteps"] == 100_000_000
+    assert effective["training"]["numEnvs"] == 8192
+    assert effective["training"]["numEvals"] == 10
+    assert effective["training"]["numMinibatches"] == 32
+    assert effective["training"]["discounting"] == 0.995
+    assert effective["training"]["learningRate"] == 0.00001
+    assert effective["training"]["deterministicEval"] is True
+    assert effective["trainingEnvironment"]["commandDistribution"] == {
+        "linearVelocityX": [0.0, 0.8],
+        "linearVelocityY": [-0.15, 0.15],
+        "angularVelocityYaw": [-0.35, 0.35],
+        "zeroCommandProbability": 0.2,
+    }
+    assert profile["priorAttempt"]["formalTrainingGate"] == "passed"
+    assert profile["artifactPolicy"] == {
+        "checkpoint": "policy_candidate_if_passed",
+        "distribution": "internal_only",
+    }
+
+
+def test_task_load_formal_rejects_lineage_budget_and_gate_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_FORMAL_PROFILE.read_text(encoding="utf-8"))
+    profile["priorAttempt"]["formalTrainingGate"] = "failed"
+    with pytest.raises(TrainingError, match="passing horizon evidence"):
+        validate_task_load_retention_profile(base, profile)
+
+    profile = json.loads(TASK_LOAD_FORMAL_PROFILE.read_text(encoding="utf-8"))
+    profile["trainingOverrides"]["numTimesteps"] = 99_000_000
+    with pytest.raises(TrainingError, match="optimizer"):
+        validate_task_load_retention_profile(base, profile)
+
+    profile = json.loads(TASK_LOAD_FORMAL_PROFILE.read_text(encoding="utf-8"))
+    profile["environment"]["commandDistribution"]["linearVelocityX"] = [0.0, 0.9]
+    with pytest.raises(TrainingError, match="command range"):
         validate_task_load_retention_profile(base, profile)
 
 

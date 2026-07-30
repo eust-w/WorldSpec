@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-task-load-formal-profile.schema.json",
+  "title": "WorldSpec H1 Task-Load Formal Training Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "baseTrainingProfileDigest",
+    "a5ckEvidence",
+    "priorAttempt",
+    "runtime",
+    "warmStart",
+    "standTeacher",
+    "settleTeacher",
+    "trainingOverrides",
+    "checkpointSelection",
+    "environment",
+    "qualityGates",
+    "artifactPolicy",
+    "evidenceStatus"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "stage": { "const": "loaded_track_settle_task_load_formal" },
+    "baseTrainingProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "a5ckEvidence": { "type": "object" },
+    "priorAttempt": {
+      "type": "object",
+      "required": [
+        "sourceStage",
+        "sourceReportDigest",
+        "sourceReportSizeBytes",
+        "checkpointDigest",
+        "checkpointSizeBytes",
+        "formalTrainingGate",
+        "distribution"
+      ],
+      "properties": {
+        "sourceStage": {
+          "const": "loaded-track-settle-task-load-horizon-v5-passed"
+        },
+        "sourceReportDigest": {
+          "const": "sha256:33ab736bf9fab3eece7491628352ebc3f143dc0dba334c0cd693b34a5dcbedb7"
+        },
+        "sourceReportSizeBytes": { "const": 31625 },
+        "checkpointDigest": {
+          "const": "sha256:d5ddb461d27366e6959c22dac928d81ab0039b55030427c80e9ab6ffb09b1943"
+        },
+        "checkpointSizeBytes": { "const": 1259927 },
+        "formalTrainingGate": { "const": "passed" },
+        "distribution": { "const": "internal_only" }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "ccdIterations": { "const": 50 }
+      },
+      "additionalProperties": false
+    },
+    "warmStart": { "type": "object" },
+    "standTeacher": { "type": "object" },
+    "settleTeacher": { "type": "object" },
+    "trainingOverrides": {
+      "type": "object",
+      "required": [
+        "numTimesteps",
+        "numEnvs",
+        "numEvals",
+        "episodeLength",
+        "unrollLength",
+        "numMinibatches",
+        "numUpdatesPerBatch",
+        "batchSize",
+        "discounting",
+        "gaeLambda",
+        "learningRate",
+        "entropyCost",
+        "clippingEpsilon",
+        "desiredKl",
+        "learningRateSchedule",
+        "learningRateScheduleMin",
+        "learningRateScheduleMax",
+        "normalizeUntilCount",
+        "deterministicEval"
+      ],
+      "properties": {
+        "numTimesteps": { "const": 100000000 },
+        "numEnvs": { "const": 8192 },
+        "numEvals": { "const": 10 },
+        "episodeLength": { "const": 1000 },
+        "unrollLength": { "const": 20 },
+        "numMinibatches": { "const": 32 },
+        "numUpdatesPerBatch": { "const": 4 },
+        "batchSize": { "const": 256 },
+        "discounting": { "const": 0.995 },
+        "gaeLambda": { "const": 0.99 },
+        "learningRate": { "const": 0.00001 },
+        "entropyCost": { "const": 0.0002 },
+        "clippingEpsilon": { "const": 0.2 },
+        "desiredKl": { "const": 0.01 },
+        "learningRateSchedule": { "const": "ADAPTIVE_KL" },
+        "learningRateScheduleMin": { "const": 0.0000025 },
+        "learningRateScheduleMax": { "const": 0.00001 },
+        "normalizeUntilCount": { "const": 1 },
+        "deterministicEval": { "const": true }
+      },
+      "additionalProperties": false
+    },
+    "checkpointSelection": {
+      "const": {
+        "mode": "deterministic_gate_rank_v1",
+        "evaluateAllSavedCheckpoints": true,
+        "packageSelectedOnly": true,
+        "includeWarmStart": true
+      }
+    },
+    "environment": { "type": "object" },
+    "qualityGates": { "type": "object" },
+    "artifactPolicy": {
+      "const": {
+        "checkpoint": "policy_candidate_if_passed",
+        "distribution": "internal_only"
+      }
+    },
+    "evidenceStatus": { "const": "derived" }
+  },
+  "additionalProperties": false
+}

@@ -147,6 +147,11 @@ elif [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_WHOLE_BODY_RESULT=
   REPORT_SCHEMA=h1-whole-body-control-report.schema.json
   GATE_FIELD=formalControlGate
+elif [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]]; then
+  REPORT_FILENAME=formal-training-report.json
+  REPORT_MARKER=WORLDSPEC_A800_FORMAL_TRAINING_RESULT=
+  REPORT_SCHEMA=h1-locomotion-midterm-report.schema.json
+  GATE_FIELD=formalTrainingGate
 fi
 if [[ "${A5CI_MODE}" == "true" ]]; then
   REPORT_FILENAME=whole-body-diagnostic-replay-report.json
@@ -159,6 +164,7 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
   [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
@@ -176,7 +182,8 @@ fi
 if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]] ||
-  [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]]; then
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]]; then
   for required in "${SETTLE_TEACHER_REPORT}" "${SETTLE_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
       printf 'ERROR: settle teacher input is not readable: %s\n' \
@@ -273,6 +280,7 @@ if profile["stage"] in {
     "loaded_track_settle_task_load_survival",
     "loaded_track_settle_task_load_deployment_eval",
     "loaded_track_settle_task_load_horizon",
+    "loaded_track_settle_task_load_formal",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -302,6 +310,7 @@ if profile["stage"] in {
                         "loaded_track_settle_task_load_survival",
                         "loaded_track_settle_task_load_deployment_eval",
                         "loaded_track_settle_task_load_horizon",
+                        "loaded_track_settle_task_load_formal",
                     }
                     else profile["retentionTeacher"]
                 )
@@ -343,7 +352,8 @@ PY
 if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]] ||
-  [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]]; then
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]] ||
+  [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]]; then
   python3 - \
     "${MIDTERM_PROFILE}" \
     "${SETTLE_TEACHER_REPORT}" \
@@ -684,6 +694,7 @@ PY
         [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]] ||
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
@@ -726,7 +737,8 @@ PY
       if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_task_load_deployment_eval" ]] ||
-        [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]]; then
+        [[ "${profile_stage}" == "loaded_track_settle_task_load_horizon" ]] ||
+        [[ "${profile_stage}" == "loaded_track_settle_task_load_formal" ]]; then
         read -r settle_report_size settle_report_digest \
           settle_checkpoint_size settle_checkpoint_digest < <(
           python3 - \
