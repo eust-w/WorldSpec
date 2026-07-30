@@ -147,6 +147,11 @@ elif [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_KITCHEN_TASK_RESULT=
   REPORT_SCHEMA=h1-kitchen-task-report.schema.json
   GATE_FIELD=formalTaskGate
+elif [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]]; then
+  REPORT_FILENAME=task-load-full-kitchen-single-report.json
+  REPORT_MARKER=WORLDSPEC_A800_TASK_LOAD_FULL_KITCHEN_SINGLE_RESULT=
+  REPORT_SCHEMA=h1-task-load-full-kitchen-single-report.schema.json
+  GATE_FIELD=formalTaskLoadFullKitchenSingleGate
 elif [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   REPORT_FILENAME=whole-body-control-report.json
   REPORT_MARKER=WORLDSPEC_A800_WHOLE_BODY_RESULT=
@@ -175,6 +180,7 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+  [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]] ||
   [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
@@ -202,6 +208,7 @@ fi
 if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+  [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]] ||
   [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   for required in "${SUPERVISOR_STAND_REPORT}" "${SUPERVISOR_STAND_CHECKPOINT}"; do
     if [[ -z "${required}" ]] || [[ ! -r "${required}" ]]; then
@@ -270,6 +277,7 @@ source = (
         "phase_aware_supervisor_probe",
         "task_load_phase_aware_supervisor_probe",
         "fixed_kitchen_full_loop_probe",
+        "task_load_fixed_kitchen_single_probe",
         "whole_body_task_space_control_spike",
     }
     else profile["warmStart"]
@@ -294,6 +302,7 @@ if profile["stage"] in {
     "phase_aware_supervisor_probe",
     "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
+    "task_load_fixed_kitchen_single_probe",
     "whole_body_task_space_control_spike",
 }:
     teacher_report_payload = pathlib.Path(sys.argv[4]).read_bytes()
@@ -307,6 +316,7 @@ if profile["stage"] in {
                 "phase_aware_supervisor_probe",
                 "task_load_phase_aware_supervisor_probe",
                 "fixed_kitchen_full_loop_probe",
+                "task_load_fixed_kitchen_single_probe",
                 "whole_body_task_space_control_spike",
             }
             else (
@@ -342,6 +352,7 @@ if profile["stage"] in {
     "phase_aware_supervisor_probe",
     "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
+    "task_load_fixed_kitchen_single_probe",
     "whole_body_task_space_control_spike",
 }:
     stand_report_payload = pathlib.Path(sys.argv[6]).read_bytes()
@@ -711,6 +722,7 @@ PY
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+        [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]] ||
         [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r teacher_report_size teacher_report_digest \
           teacher_checkpoint_size teacher_checkpoint_digest < <(
@@ -788,6 +800,7 @@ PY
       if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+        [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]] ||
         [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r supervisor_stand_report_size supervisor_stand_report_digest \
           supervisor_stand_checkpoint_size supervisor_stand_checkpoint_digest < <(
@@ -956,6 +969,12 @@ elif gate_field == "formalTaskGate":
         if report[gate_field] == "passed"
         else "non_publishable"
     )
+elif gate_field == "formalTaskLoadFullKitchenSingleGate":
+    report["controllerStatus"] = (
+        "single_integration_candidate"
+        if report[gate_field] == "passed"
+        else "non_publishable"
+    )
 elif gate_field == "formalControlGate":
     report["controllerStatus"] = (
         "control_candidate"
@@ -971,6 +990,7 @@ PY
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
+        [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]] ||
         [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r controller_size controller_digest trace_size trace_digest < <(
           python3 - "${local_result_dir}/${REPORT_FILENAME}" <<'PY'
@@ -991,6 +1011,8 @@ PY
           --remote-path "$(
             if [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
               printf '/scratch/results/artifacts/kitchen-task-controller.json'
+            elif [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]]; then
+              printf '/scratch/results/artifacts/task-load-full-kitchen-controller.json'
             elif [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
               printf '/scratch/results/artifacts/whole-body-controller.json'
             elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
@@ -1004,6 +1026,8 @@ PY
           --destination "$(
             if [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
               printf '%s/kitchen-task-controller.json' "${local_result_dir}"
+            elif [[ "${profile_stage}" == "task_load_fixed_kitchen_single_probe" ]]; then
+              printf '%s/task-load-full-kitchen-controller.json' "${local_result_dir}"
             elif [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
               printf '%s/whole-body-controller.json' "${local_result_dir}"
             elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then

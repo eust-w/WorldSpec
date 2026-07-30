@@ -300,6 +300,7 @@ source = (
         "phase_aware_supervisor_probe",
         "task_load_phase_aware_supervisor_probe",
         "fixed_kitchen_full_loop_probe",
+        "task_load_fixed_kitchen_single_probe",
         "whole_body_task_space_control_spike",
     }
     else profile["warmStart"]
@@ -408,6 +409,7 @@ if stage in {
     "phase_aware_supervisor_probe",
     "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
+    "task_load_fixed_kitchen_single_probe",
     "whole_body_task_space_control_spike",
 }:
     teacher = (
@@ -419,6 +421,7 @@ if stage in {
                 "phase_aware_supervisor_probe",
                 "task_load_phase_aware_supervisor_probe",
                 "fixed_kitchen_full_loop_probe",
+                "task_load_fixed_kitchen_single_probe",
                 "whole_body_task_space_control_spike",
             }
             else (
@@ -538,6 +541,7 @@ if stage in {
     "phase_aware_supervisor_probe",
     "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
+    "task_load_fixed_kitchen_single_probe",
     "whole_body_task_space_control_spike",
 }:
     stand = profile["standPolicy"]
@@ -721,6 +725,7 @@ from worldspec_h1_training.contract import (
 )
 from worldspec_h1_training.capture import run_capture_calibration
 from worldspec_h1_training.dual_policy import run_dual_policy_probe
+from worldspec_h1_training.full_task import run_task_load_full_kitchen_single_probe
 from worldspec_h1_training.kitchen_task import run_fixed_kitchen_task_probe
 from worldspec_h1_training.midterm import run_midterm_calibration
 from worldspec_h1_training.supervisor import run_phase_aware_supervisor_probe
@@ -800,6 +805,24 @@ elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
         / "locomotion-supervisor-profile.json"
     )
     result = run_fixed_kitchen_task_probe(
+        base_profile,
+        supervisor_profile,
+        midterm_profile,
+        Path(os.environ["BUNDLE_DIR"]),
+        Path(os.environ["MODEL_DIR"]),
+        artifact_dir,
+        Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+        Path(os.environ["INPUT_DIR"]) / "supervisor-stand-checkpoint.zip",
+    )
+elif midterm_profile["stage"] == "task_load_fixed_kitchen_single_probe":
+    supervisor_profile = read_json(
+        source_dir
+        / "examples"
+        / "h1-kitchen"
+        / "locomotion-task-load-supervisor-profile.json"
+    )
+    result = run_task_load_full_kitchen_single_probe(
         base_profile,
         supervisor_profile,
         midterm_profile,
@@ -1265,6 +1288,35 @@ elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
     }
     print(
         "WORLDSPEC_A800_KITCHEN_TASK_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "task_load_fixed_kitchen_single_probe":
+    report = dict(common)
+    report.update(
+        {
+            "id": (
+                "kitchen-task-report://worldspec/h1/task-load-single-a800-"
+                + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+            ),
+            "reportVersion": "0.1.0",
+            "status": "completed",
+            "scope": "h1_task_load_full_kitchen_single_probe",
+            "executionEvidence": "executed",
+            "runtimeAcceptance": "research_single_integration",
+            "controllerStatus": (
+                "single_integration_candidate"
+                if result["qualityAssessment"]["status"] == "passed"
+                else "non_publishable"
+            ),
+            "formalTaskLoadFullKitchenSingleGate": (
+                "passed"
+                if result["qualityAssessment"]["status"] == "passed"
+                else "failed"
+            ),
+        }
+    )
+    print(
+        "WORLDSPEC_A800_TASK_LOAD_FULL_KITCHEN_SINGLE_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 elif midterm_profile["stage"] == "whole_body_task_space_control_spike":

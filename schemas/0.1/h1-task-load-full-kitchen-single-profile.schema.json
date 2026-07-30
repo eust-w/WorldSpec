@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-task-load-full-kitchen-single-profile.schema.json",
+  "title": "WorldSpec H1 Task-Load Full Kitchen Single Probe Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "seed",
+    "baseTrainingProfileDigest",
+    "supervisorProfileDigest",
+    "supervisorEvidence",
+    "motionPolicy",
+    "capturePolicy",
+    "standPolicy",
+    "controlLineage",
+    "scene",
+    "wholeBodyController",
+    "taskPolicyHandoff",
+    "dynamicArmTracking",
+    "taskGeometryCalibration",
+    "baseAnchorRecovery",
+    "phaseController",
+    "qualityGates",
+    "runtime",
+    "artifactPolicy"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "profileVersion": { "const": "0.1.0" },
+    "status": { "const": "research" },
+    "stage": { "const": "task_load_fixed_kitchen_single_probe" },
+    "seed": { "const": 41 },
+    "baseTrainingProfileDigest": {
+      "const": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6"
+    },
+    "supervisorProfileDigest": {
+      "const": "sha256:731c1812787a3c63230d49220f5e08a48b7d04f7e7967bf476d0d066d083eec4"
+    },
+    "supervisorEvidence": {
+      "const": {
+        "job": "worldspec-h1-midterm-69xm4",
+        "profileDigest": "sha256:731c1812787a3c63230d49220f5e08a48b7d04f7e7967bf476d0d066d083eec4",
+        "reportDigest": "sha256:1ebb614d7315442a98937e09b58b888796922547b1ecc962e3a8aa49ae3325c0",
+        "reportSizeBytes": 23042,
+        "controllerDigest": "sha256:62c7c3127797998b147260c65a125f632011f6cba4796f9ed555e563e2f4631d",
+        "traceDigest": "sha256:6fcd89018a3152c4ece0d8261b143a898ec7d3c4e858289202d1d5f7e8cc1b4f",
+        "formalTaskLoadSupervisorGate": "passed",
+        "deterministicTestsPassed": 10
+      }
+    },
+    "motionPolicy": {
+      "$ref": "h1-locomotion-task-load-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "capturePolicy": {
+      "$ref": "h1-locomotion-task-load-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "standPolicy": {
+      "$ref": "h1-locomotion-task-load-supervisor-profile.schema.json#/$defs/policySource"
+    },
+    "controlLineage": {
+      "const": {
+        "profileDigest": "sha256:23fcf6908136c57880871ac0a1f9e1f13339b5d8f562eb0af8d710362f75efa8",
+        "sourceJob": "worldspec-h1-midterm-5nn2q",
+        "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+        "formalControlGate": "failed",
+        "terminalReason": "fall_height",
+        "reuseBoundary": "controller_contract_only"
+      }
+    },
+    "scene": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/scene"
+    },
+    "wholeBodyController": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/controller"
+    },
+    "taskPolicyHandoff": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/taskPolicyHandoff"
+    },
+    "dynamicArmTracking": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/dynamicArmTracking"
+    },
+    "taskGeometryCalibration": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/taskGeometryCalibration"
+    },
+    "baseAnchorRecovery": {
+      "$ref": "h1-whole-body-control-profile.schema.json#/properties/baseAnchorRecovery"
+    },
+    "phaseController": {
+      "type": "object",
+      "required": [
+        "phases",
+        "positionToleranceMeters",
+        "openGripperCommand",
+        "closedGripperCommand",
+        "phaseMinimumSteps",
+        "phaseMaximumSteps"
+      ],
+      "properties": {
+        "phases": {
+          "const": [
+            "stand_ready",
+            "reach_handle",
+            "close_handle",
+            "pull_drawer",
+            "release_handle",
+            "reach_cup",
+            "close_cup",
+            "lift_cup",
+            "insert_cup",
+            "release_cup",
+            "retract",
+            "push_drawer",
+            "final_hold"
+          ]
+        },
+        "positionToleranceMeters": { "const": 0.035 },
+        "openGripperCommand": { "const": 0.0 },
+        "closedGripperCommand": { "const": 255.0 },
+        "phaseMinimumSteps": { "type": "object" },
+        "phaseMaximumSteps": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "qualityGates": {
+      "const": {
+        "probeRuns": 1,
+        "minimumForwardDisplacement": 1.0,
+        "maximumForwardDisplacement": 2.2,
+        "minimumBaseHeight": 0.8,
+        "minimumUprightCosine": 0.8,
+        "drawerOpenThreshold": 0.18,
+        "drawerClosedThreshold": 0.03,
+        "cupInsideMargin": 0.015,
+        "maximumCupLinearSpeed": 0.08,
+        "maximumCupAngularSpeed": 0.2,
+        "minimumStableSteps": 20,
+        "maximumTaskBaseTranslation": 0.2,
+        "maximumTaskBaseLateralDrift": 0.12,
+        "maximumProjectedGradient": 0.00001,
+        "maximumNonFiniteSamples": 0
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "imageSourceRevision",
+        "packageLockDigest",
+        "ccdIterations",
+        "evaluationEnvironments",
+        "mjxCapacity"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": { "$ref": "common.schema.json#/$defs/digest" },
+        "imageSourceRevision": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$"
+        },
+        "packageLockDigest": {
+          "const": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41"
+        },
+        "ccdIterations": { "const": 50 },
+        "evaluationEnvironments": { "const": 1 },
+        "mjxCapacity": {
+          "const": {
+            "activeContactsPerEnvironment": 32,
+            "ccdContactsPerEnvironment": 16,
+            "njmax": 128
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifactPolicy": {
+      "const": {
+        "controller": "research_only",
+        "distribution": "internal_only",
+        "fiveRunClaim": "forbidden",
+        "l3Claim": "forbidden"
+      }
+    }
+  },
+  "additionalProperties": false
+}
