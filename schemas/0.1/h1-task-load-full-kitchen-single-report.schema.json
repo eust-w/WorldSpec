@@ -71,6 +71,7 @@
     "taskSceneHandoffEvidence": { "type": "object" },
     "taskSceneArmRecoveryEvidence": { "type": "object" },
     "taskSceneBaseLockEvidence": { "type": "object" },
+    "taskSceneManipulationPolicyEvidence": { "type": "object" },
     "policies": {
       "type": "object",
       "required": ["motion", "capture", "stand"],

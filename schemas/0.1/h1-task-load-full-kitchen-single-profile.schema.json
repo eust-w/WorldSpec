@@ -26,6 +26,7 @@
     "taskSceneHandoffEvidence",
     "taskSceneArmRecoveryEvidence",
     "taskSceneBaseLockEvidence",
+    "taskSceneManipulationPolicyEvidence",
     "phaseController",
     "qualityGates",
     "runtime",
@@ -81,7 +82,14 @@
       "$ref": "h1-whole-body-control-profile.schema.json#/properties/controller"
     },
     "taskPolicyHandoff": {
-      "$ref": "h1-whole-body-control-profile.schema.json#/properties/taskPolicyHandoff"
+      "const": {
+        "mode": "disabled_fixed_capture_policy",
+        "initialPolicy": "capture",
+        "policyObservationCommand": [0.0, 0.0, 0.0],
+        "captureToStandHandoff": "disabled_during_manipulation",
+        "motionReentry": "forbidden",
+        "qualityGatesChanged": false
+      }
     },
     "dynamicArmTracking": {
       "$ref": "h1-whole-body-control-profile.schema.json#/properties/dynamicArmTracking"
@@ -91,9 +99,9 @@
     },
     "baseAnchorRecovery": {
       "const": {
-        "mode": "disabled_locked_stand_policy",
+        "mode": "disabled_locked_capture_policy",
         "enabled": false,
-        "policy": "standPolicy",
+        "policy": "capturePolicy",
         "command": [0.0, 0.0, 0.0],
         "armDuringManipulation": "track_current_task_space_solution",
         "motionPolicyReentry": "forbidden",
@@ -168,6 +176,25 @@
         "minimumUprightCosine": 0.2332257628440857,
         "taskBaseLateralDrift": 0.8904498987831175,
         "maximumBaseAnchorCommand": 0.1,
+        "qualityGatesChanged": false
+      }
+    },
+    "taskSceneManipulationPolicyEvidence": {
+      "const": {
+        "job": "worldspec-h1-midterm-ncnsd",
+        "reportDigest": "sha256:3df1c12354d4e3f637ef95ceb6b2d2550167db88af53c05482e4df136872f8e4",
+        "reportSizeBytes": 18849,
+        "traceDigest": "sha256:a3629d5140a428e20538a49e6592fb91729a7d7033172808dcf085784387ece5",
+        "traceSizeBytes": 2140216,
+        "diagnosticStatus": "passed",
+        "failedReason": "robot_termination:fall_height",
+        "completedPhase": "reach_handle",
+        "manipulationPolicy": "standPolicy",
+        "manipulationSteps": 70,
+        "baseAnchorRecoverySteps": 0,
+        "minimumBaseHeight": 0.4527726471424103,
+        "minimumUprightCosine": 0.5183522701263428,
+        "taskBaseLateralDrift": 0.9665973982773721,
         "qualityGatesChanged": false
       }
     },

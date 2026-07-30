@@ -16,7 +16,9 @@ from worldspec_h1_training.full_task import (
     FULL_TASK_BASE_LOCK_EVIDENCE,
     FULL_TASK_HANDOFF_EVIDENCE,
     FULL_TASK_LOCOMOTION_HANDOFF,
+    FULL_TASK_MANIPULATION_POLICY_EVIDENCE,
     FULL_TASK_PHASE_CONTROLLER,
+    FULL_TASK_POLICY_HANDOFF,
     FULL_TASK_SINGLE_GATES,
     make_full_task_single_evaluation_profile,
     validate_full_task_single_profile,
@@ -25,7 +27,6 @@ from worldspec_h1_training.kitchen_task import ERGONOMIC_TASK_SCENE, TASK_CAPACI
 from worldspec_h1_training.whole_body import (
     DYNAMIC_ARM_TRACKING,
     TASK_GEOMETRY_CALIBRATION,
-    TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
 )
 
@@ -58,7 +59,7 @@ def _profiles() -> tuple[dict, dict, dict]:
         "controlLineage": copy.deepcopy(A5CK_CONTROL_LINEAGE),
         "scene": copy.deepcopy(ERGONOMIC_TASK_SCENE),
         "wholeBodyController": copy.deepcopy(WHOLE_BODY_CONTROLLER),
-        "taskPolicyHandoff": copy.deepcopy(TASK_POLICY_HANDOFF),
+        "taskPolicyHandoff": copy.deepcopy(FULL_TASK_POLICY_HANDOFF),
         "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
         "taskGeometryCalibration": copy.deepcopy(TASK_GEOMETRY_CALIBRATION),
         "baseAnchorRecovery": copy.deepcopy(FULL_TASK_BASE_ANCHOR_RECOVERY),
@@ -66,6 +67,9 @@ def _profiles() -> tuple[dict, dict, dict]:
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
         "taskSceneBaseLockEvidence": copy.deepcopy(FULL_TASK_BASE_LOCK_EVIDENCE),
+        "taskSceneManipulationPolicyEvidence": copy.deepcopy(
+            FULL_TASK_MANIPULATION_POLICY_EVIDENCE
+        ),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "qualityGates": copy.deepcopy(FULL_TASK_SINGLE_GATES),
         "runtime": {
@@ -97,7 +101,8 @@ def test_full_task_single_profile_binds_a6_and_a5ck_without_claiming_five_runs()
     assert profile["controlLineage"]["reuseBoundary"] == "controller_contract_only"
     assert profile["qualityGates"]["probeRuns"] == 1
     assert profile["baseAnchorRecovery"]["enabled"] is False
-    assert profile["baseAnchorRecovery"]["policy"] == "standPolicy"
+    assert profile["baseAnchorRecovery"]["policy"] == "capturePolicy"
+    assert profile["taskPolicyHandoff"]["mode"] == "disabled_fixed_capture_policy"
     assert profile["artifactPolicy"]["fiveRunClaim"] == "forbidden"
     assert profile["artifactPolicy"]["l3Claim"] == "forbidden"
 
@@ -127,9 +132,10 @@ def test_full_task_trace_contract_keeps_policy_command_and_base_state() -> None:
     assert '"policyCommand": [_trace_number(value) for value in np.asarray(policy_command)]' in source
     assert '"baseState": {' in source
     assert 'recovery_active = False' in source
-    assert 'task_handoff_phase = task_policy.prepare(anchor_norm)' in source
+    assert 'task_handoff_phase = "capture_locked"' in source
     assert 'policy_command = command' in source
     assert "base_anchor_recovery_command(" not in source
+    assert 'action = capture_action' in source
 
 
 def test_full_task_single_effective_profile_preserves_task_load() -> None:
@@ -180,6 +186,12 @@ def test_full_task_single_effective_profile_preserves_task_load() -> None:
                 {"failedReason": "reach_handle_timeout"}
             ),
             "taskSceneBaseLockEvidence contract changed",
+        ),
+        (
+            lambda profile: profile["taskSceneManipulationPolicyEvidence"].update(
+                {"manipulationPolicy": "capturePolicy"}
+            ),
+            "taskSceneManipulationPolicyEvidence contract changed",
         ),
         (
             lambda profile: profile["artifactPolicy"].update(

@@ -38,9 +38,7 @@ from .warm_start import materialize_warm_start, validate_network_compatibility
 from .whole_body import (
     DYNAMIC_ARM_TRACKING,
     TASK_GEOMETRY_CALIBRATION,
-    TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
-    TaskPolicyHandoffState,
     WholeBodyTaskSpaceController,
     _diagnostic_trace_errors,
     _trace_number,
@@ -126,12 +124,20 @@ FULL_TASK_HANDOFF_EVIDENCE = {
     "qualityGatesChanged": False,
 }
 FULL_TASK_BASE_ANCHOR_RECOVERY = {
-    "mode": "disabled_locked_stand_policy",
+    "mode": "disabled_locked_capture_policy",
     "enabled": False,
-    "policy": "standPolicy",
+    "policy": "capturePolicy",
     "command": [0.0, 0.0, 0.0],
     "armDuringManipulation": "track_current_task_space_solution",
     "motionPolicyReentry": "forbidden",
+    "qualityGatesChanged": False,
+}
+FULL_TASK_POLICY_HANDOFF = {
+    "mode": "disabled_fixed_capture_policy",
+    "initialPolicy": "capture",
+    "policyObservationCommand": [0.0, 0.0, 0.0],
+    "captureToStandHandoff": "disabled_during_manipulation",
+    "motionReentry": "forbidden",
     "qualityGatesChanged": False,
 }
 FULL_TASK_ARM_RECOVERY_EVIDENCE = {
@@ -169,6 +175,27 @@ FULL_TASK_BASE_LOCK_EVIDENCE = {
     "minimumUprightCosine": 0.2332257628440857,
     "taskBaseLateralDrift": 0.8904498987831175,
     "maximumBaseAnchorCommand": 0.1,
+    "qualityGatesChanged": False,
+}
+FULL_TASK_MANIPULATION_POLICY_EVIDENCE = {
+    "job": "worldspec-h1-midterm-ncnsd",
+    "reportDigest": (
+        "sha256:3df1c12354d4e3f637ef95ceb6b2d2550167db88af53c05482e4df136872f8e4"
+    ),
+    "reportSizeBytes": 18_849,
+    "traceDigest": (
+        "sha256:a3629d5140a428e20538a49e6592fb91729a7d7033172808dcf085784387ece5"
+    ),
+    "traceSizeBytes": 2_140_216,
+    "diagnosticStatus": "passed",
+    "failedReason": "robot_termination:fall_height",
+    "completedPhase": "reach_handle",
+    "manipulationPolicy": "standPolicy",
+    "manipulationSteps": 70,
+    "baseAnchorRecoverySteps": 0,
+    "minimumBaseHeight": 0.4527726471424103,
+    "minimumUprightCosine": 0.5183522701263428,
+    "taskBaseLateralDrift": 0.9665973982773721,
     "qualityGatesChanged": False,
 }
 
@@ -217,7 +244,7 @@ def validate_full_task_single_profile(
         ("controlLineage", A5CK_CONTROL_LINEAGE),
         ("scene", ERGONOMIC_TASK_SCENE),
         ("wholeBodyController", WHOLE_BODY_CONTROLLER),
-        ("taskPolicyHandoff", TASK_POLICY_HANDOFF),
+        ("taskPolicyHandoff", FULL_TASK_POLICY_HANDOFF),
         ("dynamicArmTracking", DYNAMIC_ARM_TRACKING),
         ("taskGeometryCalibration", TASK_GEOMETRY_CALIBRATION),
         ("baseAnchorRecovery", FULL_TASK_BASE_ANCHOR_RECOVERY),
@@ -225,6 +252,10 @@ def validate_full_task_single_profile(
         ("taskSceneHandoffEvidence", FULL_TASK_HANDOFF_EVIDENCE),
         ("taskSceneArmRecoveryEvidence", FULL_TASK_ARM_RECOVERY_EVIDENCE),
         ("taskSceneBaseLockEvidence", FULL_TASK_BASE_LOCK_EVIDENCE),
+        (
+            "taskSceneManipulationPolicyEvidence",
+            FULL_TASK_MANIPULATION_POLICY_EVIDENCE,
+        ),
         ("phaseController", FULL_TASK_PHASE_CONTROLLER),
         ("qualityGates", FULL_TASK_SINGLE_GATES),
     )
@@ -310,7 +341,6 @@ def evaluate_full_task_single(
     rng = jax.random.PRNGKey(profile["training"]["seed"])
     state = reset(rng)
     locomotion = SupervisorState(contract=FULL_TASK_LOCOMOTION_HANDOFF)
-    task_policy = TaskPolicyHandoffState()
     task = KitchenTaskState()
     traces: list[dict[str, Any]] = []
     start_x = float(np.asarray(state.data.qpos[0]))
@@ -397,7 +427,8 @@ def evaluate_full_task_single(
                 float(control["qpProjectedGradient"]),
             )
             command = jp.asarray(anchor_command)
-            task_handoff_phase = task_policy.prepare(anchor_norm)
+            task_handoff_phase = "capture_locked"
+            task_handoff_alpha = 0.0
             policy_command = command
             held_targets = control["heldTargets"]
             feedforward = control["feedforwardTorque"]
@@ -422,11 +453,8 @@ def evaluate_full_task_single(
                 stand_action,
             )
         else:
-            action, active_policy, task_handoff_alpha = task_policy.select(
-                motion_action,
-                capture_action,
-                stand_action,
-            )
+            action = capture_action
+            active_policy = "capture"
         state = step(state, action)
         jax.block_until_ready(state.reward)
 
@@ -474,13 +502,6 @@ def evaluate_full_task_single(
             if locomotion.handoff_failed:
                 failure = "locomotion_handoff_timeout"
         else:
-            task_policy.observe(
-                active_policy,
-                float(np.linalg.norm(linear)),
-                float(np.linalg.norm(angular)),
-            )
-            if task_policy.handoff_failed:
-                failure = failure or "task_policy_handoff_timeout"
             target = _target_for_phase(task.phase, task_metrics, ERGONOMIC_TASK_SCENE)
             site = controller.site_state(qpos, qvel, target)
             task.observe(
@@ -526,10 +547,13 @@ def evaluate_full_task_single(
                 "phase": task_handoff_phase,
                 "blendAlpha": _trace_number(task_handoff_alpha),
                 "requestedCommandNorm": _trace_number(np.linalg.norm(np.asarray(command))),
-                "captureSteps": task_policy.capture_steps,
-                "stableSteps": task_policy.stable_steps,
-                "blendSteps": task_policy.blend_steps,
-                "handoffFailed": task_policy.handoff_failed,
+                "captureSteps": index
+                - SUPERVISOR["moveSteps"]
+                - SUPERVISOR["settleSteps"]
+                + 1,
+                "stableSteps": 0,
+                "blendSteps": 0,
+                "handoffFailed": False,
             }
             record["baseAnchorRecovery"] = {
                 "active": bool(control["baseAnchorRecoveryActive"]),
@@ -703,7 +727,7 @@ def run_task_load_full_kitchen_single_probe(
         "supervisorEvidence": copy.deepcopy(A6_SUPERVISOR_EVIDENCE),
         "controlLineage": copy.deepcopy(A5CK_CONTROL_LINEAGE),
         "wholeBodyController": copy.deepcopy(WHOLE_BODY_CONTROLLER),
-        "taskPolicyHandoff": copy.deepcopy(TASK_POLICY_HANDOFF),
+        "taskPolicyHandoff": copy.deepcopy(FULL_TASK_POLICY_HANDOFF),
         "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
         "taskGeometryCalibration": copy.deepcopy(TASK_GEOMETRY_CALIBRATION),
         "baseAnchorRecovery": copy.deepcopy(FULL_TASK_BASE_ANCHOR_RECOVERY),
@@ -711,6 +735,9 @@ def run_task_load_full_kitchen_single_probe(
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
         "taskSceneBaseLockEvidence": copy.deepcopy(FULL_TASK_BASE_LOCK_EVIDENCE),
+        "taskSceneManipulationPolicyEvidence": copy.deepcopy(
+            FULL_TASK_MANIPULATION_POLICY_EVIDENCE
+        ),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "scene": copy.deepcopy(ERGONOMIC_TASK_SCENE),
         "policies": {
@@ -736,6 +763,9 @@ def run_task_load_full_kitchen_single_probe(
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
         "taskSceneBaseLockEvidence": copy.deepcopy(FULL_TASK_BASE_LOCK_EVIDENCE),
+        "taskSceneManipulationPolicyEvidence": copy.deepcopy(
+            FULL_TASK_MANIPULATION_POLICY_EVIDENCE
+        ),
         "policies": loaded,
         "staticPreflight": static,
         "runtimePreflight": runtime,
@@ -748,7 +778,7 @@ def run_task_load_full_kitchen_single_probe(
         "scene": copy.deepcopy(ERGONOMIC_TASK_SCENE),
         "controller": {
             "wholeBodyController": copy.deepcopy(WHOLE_BODY_CONTROLLER),
-            "taskPolicyHandoff": copy.deepcopy(TASK_POLICY_HANDOFF),
+            "taskPolicyHandoff": copy.deepcopy(FULL_TASK_POLICY_HANDOFF),
             "dynamicArmTracking": copy.deepcopy(DYNAMIC_ARM_TRACKING),
             "baseAnchorRecovery": copy.deepcopy(FULL_TASK_BASE_ANCHOR_RECOVERY),
             "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
