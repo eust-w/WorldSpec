@@ -105,7 +105,7 @@ def test_locked_full_task_single_profile_is_semantically_valid() -> None:
 
     validate_full_task_single_profile(base, supervisor, profile)
 
-    assert profile["runtime"]["imageSourceRevision"] == "57907225f031aad68603ab4469388868277320cd"
+    assert profile["runtime"]["imageSourceRevision"] == "85455657684a7616b6da1b1ebc753dd7ccb46e94"
     assert profile["qualityGates"]["probeRuns"] == 1
 
 
