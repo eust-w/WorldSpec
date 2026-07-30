@@ -644,9 +644,24 @@ def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None
     )
     assert "loaded-track-settle-manipulation-mixed-reset-v3-failed" in entrypoint
     assert 'report["checkpoint"]' in entrypoint
+    assert (
+        "manipulation-on-policy-continuation-training-image-build.a800.passed.json"
+        in wrapper
+    )
     assert "locomotion-manipulation-mixed-reset.a800.failed-summary.json" in wrapper
     assert "worldspec-h1-midterm-hl78d/midterm-checkpoint.zip" in wrapper
     assert "worldspec-h1-midterm-rf9zh/midterm-checkpoint.zip" not in wrapper
+
+    build = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "manipulation-on-policy-continuation-training-image-build.a800.passed.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert profile["runtime"]["containerImage"] == build["image"]
+    assert profile["runtime"]["containerDigest"] == build["image"].rsplit("@", 1)[1]
 
 
 def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
