@@ -13,8 +13,11 @@ WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真�
 > 任务载荷和正式 100M 阶段；100M Checkpoint 因零命令站立回归失败保持
 > `non_publishable`。冻结 Supervisor 的十项门通过后，单次完整厨房暴露了
 > 步行后操作平衡问题；mixed-reset-v3 达到静态 `5/5`，但修正后的
-> post-walk-biased-v4 纯分布评测只有步行后 `3/5`，因此目前只放行
-> on-policy-continuation-v5 校准，不允许启动厨房 5/5 或声明 L3。真实
+> post-walk-biased-v4 纯分布评测只有步行后 `3/5`；
+> on-policy-continuation-v5 继续得到步行后 `3/5`、静态 `5/5`，但其归档
+> 保留七个尚未逐项正式评估的 Checkpoint。当前只放行
+> checkpoint-portfolio-v6 在不变门槛下完成七候选审计，不允许启动完整厨房
+> 单次、厨房 5/5 或声明 L3。真实
 > A800/H100 图像/视频生成、完整 CAD/USD 原生运行、授权明确的真实厨房联合
 > 证据和 H1 厨房 5/5 均未完成，所以产品 v0.1 尚未整体验收。
 

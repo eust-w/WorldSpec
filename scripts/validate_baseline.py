@@ -318,6 +318,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/locomotion-manipulation-anchor.a800.failed-summary.json": "h1-locomotion-manipulation-anchor-failure-summary.schema.json",
         "h1-kitchen/locomotion-manipulation-mixed-reset.a800.failed-summary.json": "h1-locomotion-manipulation-mixed-reset-failure-summary.schema.json",
         "h1-kitchen/locomotion-manipulation-post-walk-biased.a800.failed-summary.json": "h1-locomotion-manipulation-post-walk-biased-failure-summary.schema.json",
+        "h1-kitchen/locomotion-manipulation-on-policy-continuation.a800.failed-summary.json": "h1-locomotion-manipulation-on-policy-continuation-failure-summary.schema.json",
         "h1-kitchen/locked-runtime.a800.passed.json": "h1-locked-runtime-report.schema.json",
         "h1-kitchen/capacity-scale.a800.passed.json": "h1-capacity-scale-report.schema.json",
         "h1-kitchen/ppo-smoke.a800.passed.json": "h1-ppo-smoke-report.schema.json",

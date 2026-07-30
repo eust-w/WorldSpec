@@ -69,5 +69,6 @@ last-verified: 2026-07-30
 | D-057 | 锚点恢复校准把步行后操作平衡提高到 4/5，但训练只使用步行后快照而正式门有一半静态起步；选择 50% 快照、50% 静态起步的混合重置校准，保持 ABI、训练步数、Episode 长度和全部质量门不变 | Accepted Design | [ADR-0038](decisions/0038-h1-manipulation-balance-mixed-reset.md) |
 | D-058 | mixed-reset-v3 把静态起步提高到 5/5，但仍有一个步行后初态失败，且步行后评测错误继承了训练混合；选择 75% 步行后、25% 静态训练，并强制两个评测套件使用纯分布，质量门不变 | Accepted Design | [ADR-0039](decisions/0039-h1-manipulation-post-walk-biased-reset.md) |
 | D-059 | post-walk-biased-v4 在纯分布评测中退化为步行后 3/5、静态 5/5；选择从最佳 mixed-reset-v3 Checkpoint Warm Start，用同一操作平衡策略重建 Capture 状态库并恢复 50/50 训练，全部质量门不变 | Accepted Design | [ADR-0040](decisions/0040-h1-manipulation-on-policy-continuation.md) |
+| D-060 | on-policy-continuation-v5 的终端阶段仅通过步行后 3/5、静态 5/5，但归档保留七个阶段；选择在同运行、同状态库和不变门槛下评估全部已保存 Checkpoint，仅正式通过的候选才可解锁完整厨房单次门 | Accepted Design | [ADR-0041](decisions/0041-h1-manipulation-checkpoint-portfolio.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

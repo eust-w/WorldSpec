@@ -26,6 +26,8 @@
     "warmStart",
     "motionTeacher",
     "a6k1CaptureFailure",
+    "previousAttempt",
+    "checkpointSelection",
     "snapshotBank",
     "runtimeCapacity",
     "staticPreflight",
@@ -144,22 +146,22 @@
       ],
       "properties": {
         "job": {
-          "const": "worldspec-h1-midterm-rf9zh"
+          "const": "worldspec-h1-midterm-hftjt"
         },
         "probeRevision": {
-          "const": "5383dd04b688b93ddea28b2a3c5c38703b9f90e9"
+          "const": "c1ac96ff83f17b70be7e06b0a4b6c5b889ca5a6d"
         },
         "reportDigest": {
-          "const": "sha256:35ab225a46a62c1a08420c3bac2271e92440f34f1c0a170eedc5bcbbdb215fae"
+          "const": "sha256:43bd5ab433aacfda5e4c58ce6a39ebae6b5969769be0ad6397957b047f237eb6"
         },
         "checkpointDigest": {
-          "const": "sha256:adbdfbee755fa3369f772029c9e645f3ea7a6df38bbf0ea41357d9dd86f22cb3"
+          "const": "sha256:9dd0c4d9b387d316cdf8ea21b0eb8adc94f6af5bbba4b6aec0ceb1620ecba4b3"
         },
         "traceDigest": {
-          "const": "sha256:ab11232ac5342dfc4daf260714d985dea3229aed3bec8df0f71756b136260e67"
+          "const": "sha256:c0270c8f44dc3afb2bcbb56c765a8bd10a051dd46d40c9e6ee83d53ca886fbc3"
         },
         "snapshotBankDigest": {
-          "const": "sha256:563869c42475b952719477f1fd092499d2cd176bcf4c2d1a6e6668caa8b44ee6"
+          "const": "sha256:10461f1b72f46d804d6f171c46bb47b343b410af15547585d81c846746ee6fe4"
         },
         "formalGate": {
           "const": "failed"
@@ -169,6 +171,138 @@
         }
       },
       "additionalProperties": true
+    },
+    "checkpointSelection": {
+      "type": "object",
+      "required": [
+        "mode",
+        "evaluateAllSavedCheckpoints",
+        "expectedCandidateCount",
+        "selectedStep",
+        "selectedFormalGate",
+        "candidates"
+      ],
+      "properties": {
+        "mode": {
+          "const": "formal_gate_then_pass_count_then_episode_length"
+        },
+        "evaluateAllSavedCheckpoints": {
+          "const": true
+        },
+        "expectedCandidateCount": {
+          "const": 7
+        },
+        "selectedStep": {
+          "enum": [
+            2457600,
+            4915200,
+            7372800,
+            9830400,
+            12288000,
+            14745600,
+            17203200
+          ]
+        },
+        "selectedFormalGate": {
+          "type": "boolean"
+        },
+        "candidates": {
+          "type": "array",
+          "minItems": 7,
+          "maxItems": 7,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/checkpointCandidate"
+          },
+          "allOf": [
+            {
+              "contains": {
+                "properties": {
+                  "step": {
+                    "const": 2457600
+                  }
+                },
+                "required": [
+                  "step"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "step": {
+                    "const": 4915200
+                  }
+                },
+                "required": [
+                  "step"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "step": {
+                    "const": 7372800
+                  }
+                },
+                "required": [
+                  "step"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "step": {
+                    "const": 9830400
+                  }
+                },
+                "required": [
+                  "step"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "step": {
+                    "const": 12288000
+                  }
+                },
+                "required": [
+                  "step"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "step": {
+                    "const": 14745600
+                  }
+                },
+                "required": [
+                  "step"
+                ]
+              }
+            },
+            {
+              "contains": {
+                "properties": {
+                  "step": {
+                    "const": 17203200
+                  }
+                },
+                "required": [
+                  "step"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
     },
     "snapshotBank": {
       "type": "object",
@@ -475,6 +609,64 @@
         }
       },
       "additionalProperties": false
+    },
+    "checkpointCandidate": {
+      "type": "object",
+      "required": [
+        "step",
+        "meanEpisodeLength",
+        "meanEpisodeLengthGate",
+        "testsPassed",
+        "testsRequired",
+        "postWalkTestsPassed",
+        "fromRestTestsPassed",
+        "deterministicSuiteGate",
+        "formalGate"
+      ],
+      "properties": {
+        "step": {
+          "enum": [
+            2457600,
+            4915200,
+            7372800,
+            9830400,
+            12288000,
+            14745600,
+            17203200
+          ]
+        },
+        "meanEpisodeLength": {
+          "type": "number"
+        },
+        "meanEpisodeLengthGate": {
+          "type": "boolean"
+        },
+        "testsPassed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10
+        },
+        "testsRequired": {
+          "const": 10
+        },
+        "postWalkTestsPassed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "fromRestTestsPassed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "deterministicSuiteGate": {
+          "type": "boolean"
+        },
+        "formalGate": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
     }
   },
   "allOf": [
@@ -493,6 +685,13 @@
         "properties": {
           "policyStatus": {
             "const": "manipulation_balance_candidate"
+          },
+          "checkpointSelection": {
+            "properties": {
+              "selectedFormalGate": {
+                "const": true
+              }
+            }
           },
           "qualityAssessment": {
             "properties": {
@@ -525,6 +724,39 @@
             "properties": {
               "clean": {
                 "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "formalManipulationBalanceGate": {
+            "const": "failed"
+          }
+        },
+        "required": [
+          "formalManipulationBalanceGate"
+        ]
+      },
+      "then": {
+        "properties": {
+          "policyStatus": {
+            "const": "non_publishable"
+          },
+          "checkpointSelection": {
+            "properties": {
+              "selectedFormalGate": {
+                "const": false
+              }
+            }
+          },
+          "qualityAssessment": {
+            "properties": {
+              "status": {
+                "const": "failed"
               }
             }
           }

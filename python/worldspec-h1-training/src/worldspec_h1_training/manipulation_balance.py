@@ -11,6 +11,7 @@ from __future__ import annotations
 import copy
 import functools
 import json
+import shutil
 import tempfile
 import time
 from pathlib import Path
@@ -66,26 +67,32 @@ A6K1_CAPTURE_FAILURE = {
 }
 
 PREVIOUS_ATTEMPT = {
-    "job": "worldspec-h1-midterm-rf9zh",
-    "probeRevision": "5383dd04b688b93ddea28b2a3c5c38703b9f90e9",
-    "reportDigest": "sha256:35ab225a46a62c1a08420c3bac2271e92440f34f1c0a170eedc5bcbbdb215fae",
-    "reportSizeBytes": 31_712,
-    "checkpointDigest": "sha256:adbdfbee755fa3369f772029c9e645f3ea7a6df38bbf0ea41357d9dd86f22cb3",
-    "checkpointSizeBytes": 8_816_724,
-    "traceDigest": "sha256:ab11232ac5342dfc4daf260714d985dea3229aed3bec8df0f71756b136260e67",
-    "traceSizeBytes": 433_891,
-    "snapshotBankDigest": "sha256:563869c42475b952719477f1fd092499d2cd176bcf4c2d1a6e6668caa8b44ee6",
-    "snapshotBankSizeBytes": 1_189_993,
+    "job": "worldspec-h1-midterm-hftjt",
+    "probeRevision": "c1ac96ff83f17b70be7e06b0a4b6c5b889ca5a6d",
+    "reportDigest": "sha256:43bd5ab433aacfda5e4c58ce6a39ebae6b5969769be0ad6397957b047f237eb6",
+    "reportSizeBytes": 31_642,
+    "checkpointDigest": "sha256:9dd0c4d9b387d316cdf8ea21b0eb8adc94f6af5bbba4b6aec0ceb1620ecba4b3",
+    "checkpointSizeBytes": 8_803_840,
+    "traceDigest": "sha256:c0270c8f44dc3afb2bcbb56c765a8bd10a051dd46d40c9e6ee83d53ca886fbc3",
+    "traceSizeBytes": 423_698,
+    "snapshotBankDigest": "sha256:10461f1b72f46d804d6f171c46bb47b343b410af15547585d81c846746ee6fe4",
+    "snapshotBankSizeBytes": 1_192_416,
     "formalGate": "failed",
-    "finalMeanEpisodeLength": 91.828125,
+    "finalMeanEpisodeLength": 97.453125,
     "deterministicTestsPassed": 8,
-    "fromRestMaximumBaseTranslation": 0.01926421941565464,
-    "fromRestMaximumTerminalLinearSpeed": 0.002552621206498071,
-    "postWalkMaximumBaseTranslation": 0.9506178884719482,
-    "postWalkMaximumTerminalLinearSpeed": 3.526850828732937,
-    "trainingFromRestProbability": 0.25,
+    "fromRestMaximumBaseTranslation": 0.024857446770381878,
+    "fromRestMaximumTerminalLinearSpeed": 0.0020157705563764268,
+    "postWalkMaximumBaseTranslation": 0.9441670220292021,
+    "postWalkMaximumTerminalLinearSpeed": 2.739229447442784,
+    "trainingFromRestProbability": 0.5,
     "evaluationSnapshotFromRestProbability": 0.0,
     "qualityGatesChanged": False,
+}
+
+CHECKPOINT_SELECTION = {
+    "mode": "formal_gate_then_pass_count_then_episode_length",
+    "evaluateAllSavedCheckpoints": True,
+    "expectedCandidateCount": 7,
 }
 
 ANCHOR_RECOVERY = {
@@ -348,6 +355,7 @@ def validate_manipulation_balance_profile(
         "motionTeacher": MOTION_TEACHER,
         "a6k1CaptureFailure": A6K1_CAPTURE_FAILURE,
         "previousAttempt": PREVIOUS_ATTEMPT,
+        "checkpointSelection": CHECKPOINT_SELECTION,
         "trainingOverrides": TRAINING_OVERRIDES,
         "environment": {
             "commandDistribution": ZERO_COMMAND,
@@ -662,6 +670,59 @@ def evaluate_manipulation_balance_suite(
     return tests, traces
 
 
+def assess_manipulation_checkpoint_candidate(
+    step: int,
+    mean_episode_length: float,
+    tests: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Summarize one saved checkpoint without relaxing any formal gate."""
+
+    required = QUALITY_GATES["requiredConsecutivePasses"]
+    post_walk = [item for item in tests if item["suite"] == "post_walk_capture"]
+    from_rest = [item for item in tests if item["suite"] == "from_rest"]
+    post_walk_passed = sum(item["result"] == "pass" for item in post_walk)
+    from_rest_passed = sum(item["result"] == "pass" for item in from_rest)
+    tests_passed = post_walk_passed + from_rest_passed
+    mean_gate = mean_episode_length >= QUALITY_GATES["minimumFinalMeanEpisodeLength"]
+    suite_gate = (
+        len(post_walk) == required
+        and len(from_rest) == required
+        and tests_passed == required * 2
+    )
+    return {
+        "step": step,
+        "meanEpisodeLength": mean_episode_length,
+        "meanEpisodeLengthGate": mean_gate,
+        "testsPassed": tests_passed,
+        "testsRequired": required * 2,
+        "postWalkTestsPassed": post_walk_passed,
+        "fromRestTestsPassed": from_rest_passed,
+        "deterministicSuiteGate": suite_gate,
+        "formalGate": mean_gate and suite_gate,
+    }
+
+
+def select_manipulation_checkpoint_candidate(
+    assessments: list[dict[str, Any]],
+) -> dict[str, Any]:
+    """Select by formal gate, pass count, mean Episode, then earlier step."""
+
+    if not assessments:
+        raise TrainingError(
+            "MANIPULATION_CHECKPOINT_CANDIDATES_MISSING",
+            "Manipulation checkpoint selection requires at least one candidate.",
+        )
+    return max(
+        assessments,
+        key=lambda item: (
+            bool(item["formalGate"]),
+            int(item["testsPassed"]),
+            float(item["meanEpisodeLength"]),
+            -int(item["step"]),
+        ),
+    )
+
+
 def run_manipulation_balance_calibration(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
@@ -766,7 +827,7 @@ def run_manipulation_balance_calibration(
             training_model,
             capture_state_bank=bank,
         )
-        make_inference_fn, params, _ = ppo.train(
+        make_inference_fn, _, _ = ppo.train(
             environment=training_env,
             progress_fn=progress,
             policy_params_fn=lambda *_: None,
@@ -793,7 +854,6 @@ def run_manipulation_balance_calibration(
             wrap_env_fn=wrapper.wrap_for_brax_training,
             num_eval_envs=min(128, training["numEnvs"]),
         )
-        candidate = make_inference_fn(params, deterministic=True)
         snapshot_eval_profile = copy.deepcopy(effective)
         snapshot_eval_profile["trainingEnvironment"]["snapshotCurriculum"][
             "fromRestProbability"
@@ -804,11 +864,86 @@ def run_manipulation_balance_calibration(
             capture_state_bank=bank,
         )
         rest_eval_env = make_environment(effective, training_model)
-        tests, traces = evaluate_manipulation_balance_suite(
-            effective,
-            snapshot_eval_env,
-            rest_eval_env,
-            candidate,
+        from brax.training.agents.ppo import checkpoint as ppo_checkpoint
+
+        checkpoint_steps = sorted(
+            (
+                path
+                for path in checkpoint_dir.iterdir()
+                if path.is_dir() and path.name.isdigit()
+            ),
+            key=lambda path: int(path.name),
+        )
+        if len(checkpoint_steps) != CHECKPOINT_SELECTION["expectedCandidateCount"]:
+            raise TrainingError(
+                "MANIPULATION_CHECKPOINT_COUNT_MISMATCH",
+                "The saved checkpoint portfolio does not match the frozen profile.",
+                {
+                    "expected": CHECKPOINT_SELECTION["expectedCandidateCount"],
+                    "actual": len(checkpoint_steps),
+                },
+            )
+        candidate_details: list[dict[str, Any]] = []
+        for checkpoint_step in checkpoint_steps:
+            step = int(checkpoint_step.name)
+            matching_progress = next(
+                (item for item in progress_records if int(item["step"]) == step),
+                None,
+            )
+            if matching_progress is None:
+                raise TrainingError(
+                    "MANIPULATION_CANDIDATE_PROGRESS_MISSING",
+                    "A saved checkpoint has no exact progress record.",
+                    {"step": step},
+                )
+            mean_episode_length = matching_progress["metrics"].get(
+                "eval/avg_episode_length"
+            )
+            if mean_episode_length is None:
+                raise TrainingError(
+                    "MANIPULATION_CANDIDATE_EPISODE_METRIC_MISSING",
+                    "A saved manipulation checkpoint has no associated episode metric.",
+                    {"step": step},
+                )
+            checkpoint_params = ppo_checkpoint.load(checkpoint_step)
+            checkpoint_policy = make_inference_fn(
+                checkpoint_params,
+                deterministic=True,
+            )
+            candidate_tests, candidate_traces = evaluate_manipulation_balance_suite(
+                effective,
+                snapshot_eval_env,
+                rest_eval_env,
+                checkpoint_policy,
+            )
+            assessment = assess_manipulation_checkpoint_candidate(
+                step,
+                float(mean_episode_length),
+                candidate_tests,
+            )
+            candidate_details.append(
+                {
+                    "assessment": assessment,
+                    "tests": candidate_tests,
+                    "traces": candidate_traces,
+                    "path": checkpoint_step,
+                }
+            )
+        selected_assessment = select_manipulation_checkpoint_candidate(
+            [item["assessment"] for item in candidate_details]
+        )
+        selected_detail = next(
+            item
+            for item in candidate_details
+            if item["assessment"]["step"] == selected_assessment["step"]
+        )
+        tests = selected_detail["tests"]
+        traces = selected_detail["traces"]
+        selected_checkpoint_root = output_dir / "selected-checkpoint"
+        selected_checkpoint_root.mkdir()
+        shutil.copytree(
+            selected_detail["path"],
+            selected_checkpoint_root / str(selected_assessment["step"]),
         )
     if len(progress_records) < 2:
         raise TrainingError(
@@ -816,21 +951,25 @@ def run_manipulation_balance_calibration(
             "Manipulation-balance training did not report enough progress.",
         )
     final_progress = progress_records[-1]
-    mean_episode_length = final_progress["metrics"].get("eval/avg_episode_length")
-    if mean_episode_length is None:
-        raise TrainingError(
-            "MANIPULATION_BALANCE_EPISODE_METRIC_MISSING",
-            "Manipulation-balance training omitted eval/avg_episode_length.",
-        )
+    mean_episode_length = float(selected_assessment["meanEpisodeLength"])
     checkpoint_archive = output_dir / "midterm-checkpoint.zip"
-    _deterministic_zip(checkpoint_dir, checkpoint_archive)
+    _deterministic_zip(selected_checkpoint_root, checkpoint_archive)
     trace_path = output_dir / "evaluation-traces.jsonl"
     with trace_path.open("w", encoding="utf-8") as stream:
         for record in traces:
             stream.write(json.dumps(record, sort_keys=True) + "\n")
     tests_gate = len(tests) == 10 and all(test["result"] == "pass" for test in tests)
-    episode_gate = float(mean_episode_length) >= QUALITY_GATES["minimumFinalMeanEpisodeLength"]
+    episode_gate = bool(selected_assessment["meanEpisodeLengthGate"])
     quality_passed = tests_gate and episode_gate
+    if quality_passed != bool(selected_assessment["formalGate"]):
+        raise TrainingError(
+            "MANIPULATION_CHECKPOINT_SELECTION_INCONSISTENT",
+            "Selected checkpoint assessment and final quality gate disagree.",
+            {
+                "selectedFormalGate": selected_assessment["formalGate"],
+                "qualityPassed": quality_passed,
+            },
+        )
     return {
         "baseTrainingProfileDigest": digest_json(base_profile),
         "manipulationBalanceProfileDigest": digest_json(profile),
@@ -843,6 +982,14 @@ def run_manipulation_balance_calibration(
         },
         "a6k1CaptureFailure": copy.deepcopy(A6K1_CAPTURE_FAILURE),
         "previousAttempt": copy.deepcopy(PREVIOUS_ATTEMPT),
+        "checkpointSelection": {
+            **copy.deepcopy(CHECKPOINT_SELECTION),
+            "selectedStep": selected_assessment["step"],
+            "selectedFormalGate": selected_assessment["formalGate"],
+            "candidates": [
+                copy.deepcopy(item["assessment"]) for item in candidate_details
+            ],
+        },
         "snapshotBank": snapshot_artifact,
         "runtimeCapacity": {
             **base_profile["runtime"]["mjxCapacity"],

@@ -12,12 +12,15 @@ from worldspec_h1_training.manipulation_balance import (
     A6K1_CAPTURE_FAILURE,
     ANCHOR_RECOVERY,
     CAPTURE_WARM_START,
+    CHECKPOINT_SELECTION,
     DYNAMIC_ARM_CURRICULUM,
     MOTION_TEACHER,
     PREVIOUS_ATTEMPT,
     QUALITY_GATES,
     SNAPSHOT_CURRICULUM,
+    assess_manipulation_checkpoint_candidate,
     make_manipulation_balance_training_profile,
+    select_manipulation_checkpoint_candidate,
     validate_manipulation_balance_profile,
 )
 
@@ -45,6 +48,7 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
     assert profile["motionTeacher"] == MOTION_TEACHER
     assert profile["a6k1CaptureFailure"] == A6K1_CAPTURE_FAILURE
     assert profile["previousAttempt"] == PREVIOUS_ATTEMPT
+    assert profile["checkpointSelection"] == CHECKPOINT_SELECTION
     assert effective["training"]["numTimesteps"] == 16_777_216
     assert effective["training"]["numEnvs"] == 4096
     assert effective["training"]["episodeLength"] == 100
@@ -109,6 +113,14 @@ def test_manipulation_balance_rejects_previous_attempt_drift() -> None:
         validate_manipulation_balance_profile(base, profile)
 
 
+def test_manipulation_balance_rejects_checkpoint_selection_drift() -> None:
+    base, profile = _profiles()
+    profile["checkpointSelection"]["expectedCandidateCount"] = 6
+
+    with pytest.raises(TrainingError, match="checkpointSelection"):
+        validate_manipulation_balance_profile(base, profile)
+
+
 def test_manipulation_balance_rejects_quality_gate_relaxation() -> None:
     base, profile = _profiles()
     profile["qualityGates"]["minimumBaseHeight"] = 0.7
@@ -155,3 +167,86 @@ def test_post_walk_evaluation_disables_rest_mixture() -> None:
     assert "snapshot_eval_profile" in source
     assert '"fromRestProbability"' in source
     assert "] = 0.0" in source
+    assert "if int(item[\"step\"]) == step" in source
+    assert "MANIPULATION_CANDIDATE_PROGRESS_MISSING" in source
+
+
+def _tests(post_walk_passes: int, from_rest_passes: int) -> list[dict]:
+    tests: list[dict] = []
+    for suite, passes in (
+        ("post_walk_capture", post_walk_passes),
+        ("from_rest", from_rest_passes),
+    ):
+        for index in range(5):
+            tests.append(
+                {
+                    "suite": suite,
+                    "result": "pass" if index < passes else "fail",
+                }
+            )
+    return tests
+
+
+def test_checkpoint_assessment_preserves_all_formal_gates() -> None:
+    assessment = assess_manipulation_checkpoint_candidate(
+        12_288_000,
+        95.0,
+        _tests(5, 5),
+    )
+
+    assert assessment == {
+        "step": 12_288_000,
+        "meanEpisodeLength": 95.0,
+        "meanEpisodeLengthGate": True,
+        "testsPassed": 10,
+        "testsRequired": 10,
+        "postWalkTestsPassed": 5,
+        "fromRestTestsPassed": 5,
+        "deterministicSuiteGate": True,
+        "formalGate": True,
+    }
+
+
+def test_checkpoint_selection_prefers_passing_candidate_over_terminal_failure() -> None:
+    selected = select_manipulation_checkpoint_candidate(
+        [
+            assess_manipulation_checkpoint_candidate(
+                12_288_000,
+                94.0,
+                _tests(5, 5),
+            ),
+            assess_manipulation_checkpoint_candidate(
+                17_203_200,
+                97.453125,
+                _tests(3, 5),
+            ),
+        ]
+    )
+
+    assert selected["step"] == 12_288_000
+    assert selected["formalGate"] is True
+
+
+def test_checkpoint_selection_uses_pass_count_without_upgrading_failure() -> None:
+    selected = select_manipulation_checkpoint_candidate(
+        [
+            assess_manipulation_checkpoint_candidate(
+                9_830_400,
+                96.0,
+                _tests(4, 5),
+            ),
+            assess_manipulation_checkpoint_candidate(
+                17_203_200,
+                97.0,
+                _tests(3, 5),
+            ),
+        ]
+    )
+
+    assert selected["step"] == 9_830_400
+    assert selected["formalGate"] is False
+
+
+def test_checkpoint_selection_rejects_empty_portfolio() -> None:
+    with pytest.raises(TrainingError, match="at least one candidate"):
+        select_manipulation_checkpoint_candidate([])

@@ -50,5 +50,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0038 H1 manipulation-balance mixed-reset calibration](0038-h1-manipulation-balance-mixed-reset.md)
 - [ADR-0039 H1 manipulation post-walk-biased reset](0039-h1-manipulation-post-walk-biased-reset.md)
 - [ADR-0040 H1 manipulation on-policy state-bank continuation](0040-h1-manipulation-on-policy-continuation.md)
+- [ADR-0041 H1 manipulation Checkpoint portfolio gate](0041-h1-manipulation-checkpoint-portfolio.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

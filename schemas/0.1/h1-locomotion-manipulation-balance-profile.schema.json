@@ -14,6 +14,7 @@
     "motionTeacher",
     "a6k1CaptureFailure",
     "previousAttempt",
+    "checkpointSelection",
     "trainingOverrides",
     "environment",
     "qualityGates",
@@ -153,26 +154,33 @@
     },
     "previousAttempt": {
       "const": {
-        "job": "worldspec-h1-midterm-rf9zh",
-        "probeRevision": "5383dd04b688b93ddea28b2a3c5c38703b9f90e9",
-        "reportDigest": "sha256:35ab225a46a62c1a08420c3bac2271e92440f34f1c0a170eedc5bcbbdb215fae",
-        "reportSizeBytes": 31712,
-        "checkpointDigest": "sha256:adbdfbee755fa3369f772029c9e645f3ea7a6df38bbf0ea41357d9dd86f22cb3",
-        "checkpointSizeBytes": 8816724,
-        "traceDigest": "sha256:ab11232ac5342dfc4daf260714d985dea3229aed3bec8df0f71756b136260e67",
-        "traceSizeBytes": 433891,
-        "snapshotBankDigest": "sha256:563869c42475b952719477f1fd092499d2cd176bcf4c2d1a6e6668caa8b44ee6",
-        "snapshotBankSizeBytes": 1189993,
+        "job": "worldspec-h1-midterm-hftjt",
+        "probeRevision": "c1ac96ff83f17b70be7e06b0a4b6c5b889ca5a6d",
+        "reportDigest": "sha256:43bd5ab433aacfda5e4c58ce6a39ebae6b5969769be0ad6397957b047f237eb6",
+        "reportSizeBytes": 31642,
+        "checkpointDigest": "sha256:9dd0c4d9b387d316cdf8ea21b0eb8adc94f6af5bbba4b6aec0ceb1620ecba4b3",
+        "checkpointSizeBytes": 8803840,
+        "traceDigest": "sha256:c0270c8f44dc3afb2bcbb56c765a8bd10a051dd46d40c9e6ee83d53ca886fbc3",
+        "traceSizeBytes": 423698,
+        "snapshotBankDigest": "sha256:10461f1b72f46d804d6f171c46bb47b343b410af15547585d81c846746ee6fe4",
+        "snapshotBankSizeBytes": 1192416,
         "formalGate": "failed",
-        "finalMeanEpisodeLength": 91.828125,
+        "finalMeanEpisodeLength": 97.453125,
         "deterministicTestsPassed": 8,
-        "fromRestMaximumBaseTranslation": 0.01926421941565464,
-        "fromRestMaximumTerminalLinearSpeed": 0.002552621206498071,
-        "postWalkMaximumBaseTranslation": 0.9506178884719482,
-        "postWalkMaximumTerminalLinearSpeed": 3.526850828732937,
-        "trainingFromRestProbability": 0.25,
+        "fromRestMaximumBaseTranslation": 0.024857446770381878,
+        "fromRestMaximumTerminalLinearSpeed": 0.0020157705563764268,
+        "postWalkMaximumBaseTranslation": 0.9441670220292021,
+        "postWalkMaximumTerminalLinearSpeed": 2.739229447442784,
+        "trainingFromRestProbability": 0.5,
         "evaluationSnapshotFromRestProbability": 0.0,
         "qualityGatesChanged": false
+      }
+    },
+    "checkpointSelection": {
+      "const": {
+        "mode": "formal_gate_then_pass_count_then_episode_length",
+        "evaluateAllSavedCheckpoints": true,
+        "expectedCandidateCount": 7
       }
     },
     "trainingOverrides": {

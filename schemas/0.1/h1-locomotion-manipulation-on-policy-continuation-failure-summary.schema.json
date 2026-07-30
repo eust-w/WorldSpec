@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-on-policy-continuation-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation On-Policy Continuation Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "image",
+    "report",
+    "checkpoint",
+    "trace",
+    "snapshotBank",
+    "training",
+    "quality",
+    "diagnosis",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-hftjt"
+    },
+    "probeRevision": {
+      "const": "c1ac96ff83f17b70be7e06b0a4b6c5b889ca5a6d"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:b92b75ee8dca5db9cfeb6db3ff24f2bbc5098f527224d58b21f43a8393bcf097"
+    },
+    "report": {
+      "$ref": "#/$defs/artifact"
+    },
+    "checkpoint": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "trace": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "snapshotBank": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/internalArtifact"
+        },
+        {
+          "type": "object",
+          "required": [
+            "snapshotCount",
+            "terminatedSnapshotCount"
+          ],
+          "properties": {
+            "snapshotCount": {
+              "const": 4096
+            },
+            "terminatedSnapshotCount": {
+              "const": 0
+            }
+          }
+        }
+      ]
+    },
+    "training": {
+      "const": {
+        "maximumReportedStep": 17203200,
+        "finalMeanEpisodeLength": 97.453125,
+        "minimumRequiredMeanEpisodeLength": 90.0,
+        "fromRestProbability": 0.5,
+        "savedCheckpointCount": 7
+      }
+    },
+    "quality": {
+      "const": {
+        "formalManipulationBalanceGate": "failed",
+        "policyStatus": "non_publishable",
+        "deterministicTestsPassed": 8,
+        "deterministicTestsRequired": 10,
+        "fromRestTestsPassed": 5,
+        "postWalkTestsPassed": 3,
+        "postWalkMaximumBaseTranslation": 0.9441670220292021,
+        "postWalkMaximumTerminalLinearSpeed": 2.739229447442784,
+        "nonFiniteSamples": 0
+      }
+    },
+    "diagnosis": {
+      "const": {
+        "classification": "terminal_checkpoint_only_evaluation_incomplete",
+        "evidence": "The terminal 17,203,200-step checkpoint passed the mean Episode gate and all five from-rest tests but passed only three of five post-walk tests. The returned archive retained seven numeric checkpoint stages, while the formal deterministic suite evaluated only the terminal stage.",
+        "qualityGatesChanged": false
+      }
+    },
+    "decision": {
+      "const": {
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "nextStep": "evaluate_all_saved_checkpoints_under_unchanged_gate",
+        "qualityGatesChanged": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "internalArtifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes",
+        "distribution"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "const": "internal_only"
+        },
+        "snapshotCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "terminatedSnapshotCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

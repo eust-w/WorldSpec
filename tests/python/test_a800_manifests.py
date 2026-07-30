@@ -642,6 +642,12 @@ def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None
         profile["environment"]["snapshotCurriculum"]["mode"]
         == "continued_on_policy_capture_and_rest_mixture"
     )
+    assert profile["checkpointSelection"] == {
+        "mode": "formal_gate_then_pass_count_then_episode_length",
+        "evaluateAllSavedCheckpoints": True,
+        "expectedCandidateCount": 7,
+    }
+    assert profile["previousAttempt"]["job"] == "worldspec-h1-midterm-hftjt"
     assert "loaded-track-settle-manipulation-mixed-reset-v3-failed" in entrypoint
     assert 'report["checkpoint"]' in entrypoint
     assert (

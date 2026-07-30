@@ -1,0 +1,58 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-on-policy-continuation/hftjt",
+  "status": "failed",
+  "job": "worldspec-h1-midterm-hftjt",
+  "probeRevision": "c1ac96ff83f17b70be7e06b0a4b6c5b889ca5a6d",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:b92b75ee8dca5db9cfeb6db3ff24f2bbc5098f527224d58b21f43a8393bcf097",
+  "report": {
+    "digest": "sha256:43bd5ab433aacfda5e4c58ce6a39ebae6b5969769be0ad6397957b047f237eb6",
+    "sizeBytes": 31642
+  },
+  "checkpoint": {
+    "digest": "sha256:9dd0c4d9b387d316cdf8ea21b0eb8adc94f6af5bbba4b6aec0ceb1620ecba4b3",
+    "sizeBytes": 8803840,
+    "distribution": "internal_only"
+  },
+  "trace": {
+    "digest": "sha256:c0270c8f44dc3afb2bcbb56c765a8bd10a051dd46d40c9e6ee83d53ca886fbc3",
+    "sizeBytes": 423698,
+    "distribution": "internal_only"
+  },
+  "snapshotBank": {
+    "digest": "sha256:10461f1b72f46d804d6f171c46bb47b343b410af15547585d81c846746ee6fe4",
+    "sizeBytes": 1192416,
+    "snapshotCount": 4096,
+    "terminatedSnapshotCount": 0,
+    "distribution": "internal_only"
+  },
+  "training": {
+    "maximumReportedStep": 17203200,
+    "finalMeanEpisodeLength": 97.453125,
+    "minimumRequiredMeanEpisodeLength": 90.0,
+    "fromRestProbability": 0.5,
+    "savedCheckpointCount": 7
+  },
+  "quality": {
+    "formalManipulationBalanceGate": "failed",
+    "policyStatus": "non_publishable",
+    "deterministicTestsPassed": 8,
+    "deterministicTestsRequired": 10,
+    "fromRestTestsPassed": 5,
+    "postWalkTestsPassed": 3,
+    "postWalkMaximumBaseTranslation": 0.9441670220292021,
+    "postWalkMaximumTerminalLinearSpeed": 2.739229447442784,
+    "nonFiniteSamples": 0
+  },
+  "diagnosis": {
+    "classification": "terminal_checkpoint_only_evaluation_incomplete",
+    "evidence": "The terminal 17,203,200-step checkpoint passed the mean Episode gate and all five from-rest tests but passed only three of five post-walk tests. The returned archive retained seven numeric checkpoint stages, while the formal deterministic suite evaluated only the terminal stage.",
+    "qualityGatesChanged": false
+  },
+  "decision": {
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "nextStep": "evaluate_all_saved_checkpoints_under_unchanged_gate",
+    "qualityGatesChanged": false
+  },
+  "generatedAt": "2026-07-30T17:30:00Z"
+}
