@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-process-isolation-runtime-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation Process-Isolation Runtime Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "image",
+    "log",
+    "jobManifest",
+    "podManifest",
+    "execution",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "runtime_failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-rfkl4"
+    },
+    "probeRevision": {
+      "const": "93f8e81bbfd58f431ab028a373feee81bce2e97a"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:2656ac9ec5627cb0160719a6e1eec2d9914b95323519148247b4579da4bcb93b"
+    },
+    "log": {
+      "const": {
+        "digest": "sha256:dba8a99055b6bef23c10d728bce415d5e1a130364c6448fb803a74c2e36f4f36",
+        "sizeBytes": 24584
+      }
+    },
+    "jobManifest": {
+      "const": {
+        "digest": "sha256:d0bd445e3bf1bc4fad7ac93bb2262173c2128e9885340fea7951988b26eab6bd",
+        "sizeBytes": 5898
+      }
+    },
+    "podManifest": {
+      "const": {
+        "digest": "sha256:be4461cf6ef23768df46aa302e86c506666ed8ad3437bc74f26f6a5080d2ff50",
+        "sizeBytes": 8015
+      }
+    },
+    "execution": {
+      "const": {
+        "device": "NVIDIA A800-SXM4-80GB",
+        "savedCheckpointCount": 7,
+        "formalManipulationBalanceGate": "not_evaluated",
+        "failure": "gpu_oom_during_checkpoint_portfolio_evaluation",
+        "failedAllocationBytes": 100663296
+      }
+    },
+    "decision": {
+      "const": {
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "nextStep": "training_and_evaluation_process_boundary",
+        "qualityGatesChanged": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

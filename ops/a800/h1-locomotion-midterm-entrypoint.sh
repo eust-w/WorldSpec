@@ -742,6 +742,66 @@ python "${SOURCE_DIR}/scripts/compose_h1_robotiq.py" \
   --output "${BUNDLE_DIR}"
 
 stage loaded_track_settle
+midterm_stage="$(
+  python - "${SOURCE_DIR}" "${WORLD_SPEC_MIDTERM_PROFILE_FILENAME}" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+profile = json.loads(
+    (
+        Path(sys.argv[1])
+        / "examples"
+        / "h1-kitchen"
+        / sys.argv[2]
+    ).read_text(encoding="utf-8")
+)
+print(profile["stage"])
+PY
+)"
+if [[ "${midterm_stage}" == "loaded_track_settle_manipulation_balance" ]]; then
+  stage manipulation_portfolio_training
+  env \
+    SOURCE_DIR="${SOURCE_DIR}" \
+    BUNDLE_DIR="${BUNDLE_DIR}" \
+    MODEL_DIR="${MODEL_DIR}" \
+    INPUT_DIR="${INPUT_DIR}" \
+    ARTIFACT_DIR="${ARTIFACT_DIR}" \
+    python - <<'PY'
+from pathlib import Path
+import os
+
+from worldspec_h1_training.contract import read_json
+from worldspec_h1_training.manipulation_balance import (
+    train_manipulation_balance_portfolio,
+)
+
+source_dir = Path(os.environ["SOURCE_DIR"])
+base_profile = read_json(
+    source_dir / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
+)
+profile = read_json(
+    source_dir
+    / "examples"
+    / "h1-kitchen"
+    / os.environ["WORLD_SPEC_MIDTERM_PROFILE_FILENAME"]
+)
+state = train_manipulation_balance_portfolio(
+    base_profile,
+    profile,
+    Path(os.environ["BUNDLE_DIR"]),
+    Path(os.environ["MODEL_DIR"]),
+    Path(os.environ["ARTIFACT_DIR"]),
+    Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+    Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+)
+print(
+    "WORLDSPEC_A800_MANIPULATION_PORTFOLIO_TRAINED="
+    + ",".join(str(step) for step in state["checkpointSteps"])
+)
+PY
+  stage manipulation_portfolio_evaluation
+fi
 env \
   SOURCE_DIR="${SOURCE_DIR}" \
   BUNDLE_DIR="${BUNDLE_DIR}" \

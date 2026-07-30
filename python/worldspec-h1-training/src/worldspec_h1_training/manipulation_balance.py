@@ -91,11 +91,11 @@ PREVIOUS_ATTEMPT = {
 }
 
 RUNTIME_FAILURE = {
-    "job": "worldspec-h1-midterm-xzrb5",
-    "probeRevision": "00f0525482f924e64cabb880a8ad3c5cc962bd2a",
-    "imageDigest": "sha256:3de0caf6b170f16e026d774cd650f3ef85e5a2a5fddc990d0ebab6d1fa9cad63",
-    "logDigest": "sha256:a743d881e4e8aba816cce41764bbf9579f802ad5d1d28a0b15d5b7a612257f21",
-    "logSizeBytes": 23_688,
+    "job": "worldspec-h1-midterm-rfkl4",
+    "probeRevision": "93f8e81bbfd58f431ab028a373feee81bce2e97a",
+    "imageDigest": "sha256:2656ac9ec5627cb0160719a6e1eec2d9914b95323519148247b4579da4bcb93b",
+    "logDigest": "sha256:dba8a99055b6bef23c10d728bce415d5e1a130364c6448fb803a74c2e36f4f36",
+    "logSizeBytes": 24_584,
     "failure": "gpu_oom_during_checkpoint_portfolio_evaluation",
     "savedCheckpointCount": 7,
     "formalGate": "not_evaluated",
@@ -106,8 +106,10 @@ CHECKPOINT_SELECTION = {
     "mode": "formal_gate_then_pass_count_then_episode_length",
     "evaluateAllSavedCheckpoints": True,
     "expectedCandidateCount": 7,
-    "memoryIsolation": "platform_allocator_and_jax_cache_clear_v1",
+    "memoryIsolation": "training_and_evaluation_process_boundary_v2",
 }
+
+PORTFOLIO_STATE_FILENAME = "manipulation-portfolio-state.json"
 
 ANCHOR_RECOVERY = {
     "mode": "pelvis_yaw_local_velocity_command_v1",
@@ -743,7 +745,7 @@ def select_manipulation_checkpoint_candidate(
     )
 
 
-def run_manipulation_balance_calibration(
+def train_manipulation_balance_portfolio(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
     bundle_dir: Path,
@@ -752,7 +754,7 @@ def run_manipulation_balance_calibration(
     warm_start_archive: Path,
     motion_teacher_archive: Path,
 ) -> dict[str, Any]:
-    """Train and gate the dedicated manipulation-balance policy."""
+    """Train and persist the portfolio before the CUDA process boundary."""
 
     import numpy as np
     from brax.training.agents.ppo import networks as ppo_networks
@@ -767,6 +769,12 @@ def run_manipulation_balance_calibration(
     runtime = runtime_preflight(effective, training_model)
     output_dir.mkdir(parents=True, exist_ok=True)
     checkpoint_dir = output_dir / "checkpoints"
+    if checkpoint_dir.exists():
+        raise TrainingError(
+            "MANIPULATION_PORTFOLIO_OUTPUT_EXISTS",
+            "The manipulation portfolio output must be created exactly once.",
+            {"path": str(checkpoint_dir)},
+        )
     checkpoint_dir.mkdir()
     progress_records: list[dict[str, Any]] = []
     started = time.monotonic()
@@ -847,7 +855,7 @@ def run_manipulation_balance_calibration(
             training_model,
             capture_state_bank=bank,
         )
-        make_inference_fn, _, _ = ppo.train(
+        ppo.train(
             environment=training_env,
             progress_fn=progress,
             policy_params_fn=lambda *_: None,
@@ -874,14 +882,159 @@ def run_manipulation_balance_calibration(
             wrap_env_fn=wrapper.wrap_for_brax_training,
             num_eval_envs=min(128, training["numEnvs"]),
         )
-        # The platform allocator returns released JAX buffers to CUDA.  Drop
-        # training-only policy/environment references and compiled executables
-        # before creating the two deterministic gate environments.
-        import jax
+    if len(progress_records) < 2:
+        raise TrainingError(
+            "MANIPULATION_BALANCE_PROGRESS_MISSING",
+            "Manipulation-balance training did not report enough progress.",
+        )
+    checkpoint_steps = sorted(
+        int(path.name)
+        for path in checkpoint_dir.iterdir()
+        if path.is_dir() and path.name.isdigit()
+    )
+    if len(checkpoint_steps) != CHECKPOINT_SELECTION["expectedCandidateCount"]:
+        raise TrainingError(
+            "MANIPULATION_CHECKPOINT_COUNT_MISMATCH",
+            "The saved checkpoint portfolio does not match the frozen profile.",
+            {
+                "expected": CHECKPOINT_SELECTION["expectedCandidateCount"],
+                "actual": len(checkpoint_steps),
+            },
+        )
+    progress_steps = {int(item["step"]) for item in progress_records}
+    missing_progress = [step for step in checkpoint_steps if step not in progress_steps]
+    if missing_progress:
+        raise TrainingError(
+            "MANIPULATION_CANDIDATE_PROGRESS_MISSING",
+            "A saved checkpoint has no exact progress record.",
+            {"steps": missing_progress},
+        )
+    portfolio_state = {
+        "stateVersion": "0.1.0",
+        "baseTrainingProfileDigest": digest_json(base_profile),
+        "manipulationBalanceProfileDigest": digest_json(profile),
+        "effectiveTrainingProfileDigest": digest_json(effective),
+        "warmStart": initialization,
+        "motionTeacher": {
+            **motion_initialization,
+            "mode": MOTION_TEACHER["mode"],
+            "selectedRole": MOTION_TEACHER["selectedRole"],
+        },
+        "snapshotBank": snapshot_artifact,
+        "checkpointSteps": checkpoint_steps,
+        "staticPreflight": static,
+        "runtimePreflight": runtime,
+        "target": {
+            "sourceBundleDigest": derivation["sourceBundleDigest"],
+            "derivedModelDigest": derivation["derivedModelDigest"],
+            "observationSize": observation_size,
+            "actionSize": action_size,
+        },
+        "training": {
+            "profileStage": profile["stage"],
+            "progressRecords": progress_records,
+            "elapsedSeconds": time.monotonic() - started,
+        },
+    }
+    state_path = output_dir / PORTFOLIO_STATE_FILENAME
+    state_path.write_text(
+        json.dumps(portfolio_state, allow_nan=False, sort_keys=True, separators=(",", ":")),
+        encoding="utf-8",
+    )
+    return portfolio_state
 
-        del training_env, rollout_env, capture_teacher, motion_teacher
-        jax.clear_caches()
-        gc.collect()
+
+def run_manipulation_balance_calibration(
+    base_profile: dict[str, Any],
+    profile: dict[str, Any],
+    bundle_dir: Path,
+    model_dir: Path,
+    output_dir: Path,
+    warm_start_archive: Path,
+    motion_teacher_archive: Path,
+) -> dict[str, Any]:
+    """Evaluate a portfolio in a fresh process and apply the frozen gate."""
+
+    import numpy as np
+    from brax.training import running_statistics
+    from brax.training.agents.ppo import checkpoint as ppo_checkpoint
+    from brax.training.agents.ppo import networks as ppo_networks
+
+    from .environment import make_environment
+
+    effective = make_manipulation_balance_training_profile(base_profile, profile)
+    static = static_preflight(base_profile, bundle_dir)
+    training_model, derivation = prepare_training_model(base_profile, bundle_dir, model_dir)
+    runtime = runtime_preflight(effective, training_model)
+    state_path = output_dir / PORTFOLIO_STATE_FILENAME
+    if not state_path.is_file():
+        raise TrainingError(
+            "MANIPULATION_PORTFOLIO_STATE_MISSING",
+            "The isolated evaluation process requires a completed portfolio state.",
+            {"path": str(state_path)},
+        )
+    portfolio_state = json.loads(state_path.read_text(encoding="utf-8"))
+    expected_bindings = {
+        "baseTrainingProfileDigest": digest_json(base_profile),
+        "manipulationBalanceProfileDigest": digest_json(profile),
+        "effectiveTrainingProfileDigest": digest_json(effective),
+    }
+    for key, expected in expected_bindings.items():
+        if portfolio_state.get(key) != expected:
+            raise TrainingError(
+                "MANIPULATION_PORTFOLIO_BINDING_MISMATCH",
+                "The training/evaluation process boundary changed a frozen binding.",
+                {"field": key, "expected": expected, "actual": portfolio_state.get(key)},
+            )
+    for archive, binding in (
+        (warm_start_archive, CAPTURE_WARM_START),
+        (motion_teacher_archive, MOTION_TEACHER),
+    ):
+        payload = archive.read_bytes()
+        if (
+            digest_bytes(payload) != binding["checkpointDigest"]
+            or len(payload) != binding["checkpointSizeBytes"]
+        ):
+            raise TrainingError(
+                "MANIPULATION_PORTFOLIO_INPUT_MISMATCH",
+                "An evaluation input does not match the frozen training input.",
+                {"path": str(archive)},
+            )
+    checkpoint_dir = output_dir / "checkpoints"
+    progress_records = portfolio_state["training"]["progressRecords"]
+    started = time.monotonic()
+
+    network_factory = functools.partial(
+        ppo_networks.make_ppo_networks,
+        policy_hidden_layer_sizes=(128, 128, 128, 128),
+        value_hidden_layer_sizes=(256, 256, 256, 256, 256),
+        policy_obs_key="state",
+        value_obs_key="state",
+    )
+    training = effective["training"]
+    bank_path = output_dir / portfolio_state["snapshotBank"]["path"]
+    payload = bank_path.read_bytes()
+    if (
+        digest_bytes(payload) != portfolio_state["snapshotBank"]["digest"]
+        or len(payload) != portfolio_state["snapshotBank"]["sizeBytes"]
+    ):
+        raise TrainingError(
+            "MANIPULATION_PORTFOLIO_BANK_MISMATCH",
+            "The persisted snapshot bank changed across the process boundary.",
+        )
+    with np.load(bank_path, allow_pickle=False) as archive:
+        bank = {key: archive[key] for key in archive.files}
+    observation_size = int(portfolio_state["target"]["observationSize"])
+    action_size = int(portfolio_state["target"]["actionSize"])
+    policy_network = network_factory(
+        {"state": observation_size},
+        action_size,
+        preprocess_observations_fn=running_statistics.normalize,
+    )
+    make_inference_fn = ppo_networks.make_inference_fn(policy_network)
+    import jax
+
+    with tempfile.TemporaryDirectory(prefix="worldspec-h1-manipulation-eval-"):
         snapshot_eval_profile = copy.deepcopy(effective)
         snapshot_eval_profile["trainingEnvironment"]["snapshotCurriculum"][
             "fromRestProbability"
@@ -892,8 +1045,6 @@ def run_manipulation_balance_calibration(
             capture_state_bank=bank,
         )
         rest_eval_env = make_environment(effective, training_model)
-        from brax.training.agents.ppo import checkpoint as ppo_checkpoint
-
         checkpoint_steps = sorted(
             (
                 path
@@ -902,13 +1053,15 @@ def run_manipulation_balance_calibration(
             ),
             key=lambda path: int(path.name),
         )
-        if len(checkpoint_steps) != CHECKPOINT_SELECTION["expectedCandidateCount"]:
+        if [int(path.name) for path in checkpoint_steps] != portfolio_state[
+            "checkpointSteps"
+        ]:
             raise TrainingError(
                 "MANIPULATION_CHECKPOINT_COUNT_MISMATCH",
-                "The saved checkpoint portfolio does not match the frozen profile.",
+                "The checkpoint portfolio changed across the process boundary.",
                 {
-                    "expected": CHECKPOINT_SELECTION["expectedCandidateCount"],
-                    "actual": len(checkpoint_steps),
+                    "expected": portfolio_state["checkpointSteps"],
+                    "actual": [int(path.name) for path in checkpoint_steps],
                 },
             )
         candidate_details: list[dict[str, Any]] = []
@@ -1005,12 +1158,8 @@ def run_manipulation_balance_calibration(
         "baseTrainingProfileDigest": digest_json(base_profile),
         "manipulationBalanceProfileDigest": digest_json(profile),
         "effectiveTrainingProfileDigest": digest_json(effective),
-        "warmStart": initialization,
-        "motionTeacher": {
-            **motion_initialization,
-            "mode": MOTION_TEACHER["mode"],
-            "selectedRole": MOTION_TEACHER["selectedRole"],
-        },
+        "warmStart": portfolio_state["warmStart"],
+        "motionTeacher": portfolio_state["motionTeacher"],
         "a6k1CaptureFailure": copy.deepcopy(A6K1_CAPTURE_FAILURE),
         "previousAttempt": copy.deepcopy(PREVIOUS_ATTEMPT),
         "runtimeFailure": copy.deepcopy(RUNTIME_FAILURE),
@@ -1022,7 +1171,7 @@ def run_manipulation_balance_calibration(
                 copy.deepcopy(item["assessment"]) for item in candidate_details
             ],
         },
-        "snapshotBank": snapshot_artifact,
+        "snapshotBank": portfolio_state["snapshotBank"],
         "runtimeCapacity": {
             **base_profile["runtime"]["mjxCapacity"],
             "effectiveNaconmax": (
@@ -1046,7 +1195,11 @@ def run_manipulation_balance_calibration(
             "profileStage": profile["stage"],
             "progressRecordCount": len(progress_records),
             "maximumReportedStep": max(item["step"] for item in progress_records),
-            "elapsedSeconds": time.monotonic() - started,
+            "elapsedSeconds": (
+                float(portfolio_state["training"]["elapsedSeconds"])
+                + time.monotonic()
+                - started
+            ),
             "firstProgress": progress_records[0],
             "finalProgress": final_progress,
         },

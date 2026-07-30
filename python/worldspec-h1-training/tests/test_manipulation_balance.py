@@ -179,7 +179,9 @@ def test_post_walk_evaluation_disables_rest_mixture() -> None:
     assert "] = 0.0" in source
     assert "if int(item[\"step\"]) == step" in source
     assert "MANIPULATION_CANDIDATE_PROGRESS_MISSING" in source
-    assert "platform_allocator_and_jax_cache_clear_v1" in source
+    assert "training_and_evaluation_process_boundary_v2" in source
+    assert "train_manipulation_balance_portfolio" in source
+    assert "MANIPULATION_PORTFOLIO_STATE_MISSING" in source
     assert "jax.clear_caches()" in source
 
 

@@ -179,11 +179,11 @@
     },
     "runtimeFailure": {
       "const": {
-        "job": "worldspec-h1-midterm-xzrb5",
-        "probeRevision": "00f0525482f924e64cabb880a8ad3c5cc962bd2a",
-        "imageDigest": "sha256:3de0caf6b170f16e026d774cd650f3ef85e5a2a5fddc990d0ebab6d1fa9cad63",
-        "logDigest": "sha256:a743d881e4e8aba816cce41764bbf9579f802ad5d1d28a0b15d5b7a612257f21",
-        "logSizeBytes": 23688,
+        "job": "worldspec-h1-midterm-rfkl4",
+        "probeRevision": "93f8e81bbfd58f431ab028a373feee81bce2e97a",
+        "imageDigest": "sha256:2656ac9ec5627cb0160719a6e1eec2d9914b95323519148247b4579da4bcb93b",
+        "logDigest": "sha256:dba8a99055b6bef23c10d728bce415d5e1a130364c6448fb803a74c2e36f4f36",
+        "logSizeBytes": 24584,
         "failure": "gpu_oom_during_checkpoint_portfolio_evaluation",
         "savedCheckpointCount": 7,
         "formalGate": "not_evaluated",
@@ -195,7 +195,7 @@
         "mode": "formal_gate_then_pass_count_then_episode_length",
         "evaluateAllSavedCheckpoints": true,
         "expectedCandidateCount": 7,
-        "memoryIsolation": "platform_allocator_and_jax_cache_clear_v1"
+        "memoryIsolation": "training_and_evaluation_process_boundary_v2"
       }
     },
     "trainingOverrides": {

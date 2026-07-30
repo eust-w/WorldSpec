@@ -647,7 +647,7 @@ def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None
         "mode": "formal_gate_then_pass_count_then_episode_length",
         "evaluateAllSavedCheckpoints": True,
         "expectedCandidateCount": 7,
-        "memoryIsolation": "platform_allocator_and_jax_cache_clear_v1",
+        "memoryIsolation": "training_and_evaluation_process_boundary_v2",
     }
     assert profile["previousAttempt"]["job"] == "worldspec-h1-midterm-hftjt"
     assert "loaded-track-settle-manipulation-mixed-reset-v3-failed" in entrypoint
