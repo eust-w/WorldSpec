@@ -626,6 +626,9 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
     wrapper = (
         ROOT / "scripts" / "run_a800_h1_manipulation_balance_calibration.sh"
     ).read_text(encoding="utf-8")
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(
+        encoding="utf-8"
+    )
     profile = json.loads(
         (
             ROOT
@@ -656,6 +659,8 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
     assert profile["previousAttempt"]["job"] == "worldspec-h1-midterm-hftjt"
     assert profile["previousQualityFailure"]["job"] == "worldspec-h1-midterm-hnhb6"
     assert profile["previousQualityFailure"]["selectedStep"] == 4915200
+    assert profile["frozenSnapshotBank"]["sourceJob"] == "worldspec-h1-midterm-hnhb6"
+    assert profile["frozenSnapshotBank"]["terminatedSnapshotCount"] == 0
     assert profile["environment"]["reward"]["baseAnchorErrorCost"] == 25.0
     assert profile["environment"]["reward"]["settleLinearErrorCost"] == 2.0
     assert (
@@ -674,6 +679,9 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
         in wrapper
     )
     assert "worldspec-h1-midterm-hnhb6/midterm-checkpoint.zip" in wrapper
+    assert "worldspec-h1-midterm-hnhb6/manipulation-state-bank.npz" in wrapper
+    assert "WORLD_SPEC_MANIPULATION_SNAPSHOT_BANK" in launcher
+    assert "/scratch/inputs/manipulation-state-bank.npz" in launcher
     assert "worldspec-h1-midterm-rf9zh/midterm-checkpoint.zip" not in wrapper
 
     build = json.loads(

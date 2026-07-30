@@ -816,6 +816,7 @@ state = train_manipulation_balance_portfolio(
     Path(os.environ["ARTIFACT_DIR"]),
     Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
     Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+    Path(os.environ["INPUT_DIR"]) / "manipulation-state-bank.npz",
 )
 print(
     "WORLDSPEC_A800_MANIPULATION_PORTFOLIO_TRAINED="

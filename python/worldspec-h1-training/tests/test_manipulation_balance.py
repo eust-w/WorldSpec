@@ -14,11 +14,13 @@ from worldspec_h1_training.manipulation_balance import (
     CAPTURE_WARM_START,
     CHECKPOINT_SELECTION,
     DYNAMIC_ARM_CURRICULUM,
+    FROZEN_SNAPSHOT_BANK,
     MOTION_TEACHER,
     PREVIOUS_ATTEMPT,
     PREVIOUS_QUALITY_FAILURE,
     QUALITY_GATES,
     RUNTIME_FAILURE,
+    SNAPSHOT_BANK_REPORT_FIELDS,
     SNAPSHOT_CURRICULUM,
     assess_manipulation_checkpoint_candidate,
     make_manipulation_balance_training_profile,
@@ -52,6 +54,24 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
     assert profile["previousAttempt"] == PREVIOUS_ATTEMPT
     assert profile["runtimeFailure"] == RUNTIME_FAILURE
     assert profile["previousQualityFailure"] == PREVIOUS_QUALITY_FAILURE
+    assert profile["frozenSnapshotBank"] == FROZEN_SNAPSHOT_BANK
+    assert SNAPSHOT_BANK_REPORT_FIELDS == {
+        "digest",
+        "sizeBytes",
+        "snapshotCount",
+        "motionSteps",
+        "captureStepMinimum",
+        "captureStepMaximum",
+        "motionCommandMinimum",
+        "motionCommandMaximum",
+        "seed",
+        "terminatedSnapshotCount",
+        "distribution",
+    }
+    assert set(FROZEN_SNAPSHOT_BANK) - SNAPSHOT_BANK_REPORT_FIELDS == {
+        "sourceJob",
+        "sourceReportDigest",
+    }
     assert profile["checkpointSelection"] == CHECKPOINT_SELECTION
     assert effective["training"]["numTimesteps"] == 16_777_216
     assert effective["training"]["numEnvs"] == 4096
@@ -138,6 +158,14 @@ def test_manipulation_balance_rejects_previous_quality_failure_drift() -> None:
     profile["previousQualityFailure"]["selectedStep"] += 1
 
     with pytest.raises(TrainingError, match="previousQualityFailure"):
+        validate_manipulation_balance_profile(base, profile)
+
+
+def test_manipulation_balance_rejects_frozen_snapshot_bank_drift() -> None:
+    base, profile = _profiles()
+    profile["frozenSnapshotBank"]["digest"] = "sha256:" + ("0" * 64)
+
+    with pytest.raises(TrainingError, match="frozenSnapshotBank"):
         validate_manipulation_balance_profile(base, profile)
 
 

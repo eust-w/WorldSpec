@@ -20,10 +20,7 @@ from typing import Any
 from .capture import _with_command
 from .contract import digest_bytes, digest_json, validate_profile
 from .errors import TrainingError
-from .midterm import (
-    TASK_LOAD_RETENTION_LOAD,
-    _load_deterministic_teacher_policy,
-)
+from .midterm import TASK_LOAD_RETENTION_LOAD
 from .model import prepare_training_model
 from .preflight import runtime_preflight, static_preflight
 from .trainer import _deterministic_zip, _flat_observation_size, _host_float
@@ -54,6 +51,44 @@ PREVIOUS_QUALITY_FAILURE = {
     "postWalkTestsPassed": 4,
     "fromRestTestsPassed": 5,
     "qualityGatesChanged": False,
+}
+
+FROZEN_SNAPSHOT_BANK = {
+    "sourceJob": "worldspec-h1-midterm-hnhb6",
+    "sourceReportDigest": "sha256:1230c13509a66677f4d91f534f5e19a6a6e5b936abdf5196ce0d2c85e41d32b3",
+    "digest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+    "sizeBytes": 1_192_118,
+    "snapshotCount": 4_096,
+    "motionSteps": 150,
+    "captureStepMinimum": 35,
+    "captureStepMaximum": 50,
+    "motionCommandMinimum": [
+        0.4000796973705292,
+        -0.04999824985861778,
+        -0.0999951884150505,
+    ],
+    "motionCommandMaximum": [
+        0.5999876856803894,
+        0.04994645342230797,
+        0.09998238831758499,
+    ],
+    "seed": 20_001,
+    "terminatedSnapshotCount": 0,
+    "distribution": "internal_only",
+}
+
+SNAPSHOT_BANK_REPORT_FIELDS = {
+    "digest",
+    "sizeBytes",
+    "snapshotCount",
+    "motionSteps",
+    "captureStepMinimum",
+    "captureStepMaximum",
+    "motionCommandMinimum",
+    "motionCommandMaximum",
+    "seed",
+    "terminatedSnapshotCount",
+    "distribution",
 }
 
 MOTION_TEACHER = {
@@ -392,6 +427,7 @@ def validate_manipulation_balance_profile(
         "previousAttempt": PREVIOUS_ATTEMPT,
         "runtimeFailure": RUNTIME_FAILURE,
         "previousQualityFailure": PREVIOUS_QUALITY_FAILURE,
+        "frozenSnapshotBank": FROZEN_SNAPSHOT_BANK,
         "checkpointSelection": CHECKPOINT_SELECTION,
         "trainingOverrides": TRAINING_OVERRIDES,
         "environment": {
@@ -772,6 +808,7 @@ def train_manipulation_balance_portfolio(
     output_dir: Path,
     warm_start_archive: Path,
     motion_teacher_archive: Path,
+    snapshot_bank_archive: Path,
 ) -> dict[str, Any]:
     """Train and persist the portfolio before the CUDA process boundary."""
 
@@ -830,45 +867,65 @@ def train_manipulation_balance_portfolio(
             CAPTURE_WARM_START["checkpointDigest"],
             CAPTURE_WARM_START["checkpointSizeBytes"],
         )
-        motion_step, motion_initialization = materialize_warm_start(
+        _, motion_initialization = materialize_warm_start(
             motion_teacher_archive,
             temporary_root / "motion-teacher",
             MOTION_TEACHER["checkpointDigest"],
             MOTION_TEACHER["checkpointSizeBytes"],
         )
-        capture_teacher = _load_deterministic_teacher_policy(
-            warm_step,
-            initialization,
-            network_factory,
-        )
-        motion_teacher = _load_deterministic_teacher_policy(
-            motion_step,
-            motion_initialization,
-            network_factory,
-        )
-        rollout_profile = copy.deepcopy(effective)
-        rollout_profile["trainingEnvironment"].pop("dynamicArmCurriculum")
-        rollout_profile["trainingEnvironment"].pop("snapshotCurriculum")
-        rollout_profile["training"]["commandDistribution"] = {
-            **SNAPSHOT_CURRICULUM["motionCommandDistribution"],
-            "zeroCommandProbability": 0.0,
+        snapshot_payload = snapshot_bank_archive.read_bytes()
+        if (
+            digest_bytes(snapshot_payload) != FROZEN_SNAPSHOT_BANK["digest"]
+            or len(snapshot_payload) != FROZEN_SNAPSHOT_BANK["sizeBytes"]
+        ):
+            raise TrainingError(
+                "MANIPULATION_FROZEN_SNAPSHOT_BANK_MISMATCH",
+                "The frozen v11 snapshot bank does not match its evidence binding.",
+                {"path": str(snapshot_bank_archive)},
+            )
+        with np.load(snapshot_bank_archive, allow_pickle=False) as archive:
+            if set(archive.files) != {"qpos", "qvel", "last_action"}:
+                raise TrainingError(
+                    "MANIPULATION_FROZEN_SNAPSHOT_BANK_INVALID",
+                    "The frozen v11 snapshot bank has unexpected arrays.",
+                    {"arrays": sorted(archive.files)},
+                )
+            bank = {key: archive[key] for key in archive.files}
+        shape_env = make_environment(effective, training_model)
+        observation_size = _flat_observation_size(shape_env.observation_size["state"])
+        action_size = int(shape_env.action_size)
+        expected_shapes = {
+            "qpos": (FROZEN_SNAPSHOT_BANK["snapshotCount"], training_model.nq),
+            "qvel": (FROZEN_SNAPSHOT_BANK["snapshotCount"], training_model.nv),
+            "last_action": (FROZEN_SNAPSHOT_BANK["snapshotCount"], action_size),
         }
-        rollout_env = make_environment(rollout_profile, training_model)
-        observation_size = _flat_observation_size(rollout_env.observation_size["state"])
-        action_size = int(rollout_env.action_size)
+        actual_shapes = {key: tuple(value.shape) for key, value in bank.items()}
+        if actual_shapes != expected_shapes or not all(
+            np.isfinite(value).all() for value in bank.values()
+        ):
+            raise TrainingError(
+                "MANIPULATION_FROZEN_SNAPSHOT_BANK_INVALID",
+                "The frozen v11 snapshot bank is non-finite or shape-incompatible.",
+                {"expectedShapes": expected_shapes, "actualShapes": actual_shapes},
+            )
         validate_network_compatibility(initialization, observation_size, action_size)
         validate_network_compatibility(motion_initialization, observation_size, action_size)
-        bank, bank_metadata = _roll_motion_capture_bank(
-            rollout_env,
-            motion_teacher,
-            capture_teacher,
-            seed=training["seed"] + 20_000,
-        )
-        snapshot_artifact = _save_bank(
-            output_dir / "manipulation-state-bank.npz",
-            bank,
-            bank_metadata,
-        )
+        snapshot_path = output_dir / "manipulation-state-bank.npz"
+        if snapshot_path.exists():
+            raise TrainingError(
+                "MANIPULATION_FROZEN_SNAPSHOT_BANK_OUTPUT_EXISTS",
+                "Refusing to overwrite an existing snapshot-bank artifact.",
+                {"path": str(snapshot_path)},
+            )
+        snapshot_path.write_bytes(snapshot_payload)
+        snapshot_artifact = {
+            "path": snapshot_path.name,
+            **{
+                key: copy.deepcopy(value)
+                for key, value in FROZEN_SNAPSHOT_BANK.items()
+                if key in SNAPSHOT_BANK_REPORT_FIELDS
+            },
+        }
         training_env = make_environment(
             effective,
             training_model,

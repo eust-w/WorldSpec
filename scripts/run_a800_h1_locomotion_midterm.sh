@@ -21,6 +21,7 @@ SETTLE_TEACHER_REPORT="${WORLD_SPEC_SETTLE_TEACHER_REPORT:-}"
 SETTLE_TEACHER_CHECKPOINT="${WORLD_SPEC_SETTLE_TEACHER_CHECKPOINT:-}"
 SUPERVISOR_STAND_REPORT="${WORLD_SPEC_SUPERVISOR_STAND_REPORT:-}"
 SUPERVISOR_STAND_CHECKPOINT="${WORLD_SPEC_SUPERVISOR_STAND_CHECKPOINT:-}"
+MANIPULATION_SNAPSHOT_BANK="${WORLD_SPEC_MANIPULATION_SNAPSHOT_BANK:-}"
 DIAGNOSTIC_REPLAY_PROFILE="${WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE:-}"
 A5C_BASELINE_SUMMARY="${WORLD_SPEC_A5C_BASELINE_SUMMARY:-${ROOT_DIR}/examples/h1-kitchen/whole-body-control.a800.failed-summary.json}"
 A5C_BASELINE_REPORT="${WORLD_SPEC_A5C_BASELINE_REPORT:-${ROOT_DIR}/runs/a800/worldspec-h1-midterm-d5z6c/whole-body-control-report.json}"
@@ -196,6 +197,12 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
     fi
   done
   RETENTION_TEACHER_REPORT_FILENAME="$(basename "${RETENTION_TEACHER_REPORT}")"
+fi
+if [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]] &&
+  [[ ! -r "${MANIPULATION_SNAPSHOT_BANK}" ]]; then
+  printf 'ERROR: manipulation snapshot bank is not readable: %s\n' \
+    "${MANIPULATION_SNAPSHOT_BANK:-unset}" >&2
+  exit 2
 fi
 if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||
@@ -769,6 +776,27 @@ PY
           --remote-path /scratch/inputs/stand-teacher-checkpoint.zip \
           --expected-size "${teacher_checkpoint_size}" \
           --expected-digest "${teacher_checkpoint_digest}"
+      fi
+      if [[ "${profile_stage}" == "loaded_track_settle_manipulation_balance" ]]; then
+        read -r manipulation_bank_size manipulation_bank_digest < <(
+          python3 - "${MANIPULATION_SNAPSHOT_BANK}" <<'PY'
+import hashlib
+import pathlib
+import sys
+
+payload = pathlib.Path(sys.argv[1]).read_bytes()
+print(len(payload), f"sha256:{hashlib.sha256(payload).hexdigest()}")
+PY
+        )
+        python3 "${CHUNK_UPLOAD}" \
+          --kubeconfig "${KUBECONFIG_PATH}" \
+          --namespace "${K8S_NAMESPACE}" \
+          --pod "${pod_name}" \
+          --container midterm \
+          --source "${MANIPULATION_SNAPSHOT_BANK}" \
+          --remote-path /scratch/inputs/manipulation-state-bank.npz \
+          --expected-size "${manipulation_bank_size}" \
+          --expected-digest "${manipulation_bank_digest}"
       fi
       if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_task_load_survival" ]] ||

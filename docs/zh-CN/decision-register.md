@@ -79,5 +79,6 @@ last-verified: 2026-07-30
 | D-067 | suite-isolated-v11 在真实 A800 上完成七候选训练与 14/14 隔离评测，证明运行链路问题已关闭；所有候选静态评测均 5/5，但最佳候选步行后仅 4/5，Step 4,915,200 的第 2 条轨迹在 99/100 步 `fall_height`，因此正式门失败、策略保持 `non_publishable`，禁止完整厨房单次、5/5 和 100M | Accepted | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
 | D-068 | 选择 unbounded-recovery-v12：从 v11 的 Step 4,915,200 候选 Warm Start，在保持状态分布、控制范围、评测种子和全部质量门不变的前提下，增加基座锚点与停稳速度的无界平方误差成本；正式操作平衡门通过后才可解锁完整厨房单次 | Accepted Design | [ADR-0044](decisions/0044-h1-manipulation-unbounded-recovery.md) |
 | D-069 | v12 首个 Job 在训练前因入口未识别新 Warm Start 阶段而配置失败，策略未评估；仅补齐冻结摘要校验和 Checkpoint 路径选择后，允许使用新 Probe Revision 重启一次，Profile 与全部质量门不变 | Accepted | [ADR-0044](decisions/0044-h1-manipulation-unbounded-recovery.md) |
+| D-070 | v12 修复后在 PPO 前因把操作平衡 Checkpoint 误作 Capture 教师而无法生成全有效状态库；v13 直接复用 v11 已验证的 4096 状态 Blob，并对 Digest、形状、有限值和零终止证据 fail closed，其余训练与质量门不变 | Accepted Design | [ADR-0045](decisions/0045-h1-manipulation-frozen-snapshot-bank.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

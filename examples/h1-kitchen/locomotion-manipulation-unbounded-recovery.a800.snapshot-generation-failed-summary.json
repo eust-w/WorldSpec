@@ -1,0 +1,39 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-unbounded-recovery/jnj6z",
+  "status": "runtime_failed",
+  "job": "worldspec-h1-midterm-jnj6z",
+  "probeRevision": "bf5630ff73bfb104b57faf132111eda44c73d470",
+  "imageSourceRevision": "12e54c7cdf043ad1c43d789154ace8b432ec917a",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:36d68af0f4585713e1ad7cf89d79a410edc2cea219cdf3388482e99bf50537cf",
+  "stage": "manipulation_portfolio_training",
+  "failure": "capture_teacher_terminated_before_snapshot_capture",
+  "ppoTrainingStarted": false,
+  "formalGate": "not_evaluated",
+  "artifacts": {
+    "jobLog": {
+      "digest": "sha256:f916a1e80e3550a65eaf80304f9303a243a9444cdf17b04eca82952f87dbaa47",
+      "sizeBytes": 19988
+    },
+    "jobManifest": {
+      "digest": "sha256:eff118597b52fb97d2e94068679b7f5fe7d5fcc6c553f304cfebf39168e40d86",
+      "sizeBytes": 5909
+    },
+    "podManifest": {
+      "digest": "sha256:24fb7367073fdef0adce3fb68c74e6d4e049146a82049f9277c03096f04f021c",
+      "sizeBytes": 8024
+    },
+    "podDescription": {
+      "digest": "sha256:54a26f1cbbffd28120edebb7488aefb84264676a6af71c3ad9f81f7e7936e5d0",
+      "sizeBytes": 5767
+    }
+  },
+  "decision": {
+    "strategyResult": "not_evaluated",
+    "reuseFrozenV11SnapshotBank": true,
+    "qualityGatesChanged": false,
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "hundredMillionTrainingAllowed": false
+  },
+  "generatedAt": "2026-07-30T20:52:35Z"
+}

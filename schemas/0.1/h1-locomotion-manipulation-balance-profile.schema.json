@@ -16,6 +16,7 @@
     "previousAttempt",
     "runtimeFailure",
     "previousQualityFailure",
+    "frozenSnapshotBank",
     "checkpointSelection",
     "trainingOverrides",
     "environment",
@@ -207,6 +208,31 @@
         "postWalkTestsPassed": 4,
         "fromRestTestsPassed": 5,
         "qualityGatesChanged": false
+      }
+    },
+    "frozenSnapshotBank": {
+      "const": {
+        "sourceJob": "worldspec-h1-midterm-hnhb6",
+        "sourceReportDigest": "sha256:1230c13509a66677f4d91f534f5e19a6a6e5b936abdf5196ce0d2c85e41d32b3",
+        "digest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+        "sizeBytes": 1192118,
+        "snapshotCount": 4096,
+        "motionSteps": 150,
+        "captureStepMinimum": 35,
+        "captureStepMaximum": 50,
+        "motionCommandMinimum": [
+          0.4000796973705292,
+          -0.04999824985861778,
+          -0.0999951884150505
+        ],
+        "motionCommandMaximum": [
+          0.5999876856803894,
+          0.04994645342230797,
+          0.09998238831758499
+        ],
+        "seed": 20001,
+        "terminatedSnapshotCount": 0,
+        "distribution": "internal_only"
       }
     },
     "checkpointSelection": {
