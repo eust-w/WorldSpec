@@ -24,12 +24,97 @@ CAPTURE_POLICY_SOURCE = {
     "sourceReportDigest": (
         "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f"
     ),
-    "checkpointDigest": (
-        "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe"
-    ),
+    "checkpointDigest": ("sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe"),
     "checkpointSizeBytes": 6_280_278,
     "distribution": "internal_only",
     "selectedRole": "motion_state_capture",
+}
+TASK_LOAD_MOTION_POLICY_SOURCE = {
+    "sourceStage": "loaded-track-settle-task-load-formal-v1-failed",
+    "sourceReportDigest": (
+        "sha256:31e4991a33721928df2b2887f00dccd339dfe261dfbf1aaec4597579c6c784d9"
+    ),
+    "checkpointDigest": ("sha256:61ebfa89d0fa5e7d7fc6488c524cf21c742c6a25efb5854a2bd689a61c895016"),
+    "checkpointSizeBytes": 1_260_210,
+    "distribution": "internal_only",
+    "selectedRole": "motion",
+}
+TASK_LOAD_EVALUATION_ENVIRONMENT = {
+    "commandDistribution": {
+        "linearVelocityX": [0.0, 0.8],
+        "linearVelocityY": [-0.15, 0.15],
+        "angularVelocityYaw": [-0.35, 0.35],
+        "zeroCommandProbability": 0.2,
+    },
+    "taskLoadCurriculum": {
+        "mode": "static_right_arm_pose",
+        "sourceJob": "worldspec-h1-midterm-5nn2q",
+        "sourceTraceDigest": (
+            "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9"
+        ),
+        "heldTargetScale": [1.0, 1.0],
+        "initialBaseVelocityX": [0.0, 0.0],
+        "heldTargets": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.1543052911758423,
+            0.09892238825658843,
+            -0.006488978405079102,
+            -0.19852599334400028,
+        ],
+        "heldFeedforward": [
+            0.032988220529269176,
+            -1.1402555002525037,
+            0.08486267857762098,
+            0.012800121336152957,
+            -1.0451398037469817,
+            -0.9578816827225751,
+            0.837737275364864,
+            0.46023224988862355,
+            -4.402542577541209,
+        ],
+        "observationAugmentation": "none",
+        "qualityGatesChanged": False,
+    },
+    "termination": {
+        "minimumBaseHeight": 0.5,
+        "minimumUprightCosine": 0.25,
+        "jointLimitToleranceRadians": 0.02,
+    },
+    "reward": {
+        "survival": 3.0,
+        "trackingLinear": 6.0,
+        "trackingYaw": 2.0,
+        "upright": 3.0,
+        "baseHeight": 2.0,
+        "pose": 0.5,
+        "verticalVelocityCost": 1.0,
+        "angularVelocityXYCost": 0.5,
+        "torqueCost": 0.000002,
+        "actionRateCost": 0.03,
+        "settleLinear": 16.0,
+        "settleYaw": 6.0,
+        "settleActionRateScale": 0.15,
+        "standDistillation": 4.0,
+        "settleDistillation": 4.0,
+        "standTeacherActionCost": 1.0,
+        "settleTeacherActionCost": 1.0,
+        "terminationPenalty": 100,
+    },
+    "targets": {"baseHeight": 0.98},
+    "sigmas": {
+        "tracking": 0.2,
+        "upright": 0.05,
+        "baseHeight": 0.02,
+        "pose": 0.2,
+        "settleTracking": 0.05,
+        "standDistillation": 0.05,
+        "settleDistillation": 0.05,
+    },
+    "commandResampleSteps": 200,
 }
 SUPERVISOR = {
     "mode": "phase_aware_velocity_stability_gate",
@@ -143,25 +228,35 @@ def validate_supervisor_profile(
     base_profile: dict[str, Any],
     profile: dict[str, Any],
 ) -> None:
-    """Validate the immutable A4 three-policy supervisor contract."""
+    """Validate an immutable three-policy supervisor contract."""
 
     validate_profile(base_profile)
+    stage = profile.get("stage")
     if (
         profile.get("profileVersion") != "0.1.0"
         or profile.get("status") != "research"
-        or profile.get("stage") != "phase_aware_supervisor_probe"
+        or stage
+        not in {
+            "phase_aware_supervisor_probe",
+            "task_load_phase_aware_supervisor_probe",
+        }
     ):
         raise TrainingError(
             "SUPERVISOR_PROFILE_UNSUPPORTED",
-            "A4 must use phase_aware_supervisor_probe v0.1.",
+            "Supervisor probes must use a supported v0.1 stage.",
         )
     if profile.get("baseTrainingProfileDigest") != digest_json(base_profile):
         raise TrainingError(
             "SUPERVISOR_BASE_PROFILE_MISMATCH",
             "A4 is not bound to the exact base training Profile.",
         )
+    expected_motion = (
+        TASK_LOAD_MOTION_POLICY_SOURCE
+        if stage == "task_load_phase_aware_supervisor_probe"
+        else MOTION_POLICY_SOURCE
+    )
     for key, expected, label in (
-        ("motionPolicy", MOTION_POLICY_SOURCE, "motion"),
+        ("motionPolicy", expected_motion, "motion"),
         ("capturePolicy", CAPTURE_POLICY_SOURCE, "capture"),
         ("standPolicy", STAND_POLICY_SOURCE, "stand"),
     ):
@@ -170,6 +265,17 @@ def validate_supervisor_profile(
                 f"SUPERVISOR_{label.upper()}_SOURCE_MISMATCH",
                 f"A4 must bind the frozen {label} policy lineage.",
             )
+    if stage == "task_load_phase_aware_supervisor_probe":
+        if profile.get("evaluationEnvironment") != TASK_LOAD_EVALUATION_ENVIRONMENT:
+            raise TrainingError(
+                "TASK_LOAD_SUPERVISOR_ENVIRONMENT_INVALID",
+                "A6-S must use the frozen static right-arm task-load environment.",
+            )
+    elif "evaluationEnvironment" in profile:
+        raise TrainingError(
+            "SUPERVISOR_ENVIRONMENT_FORBIDDEN",
+            "The historical A4 Profile cannot acquire a task-load environment.",
+        )
     if profile.get("supervisor") != SUPERVISOR:
         raise TrainingError(
             "SUPERVISOR_CONTRACT_INVALID",
@@ -221,6 +327,11 @@ def make_supervisor_evaluation_profile(
     effective["runtime"]["packageLockDigest"] = profile["runtime"]["packageLockDigest"]
     effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
     effective["training"]["numEnvs"] = profile["runtime"]["evaluationEnvironments"]
+    if profile["stage"] == "task_load_phase_aware_supervisor_probe":
+        effective["training"]["commandDistribution"] = copy.deepcopy(
+            profile["evaluationEnvironment"]["commandDistribution"]
+        )
+        effective["trainingEnvironment"] = copy.deepcopy(profile["evaluationEnvironment"])
     effective["validation"] = copy.deepcopy(profile["qualityGates"])
     return effective
 
@@ -463,9 +574,7 @@ def evaluate_supervisor_suite(
                 "standDwellSteps": (
                     supervisor.stand_steps if mode == "walk_settle" else duration_steps
                 ),
-                "handoffFailed": (
-                    supervisor.handoff_failed if mode == "walk_settle" else False
-                ),
+                "handoffFailed": (supervisor.handoff_failed if mode == "walk_settle" else False),
                 "maximumTerminalHoldLinearSpeed": maximum_terminal_linear_speed,
                 "maximumTerminalHoldAngularSpeed": maximum_terminal_angular_speed,
                 "finalLinearSpeed": final_linear_speed,
@@ -495,7 +604,7 @@ def run_phase_aware_supervisor_probe(
     capture_archive: Path,
     stand_archive: Path,
 ) -> dict[str, Any]:
-    """Load three frozen policies and evaluate the A4 reference supervisor."""
+    """Load three frozen policies and evaluate a reference supervisor."""
 
     from brax.training.agents.ppo import networks as ppo_networks
 
@@ -561,7 +670,16 @@ def run_phase_aware_supervisor_probe(
         "supervisor": copy.deepcopy(profile["supervisor"]),
         "distribution": "internal_only",
     }
-    controller_path = output_dir / "phase-aware-supervisor.json"
+    task_load_stage = profile["stage"] == "task_load_phase_aware_supervisor_probe"
+    if task_load_stage:
+        controller["taskLoadCurriculum"] = copy.deepcopy(
+            profile["evaluationEnvironment"]["taskLoadCurriculum"]
+        )
+    controller_path = output_dir / (
+        "task-load-phase-aware-supervisor.json"
+        if task_load_stage
+        else "phase-aware-supervisor.json"
+    )
     controller_path.write_bytes(canonical_bytes(controller))
     trace_path = output_dir / "evaluation-traces.jsonl"
     with trace_path.open("w", encoding="utf-8") as stream:
@@ -594,6 +712,15 @@ def run_phase_aware_supervisor_probe(
             "actionSize": action_size,
         },
         "supervisor": copy.deepcopy(profile["supervisor"]),
+        **(
+            {
+                "taskLoadCurriculum": copy.deepcopy(
+                    profile["evaluationEnvironment"]["taskLoadCurriculum"]
+                )
+            }
+            if task_load_stage
+            else {}
+        ),
         "qualityAssessment": {
             "status": "passed" if tests_gate else "failed",
             "deterministicSuiteGate": tests_gate,

@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-task-load-supervisor-report.schema.json",
+  "title": "WorldSpec H1 Task-Load Phase-Aware Supervisor Probe Report 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "reportVersion",
+    "status",
+    "scope",
+    "executionEvidence",
+    "runtimeAcceptance",
+    "controllerStatus",
+    "formalTaskLoadSupervisorGate",
+    "probeDefinition",
+    "imageSource",
+    "probeInput",
+    "container",
+    "platform",
+    "gpu",
+    "packages",
+    "packageLockDigest",
+    "baseTrainingProfileDigest",
+    "supervisorProfileDigest",
+    "motionPolicy",
+    "capturePolicy",
+    "standPolicy",
+    "runtimeCapacity",
+    "staticPreflight",
+    "runtimePreflight",
+    "target",
+    "supervisor",
+    "taskLoadCurriculum",
+    "qualityAssessment",
+    "controllerArtifact",
+    "traceArtifact",
+    "logDiagnostics",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": { "$ref": "common.schema.json#/$defs/id" },
+    "reportVersion": { "const": "0.1.0" },
+    "status": { "const": "completed" },
+    "scope": { "const": "h1_task_load_phase_aware_supervisor_probe" },
+    "executionEvidence": { "const": "executed" },
+    "runtimeAcceptance": { "const": "research_task_load_supervisor" },
+    "controllerStatus": {
+      "enum": ["task_load_supervisor_candidate", "non_publishable"]
+    },
+    "formalTaskLoadSupervisorGate": { "enum": ["passed", "failed"] },
+    "probeDefinition": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "imageSource": {
+      "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/revision"
+    },
+    "probeInput": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/probeInput"
+    },
+    "container": { "type": "object" },
+    "platform": { "type": "object" },
+    "gpu": { "type": "object" },
+    "packages": { "type": "object" },
+    "packageLockDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "baseTrainingProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "supervisorProfileDigest": { "$ref": "common.schema.json#/$defs/digest" },
+    "motionPolicy": { "$ref": "#/$defs/policyInitialization" },
+    "capturePolicy": { "$ref": "#/$defs/policyInitialization" },
+    "standPolicy": { "$ref": "#/$defs/policyInitialization" },
+    "runtimeCapacity": { "type": "object" },
+    "staticPreflight": { "type": "object" },
+    "runtimePreflight": { "type": "object" },
+    "target": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/target"
+    },
+    "supervisor": { "type": "object" },
+    "taskLoadCurriculum": {
+      "const": {
+        "mode": "static_right_arm_pose",
+        "sourceJob": "worldspec-h1-midterm-5nn2q",
+        "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+        "heldTargetScale": [1.0, 1.0],
+        "initialBaseVelocityX": [0.0, 0.0],
+        "heldTargets": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.1543052911758423,
+          0.09892238825658843,
+          -0.006488978405079102,
+          -0.19852599334400028
+        ],
+        "heldFeedforward": [
+          0.032988220529269176,
+          -1.1402555002525037,
+          0.08486267857762098,
+          0.012800121336152957,
+          -1.0451398037469817,
+          -0.9578816827225751,
+          0.837737275364864,
+          0.46023224988862355,
+          -4.402542577541209
+        ],
+        "observationAugmentation": "none",
+        "qualityGatesChanged": false
+      }
+    },
+    "qualityAssessment": {
+      "type": "object",
+      "required": ["status", "deterministicSuiteGate", "tests"],
+      "properties": {
+        "status": { "enum": ["passed", "failed"] },
+        "deterministicSuiteGate": { "type": "boolean" },
+        "tests": {
+          "type": "array",
+          "minItems": 10,
+          "maxItems": 10,
+          "items": {
+            "$ref": "h1-locomotion-midterm-report.schema.json#/$defs/test"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "controllerArtifact": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/artifact"
+    },
+    "traceArtifact": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/artifact"
+    },
+    "logDiagnostics": {
+      "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/logDiagnostics"
+    },
+    "generatedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "policyInitialization": {
+      "allOf": [
+        {
+          "$ref": "h1-locomotion-dual-policy-report.schema.json#/$defs/policyInitialization"
+        },
+        {
+          "properties": {
+            "role": {
+              "enum": ["motion", "motion_state_capture", "zero_velocity_and_stand"]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "formalTaskLoadSupervisorGate": { "const": "passed" }
+        },
+        "required": ["formalTaskLoadSupervisorGate"]
+      },
+      "then": {
+        "properties": {
+          "controllerStatus": { "const": "task_load_supervisor_candidate" },
+          "qualityAssessment": {
+            "properties": {
+              "status": { "const": "passed" },
+              "deterministicSuiteGate": { "const": true },
+              "tests": {
+                "not": {
+                  "contains": {
+                    "properties": { "result": { "const": "fail" } },
+                    "required": ["result"]
+                  }
+                }
+              }
+            }
+          },
+          "logDiagnostics": {
+            "properties": {
+              "ccdOverflowCount": { "const": 0 },
+              "capacityOverflowCount": { "const": 0 },
+              "abnormalContactCount": { "const": 0 },
+              "jointLimitViolationCount": { "const": 0 },
+              "nonFiniteCount": { "const": 0 },
+              "clean": { "const": true }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

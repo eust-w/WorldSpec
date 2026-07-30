@@ -137,6 +137,11 @@ elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
   REPORT_MARKER=WORLDSPEC_A800_SUPERVISOR_RESULT=
   REPORT_SCHEMA=h1-locomotion-supervisor-report.schema.json
   GATE_FIELD=formalSupervisorGate
+elif [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]]; then
+  REPORT_FILENAME=task-load-supervisor-report.json
+  REPORT_MARKER=WORLDSPEC_A800_TASK_LOAD_SUPERVISOR_RESULT=
+  REPORT_SCHEMA=h1-locomotion-task-load-supervisor-report.schema.json
+  GATE_FIELD=formalTaskLoadSupervisorGate
 elif [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]]; then
   REPORT_FILENAME=kitchen-task-report.json
   REPORT_MARKER=WORLDSPEC_A800_KITCHEN_TASK_RESULT=
@@ -168,6 +173,7 @@ if [[ "${profile_stage}" == "loaded_track_settle_retention" ]] ||
   [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
   [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
   [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+  [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
   [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   for required in "${RETENTION_TEACHER_REPORT}" "${RETENTION_TEACHER_CHECKPOINT}"; do
@@ -194,6 +200,7 @@ if [[ "${profile_stage}" == "loaded_track_settle_task_load_retention" ]] ||
   SETTLE_TEACHER_REPORT_FILENAME="$(basename "${SETTLE_TEACHER_REPORT}")"
 fi
 if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+  [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
   [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
   [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
   for required in "${SUPERVISOR_STAND_REPORT}" "${SUPERVISOR_STAND_CHECKPOINT}"; do
@@ -261,6 +268,7 @@ source = (
     if profile["stage"] in {
         "dual_policy_switch_probe",
         "phase_aware_supervisor_probe",
+        "task_load_phase_aware_supervisor_probe",
         "fixed_kitchen_full_loop_probe",
         "whole_body_task_space_control_spike",
     }
@@ -284,6 +292,7 @@ if profile["stage"] in {
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
+    "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
     "whole_body_task_space_control_spike",
 }:
@@ -296,6 +305,7 @@ if profile["stage"] in {
             profile["capturePolicy"]
             if profile["stage"] in {
                 "phase_aware_supervisor_probe",
+                "task_load_phase_aware_supervisor_probe",
                 "fixed_kitchen_full_loop_probe",
                 "whole_body_task_space_control_spike",
             }
@@ -330,6 +340,7 @@ if profile["stage"] in {
         raise SystemExit("retention teacher checkpoint identity mismatch")
 if profile["stage"] in {
     "phase_aware_supervisor_probe",
+    "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
     "whole_body_task_space_control_spike",
 }:
@@ -698,6 +709,7 @@ PY
         [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "loaded_track_settle_capture" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+        [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
         [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r teacher_report_size teacher_report_digest \
@@ -774,6 +786,7 @@ PY
           --expected-digest "${settle_checkpoint_digest}"
       fi
       if [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+        [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
         [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r supervisor_stand_report_size supervisor_stand_report_digest \
@@ -931,6 +944,12 @@ elif gate_field == "formalSupervisorGate":
         if report[gate_field] == "passed"
         else "non_publishable"
     )
+elif gate_field == "formalTaskLoadSupervisorGate":
+    report["controllerStatus"] = (
+        "task_load_supervisor_candidate"
+        if report[gate_field] == "passed"
+        else "non_publishable"
+    )
 elif gate_field == "formalTaskGate":
     report["controllerStatus"] = (
         "integration_candidate"
@@ -950,6 +969,7 @@ report_path.write_text(
 PY
       if [[ "${profile_stage}" == "dual_policy_switch_probe" ]] ||
         [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]] ||
+        [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]] ||
         [[ "${profile_stage}" == "fixed_kitchen_full_loop_probe" ]] ||
         [[ "${profile_stage}" == "whole_body_task_space_control_spike" ]]; then
         read -r controller_size controller_digest trace_size trace_digest < <(
@@ -975,6 +995,8 @@ PY
               printf '/scratch/results/artifacts/whole-body-controller.json'
             elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
               printf '/scratch/results/artifacts/phase-aware-supervisor.json'
+            elif [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]]; then
+              printf '/scratch/results/artifacts/task-load-phase-aware-supervisor.json'
             else
               printf '/scratch/results/artifacts/dual-policy-controller.json'
             fi
@@ -986,6 +1008,8 @@ PY
               printf '%s/whole-body-controller.json' "${local_result_dir}"
             elif [[ "${profile_stage}" == "phase_aware_supervisor_probe" ]]; then
               printf '%s/phase-aware-supervisor.json' "${local_result_dir}"
+            elif [[ "${profile_stage}" == "task_load_phase_aware_supervisor_probe" ]]; then
+              printf '%s/task-load-phase-aware-supervisor.json' "${local_result_dir}"
             else
               printf '%s/dual-policy-controller.json' "${local_result_dir}"
             fi

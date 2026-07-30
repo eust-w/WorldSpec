@@ -9,6 +9,8 @@ import pytest
 from worldspec_h1_training.contract import digest_json
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.supervisor import (
+    TASK_LOAD_EVALUATION_ENVIRONMENT,
+    TASK_LOAD_MOTION_POLICY_SOURCE,
     SupervisorState,
     make_supervisor_evaluation_profile,
     validate_supervisor_profile,
@@ -16,9 +18,7 @@ from worldspec_h1_training.supervisor import (
 
 ROOT = Path(__file__).resolve().parents[3]
 BASE_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
-SUPERVISOR_PROFILE = (
-    ROOT / "examples" / "h1-kitchen" / "locomotion-supervisor-profile.json"
-)
+SUPERVISOR_PROFILE = ROOT / "examples" / "h1-kitchen" / "locomotion-supervisor-profile.json"
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -128,16 +128,51 @@ def test_supervisor_effective_profile_is_a_deep_copy() -> None:
     assert base == original
 
 
+def test_task_load_supervisor_binds_100m_motion_and_static_right_arm_load() -> None:
+    base, profile = _profiles()
+    profile["id"] = "supervisorprofile://worldspec/h1/task-load-phase-aware-v1"
+    profile["stage"] = "task_load_phase_aware_supervisor_probe"
+    profile["motionPolicy"] = copy.deepcopy(TASK_LOAD_MOTION_POLICY_SOURCE)
+    profile["evaluationEnvironment"] = copy.deepcopy(TASK_LOAD_EVALUATION_ENVIRONMENT)
+
+    effective = make_supervisor_evaluation_profile(base, profile)
+
+    assert effective["trainingEnvironment"] == TASK_LOAD_EVALUATION_ENVIRONMENT
+    assert effective["training"]["commandDistribution"] == {
+        "linearVelocityX": [0.0, 0.8],
+        "linearVelocityY": [-0.15, 0.15],
+        "angularVelocityYaw": [-0.35, 0.35],
+        "zeroCommandProbability": 0.2,
+    }
+    assert effective["training"]["numTimesteps"] == base["training"]["numTimesteps"]
+    assert effective["training"]["numEnvs"] == 1
+    assert "transitionCurriculum" not in effective["trainingEnvironment"]
+
+
+def test_task_load_supervisor_rejects_load_or_100m_lineage_drift() -> None:
+    base, profile = _profiles()
+    profile["stage"] = "task_load_phase_aware_supervisor_probe"
+    profile["motionPolicy"] = copy.deepcopy(TASK_LOAD_MOTION_POLICY_SOURCE)
+    profile["evaluationEnvironment"] = copy.deepcopy(TASK_LOAD_EVALUATION_ENVIRONMENT)
+    profile["evaluationEnvironment"]["taskLoadCurriculum"]["heldTargetScale"] = [0.5, 1.0]
+
+    with pytest.raises(TrainingError, match="static right-arm task-load"):
+        validate_supervisor_profile(base, profile)
+
+    profile["evaluationEnvironment"] = copy.deepcopy(TASK_LOAD_EVALUATION_ENVIRONMENT)
+    profile["motionPolicy"]["checkpointDigest"] = "sha256:" + ("0" * 64)
+    with pytest.raises(TrainingError, match="frozen"):
+        validate_supervisor_profile(base, profile)
+
+
 def test_a800_supervisor_entrypoint_and_launcher_are_fail_closed() -> None:
-    entrypoint = (
-        ROOT / "ops" / "a800" / "h1-locomotion-midterm-entrypoint.sh"
-    ).read_text(encoding="utf-8")
-    launcher = (
-        ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh"
-    ).read_text(encoding="utf-8")
-    wrapper = (
-        ROOT / "scripts" / "run_a800_h1_phase_aware_supervisor_probe.sh"
-    ).read_text(encoding="utf-8")
+    entrypoint = (ROOT / "ops" / "a800" / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    launcher = (ROOT / "scripts" / "run_a800_h1_locomotion_midterm.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_a800_h1_phase_aware_supervisor_probe.sh").read_text(
+        encoding="utf-8"
+    )
 
     assert "phase_aware_supervisor_probe" in entrypoint
     assert "run_phase_aware_supervisor_probe" in entrypoint
@@ -145,6 +180,10 @@ def test_a800_supervisor_entrypoint_and_launcher_are_fail_closed() -> None:
     assert "WORLDSPEC_A800_SUPERVISOR_RESULT=" in entrypoint
     assert "formalSupervisorGate" in launcher
     assert "phase-aware-supervisor.json" in launcher
+    assert "task_load_phase_aware_supervisor_probe" in entrypoint
+    assert "formalTaskLoadSupervisorGate" in launcher
+    assert "task-load-phase-aware-supervisor.json" in launcher
+    assert "loaded-track-settle-task-load-formal-v1-failed" in entrypoint
     assert "WORLD_SPEC_RETAIN_INCOMPLETE_REMOTE" in launcher
     assert "remote_evidence_retained=true" in launcher
     assert "WORLD_SPEC_SUPERVISOR_STAND_CHECKPOINT" in wrapper

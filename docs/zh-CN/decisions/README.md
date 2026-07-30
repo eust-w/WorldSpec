@@ -43,5 +43,6 @@ last-verified: 2026-07-30
 - [ADR-0033 H1 确定性部署评估与 Warm Start 候选](0033-h1-deterministic-deployment-evaluation.md)
 - [ADR-0034 H1 负载步态长时生存信用与 PPO 漂移约束](0034-h1-long-horizon-survival-credit.md)
 - [ADR-0035 H1 正式 100M 训练结果与站立回归失败](0035-h1-formal-100m-training-result.md)
+- [ADR-0036 H1 任务载荷三策略 Supervisor 门控](0036-h1-task-load-supervisor-gate.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

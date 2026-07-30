@@ -45,5 +45,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0033 H1 deterministic deployment evaluation and Warm-Start candidate](0033-h1-deterministic-deployment-evaluation.md)
 - [ADR-0034 H1 task-load long-horizon survival credit and PPO-drift constraints](0034-h1-long-horizon-survival-credit.md)
 - [ADR-0035 H1 formal 100M training result and stand-regression failure](0035-h1-formal-100m-training-result.md)
+- [ADR-0036 H1 task-load three-policy Supervisor gate](0036-h1-task-load-supervisor-gate.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

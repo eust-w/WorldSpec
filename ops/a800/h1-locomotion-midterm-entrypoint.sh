@@ -298,6 +298,7 @@ source = (
     if stage in {
         "dual_policy_switch_probe",
         "phase_aware_supervisor_probe",
+        "task_load_phase_aware_supervisor_probe",
         "fixed_kitchen_full_loop_probe",
         "whole_body_task_space_control_spike",
     }
@@ -368,9 +369,28 @@ elif source["sourceStage"] == "loaded-track-settle-task-load-horizon-v5-passed":
         != "loaded_track_settle_task_load_horizon"
     ):
         raise SystemExit("formal-training source is not the frozen passing horizon evidence")
+elif source["sourceStage"] == "loaded-track-settle-task-load-formal-v1-failed":
+    if (
+        report["status"] != "failed"
+        or report["formalTrainingGate"] != "failed"
+        or report["policyStatus"] != "non_publishable"
+        or report["metrics"]["maximumReportedStep"] < 100_000_000
+        or report["metrics"]["walkSettlePassed"] != 5
+        or report["metrics"]["standRegressionPassed"] != 0
+        or report["claimBoundary"]["policyCandidate"] is not False
+    ):
+        raise SystemExit("task-load supervisor source is not the frozen 100M evidence")
 else:
     raise SystemExit("unsupported warm-start source stage")
-if report["researchCheckpoint"]["digest"] != checkpoint_digest:
+reported_checkpoint = (
+    report["artifacts"]["checkpoint"]
+    if source["sourceStage"] == "loaded-track-settle-task-load-formal-v1-failed"
+    else report["researchCheckpoint"]
+)
+if (
+    reported_checkpoint["digest"] != checkpoint_digest
+    or reported_checkpoint["sizeBytes"] != len(checkpoint_payload)
+):
     raise SystemExit("warm-start report/checkpoint lineage mismatch")
 if not replay_filename and profile["runtime"]["containerImage"] != sys.argv[5]:
     raise SystemExit("midterm Profile container image mismatch")
@@ -386,6 +406,7 @@ if stage in {
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
+    "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
     "whole_body_task_space_control_spike",
 }:
@@ -396,6 +417,7 @@ if stage in {
             profile["capturePolicy"]
             if stage in {
                 "phase_aware_supervisor_probe",
+                "task_load_phase_aware_supervisor_probe",
                 "fixed_kitchen_full_loop_probe",
                 "whole_body_task_space_control_spike",
             }
@@ -514,6 +536,7 @@ if stage in {
         raise SystemExit("settle teacher is not the frozen passing capture evidence")
 if stage in {
     "phase_aware_supervisor_probe",
+    "task_load_phase_aware_supervisor_probe",
     "fixed_kitchen_full_loop_probe",
     "whole_body_task_space_control_spike",
 }:
@@ -755,7 +778,10 @@ elif midterm_profile["stage"] == "loaded_track_settle_capture":
         Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
         Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
     )
-elif midterm_profile["stage"] == "phase_aware_supervisor_probe":
+elif midterm_profile["stage"] in {
+    "phase_aware_supervisor_probe",
+    "task_load_phase_aware_supervisor_probe",
+}:
     result = run_phase_aware_supervisor_probe(
         base_profile,
         midterm_profile,
@@ -1185,6 +1211,33 @@ elif midterm_profile["stage"] == "phase_aware_supervisor_probe":
     }
     print(
         "WORLDSPEC_A800_SUPERVISOR_RESULT="
+        + json.dumps(report, separators=(",", ":"))
+    )
+elif midterm_profile["stage"] == "task_load_phase_aware_supervisor_probe":
+    report = {
+        "id": (
+            "task-load-supervisor-report://worldspec/h1/a800-"
+            + os.environ["WORLD_SPEC_PROBE_INPUT_REVISION"][:12]
+        ),
+        "reportVersion": "0.1.0",
+        "status": "completed",
+        "scope": "h1_task_load_phase_aware_supervisor_probe",
+        "executionEvidence": "executed",
+        "runtimeAcceptance": "research_task_load_supervisor",
+        "controllerStatus": (
+            "task_load_supervisor_candidate"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "non_publishable"
+        ),
+        "formalTaskLoadSupervisorGate": (
+            "passed"
+            if result["qualityAssessment"]["status"] == "passed"
+            else "failed"
+        ),
+        **common,
+    }
+    print(
+        "WORLDSPEC_A800_TASK_LOAD_SUPERVISOR_RESULT="
         + json.dumps(report, separators=(",", ":"))
     )
 elif midterm_profile["stage"] == "fixed_kitchen_full_loop_probe":
