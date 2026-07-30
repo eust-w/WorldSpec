@@ -41,8 +41,8 @@ fi
 
 export WORLD_SPEC_IMAGE_SOURCE_REVISION="${image_source_revision}"
 export WORLD_SPEC_MIDTERM_PROFILE="${PROFILE}"
-export WORLD_SPEC_WARM_START_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-capture.a800.passed.json"
-export WORLD_SPEC_WARM_START_CHECKPOINT="${ROOT_DIR}/runs/a800/worldspec-h1-midterm-rmnnr/midterm-checkpoint.zip"
+export WORLD_SPEC_WARM_START_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-manipulation-mixed-reset.a800.failed-summary.json"
+export WORLD_SPEC_WARM_START_CHECKPOINT="${ROOT_DIR}/runs/a800/worldspec-h1-midterm-hl78d/midterm-checkpoint.zip"
 export WORLD_SPEC_RETENTION_TEACHER_REPORT="${ROOT_DIR}/examples/h1-kitchen/locomotion-task-load-formal.a800.failed-summary.json"
 export WORLD_SPEC_RETENTION_TEACHER_CHECKPOINT="${ROOT_DIR}/runs/a800/worldspec-h1-midterm-cdbm5/midterm-checkpoint.zip"
 export WORLD_SPEC_H1_RUNTIME_IMAGE="${built_image}"

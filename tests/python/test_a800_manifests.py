@@ -614,6 +614,41 @@ def test_capture_calibration_binds_both_policies_and_fails_closed() -> None:
     assert "run_a800_h1_locomotion_midterm.sh" in wrapper
 
 
+def test_manipulation_continuation_rebuilds_bank_from_frozen_v3_policy() -> None:
+    entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    wrapper = (
+        ROOT / "scripts" / "run_a800_h1_manipulation_balance_calibration.sh"
+    ).read_text(encoding="utf-8")
+    profile = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "locomotion-manipulation-balance-profile.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert (
+        profile["warmStart"]["sourceStage"]
+        == "loaded-track-settle-manipulation-mixed-reset-v3-failed"
+    )
+    assert profile["warmStart"]["checkpointDigest"] == (
+        "sha256:89618f878a8aee343bde51ba36fc1271d18de732896ba9c2dffac981ba8b936e"
+    )
+    assert profile["environment"]["snapshotCurriculum"]["fromRestProbability"] == 0.5
+    assert (
+        profile["environment"]["snapshotCurriculum"]["mode"]
+        == "continued_on_policy_capture_and_rest_mixture"
+    )
+    assert "loaded-track-settle-manipulation-mixed-reset-v3-failed" in entrypoint
+    assert 'report["checkpoint"]' in entrypoint
+    assert "locomotion-manipulation-mixed-reset.a800.failed-summary.json" in wrapper
+    assert "worldspec-h1-midterm-hl78d/midterm-checkpoint.zip" in wrapper
+    assert "worldspec-h1-midterm-rf9zh/midterm-checkpoint.zip" not in wrapper
+
+
 def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
     (job,) = _documents("h1-locomotion-midterm-job.yaml")
     assert job["spec"]["backoffLimit"] == 0

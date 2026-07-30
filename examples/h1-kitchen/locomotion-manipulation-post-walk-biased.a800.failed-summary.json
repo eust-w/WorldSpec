@@ -1,0 +1,58 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-post-walk-biased/rf9zh",
+  "status": "failed",
+  "job": "worldspec-h1-midterm-rf9zh",
+  "probeRevision": "5383dd04b688b93ddea28b2a3c5c38703b9f90e9",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:bb92915936c4d06ecb185b6d0229ab3034fca4da37636c0d6324d0a745b7e501",
+  "report": {
+    "digest": "sha256:35ab225a46a62c1a08420c3bac2271e92440f34f1c0a170eedc5bcbbdb215fae",
+    "sizeBytes": 31712
+  },
+  "checkpoint": {
+    "digest": "sha256:adbdfbee755fa3369f772029c9e645f3ea7a6df38bbf0ea41357d9dd86f22cb3",
+    "sizeBytes": 8816724,
+    "distribution": "internal_only"
+  },
+  "trace": {
+    "digest": "sha256:ab11232ac5342dfc4daf260714d985dea3229aed3bec8df0f71756b136260e67",
+    "sizeBytes": 433891,
+    "distribution": "internal_only"
+  },
+  "snapshotBank": {
+    "digest": "sha256:563869c42475b952719477f1fd092499d2cd176bcf4c2d1a6e6668caa8b44ee6",
+    "sizeBytes": 1189993,
+    "snapshotCount": 4096,
+    "terminatedSnapshotCount": 0,
+    "distribution": "internal_only"
+  },
+  "training": {
+    "maximumReportedStep": 17203200,
+    "finalMeanEpisodeLength": 91.828125,
+    "minimumRequiredMeanEpisodeLength": 90.0,
+    "fromRestProbability": 0.25
+  },
+  "quality": {
+    "formalManipulationBalanceGate": "failed",
+    "policyStatus": "non_publishable",
+    "deterministicTestsPassed": 8,
+    "deterministicTestsRequired": 10,
+    "fromRestTestsPassed": 5,
+    "postWalkTestsPassed": 3,
+    "postWalkMaximumBaseTranslation": 0.9506178884719482,
+    "postWalkMaximumTerminalLinearSpeed": 3.526850828732937,
+    "nonFiniteSamples": 0
+  },
+  "diagnosis": {
+    "classification": "post_walk_bias_regression",
+    "heldJointVelocityOutlier": false,
+    "evidence": "Pure post-walk evaluation exposed two failures. Biasing fresh training toward post-walk resets reduced mean Episode length and worsened the hardest state; the failed state had ordinary held-joint velocity, so reset velocity inconsistency was not supported.",
+    "qualityGatesChanged": false
+  },
+  "decision": {
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "nextStep": "warm_start_best_mixed_reset_policy_and_rebuild_on_policy_bank",
+    "qualityGatesChanged": false
+  },
+  "generatedAt": "2026-07-30T16:12:00Z"
+}

@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-post-walk-biased-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation Post-Walk-Biased Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "image",
+    "report",
+    "checkpoint",
+    "trace",
+    "snapshotBank",
+    "training",
+    "quality",
+    "diagnosis",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-rf9zh"
+    },
+    "probeRevision": {
+      "const": "5383dd04b688b93ddea28b2a3c5c38703b9f90e9"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:bb92915936c4d06ecb185b6d0229ab3034fca4da37636c0d6324d0a745b7e501"
+    },
+    "report": {
+      "$ref": "#/$defs/artifact"
+    },
+    "checkpoint": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "trace": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "snapshotBank": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/internalArtifact"
+        },
+        {
+          "type": "object",
+          "required": [
+            "snapshotCount",
+            "terminatedSnapshotCount"
+          ],
+          "properties": {
+            "snapshotCount": {
+              "const": 4096
+            },
+            "terminatedSnapshotCount": {
+              "const": 0
+            }
+          }
+        }
+      ]
+    },
+    "training": {
+      "const": {
+        "maximumReportedStep": 17203200,
+        "finalMeanEpisodeLength": 91.828125,
+        "minimumRequiredMeanEpisodeLength": 90.0,
+        "fromRestProbability": 0.25
+      }
+    },
+    "quality": {
+      "const": {
+        "formalManipulationBalanceGate": "failed",
+        "policyStatus": "non_publishable",
+        "deterministicTestsPassed": 8,
+        "deterministicTestsRequired": 10,
+        "fromRestTestsPassed": 5,
+        "postWalkTestsPassed": 3,
+        "postWalkMaximumBaseTranslation": 0.9506178884719482,
+        "postWalkMaximumTerminalLinearSpeed": 3.526850828732937,
+        "nonFiniteSamples": 0
+      }
+    },
+    "diagnosis": {
+      "const": {
+        "classification": "post_walk_bias_regression",
+        "heldJointVelocityOutlier": false,
+        "evidence": "Pure post-walk evaluation exposed two failures. Biasing fresh training toward post-walk resets reduced mean Episode length and worsened the hardest state; the failed state had ordinary held-joint velocity, so reset velocity inconsistency was not supported.",
+        "qualityGatesChanged": false
+      }
+    },
+    "decision": {
+      "const": {
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "nextStep": "warm_start_best_mixed_reset_policy_and_rebuild_on_policy_bank",
+        "qualityGatesChanged": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "internalArtifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes",
+        "distribution"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "const": "internal_only"
+        },
+        "snapshotCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "terminatedSnapshotCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

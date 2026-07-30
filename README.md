@@ -2,7 +2,21 @@
 
 WorldSpec 是面向具身资产的规范语义模型、证据模型与跨仿真器编译中间层。目标是把现有资产或图像/视频生成结果整理为可追溯、可验证、损失透明的 SimReady 资产。
 
-> 当前仓库状态：包含 v0.1 文档、45 个 JSON Schema、示例、Rust Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、CLI 与 loopback 异步 API。已实现 MuJoCo/Three.js 参考编译、Digest 绑定的 L2 Conformance/Certificate、L3 TaskRun/RuntimeRecord 证据核验、Reference Predicate Engine、真实 MuJoCo 3.6.0 加载与步进、真实 Chromium/Three.js 0.185.1 加载与截图，以及产物篡改拒绝；当前 macOS arm64 本地 Profile 达到 L2。还实现 OBJ 不可变修复、最小 URDF/MJCF 运动学接入、CAD/OpenUSD 隔离检查骨架、TRELLIS.2/Nerfstudio 生成 Worker 的 Fail-Closed 门控，以及锁定来源的 H1/右手单 Robotiq 确定性组合；后者已通过本机原生加载，但安装位姿仍是估算。锁定 Unitree 步态策略的接口推理通过，但在 Menagerie 全身模型上的 4 秒行为验证失败。用户已选择 A+R 目标动力学重训路线，并确认 MuJoCo Playground v0.2.0、MuJoCo/MJX、Warp 与 Brax JAX PPO；来源锁、目标 Bundle 适配器、训练 Profile、`train` Job 和 Fail-Closed Worker 门禁已建立，派生训练模型已在本机 MuJoCo 3.6.0 原生加载。隔离且无凭据的 A800 兼容性 Spike，以及旧容量 Profile 的一次 32,768 请求步、256 环境 A800 PPO 研究级 smoke 均真实执行通过；旧 smoke 明确为 `non_publishable`，没有 Checkpoint。对官方 MJX 容量语义复核后，当前 Profile 已改为显式按环境扩展 `naconmax/naccdmax`、按世界设置 `njmax`；提交 `101aff7` 的新 Digest 锁定镜像、当前 Profile 的 A800 one-step 与 8,192 环境规模预检均已通过，批量状态数值有限且容量零溢出。容量修订后的 32,768 请求步、256 环境 PPO 研究烟测也已在 A800 通过，训练与推理数值有限、容量零溢出；但其平均评估 Episode 仅约 87.34 步，仍为 `non_publishable` 且没有 Checkpoint，不能证明策略质量。独立的 `stand-v2.1` 已在真实 A800 上完成 4,194,304 请求步校准，最终平均 Episode 为 500、相对 `stand-v1` 提升 4.02 倍、五次确定性站立 5/5 通过，内部 Checkpoint 也已按大小与 Digest 完整回传；该证据仍是 `research_calibration / non_publishable`，只放行下一步行走课程实验。尚无 Linux x86_64 参考 Profile 的 L2 证书、真实 A800/H100 生成、规范 H1 训练、完整 CAD/USD 原生运行或 H1 厨房 5/5 L3 证据，因此产品 v0.1 尚未整体验收。
+> 当前仓库状态：包含 v0.1 双语文档、91 个 JSON Schema、正负示例、Rust
+> Core/Validator、Canonical Digest、文件 CAS、SQLite WAL 作业索引、CLI 与
+> loopback 异步 API。MuJoCo/Three.js 参考编译、Digest 绑定的 L2
+> Conformance/Certificate、L3 TaskRun/RuntimeRecord 证据核验、Reference
+> Predicate Engine、真实 MuJoCo 3.6.0 加载与步进、真实
+> Chromium/Three.js 0.185.1 加载与截图及产物篡改拒绝已有本地执行证据；
+> macOS arm64 本地 Profile 达到 L2，但尚无 Linux x86_64 参考 Profile 的
+> L2 证书。H1 + 右手 Robotiq 的 A800 训练链已经完成站立、过渡、Capture、
+> 任务载荷和正式 100M 阶段；100M Checkpoint 因零命令站立回归失败保持
+> `non_publishable`。冻结 Supervisor 的十项门通过后，单次完整厨房暴露了
+> 步行后操作平衡问题；mixed-reset-v3 达到静态 `5/5`，但修正后的
+> post-walk-biased-v4 纯分布评测只有步行后 `3/5`，因此目前只放行
+> on-policy-continuation-v5 校准，不允许启动厨房 5/5 或声明 L3。真实
+> A800/H100 图像/视频生成、完整 CAD/USD 原生运行、授权明确的真实厨房联合
+> 证据和 H1 厨房 5/5 均未完成，所以产品 v0.1 尚未整体验收。
 
 ## 快速入口
 

@@ -1,5 +1,5 @@
 {
-  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/post-walk-biased-reset-v4",
+  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/on-policy-continuation-v5",
   "profileVersion": "0.1.0",
   "status": "research",
   "stage": "loaded_track_settle_manipulation_balance",
@@ -11,10 +11,10 @@
     "ccdIterations": 50
   },
   "warmStart": {
-    "sourceStage": "loaded-track-settle-capture-v1-passed",
-    "sourceReportDigest": "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f",
-    "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
-    "checkpointSizeBytes": 6280278,
+    "sourceStage": "loaded-track-settle-manipulation-mixed-reset-v3-failed",
+    "sourceReportDigest": "sha256:54598b80cdf26f0ba0a21108373fc97bac2c8e5bc0b936174a770d73b8c4f2bf",
+    "checkpointDigest": "sha256:89618f878a8aee343bde51ba36fc1271d18de732896ba9c2dffac981ba8b936e",
+    "checkpointSizeBytes": 8796941,
     "distribution": "internal_only",
     "restore": {
       "normalizer": true,
@@ -49,25 +49,25 @@
     "qualityGatesChanged": false
   },
   "previousAttempt": {
-    "job": "worldspec-h1-midterm-hl78d",
-    "probeRevision": "ca4a73e9006435b37a79152f47caeb4969d4f4f0",
-    "reportDigest": "sha256:a5c40535c3a863a6012ba1acb98200ba4d96c0b991d7169a9f023459015483d7",
-    "reportSizeBytes": 31592,
-    "checkpointDigest": "sha256:89618f878a8aee343bde51ba36fc1271d18de732896ba9c2dffac981ba8b936e",
-    "checkpointSizeBytes": 8796941,
-    "traceDigest": "sha256:4021670994c205d4e54538be1966b34a8a273f474b867c6c9ef6c52a3dddd9ef",
-    "traceSizeBytes": 437686,
-    "snapshotBankDigest": "sha256:931ea17b908fffc8bfcbdaffc95c98f246915a1154b26d21a1c521e79b71357f",
-    "snapshotBankSizeBytes": 1189923,
+    "job": "worldspec-h1-midterm-rf9zh",
+    "probeRevision": "5383dd04b688b93ddea28b2a3c5c38703b9f90e9",
+    "reportDigest": "sha256:35ab225a46a62c1a08420c3bac2271e92440f34f1c0a170eedc5bcbbdb215fae",
+    "reportSizeBytes": 31712,
+    "checkpointDigest": "sha256:adbdfbee755fa3369f772029c9e645f3ea7a6df38bbf0ea41357d9dd86f22cb3",
+    "checkpointSizeBytes": 8816724,
+    "traceDigest": "sha256:ab11232ac5342dfc4daf260714d985dea3229aed3bec8df0f71756b136260e67",
+    "traceSizeBytes": 433891,
+    "snapshotBankDigest": "sha256:563869c42475b952719477f1fd092499d2cd176bcf4c2d1a6e6668caa8b44ee6",
+    "snapshotBankSizeBytes": 1189993,
     "formalGate": "failed",
-    "finalMeanEpisodeLength": 94.359375,
-    "deterministicTestsPassed": 9,
-    "fromRestMaximumBaseTranslation": 0.018160735424661872,
-    "fromRestMaximumTerminalLinearSpeed": 0.0034309549556142036,
-    "postWalkMaximumBaseTranslation": 0.33074650083223095,
-    "postWalkMaximumTerminalLinearSpeed": 0.9128383722959879,
-    "trainingFromRestProbability": 0.5,
-    "evaluationSnapshotFromRestProbability": 0.5,
+    "finalMeanEpisodeLength": 91.828125,
+    "deterministicTestsPassed": 8,
+    "fromRestMaximumBaseTranslation": 0.01926421941565464,
+    "fromRestMaximumTerminalLinearSpeed": 0.002552621206498071,
+    "postWalkMaximumBaseTranslation": 0.9506178884719482,
+    "postWalkMaximumTerminalLinearSpeed": 3.526850828732937,
+    "trainingFromRestProbability": 0.25,
+    "evaluationSnapshotFromRestProbability": 0.0,
     "qualityGatesChanged": false
   },
   "trainingOverrides": {
@@ -91,9 +91,9 @@
       "zeroCommandProbability": 1.0
     },
     "snapshotCurriculum": {
-      "mode": "loaded_motion_capture_biased_mixture",
+      "mode": "continued_on_policy_capture_and_rest_mixture",
       "snapshotCount": 4096,
-      "fromRestProbability": 0.25,
+      "fromRestProbability": 0.5,
       "motionSteps": 150,
       "captureStepRange": [35, 50],
       "motionCommandDistribution": {

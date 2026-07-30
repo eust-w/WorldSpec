@@ -388,12 +388,28 @@ elif source["sourceStage"] == "loaded-track-settle-capture-v1-passed":
         or report["policyStatus"] != "capture_candidate"
     ):
         raise SystemExit("manipulation-balance warm start is not frozen capture evidence")
+elif source["sourceStage"] == "loaded-track-settle-manipulation-mixed-reset-v3-failed":
+    if (
+        report["status"] != "failed"
+        or report["quality"]["formalManipulationBalanceGate"] != "failed"
+        or report["quality"]["policyStatus"] != "non_publishable"
+        or report["quality"]["fromRestTestsPassed"] != 5
+        or report["decision"]["fullKitchenSingleAllowed"] is not False
+    ):
+        raise SystemExit(
+            "manipulation continuation source is not frozen mixed-reset failure evidence"
+        )
 else:
     raise SystemExit("unsupported warm-start source stage")
 reported_checkpoint = (
     report["artifacts"]["checkpoint"]
     if source["sourceStage"] == "loaded-track-settle-task-load-formal-v1-failed"
-    else report["researchCheckpoint"]
+    else (
+        report["checkpoint"]
+        if source["sourceStage"]
+        == "loaded-track-settle-manipulation-mixed-reset-v3-failed"
+        else report["researchCheckpoint"]
+    )
 )
 if (
     reported_checkpoint["digest"] != checkpoint_digest

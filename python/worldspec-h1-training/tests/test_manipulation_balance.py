@@ -52,7 +52,7 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
         "research_manipulation_balance_override"
     )
     assert effective["trainingEnvironment"]["snapshotCurriculum"] == SNAPSHOT_CURRICULUM
-    assert SNAPSHOT_CURRICULUM["fromRestProbability"] == 0.25
+    assert SNAPSHOT_CURRICULUM["fromRestProbability"] == 0.5
     assert effective["trainingEnvironment"]["dynamicArmCurriculum"] == DYNAMIC_ARM_CURRICULUM
     assert (
         effective["trainingEnvironment"]["dynamicArmCurriculum"]["anchorRecovery"]
@@ -95,7 +95,7 @@ def test_manipulation_balance_rejects_anchor_recovery_drift() -> None:
 
 def test_manipulation_balance_rejects_reset_mixture_drift() -> None:
     base, profile = _profiles()
-    profile["environment"]["snapshotCurriculum"]["fromRestProbability"] = 0.5
+    profile["environment"]["snapshotCurriculum"]["fromRestProbability"] = 0.25
 
     with pytest.raises(TrainingError, match="environment"):
         validate_manipulation_balance_profile(base, profile)
