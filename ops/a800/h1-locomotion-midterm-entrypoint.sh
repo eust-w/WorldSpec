@@ -272,6 +272,15 @@ elif source["sourceStage"] == "loaded-track-settle-retention-v3-failed":
         != "loaded_track_settle_retention"
     ):
         raise SystemExit("task-load retention source is not frozen failed evidence")
+elif source["sourceStage"] == "loaded-track-settle-task-load-survival-v3-failed":
+    if (
+        report["qualityAssessment"]["status"] != "failed"
+        or report["formalTrainingGate"] != "failed"
+        or report["policyStatus"] != "non_publishable"
+        or report["training"]["profileStage"]
+        != "loaded_track_settle_task_load_survival"
+    ):
+        raise SystemExit("deployment-evaluation source is not frozen failed evidence")
 else:
     raise SystemExit("unsupported warm-start source stage")
 if report["researchCheckpoint"]["digest"] != checkpoint_digest:

@@ -443,6 +443,11 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert "run_a800_h1_locomotion_midterm.sh" in (
         task_load_deployment_eval_launcher
     )
+    entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "loaded-track-settle-task-load-survival-v3-failed" in entrypoint
+    assert "deployment-evaluation source is not frozen failed evidence" in entrypoint
 
 
 def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:
