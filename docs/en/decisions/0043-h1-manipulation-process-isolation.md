@@ -47,3 +47,17 @@ Add process-isolated-checkpoint-portfolio-v8:
 - v8 becomes a Manipulation Policy candidate only after complete artifact
   handoff and a passing formal gate.
 - If v8 stops before the formal gate, it remains a runtime failure.
+
+## v8 outcome and v9 correction
+
+The v8 job `worldspec-h1-midterm-j6zgw` completed the real 17,203,200-step
+training run, saved seven Checkpoints, exited the training process, and started
+the fresh evaluation process. Evaluation stopped before loading any candidate
+because the Brax API import path was wrong:
+`brax.training.running_statistics` must be
+`brax.training.acme.running_statistics`. No candidate test ran, so this result
+has no policy-quality meaning.
+
+v9 changes only that import path and adds a source regression assertion. The
+process boundary, training, candidates, seed, and quality gates remain
+unchanged.

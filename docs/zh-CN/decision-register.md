@@ -72,5 +72,6 @@ last-verified: 2026-07-30
 | D-060 | on-policy-continuation-v5 的终端阶段仅通过步行后 3/5、静态 5/5，但归档保留七个阶段；选择在同运行、同状态库和不变门槛下评估全部已保存 Checkpoint，仅正式通过的候选才可解锁完整厨房单次门 | Accepted Design | [ADR-0041](decisions/0041-h1-manipulation-checkpoint-portfolio.md) |
 | D-061 | checkpoint-portfolio-v6 已保存七个 Checkpoint，但逐候选评估因 JAX 缓存挤占 Warp 显存而在正式门前 OOM；选择 platform allocator、训练后/套件间/候选间清缓存的显存隔离，训练与全部质量门不变 | Accepted Design | [ADR-0042](decisions/0042-h1-manipulation-checkpoint-memory-isolation.md) |
 | D-062 | memory-isolated-v7 完成 17,203,200 步和七个 Checkpoint 后仍因同进程 JAX/XLA/Warp 生命周期在正式门前 OOM；选择训练进程正常退出后用全新进程只读评估，全部训练语义和质量门不变 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
+| D-063 | process-isolated-v8 已证明训练/评估进程边界生效，但评估在候选测试前因 Brax `running_statistics` 导入路径错误终止；v9 只修正为现有代码已使用的 `brax.training.acme` 路径，其他语义不变 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

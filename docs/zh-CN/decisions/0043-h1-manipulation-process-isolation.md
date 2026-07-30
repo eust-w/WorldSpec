@@ -40,3 +40,15 @@ memory-isolated-checkpoint-portfolio-v7 已在 Drobodata A800 作业
 - 进程隔离只改变运行时生命周期，不改变学习问题、控制语义或验收门；
 - v8 只有在产物完整交接并通过正式门后，才可作为 Manipulation Policy 候选；
 - v8 若仍在正式门前失败，必须继续标记为运行时失败。
+
+## v8 运行结果与 v9 修正
+
+v8 作业 `worldspec-h1-midterm-j6zgw` 已真实完成 17,203,200 步训练，保存七个
+Checkpoint，并证明训练进程退出后成功启动了新的评估进程。评估进程在加载
+策略网络前因 Brax API 导入路径错误终止：
+`brax.training.running_statistics` 应为
+`brax.training.acme.running_statistics`。该错误发生在任何候选测试之前，
+不产生策略质量结论。
+
+v9 只修正这个导入路径，并增加源码回归断言。进程边界、训练、候选、随机种子
+和质量门均保持不变。

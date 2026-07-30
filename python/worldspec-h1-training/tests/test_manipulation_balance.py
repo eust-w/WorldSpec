@@ -182,6 +182,7 @@ def test_post_walk_evaluation_disables_rest_mixture() -> None:
     assert "training_and_evaluation_process_boundary_v2" in source
     assert "train_manipulation_balance_portfolio" in source
     assert "MANIPULATION_PORTFOLIO_STATE_MISSING" in source
+    assert "from brax.training.acme import running_statistics" in source
     assert "jax.clear_caches()" in source
 
 

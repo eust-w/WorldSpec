@@ -1,5 +1,5 @@
 {
-  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/process-isolated-checkpoint-portfolio-v8",
+  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/process-isolated-checkpoint-portfolio-v9",
   "profileVersion": "0.1.0",
   "status": "research",
   "stage": "loaded_track_settle_manipulation_balance",
@@ -71,12 +71,12 @@
     "qualityGatesChanged": false
   },
   "runtimeFailure": {
-    "job": "worldspec-h1-midterm-rfkl4",
-    "probeRevision": "93f8e81bbfd58f431ab028a373feee81bce2e97a",
-    "imageDigest": "sha256:2656ac9ec5627cb0160719a6e1eec2d9914b95323519148247b4579da4bcb93b",
-    "logDigest": "sha256:dba8a99055b6bef23c10d728bce415d5e1a130364c6448fb803a74c2e36f4f36",
-    "logSizeBytes": 24584,
-    "failure": "gpu_oom_during_checkpoint_portfolio_evaluation",
+    "job": "worldspec-h1-midterm-j6zgw",
+    "probeRevision": "3646f7f09493773816d34ba6cd82104666c3004c",
+    "imageDigest": "sha256:82090c3b4f4b98625c34b7e9f2e8c446db2c61991c72bba0a37257d1be8136fd",
+    "logDigest": "sha256:2a88f3162b380d5dc4e1509666bb445753cec84ced181231bfa30fe036259f9d",
+    "logSizeBytes": 20003,
+    "failure": "evaluation_running_statistics_import_error",
     "savedCheckpointCount": 7,
     "formalGate": "not_evaluated",
     "qualityGatesChanged": false
