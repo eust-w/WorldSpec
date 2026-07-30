@@ -3,7 +3,7 @@ status: Official Translation
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../zh-CN/decisions/README.md
-last-verified: 2026-07-29
+last-verified: 2026-07-30
 ---
 
 # ADR index
@@ -37,5 +37,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0025 H1 task-phase leg-policy safe handoff](0025-h1-task-policy-handoff-fix.md)
 - [ADR-0026 H1 fixed-base four-joint dynamic arm tracking](0026-h1-dynamic-arm-tracking.md)
 - [ADR-0027 H1 ergonomic task-geometry calibration](0027-h1-ergonomic-task-geometry.md)
+- [ADR-0028 H1 task-origin base recovery](0028-h1-task-origin-base-recovery.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

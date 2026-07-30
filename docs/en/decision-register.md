@@ -3,7 +3,7 @@ status: Official Translation
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../zh-CN/decision-register.md
-last-verified: 2026-07-29
+last-verified: 2026-07-30
 ---
 
 # Decision register
@@ -58,5 +58,6 @@ The Chinese document is the normative source; this page is its official translat
 | D-044 | Select A5-CF: preserve the A5-C QP, policies, scene, ranges, termination conditions, and quality gates; use `0.05/0.02` task-phase hysteresis plus the validated Capture stability gate and five-step Blend for Motion-to-Stand handoff; gate one A800 Spike without automatic tuning or A5/100M launch | Accepted Design | [ADR-0025](decisions/0025-h1-task-policy-handoff-fix.md) |
 | D-045 | A5-CF removed the `right_hip_yaw` handoff violation on A800 but task-phase torso/arm motion caused `fall_height`, so it did not become a control candidate; select A5-CG to lock the base and torso and gate four-joint right-arm QP with explicit bias-force feed-forward once | Accepted Design | [ADR-0026](decisions/0026-h1-dynamic-arm-tracking.md) |
 | D-046 | A5-CG kept Stand Policy active with four-joint dynamic-arm isolation on A800, but the low handle target still drove a near-singular elbow posture, backward base slip, and `fall_height`; select A5-CH to move the self-authored task geometry into the observed stable workspace without changing gates or Controller | Accepted Design | [ADR-0027](decisions/0027-h1-ergonomic-task-geometry.md) |
+| D-047 | A5-CH still triggered `fall_height` on A800 after arm disturbance drove backward base slip; select A5-CJ to reuse Motion/Capture/Stand through a task-origin PD recovery command, freeze arm targets during recovery, and preserve every quality gate | Accepted Design | [ADR-0028](decisions/0028-h1-task-origin-base-recovery.md) |
 
 Changing an Accepted decision requires an ADR; editing only implementation prose is insufficient.

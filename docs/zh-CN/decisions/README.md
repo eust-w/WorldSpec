@@ -3,7 +3,7 @@ status: Normative
 applies-to: WorldSpec 0.1
 normative-language: zh-CN
 mirror: ../../en/decisions/README.md
-last-verified: 2026-07-29
+last-verified: 2026-07-30
 ---
 
 # ADR 目录
@@ -35,5 +35,6 @@ last-verified: 2026-07-29
 - [ADR-0025 H1 任务阶段腿部策略安全交接](0025-h1-task-policy-handoff-fix.md)
 - [ADR-0026 H1 固定底座四关节动态右臂跟踪](0026-h1-dynamic-arm-tracking.md)
 - [ADR-0027 H1 任务几何工作空间校准](0027-h1-ergonomic-task-geometry.md)
+- [ADR-0028 H1 任务原点基座恢复](0028-h1-task-origin-base-recovery.md)
 
 ADR 状态采用 Proposed、Accepted、Superseded。Accepted 决策的变化必须新建 ADR 并链接被替代记录。

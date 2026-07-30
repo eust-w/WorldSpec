@@ -172,6 +172,37 @@ TASK_GEOMETRY_CALIBRATION = {
     "qualityGatesChanged": False,
 }
 
+A5CH_FAILURE_EVIDENCE = {
+    "job": "worldspec-h1-midterm-ddkxh",
+    "controlProfileDigest": (
+        "sha256:43f631d024b4c69b8aff19a8ec79f7b56843b0cdd70728eb43620b89bdf9ae5b"
+    ),
+    "reportDigest": "sha256:fe44f1e9b56ebe2a7b26d11d77ac6f474479a5259eb4feb50fed56150d5c3903",
+    "controllerDigest": ("sha256:06a2646082e1f732ca57461d58a4055fa4cee4a1e411bb029ea14e69140d9ad9"),
+    "traceDigest": "sha256:095b64dc733772182f716e3c088d103d690eeef78a716004f872112ca85285d3",
+    "traceRecordCount": 287,
+    "terminalReason": "fall_height",
+    "taskPolicyFinalPhase": "stand",
+    "taskPolicyHandoffFailed": False,
+    "dynamicArmTrackingEnabled": True,
+    "taskGeometryCalibrationEnabled": True,
+    "formalControlGate": "failed",
+}
+
+BASE_ANCHOR_RECOVERY = {
+    "mode": "task_origin_pd_motion_policy",
+    "positionGain": 2.0,
+    "velocityGain": 0.8,
+    "maximumForwardCommand": 0.5,
+    "maximumBackwardCommand": 0.2,
+    "maximumLateralCommand": 0.1,
+    "yawCommand": 0.0,
+    "activationThreshold": TASK_POLICY_HANDOFF["motionEntryThreshold"],
+    "releaseThreshold": TASK_POLICY_HANDOFF["motionExitThreshold"],
+    "armDuringRecovery": "freeze_last_stable_targets",
+    "qualityGatesChanged": False,
+}
+
 DIAGNOSTIC_TERMINATION_CHANNELS = (
     "joint_limit",
     "fall_height",
@@ -1249,6 +1280,18 @@ def validate_whole_body_profile(
             )
     task_geometry_calibration = profile.get("taskGeometryCalibration")
     a5cg_evidence = profile.get("a5cgEvidence")
+    base_anchor_recovery = profile.get("baseAnchorRecovery")
+    a5ch_evidence = profile.get("a5chEvidence")
+    if (base_anchor_recovery is None) != (a5ch_evidence is None):
+        raise TrainingError(
+            "WHOLE_BODY_BASE_ANCHOR_LINEAGE_INCOMPLETE",
+            "A5-CJ requires both the base-anchor contract and A5-CH failure evidence.",
+        )
+    if base_anchor_recovery is not None and task_geometry_calibration is None:
+        raise TrainingError(
+            "WHOLE_BODY_BASE_ANCHOR_CONTROLLER_MISSING",
+            "A5-CJ must preserve the A5-CH geometry and dynamic arm controller.",
+        )
     if (task_geometry_calibration is None) != (a5cg_evidence is None):
         raise TrainingError(
             "WHOLE_BODY_TASK_GEOMETRY_LINEAGE_INCOMPLETE",
@@ -1327,6 +1370,22 @@ def validate_whole_body_profile(
             "WHOLE_BODY_TASK_GEOMETRY_CONTROLLER_MISSING",
             "A5-CH must preserve the A5-CG dynamic arm controller.",
         )
+    if base_anchor_recovery is not None:
+        if task_geometry_calibration is None or dynamic_arm_tracking is None:
+            raise TrainingError(
+                "WHOLE_BODY_BASE_ANCHOR_CONTROLLER_MISSING",
+                "A5-CJ must preserve the A5-CH geometry and dynamic arm controller.",
+            )
+        if base_anchor_recovery != BASE_ANCHOR_RECOVERY:
+            raise TrainingError(
+                "WHOLE_BODY_BASE_ANCHOR_INVALID",
+                "A5-CJ must use the frozen task-origin recovery contract.",
+            )
+        if a5ch_evidence != A5CH_FAILURE_EVIDENCE:
+            raise TrainingError(
+                "WHOLE_BODY_BASE_ANCHOR_EVIDENCE_MISMATCH",
+                "A5-CJ must remain bound to the archived A5-CH fall-height evidence.",
+            )
     runtime = profile.get("runtime", {})
     if (
         runtime.get("ccdIterations") != 50
@@ -1372,6 +1431,42 @@ def make_whole_body_evaluation_profile(
     return effective
 
 
+def base_anchor_recovery_command(
+    origin_position: Sequence[float],
+    current_position: Sequence[float],
+    local_velocity: Sequence[float],
+    contract: Mapping[str, Any] = BASE_ANCHOR_RECOVERY,
+) -> list[float]:
+    """Return a bounded local command that restores the task-phase base origin."""
+
+    if len(origin_position) < 2 or len(current_position) < 2 or len(local_velocity) < 2:
+        raise TrainingError(
+            "BASE_ANCHOR_STATE_INVALID",
+            "Base-anchor recovery requires planar position and velocity.",
+        )
+    values = [*origin_position[:2], *current_position[:2], *local_velocity[:2]]
+    if not all(math.isfinite(float(value)) for value in values):
+        raise TrainingError(
+            "BASE_ANCHOR_STATE_NONFINITE",
+            "Base-anchor recovery inputs must be finite.",
+        )
+    gain = float(contract["positionGain"])
+    velocity_gain = float(contract["velocityGain"])
+    raw_x = gain * (float(origin_position[0]) - float(current_position[0])) - velocity_gain * float(
+        local_velocity[0]
+    )
+    raw_y = gain * (float(origin_position[1]) - float(current_position[1])) - velocity_gain * float(
+        local_velocity[1]
+    )
+    command_x = min(
+        float(contract["maximumForwardCommand"]),
+        max(-float(contract["maximumBackwardCommand"]), raw_x),
+    )
+    lateral_limit = float(contract["maximumLateralCommand"])
+    command_y = min(lateral_limit, max(-lateral_limit, raw_y))
+    return [command_x, command_y, float(contract["yawCommand"])]
+
+
 def evaluate_whole_body_control_spike(
     profile: dict[str, Any],
     env,
@@ -1381,6 +1476,7 @@ def evaluate_whole_body_control_spike(
     task_policy_handoff: Mapping[str, Any] | None = None,
     dynamic_arm_tracking: Mapping[str, Any] | None = None,
     task_scene: Mapping[str, Any] = TASK_SCENE,
+    base_anchor_recovery: Mapping[str, Any] | None = None,
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
     import jax
     import jax.numpy as jp
@@ -1410,6 +1506,9 @@ def evaluate_whole_body_control_spike(
     minimum_upright = float("inf")
     maximum_projected_gradient = 0.0
     terminal_reasons: set[str] = set()
+    last_stable_task_control: dict[str, Any] | None = None
+    base_anchor_recovery_steps = 0
+    maximum_base_anchor_command = 0.0
 
     def with_inputs(state_value, command, held_targets, feedforward):
         info = dict(state_value.info)
@@ -1460,12 +1559,38 @@ def evaluate_whole_body_control_spike(
             metrics = _task_metrics(env, state, task_scene)
             target_phase = "stand_ready" if phase == "whole_body_settle" else "reach_handle"
             target = _target_for_phase(target_phase, metrics, task_scene)
-            control = controller.solve(
+            candidate_control = controller.solve(
                 np.asarray(state.data.qpos),
                 np.asarray(state.data.qvel),
                 target,
             )
-            command = jp.asarray(control["baseCommand"])
+            control = candidate_control
+            command = jp.asarray(candidate_control["baseCommand"])
+            if base_anchor_recovery is not None:
+                anchor_command = base_anchor_recovery_command(
+                    initial_task_base,
+                    np.asarray(state.data.qpos[:3], dtype=float),
+                    np.asarray(env.local_velocity(state.data), dtype=float),
+                    base_anchor_recovery,
+                )
+                anchor_norm = float(np.linalg.norm(np.asarray(anchor_command)))
+                maximum_base_anchor_command = max(maximum_base_anchor_command, anchor_norm)
+                recovery_active = anchor_norm >= float(
+                    base_anchor_recovery["activationThreshold"]
+                ) or (task_supervisor is not None and task_supervisor.phase != "stand")
+                if recovery_active:
+                    if last_stable_task_control is None:
+                        last_stable_task_control = copy.deepcopy(candidate_control)
+                    control = copy.deepcopy(last_stable_task_control)
+                    command = jp.asarray(anchor_command)
+                    base_anchor_recovery_steps += 1
+                else:
+                    last_stable_task_control = copy.deepcopy(candidate_control)
+                control["baseAnchorCommand"] = [float(value) for value in anchor_command]
+                control["baseAnchorRecoveryActive"] = recovery_active
+                control["appliedArmTargetSource"] = (
+                    "last_stable_task_control" if recovery_active else "current_task_space_solution"
+                )
             held_targets = control["heldTargets"]
             feedforward = control["feedforwardTorque"]
             maximum_projected_gradient = max(
@@ -1591,6 +1716,15 @@ def evaluate_whole_body_control_spike(
             "control": control,
             "site": site,
         }
+        if base_anchor_recovery is not None and not (moving or transitioning):
+            record["baseAnchorRecovery"] = {
+                "enabled": True,
+                "active": bool(control["baseAnchorRecoveryActive"]),
+                "command": copy.deepcopy(control["baseAnchorCommand"]),
+                "steps": base_anchor_recovery_steps,
+                "maximumCommandNorm": _trace_number(maximum_base_anchor_command),
+                "armTargetSource": control["appliedArmTargetSource"],
+            }
         if task_supervisor is not None and not (moving or transitioning):
             record["policyCommand"] = [_trace_number(value) for value in np.asarray(policy_command)]
             record["taskPolicyHandoff"] = {
@@ -1663,6 +1797,9 @@ def evaluate_whole_body_control_spike(
                 ),
                 "dynamicArmTrackingEnabled": dynamic_arm_tracking is not None,
                 "taskGeometryCalibrationEnabled": task_scene == ERGONOMIC_TASK_SCENE,
+                "baseAnchorRecoveryEnabled": base_anchor_recovery is not None,
+                "baseAnchorRecoverySteps": base_anchor_recovery_steps,
+                "maximumBaseAnchorCommand": maximum_base_anchor_command,
             },
         },
         traces,
@@ -1740,6 +1877,7 @@ def run_whole_body_control_spike(
             profile.get("taskPolicyHandoff"),
             profile.get("dynamicArmTracking"),
             profile["scene"],
+            profile.get("baseAnchorRecovery"),
         )
     trace_path = output_dir / "evaluation-traces.jsonl"
     with trace_path.open("w", encoding="utf-8") as stream:
@@ -1764,6 +1902,11 @@ def run_whole_body_control_spike(
         **(
             {"taskGeometryCalibration": copy.deepcopy(profile["taskGeometryCalibration"])}
             if "taskGeometryCalibration" in profile
+            else {}
+        ),
+        **(
+            {"baseAnchorRecovery": copy.deepcopy(profile["baseAnchorRecovery"])}
+            if "baseAnchorRecovery" in profile
             else {}
         ),
         "scene": copy.deepcopy(profile["scene"]),
@@ -1809,6 +1952,11 @@ def run_whole_body_control_spike(
         **(
             {"taskGeometryCalibration": copy.deepcopy(profile["taskGeometryCalibration"])}
             if "taskGeometryCalibration" in profile
+            else {}
+        ),
+        **(
+            {"baseAnchorRecovery": copy.deepcopy(profile["baseAnchorRecovery"])}
+            if "baseAnchorRecovery" in profile
             else {}
         ),
         "qualityAssessment": {

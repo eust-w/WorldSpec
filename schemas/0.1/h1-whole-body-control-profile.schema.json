@@ -188,6 +188,37 @@
         "qualityGatesChanged": false
       }
     },
+    "a5chEvidence": {
+      "const": {
+        "job": "worldspec-h1-midterm-ddkxh",
+        "controlProfileDigest": "sha256:43f631d024b4c69b8aff19a8ec79f7b56843b0cdd70728eb43620b89bdf9ae5b",
+        "reportDigest": "sha256:fe44f1e9b56ebe2a7b26d11d77ac6f474479a5259eb4feb50fed56150d5c3903",
+        "controllerDigest": "sha256:06a2646082e1f732ca57461d58a4055fa4cee4a1e411bb029ea14e69140d9ad9",
+        "traceDigest": "sha256:095b64dc733772182f716e3c088d103d690eeef78a716004f872112ca85285d3",
+        "traceRecordCount": 287,
+        "terminalReason": "fall_height",
+        "taskPolicyFinalPhase": "stand",
+        "taskPolicyHandoffFailed": false,
+        "dynamicArmTrackingEnabled": true,
+        "taskGeometryCalibrationEnabled": true,
+        "formalControlGate": "failed"
+      }
+    },
+    "baseAnchorRecovery": {
+      "const": {
+        "mode": "task_origin_pd_motion_policy",
+        "positionGain": 2.0,
+        "velocityGain": 0.8,
+        "maximumForwardCommand": 0.5,
+        "maximumBackwardCommand": 0.2,
+        "maximumLateralCommand": 0.1,
+        "yawCommand": 0.0,
+        "activationThreshold": 0.05,
+        "releaseThreshold": 0.02,
+        "armDuringRecovery": "freeze_last_stable_targets",
+        "qualityGatesChanged": false
+      }
+    },
     "runtime": {
       "type": "object",
       "required": [
@@ -245,6 +276,13 @@
     "taskGeometryCalibration": [
       "a5cgEvidence",
       "dynamicArmTracking"
+    ],
+    "a5chEvidence": ["baseAnchorRecovery"],
+    "baseAnchorRecovery": [
+      "a5chEvidence",
+      "taskGeometryCalibration",
+      "dynamicArmTracking",
+      "taskPolicyHandoff"
     ]
   },
   "additionalProperties": false

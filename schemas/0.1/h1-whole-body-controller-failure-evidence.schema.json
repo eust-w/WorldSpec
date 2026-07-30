@@ -61,7 +61,8 @@
           "enum": ["motion", "capture", "blend", "stand"]
         },
         "taskPolicyHandoffFailed": { "type": "boolean" },
-        "dynamicArmTrackingEnabled": { "type": "boolean" }
+        "dynamicArmTrackingEnabled": { "type": "boolean" },
+        "taskGeometryCalibrationEnabled": { "type": "boolean" }
       },
       "additionalProperties": false
     },

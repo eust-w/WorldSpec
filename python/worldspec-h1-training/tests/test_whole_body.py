@@ -12,8 +12,10 @@ from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.whole_body import (
     A5CF_FAILURE_EVIDENCE,
     A5CG_FAILURE_EVIDENCE,
+    A5CH_FAILURE_EVIDENCE,
     A5CI_DIAGNOSTIC_EVIDENCE,
     A5R_FAILED_REPORT_DIGEST,
+    BASE_ANCHOR_RECOVERY,
     DYNAMIC_ARM_TRACKING,
     TASK_GEOMETRY_CALIBRATION,
     TASK_POLICY_HANDOFF,
@@ -22,6 +24,7 @@ from worldspec_h1_training.whole_body import (
     TaskPolicyHandoffState,
     WholeBodyTaskSpaceController,
     assess_diagnostic_trace,
+    base_anchor_recovery_command,
     compare_whole_body_traces,
     make_whole_body_evaluation_profile,
     solve_box_qp,
@@ -38,6 +41,7 @@ CONTROL = ROOT / "examples" / "h1-kitchen" / "whole-body-control-profile.json"
 HANDOFF = ROOT / "examples" / "h1-kitchen" / "whole-body-policy-handoff-profile.json"
 DYNAMIC_ARM = ROOT / "examples" / "h1-kitchen" / "whole-body-dynamic-arm-profile.json"
 ERGONOMIC_HANDLE = ROOT / "examples" / "h1-kitchen" / "whole-body-ergonomic-handle-profile.json"
+BASE_ANCHOR = ROOT / "examples" / "h1-kitchen" / "whole-body-base-anchor-profile.json"
 
 
 def _profiles() -> tuple[dict, dict, dict]:
@@ -172,6 +176,74 @@ def test_a5ch_rejects_scene_or_calibration_drift() -> None:
     with pytest.raises(TrainingError) as captured:
         validate_whole_body_profile(base, supervisor, profile)
     assert captured.value.code == "WHOLE_BODY_TASK_GEOMETRY_INVALID"
+
+
+def test_a5cj_profile_binds_exact_a5ch_evidence_and_base_anchor_contract() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(BASE_ANCHOR.read_text(encoding="utf-8"))
+
+    validate_whole_body_profile(base, supervisor, profile)
+
+    assert profile["a5chEvidence"] == A5CH_FAILURE_EVIDENCE
+    assert profile["baseAnchorRecovery"] == BASE_ANCHOR_RECOVERY
+    assert profile["qualityGates"] == WHOLE_BODY_GATES
+
+
+@pytest.mark.parametrize("missing", ["a5chEvidence", "baseAnchorRecovery"])
+def test_a5cj_rejects_partial_base_anchor_lineage(missing: str) -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(BASE_ANCHOR.read_text(encoding="utf-8"))
+    profile.pop(missing)
+
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+
+    assert captured.value.code == "WHOLE_BODY_BASE_ANCHOR_LINEAGE_INCOMPLETE"
+
+
+def test_a5cj_rejects_missing_controller_lineage_and_contract_drift() -> None:
+    base, supervisor, _ = _profiles()
+    profile = json.loads(BASE_ANCHOR.read_text(encoding="utf-8"))
+    profile.pop("taskGeometryCalibration")
+    profile.pop("a5cgEvidence")
+
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+
+    assert captured.value.code == "WHOLE_BODY_BASE_ANCHOR_CONTROLLER_MISSING"
+
+    profile = json.loads(BASE_ANCHOR.read_text(encoding="utf-8"))
+    profile["baseAnchorRecovery"]["positionGain"] = 1.9
+    with pytest.raises(TrainingError) as captured:
+        validate_whole_body_profile(base, supervisor, profile)
+
+    assert captured.value.code == "WHOLE_BODY_BASE_ANCHOR_INVALID"
+
+
+def test_base_anchor_recovery_command_applies_pd_and_axis_limits() -> None:
+    command = base_anchor_recovery_command(
+        [1.40, 0.0, 0.9],
+        [1.38, 0.02, 0.9],
+        [-0.10, 0.03, 0.0],
+    )
+    bounded = base_anchor_recovery_command(
+        [1.40, 0.0],
+        [0.40, 1.0],
+        [-1.0, 1.0],
+    )
+
+    assert command == pytest.approx([0.12, -0.064, 0.0])
+    assert bounded == pytest.approx([0.5, -0.1, 0.0])
+
+
+def test_base_anchor_recovery_command_rejects_incomplete_or_nonfinite_state() -> None:
+    with pytest.raises(TrainingError) as incomplete:
+        base_anchor_recovery_command([0.0], [0.0, 0.0], [0.0, 0.0])
+    assert incomplete.value.code == "BASE_ANCHOR_STATE_INVALID"
+
+    with pytest.raises(TrainingError) as nonfinite:
+        base_anchor_recovery_command([0.0, 0.0], [float("nan"), 0.0], [0.0, 0.0])
+    assert nonfinite.value.code == "BASE_ANCHOR_STATE_NONFINITE"
 
 
 def test_task_policy_handoff_uses_hysteresis_capture_and_blend() -> None:
@@ -614,3 +686,10 @@ def test_a800_whole_body_spike_is_fail_closed_and_not_training() -> None:
     assert "whole-body-ergonomic-handle-profile.json" in ergonomic_handle_wrapper
     assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in ergonomic_handle_wrapper
     assert "100000000" not in ergonomic_handle_wrapper
+
+    base_anchor_wrapper = (
+        ROOT / "scripts" / "run_a800_h1_whole_body_base_anchor_spike.sh"
+    ).read_text(encoding="utf-8")
+    assert "whole-body-base-anchor-profile.json" in base_anchor_wrapper
+    assert "WORLD_SPEC_DIAGNOSTIC_REPLAY_PROFILE" not in base_anchor_wrapper
+    assert "100000000" not in base_anchor_wrapper

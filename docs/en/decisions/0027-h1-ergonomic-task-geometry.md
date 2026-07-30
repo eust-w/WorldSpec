@@ -44,6 +44,22 @@ Adopt the minimal A5-CH correction:
    Spike. Failure remains `non_publishable`; a pass creates at most an internal
    `control_candidate`.
 
+## Executed result
+
+A5-CH Job `worldspec-h1-midterm-ddkxh` executed 287 Trace records on a real
+Drobodata A800. The calibrated physical geometry, four-joint dynamic arm, and
+Stand Policy were active as specified, with no joint-limit violation,
+non-finite value, or handoff failure; the robot nevertheless triggered
+`fall_height`.
+
+The Trace shows that the base slid continuously backward after the right arm
+started tracking the handle. Because the handle target remained fixed in world
+coordinates while the controller kept extending the arm toward it, backward
+base slip and arm extension formed positive feedback. Final planar base
+translation was `0.6912 m` and minimum height was `0.7796 m`. A5-CH therefore
+proves that handle height was not the sole cause: the task phase lacked
+base-position recovery against arm disturbance.
+
 ## Boundary
 
 - This calibrates a self-authored generated scene to the robot workspace; it
