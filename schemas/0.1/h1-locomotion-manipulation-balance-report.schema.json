@@ -144,22 +144,22 @@
       ],
       "properties": {
         "job": {
-          "const": "worldspec-h1-midterm-dxbgm"
+          "const": "worldspec-h1-midterm-hl78d"
         },
         "probeRevision": {
-          "const": "3107988623e20391573043efba706664f15b95fe"
+          "const": "ca4a73e9006435b37a79152f47caeb4969d4f4f0"
         },
         "reportDigest": {
-          "const": "sha256:b5308429cc1870ae6a6f4c60a61e666d2b0fc8df658b87b017be6d683b6c2f69"
+          "const": "sha256:a5c40535c3a863a6012ba1acb98200ba4d96c0b991d7169a9f023459015483d7"
         },
         "checkpointDigest": {
-          "const": "sha256:419dd8f830209823099f806bf3f79d0310f0376e81617a3d28465aede20a0215"
+          "const": "sha256:89618f878a8aee343bde51ba36fc1271d18de732896ba9c2dffac981ba8b936e"
         },
         "traceDigest": {
-          "const": "sha256:8702778fa4b7773601b9835cf0c48ba9c1cbaf11b50888cef89e3e8b66354148"
+          "const": "sha256:4021670994c205d4e54538be1966b34a8a273f474b867c6c9ef6c52a3dddd9ef"
         },
         "snapshotBankDigest": {
-          "const": "sha256:fb9e9ea4157e187ba930111678586246de09c62a4045672f5ae459c5c4176557"
+          "const": "sha256:931ea17b908fffc8bfcbdaffc95c98f246915a1154b26d21a1c521e79b71357f"
         },
         "formalGate": {
           "const": "failed"

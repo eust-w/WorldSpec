@@ -1,0 +1,60 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-mixed-reset/hl78d",
+  "status": "failed",
+  "job": "worldspec-h1-midterm-hl78d",
+  "probeRevision": "ca4a73e9006435b37a79152f47caeb4969d4f4f0",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:df34271945b6d00a02af286576905373c2d44c5ff254eb12bc78011d0c9a8cdc",
+  "report": {
+    "digest": "sha256:a5c40535c3a863a6012ba1acb98200ba4d96c0b991d7169a9f023459015483d7",
+    "sizeBytes": 31592
+  },
+  "checkpoint": {
+    "digest": "sha256:89618f878a8aee343bde51ba36fc1271d18de732896ba9c2dffac981ba8b936e",
+    "sizeBytes": 8796941,
+    "distribution": "internal_only"
+  },
+  "trace": {
+    "digest": "sha256:4021670994c205d4e54538be1966b34a8a273f474b867c6c9ef6c52a3dddd9ef",
+    "sizeBytes": 437686,
+    "distribution": "internal_only"
+  },
+  "snapshotBank": {
+    "digest": "sha256:931ea17b908fffc8bfcbdaffc95c98f246915a1154b26d21a1c521e79b71357f",
+    "sizeBytes": 1189923,
+    "snapshotCount": 4096,
+    "terminatedSnapshotCount": 0,
+    "distribution": "internal_only"
+  },
+  "training": {
+    "maximumReportedStep": 17203200,
+    "finalMeanEpisodeLength": 94.359375,
+    "minimumRequiredMeanEpisodeLength": 90.0,
+    "fromRestProbability": 0.5,
+    "reportedFromRestEpisodeState": 50.0
+  },
+  "quality": {
+    "formalManipulationBalanceGate": "failed",
+    "policyStatus": "non_publishable",
+    "deterministicTestsPassed": 9,
+    "deterministicTestsRequired": 10,
+    "fromRestTestsPassed": 5,
+    "postWalkTestsPassed": 4,
+    "postWalkMaximumBaseTranslation": 0.33074650083223095,
+    "postWalkMaximumTerminalLinearSpeed": 0.9128383722959879,
+    "nonFiniteSamples": 0
+  },
+  "diagnosis": {
+    "classification": "residual_post_walk_distribution_failure",
+    "trainingMixtureVerified": true,
+    "evaluationMixtureBug": true,
+    "evidence": "The mixed reset repaired all five from-rest tests, but one bank-backed post-walk state still failed. The post-walk evaluation environment also retained the training mixture, so two of its five nominal post-walk seeds were actually rest resets.",
+    "qualityGatesChanged": false
+  },
+  "decision": {
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "nextStep": "post_walk_biased_pure_suite_calibration",
+    "qualityGatesChanged": false
+  },
+  "generatedAt": "2026-07-30T15:40:00Z"
+}

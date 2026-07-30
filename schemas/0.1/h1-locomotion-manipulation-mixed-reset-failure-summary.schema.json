@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-mixed-reset-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation Mixed-Reset Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "image",
+    "report",
+    "checkpoint",
+    "trace",
+    "snapshotBank",
+    "training",
+    "quality",
+    "diagnosis",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-hl78d"
+    },
+    "probeRevision": {
+      "const": "ca4a73e9006435b37a79152f47caeb4969d4f4f0"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:df34271945b6d00a02af286576905373c2d44c5ff254eb12bc78011d0c9a8cdc"
+    },
+    "report": {
+      "$ref": "#/$defs/artifact"
+    },
+    "checkpoint": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "trace": {
+      "$ref": "#/$defs/internalArtifact"
+    },
+    "snapshotBank": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/internalArtifact"
+        },
+        {
+          "type": "object",
+          "required": [
+            "snapshotCount",
+            "terminatedSnapshotCount"
+          ],
+          "properties": {
+            "snapshotCount": {
+              "const": 4096
+            },
+            "terminatedSnapshotCount": {
+              "const": 0
+            }
+          }
+        }
+      ]
+    },
+    "training": {
+      "const": {
+        "maximumReportedStep": 17203200,
+        "finalMeanEpisodeLength": 94.359375,
+        "minimumRequiredMeanEpisodeLength": 90.0,
+        "fromRestProbability": 0.5,
+        "reportedFromRestEpisodeState": 50.0
+      }
+    },
+    "quality": {
+      "type": "object",
+      "required": [
+        "formalManipulationBalanceGate",
+        "policyStatus",
+        "deterministicTestsPassed",
+        "deterministicTestsRequired",
+        "fromRestTestsPassed",
+        "postWalkTestsPassed",
+        "postWalkMaximumBaseTranslation",
+        "postWalkMaximumTerminalLinearSpeed",
+        "nonFiniteSamples"
+      ],
+      "properties": {
+        "formalManipulationBalanceGate": {
+          "const": "failed"
+        },
+        "policyStatus": {
+          "const": "non_publishable"
+        },
+        "deterministicTestsPassed": {
+          "const": 9
+        },
+        "deterministicTestsRequired": {
+          "const": 10
+        },
+        "fromRestTestsPassed": {
+          "const": 5
+        },
+        "postWalkTestsPassed": {
+          "const": 4
+        },
+        "postWalkMaximumBaseTranslation": {
+          "const": 0.33074650083223095
+        },
+        "postWalkMaximumTerminalLinearSpeed": {
+          "const": 0.9128383722959879
+        },
+        "nonFiniteSamples": {
+          "const": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "diagnosis": {
+      "const": {
+        "classification": "residual_post_walk_distribution_failure",
+        "trainingMixtureVerified": true,
+        "evaluationMixtureBug": true,
+        "evidence": "The mixed reset repaired all five from-rest tests, but one bank-backed post-walk state still failed. The post-walk evaluation environment also retained the training mixture, so two of its five nominal post-walk seeds were actually rest resets.",
+        "qualityGatesChanged": false
+      }
+    },
+    "decision": {
+      "const": {
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "nextStep": "post_walk_biased_pure_suite_calibration",
+        "qualityGatesChanged": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "internalArtifact": {
+      "type": "object",
+      "required": [
+        "digest",
+        "sizeBytes",
+        "distribution"
+      ],
+      "properties": {
+        "digest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sizeBytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "distribution": {
+          "const": "internal_only"
+        },
+        "snapshotCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "terminatedSnapshotCount": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

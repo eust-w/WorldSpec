@@ -48,5 +48,6 @@ The Chinese document is the normative source; this page is its official translat
 - [ADR-0036 H1 task-load three-policy Supervisor gate](0036-h1-task-load-supervisor-gate.md)
 - [ADR-0037 H1 task-load full-kitchen single-run gate](0037-h1-task-load-full-kitchen-single-gate.md)
 - [ADR-0038 H1 manipulation-balance mixed-reset calibration](0038-h1-manipulation-balance-mixed-reset.md)
+- [ADR-0039 H1 manipulation post-walk-biased reset](0039-h1-manipulation-post-walk-biased-reset.md)
 
 ADR status is Proposed, Accepted, or Superseded. Changing an Accepted decision requires a new ADR that links the record it replaces.

@@ -52,7 +52,7 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
         "research_manipulation_balance_override"
     )
     assert effective["trainingEnvironment"]["snapshotCurriculum"] == SNAPSHOT_CURRICULUM
-    assert SNAPSHOT_CURRICULUM["fromRestProbability"] == 0.5
+    assert SNAPSHOT_CURRICULUM["fromRestProbability"] == 0.25
     assert effective["trainingEnvironment"]["dynamicArmCurriculum"] == DYNAMIC_ARM_CURRICULUM
     assert (
         effective["trainingEnvironment"]["dynamicArmCurriculum"]["anchorRecovery"]
@@ -95,7 +95,7 @@ def test_manipulation_balance_rejects_anchor_recovery_drift() -> None:
 
 def test_manipulation_balance_rejects_reset_mixture_drift() -> None:
     base, profile = _profiles()
-    profile["environment"]["snapshotCurriculum"]["fromRestProbability"] = 0.25
+    profile["environment"]["snapshotCurriculum"]["fromRestProbability"] = 0.5
 
     with pytest.raises(TrainingError, match="environment"):
         validate_manipulation_balance_profile(base, profile)
@@ -140,3 +140,18 @@ def test_environment_applies_mixed_capture_and_rest_reset() -> None:
     assert "from_rest = jax.random.bernoulli(" in source
     assert "qpos = jp.where(from_rest, self._initial_qpos, bank_qpos)" in source
     assert "jp.where(from_rest, jp.zeros(self.mjx_model.nv), bank_qvel)" in source
+
+
+def test_post_walk_evaluation_disables_rest_mixture() -> None:
+    source = (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "manipulation_balance.py"
+    ).read_text(encoding="utf-8")
+
+    assert "snapshot_eval_profile" in source
+    assert '"fromRestProbability"' in source
+    assert "] = 0.0" in source

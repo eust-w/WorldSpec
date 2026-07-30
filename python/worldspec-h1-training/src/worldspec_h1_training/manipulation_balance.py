@@ -1,9 +1,9 @@
 """Post-walk manipulation-balance calibration for H1.
 
 This stage is intentionally separate from the historical locomotion and capture
-profiles.  It keeps the ten-action leg ABI, trains on an equal mixture of
-motion-to-capture snapshots and the deterministic rest state, and exposes the
-policy to an evidence-bound right-arm trajectory.
+profiles.  It keeps the ten-action leg ABI, biases training toward the remaining
+post-walk failure distribution while retaining rest-state regression coverage,
+and exposes the policy to an evidence-bound right-arm trajectory.
 """
 
 from __future__ import annotations
@@ -66,24 +66,25 @@ A6K1_CAPTURE_FAILURE = {
 }
 
 PREVIOUS_ATTEMPT = {
-    "job": "worldspec-h1-midterm-dxbgm",
-    "probeRevision": "3107988623e20391573043efba706664f15b95fe",
-    "reportDigest": "sha256:b5308429cc1870ae6a6f4c60a61e666d2b0fc8df658b87b017be6d683b6c2f69",
-    "reportSizeBytes": 31_165,
-    "checkpointDigest": "sha256:419dd8f830209823099f806bf3f79d0310f0376e81617a3d28465aede20a0215",
-    "checkpointSizeBytes": 8_807_890,
-    "traceDigest": "sha256:8702778fa4b7773601b9835cf0c48ba9c1cbaf11b50888cef89e3e8b66354148",
-    "traceSizeBytes": 434_010,
-    "snapshotBankDigest": "sha256:fb9e9ea4157e187ba930111678586246de09c62a4045672f5ae459c5c4176557",
-    "snapshotBankSizeBytes": 1_189_875,
+    "job": "worldspec-h1-midterm-hl78d",
+    "probeRevision": "ca4a73e9006435b37a79152f47caeb4969d4f4f0",
+    "reportDigest": "sha256:a5c40535c3a863a6012ba1acb98200ba4d96c0b991d7169a9f023459015483d7",
+    "reportSizeBytes": 31_592,
+    "checkpointDigest": "sha256:89618f878a8aee343bde51ba36fc1271d18de732896ba9c2dffac981ba8b936e",
+    "checkpointSizeBytes": 8_796_941,
+    "traceDigest": "sha256:4021670994c205d4e54538be1966b34a8a273f474b867c6c9ef6c52a3dddd9ef",
+    "traceSizeBytes": 437_686,
+    "snapshotBankDigest": "sha256:931ea17b908fffc8bfcbdaffc95c98f246915a1154b26d21a1c521e79b71357f",
+    "snapshotBankSizeBytes": 1_189_923,
     "formalGate": "failed",
-    "finalMeanEpisodeLength": 88.0078125,
-    "deterministicTestsPassed": 4,
-    "fromRestMaximumBaseTranslation": 0.19421254000873567,
-    "fromRestMaximumTerminalLinearSpeed": 0.5424353392169927,
-    "postWalkMaximumBaseTranslation": 0.34201740938670944,
-    "postWalkMaximumTerminalLinearSpeed": 1.068310242030232,
-    "trainingFromRestProbability": 0.0,
+    "finalMeanEpisodeLength": 94.359375,
+    "deterministicTestsPassed": 9,
+    "fromRestMaximumBaseTranslation": 0.018160735424661872,
+    "fromRestMaximumTerminalLinearSpeed": 0.0034309549556142036,
+    "postWalkMaximumBaseTranslation": 0.33074650083223095,
+    "postWalkMaximumTerminalLinearSpeed": 0.9128383722959879,
+    "trainingFromRestProbability": 0.5,
+    "evaluationSnapshotFromRestProbability": 0.5,
     "qualityGatesChanged": False,
 }
 
@@ -105,9 +106,9 @@ ZERO_COMMAND = {
 }
 
 SNAPSHOT_CURRICULUM = {
-    "mode": "loaded_motion_capture_and_rest_mixture",
+    "mode": "loaded_motion_capture_biased_mixture",
     "snapshotCount": 4096,
-    "fromRestProbability": 0.5,
+    "fromRestProbability": 0.25,
     "motionSteps": 150,
     "captureStepRange": [35, 50],
     "motionCommandDistribution": {
@@ -793,8 +794,12 @@ def run_manipulation_balance_calibration(
             num_eval_envs=min(128, training["numEnvs"]),
         )
         candidate = make_inference_fn(params, deterministic=True)
+        snapshot_eval_profile = copy.deepcopy(effective)
+        snapshot_eval_profile["trainingEnvironment"]["snapshotCurriculum"][
+            "fromRestProbability"
+        ] = 0.0
         snapshot_eval_env = make_environment(
-            effective,
+            snapshot_eval_profile,
             training_model,
             capture_state_bank=bank,
         )
