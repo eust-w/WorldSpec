@@ -259,12 +259,29 @@ FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_DIGEST = (
     "sha256:c8487802fd06f08e2a08fce03e505cee31ec420c50a21559f601327392aab201"
 )
 FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_SIZE = 1_269_304
+FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_DIGEST = (
+    "sha256:4a6d63e3bf7e1708e9289335aaf922b6911728100d103412e0d7f0404645bd2f"
+)
+FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_SIZE = 31_753
+FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_DIGEST = (
+    "sha256:93debf9cb817e35148dda6079bfdb6f7d5464f0259164c42bd071467ff7067d6"
+)
+FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_SIZE = 1_259_611
 TASK_LOAD_DEPLOYMENT_EVAL_PRIOR_ATTEMPT = {
     "sourceStage": "loaded-track-settle-task-load-survival-v3-failed",
     "sourceReportDigest": FAILED_TASK_LOAD_SURVIVAL_REPORT_DIGEST,
     "sourceReportSizeBytes": FAILED_TASK_LOAD_SURVIVAL_REPORT_SIZE,
     "checkpointDigest": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_DIGEST,
     "checkpointSizeBytes": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_SIZE,
+    "formalTrainingGate": "failed",
+    "distribution": "internal_only",
+}
+TASK_LOAD_HORIZON_PRIOR_ATTEMPT = {
+    "sourceStage": "loaded-track-settle-task-load-deployment-eval-v4-failed",
+    "sourceReportDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_DIGEST,
+    "sourceReportSizeBytes": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_SIZE,
+    "checkpointDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_DIGEST,
+    "checkpointSizeBytes": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_SIZE,
     "formalTrainingGate": "failed",
     "distribution": "internal_only",
 }
@@ -277,11 +294,28 @@ TASK_LOAD_DEPLOYMENT_EVAL_TRAINING_OVERRIDES = {
     **TASK_LOAD_SURVIVAL_TRAINING_OVERRIDES,
     "deterministicEval": True,
 }
+TASK_LOAD_HORIZON_TRAINING_OVERRIDES = {
+    **TASK_LOAD_DEPLOYMENT_EVAL_TRAINING_OVERRIDES,
+    "discounting": 0.995,
+    "gaeLambda": 0.99,
+    "learningRate": 0.00001,
+    "entropyCost": 0.0002,
+    "clippingEpsilon": 0.2,
+    "desiredKl": 0.01,
+    "learningRateSchedule": "ADAPTIVE_KL",
+    "learningRateScheduleMin": 0.0000025,
+    "learningRateScheduleMax": 0.00001,
+    "normalizeUntilCount": 1,
+}
 TASK_LOAD_SURVIVAL_REWARD_ADDITIONS = {
     **TASK_LOAD_RETENTION_REWARD_ADDITIONS,
     "standTeacherActionCost": 1.0,
     "settleTeacherActionCost": 1.0,
     "terminationPenalty": 25.0,
+}
+TASK_LOAD_HORIZON_REWARD_ADDITIONS = {
+    **TASK_LOAD_SURVIVAL_REWARD_ADDITIONS,
+    "terminationPenalty": 100.0,
 }
 TASK_LOAD_SURVIVAL_QUALITY_GATES = {
     **TRANSITION_QUALITY_GATES,
@@ -846,6 +880,7 @@ def validate_task_load_retention_profile(
     stage = profile.get("stage")
     survival_stage = stage == "loaded_track_settle_task_load_survival"
     deployment_eval_stage = stage == "loaded_track_settle_task_load_deployment_eval"
+    horizon_stage = stage == "loaded_track_settle_task_load_horizon"
     if (
         profile.get("profileVersion") != "0.1.0"
         or profile.get("status") != "research"
@@ -854,6 +889,7 @@ def validate_task_load_retention_profile(
             "loaded_track_settle_task_load_retention",
             "loaded_track_settle_task_load_survival",
             "loaded_track_settle_task_load_deployment_eval",
+            "loaded_track_settle_task_load_horizon",
         }
     ):
         raise TrainingError(
@@ -882,6 +918,12 @@ def validate_task_load_retention_profile(
                 "TASK_LOAD_DEPLOYMENT_EVAL_PRIOR_ATTEMPT_MISMATCH",
                 "Task-load deployment evaluation must bind the frozen failed survival attempt.",
             )
+    elif horizon_stage:
+        if profile.get("priorAttempt") != TASK_LOAD_HORIZON_PRIOR_ATTEMPT:
+            raise TrainingError(
+                "TASK_LOAD_HORIZON_PRIOR_ATTEMPT_MISMATCH",
+                "Task-load horizon calibration must bind the frozen failed deployment evaluation.",
+            )
     elif "priorAttempt" in profile:
         raise TrainingError(
             "TASK_LOAD_RETENTION_PRIOR_ATTEMPT_FORBIDDEN",
@@ -890,18 +932,27 @@ def validate_task_load_retention_profile(
     source = profile.get("warmStart", {})
     expected_source = (
         {
-            "sourceStage": "loaded-track-settle-task-load-survival-v3-failed",
-            "sourceReportDigest": FAILED_TASK_LOAD_SURVIVAL_REPORT_DIGEST,
-            "checkpointDigest": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_DIGEST,
-            "checkpointSizeBytes": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_SIZE,
+            "sourceStage": "loaded-track-settle-task-load-deployment-eval-v4-failed",
+            "sourceReportDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_REPORT_DIGEST,
+            "checkpointDigest": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_DIGEST,
+            "checkpointSizeBytes": FAILED_TASK_LOAD_DEPLOYMENT_EVAL_CHECKPOINT_SIZE,
         }
-        if deployment_eval_stage
-        else {
-            "sourceStage": "loaded-track-settle-retention-v3-failed",
-            "sourceReportDigest": FAILED_RETENTION_REPORT_DIGEST,
-            "checkpointDigest": FAILED_RETENTION_CHECKPOINT_DIGEST,
-            "checkpointSizeBytes": FAILED_RETENTION_CHECKPOINT_SIZE,
-        }
+        if horizon_stage
+        else (
+            {
+                "sourceStage": "loaded-track-settle-task-load-survival-v3-failed",
+                "sourceReportDigest": FAILED_TASK_LOAD_SURVIVAL_REPORT_DIGEST,
+                "checkpointDigest": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_DIGEST,
+                "checkpointSizeBytes": FAILED_TASK_LOAD_SURVIVAL_CHECKPOINT_SIZE,
+            }
+            if deployment_eval_stage
+            else {
+                "sourceStage": "loaded-track-settle-retention-v3-failed",
+                "sourceReportDigest": FAILED_RETENTION_REPORT_DIGEST,
+                "checkpointDigest": FAILED_RETENTION_CHECKPOINT_DIGEST,
+                "checkpointSizeBytes": FAILED_RETENTION_CHECKPOINT_SIZE,
+            }
+        )
     )
     if any(source.get(key) != value for key, value in expected_source.items()):
         raise TrainingError(
@@ -933,12 +984,16 @@ def validate_task_load_retention_profile(
             "Task-load retention must bind the passing capture policy as settle teacher.",
         )
     expected_training = (
-        TASK_LOAD_DEPLOYMENT_EVAL_TRAINING_OVERRIDES
-        if deployment_eval_stage
+        TASK_LOAD_HORIZON_TRAINING_OVERRIDES
+        if horizon_stage
         else (
-            TASK_LOAD_SURVIVAL_TRAINING_OVERRIDES
-            if survival_stage
-            else TASK_LOAD_RETENTION_TRAINING_OVERRIDES
+            TASK_LOAD_DEPLOYMENT_EVAL_TRAINING_OVERRIDES
+            if deployment_eval_stage
+            else (
+                TASK_LOAD_SURVIVAL_TRAINING_OVERRIDES
+                if survival_stage
+                else TASK_LOAD_RETENTION_TRAINING_OVERRIDES
+            )
         )
     )
     if profile.get("trainingOverrides") != expected_training:
@@ -951,7 +1006,7 @@ def validate_task_load_retention_profile(
         "evaluateAllSavedCheckpoints": True,
         "packageSelectedOnly": True,
     }
-    if deployment_eval_stage:
+    if deployment_eval_stage or horizon_stage:
         expected_checkpoint_selection["includeWarmStart"] = True
     if profile.get("checkpointSelection") != expected_checkpoint_selection:
         raise TrainingError(
@@ -975,9 +1030,13 @@ def validate_task_load_retention_profile(
             "Task-load retention must train and evaluate the full A5-CK right-arm load.",
         )
     expected_reward_additions = (
-        TASK_LOAD_SURVIVAL_REWARD_ADDITIONS
-        if survival_stage or deployment_eval_stage
-        else TASK_LOAD_RETENTION_REWARD_ADDITIONS
+        TASK_LOAD_HORIZON_REWARD_ADDITIONS
+        if horizon_stage
+        else (
+            TASK_LOAD_SURVIVAL_REWARD_ADDITIONS
+            if survival_stage or deployment_eval_stage
+            else TASK_LOAD_RETENTION_REWARD_ADDITIONS
+        )
     )
     expected_reward = {
         "survival": 3.0,
@@ -1023,7 +1082,7 @@ def validate_task_load_retention_profile(
         )
     expected_quality_gates = (
         TASK_LOAD_SURVIVAL_QUALITY_GATES
-        if survival_stage or deployment_eval_stage
+        if survival_stage or deployment_eval_stage or horizon_stage
         else TRANSITION_QUALITY_GATES
     )
     if profile.get("qualityGates") != expected_quality_gates:
@@ -1148,12 +1207,16 @@ def make_task_load_retention_training_profile(
     effective["runtime"]["ccdIterations"] = profile["runtime"]["ccdIterations"]
     effective["training"].update(profile["trainingOverrides"])
     effective["training"]["hyperparameterStatus"] = (
-        "research_task_load_deployment_eval_override"
-        if profile["stage"] == "loaded_track_settle_task_load_deployment_eval"
+        "research_task_load_horizon_override"
+        if profile["stage"] == "loaded_track_settle_task_load_horizon"
         else (
-            "research_task_load_survival_override"
-            if profile["stage"] == "loaded_track_settle_task_load_survival"
-            else "research_task_load_retention_override"
+            "research_task_load_deployment_eval_override"
+            if profile["stage"] == "loaded_track_settle_task_load_deployment_eval"
+            else (
+                "research_task_load_survival_override"
+                if profile["stage"] == "loaded_track_settle_task_load_survival"
+                else "research_task_load_retention_override"
+            )
         )
     )
     effective["training"]["commandDistribution"] = copy.deepcopy(
@@ -1335,6 +1398,7 @@ def run_midterm_calibration(
         "loaded_track_settle_task_load_retention",
         "loaded_track_settle_task_load_survival",
         "loaded_track_settle_task_load_deployment_eval",
+        "loaded_track_settle_task_load_horizon",
     }:
         effective = make_task_load_retention_training_profile(base_profile, profile)
         if retention_teacher_archive is None or settle_teacher_archive is None:
@@ -1480,8 +1544,21 @@ def run_midterm_calibration(
             num_minibatches=training["numMinibatches"],
             num_updates_per_batch=training["numUpdatesPerBatch"],
             discounting=training["discounting"],
+            gae_lambda=training.get("gaeLambda", 0.95),
             learning_rate=training["learningRate"],
             entropy_cost=training["entropyCost"],
+            clipping_epsilon=training.get("clippingEpsilon", 0.3),
+            desired_kl=training.get("desiredKl", 0.01),
+            learning_rate_schedule=training.get("learningRateSchedule"),
+            learning_rate_schedule_min_lr=training.get(
+                "learningRateScheduleMin",
+                0.00001,
+            ),
+            learning_rate_schedule_max_lr=training.get(
+                "learningRateScheduleMax",
+                0.01,
+            ),
+            normalize_until_count=training.get("normalizeUntilCount"),
             deterministic_eval=training.get("deterministicEval", False),
             num_envs=training["numEnvs"],
             batch_size=training["batchSize"],
@@ -1510,6 +1587,7 @@ def run_midterm_calibration(
             "loaded_track_settle_task_load_retention",
             "loaded_track_settle_task_load_survival",
             "loaded_track_settle_task_load_deployment_eval",
+            "loaded_track_settle_task_load_horizon",
         }:
             from brax.training.agents.ppo import checkpoint as ppo_checkpoint
 
@@ -1703,6 +1781,7 @@ def run_midterm_calibration(
             "loaded_track_settle_task_load_retention",
             "loaded_track_settle_task_load_survival",
             "loaded_track_settle_task_load_deployment_eval",
+            "loaded_track_settle_task_load_horizon",
         }:
             result["standTeacher"] = teacher_initialization
         else:
@@ -1723,6 +1802,7 @@ def run_midterm_calibration(
         "loaded_track_settle_task_load_retention",
         "loaded_track_settle_task_load_survival",
         "loaded_track_settle_task_load_deployment_eval",
+        "loaded_track_settle_task_load_horizon",
     }:
         result["taskLoadCurriculum"] = copy.deepcopy(profile["environment"]["taskLoadCurriculum"])
     return result

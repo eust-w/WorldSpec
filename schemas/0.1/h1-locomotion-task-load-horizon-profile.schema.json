@@ -1,0 +1,312 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-task-load-horizon-profile.schema.json",
+  "title": "WorldSpec H1 Task-Load Horizon Calibration Profile 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "profileVersion",
+    "status",
+    "stage",
+    "baseTrainingProfileDigest",
+    "a5ckEvidence",
+    "priorAttempt",
+    "runtime",
+    "warmStart",
+    "standTeacher",
+    "settleTeacher",
+    "trainingOverrides",
+    "checkpointSelection",
+    "environment",
+    "qualityGates",
+    "artifactPolicy",
+    "evidenceStatus"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "profileVersion": {
+      "const": "0.1.0"
+    },
+    "status": {
+      "const": "research"
+    },
+    "stage": {
+      "const": "loaded_track_settle_task_load_horizon"
+    },
+    "baseTrainingProfileDigest": {
+      "$ref": "common.schema.json#/$defs/digest"
+    },
+    "a5ckEvidence": {
+      "type": "object"
+    },
+    "priorAttempt": {
+      "type": "object",
+      "required": [
+        "sourceStage",
+        "sourceReportDigest",
+        "sourceReportSizeBytes",
+        "checkpointDigest",
+        "checkpointSizeBytes",
+        "formalTrainingGate",
+        "distribution"
+      ],
+      "properties": {
+        "sourceStage": {
+          "const": "loaded-track-settle-task-load-deployment-eval-v4-failed"
+        },
+        "sourceReportDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "sourceReportSizeBytes": {
+          "const": 31753
+        },
+        "checkpointDigest": {
+          "const": "sha256:93debf9cb817e35148dda6079bfdb6f7d5464f0259164c42bd071467ff7067d6"
+        },
+        "checkpointSizeBytes": {
+          "const": 1259611
+        },
+        "formalTrainingGate": {
+          "const": "failed"
+        },
+        "distribution": {
+          "const": "internal_only"
+        }
+      },
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "containerImage",
+        "containerDigest",
+        "packageLockDigest",
+        "ccdIterations"
+      ],
+      "properties": {
+        "containerImage": {
+          "type": "string",
+          "pattern": "^\\S+@sha256:[0-9a-f]{64}$"
+        },
+        "containerDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "packageLockDigest": {
+          "$ref": "common.schema.json#/$defs/digest"
+        },
+        "ccdIterations": {
+          "const": 50
+        }
+      },
+      "additionalProperties": false
+    },
+    "warmStart": {
+      "type": "object"
+    },
+    "standTeacher": {
+      "type": "object"
+    },
+    "settleTeacher": {
+      "type": "object"
+    },
+    "trainingOverrides": {
+      "type": "object",
+      "required": [
+        "numTimesteps",
+        "numEnvs",
+        "numEvals",
+        "episodeLength",
+        "unrollLength",
+        "numMinibatches",
+        "numUpdatesPerBatch",
+        "batchSize",
+        "discounting",
+        "gaeLambda",
+        "learningRate",
+        "entropyCost",
+        "clippingEpsilon",
+        "desiredKl",
+        "learningRateSchedule",
+        "learningRateScheduleMin",
+        "learningRateScheduleMax",
+        "normalizeUntilCount",
+        "deterministicEval"
+      ],
+      "properties": {
+        "numTimesteps": {
+          "const": 16777216
+        },
+        "numEnvs": {
+          "const": 4096
+        },
+        "numEvals": {
+          "const": 8
+        },
+        "episodeLength": {
+          "const": 1000
+        },
+        "unrollLength": {
+          "const": 20
+        },
+        "numMinibatches": {
+          "const": 16
+        },
+        "numUpdatesPerBatch": {
+          "const": 4
+        },
+        "batchSize": {
+          "const": 256
+        },
+        "discounting": {
+          "const": 0.995
+        },
+        "gaeLambda": {
+          "const": 0.99
+        },
+        "learningRate": {
+          "const": 0.00001
+        },
+        "entropyCost": {
+          "const": 0.0002
+        },
+        "clippingEpsilon": {
+          "const": 0.2
+        },
+        "desiredKl": {
+          "const": 0.01
+        },
+        "learningRateSchedule": {
+          "const": "ADAPTIVE_KL"
+        },
+        "learningRateScheduleMin": {
+          "const": 0.0000025
+        },
+        "learningRateScheduleMax": {
+          "const": 0.00001
+        },
+        "normalizeUntilCount": {
+          "const": 1
+        },
+        "deterministicEval": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "checkpointSelection": {
+      "type": "object",
+      "required": [
+        "mode",
+        "evaluateAllSavedCheckpoints",
+        "packageSelectedOnly",
+        "includeWarmStart"
+      ],
+      "properties": {
+        "mode": {
+          "const": "deterministic_gate_rank_v1"
+        },
+        "evaluateAllSavedCheckpoints": {
+          "const": true
+        },
+        "packageSelectedOnly": {
+          "const": true
+        },
+        "includeWarmStart": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "commandDistribution",
+        "transitionCurriculum",
+        "taskLoadCurriculum",
+        "termination",
+        "reward",
+        "targets",
+        "sigmas",
+        "commandResampleSteps"
+      ],
+      "properties": {
+        "commandDistribution": {
+          "type": "object"
+        },
+        "transitionCurriculum": {
+          "type": "object"
+        },
+        "taskLoadCurriculum": {
+          "type": "object"
+        },
+        "termination": {
+          "type": "object"
+        },
+        "reward": {
+          "type": "object",
+          "required": [
+            "terminationPenalty",
+            "standTeacherActionCost",
+            "settleTeacherActionCost"
+          ],
+          "properties": {
+            "terminationPenalty": {
+              "const": 100.0
+            },
+            "standTeacherActionCost": {
+              "const": 1.0
+            },
+            "settleTeacherActionCost": {
+              "const": 1.0
+            }
+          }
+        },
+        "targets": {
+          "type": "object"
+        },
+        "sigmas": {
+          "type": "object"
+        },
+        "commandResampleSteps": {
+          "const": 200
+        }
+      }
+    },
+    "qualityGates": {
+      "type": "object",
+      "required": [
+        "settleWindowSeconds",
+        "settleMeasurementWindowSeconds",
+        "maximumSettleLinearSpeed",
+        "maximumSettleAngularSpeed",
+        "minimumFinalMeanEpisodeLength"
+      ],
+      "properties": {
+        "settleWindowSeconds": {
+          "const": 1.0
+        },
+        "settleMeasurementWindowSeconds": {
+          "const": 0.2
+        },
+        "maximumSettleLinearSpeed": {
+          "const": 0.2
+        },
+        "maximumSettleAngularSpeed": {
+          "const": 0.4
+        },
+        "minimumFinalMeanEpisodeLength": {
+          "const": 900.0
+        }
+      }
+    },
+    "artifactPolicy": {
+      "type": "object"
+    },
+    "evidenceStatus": {
+      "const": "derived"
+    }
+  },
+  "additionalProperties": false
+}

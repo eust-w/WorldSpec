@@ -417,7 +417,8 @@
             "loaded_track_settle_task_load",
             "loaded_track_settle_task_load_retention",
             "loaded_track_settle_task_load_survival",
-            "loaded_track_settle_task_load_deployment_eval"
+            "loaded_track_settle_task_load_deployment_eval",
+            "loaded_track_settle_task_load_horizon"
           ]
         }
       }
@@ -549,7 +550,8 @@
                 "enum": [
                   "loaded_track_settle_task_load_retention",
                   "loaded_track_settle_task_load_survival",
-                  "loaded_track_settle_task_load_deployment_eval"
+                  "loaded_track_settle_task_load_deployment_eval",
+                  "loaded_track_settle_task_load_horizon"
                 ]
               }
             },

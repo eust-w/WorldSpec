@@ -440,14 +440,27 @@ def test_locomotion_midterm_is_single_gpu_tokenless_and_uses_handshakes() -> Non
     assert 'export WORLD_SPEC_IMAGE_SOURCE_REVISION="${image_source_revision}"' in (
         task_load_deployment_eval_launcher
     )
-    assert "run_a800_h1_locomotion_midterm.sh" in (
-        task_load_deployment_eval_launcher
-    )
+    assert "run_a800_h1_locomotion_midterm.sh" in (task_load_deployment_eval_launcher)
     entrypoint = (A800 / "h1-locomotion-midterm-entrypoint.sh").read_text(
         encoding="utf-8"
     )
     assert "loaded-track-settle-task-load-survival-v3-failed" in entrypoint
     assert "deployment-evaluation source is not frozen failed evidence" in entrypoint
+    task_load_horizon_launcher = (
+        ROOT / "scripts" / "run_a800_h1_task_load_horizon_calibration.sh"
+    ).read_text(encoding="utf-8")
+    assert "locomotion-task-load-horizon-profile.json" in task_load_horizon_launcher
+    assert "locomotion-task-load-deployment-eval.a800.failed.json" in (
+        task_load_horizon_launcher
+    )
+    assert "task-load-horizon-training-image-build.a800.passed.json" in (
+        task_load_horizon_launcher
+    )
+    assert "worldspec-h1-midterm-zg6kg/midterm-checkpoint.zip" in (
+        task_load_horizon_launcher
+    )
+    assert "loaded_track_settle_task_load_horizon" in task_load_horizon_launcher
+    assert "horizon-calibration source is not frozen failed evidence" in entrypoint
 
 
 def test_dual_policy_probe_reuses_isolated_transport_without_training() -> None:

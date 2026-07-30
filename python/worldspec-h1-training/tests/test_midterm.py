@@ -40,6 +40,9 @@ TASK_LOAD_SURVIVAL_PROFILE = (
 TASK_LOAD_DEPLOYMENT_EVAL_PROFILE = (
     ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-deployment-eval-profile.json"
 )
+TASK_LOAD_HORIZON_PROFILE = (
+    ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-horizon-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict]:
@@ -349,6 +352,54 @@ def test_task_load_deployment_eval_rejects_stochastic_eval_or_lineage_drift() ->
     profile = json.loads(TASK_LOAD_DEPLOYMENT_EVAL_PROFILE.read_text(encoding="utf-8"))
     profile["warmStart"]["checkpointDigest"] = "sha256:" + ("0" * 64)
     with pytest.raises(TrainingError, match="predecessor evidence"):
+        validate_task_load_retention_profile(base, profile)
+
+
+def test_task_load_horizon_extends_credit_and_limits_policy_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_HORIZON_PROFILE.read_text(encoding="utf-8"))
+
+    effective = make_task_load_retention_training_profile(base, profile)
+
+    assert effective["training"]["hyperparameterStatus"] == ("research_task_load_horizon_override")
+    assert effective["training"]["deterministicEval"] is True
+    assert effective["training"]["discounting"] == 0.995
+    assert effective["training"]["gaeLambda"] == 0.99
+    assert effective["training"]["clippingEpsilon"] == 0.2
+    assert effective["training"]["learningRateSchedule"] == "ADAPTIVE_KL"
+    assert effective["training"]["learningRateScheduleMin"] == 0.0000025
+    assert effective["training"]["learningRateScheduleMax"] == 0.00001
+    assert effective["training"]["normalizeUntilCount"] == 1
+    assert effective["trainingEnvironment"]["reward"]["terminationPenalty"] == 100.0
+    assert effective["validation"]["minimumFinalMeanEpisodeLength"] == 900.0
+    assert profile["checkpointSelection"]["includeWarmStart"] is True
+
+
+def test_task_load_horizon_rejects_relaxed_gate_or_lineage_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_HORIZON_PROFILE.read_text(encoding="utf-8"))
+    profile["qualityGates"]["minimumFinalMeanEpisodeLength"] = 800.0
+
+    with pytest.raises(TrainingError, match="cannot relax"):
+        validate_task_load_retention_profile(base, profile)
+
+    profile = json.loads(TASK_LOAD_HORIZON_PROFILE.read_text(encoding="utf-8"))
+    profile["warmStart"]["checkpointDigest"] = "sha256:" + ("0" * 64)
+    with pytest.raises(TrainingError, match="predecessor evidence"):
+        validate_task_load_retention_profile(base, profile)
+
+
+def test_task_load_horizon_rejects_ppo_horizon_or_penalty_drift() -> None:
+    base = json.loads(BASE_PROFILE.read_text(encoding="utf-8"))
+    profile = json.loads(TASK_LOAD_HORIZON_PROFILE.read_text(encoding="utf-8"))
+    profile["trainingOverrides"]["gaeLambda"] = 0.95
+
+    with pytest.raises(TrainingError, match="optimizer"):
+        validate_task_load_retention_profile(base, profile)
+
+    profile = json.loads(TASK_LOAD_HORIZON_PROFILE.read_text(encoding="utf-8"))
+    profile["environment"]["reward"]["terminationPenalty"] = 25.0
+    with pytest.raises(TrainingError, match="reward"):
         validate_task_load_retention_profile(base, profile)
 
 

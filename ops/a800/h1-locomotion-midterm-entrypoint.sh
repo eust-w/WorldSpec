@@ -281,6 +281,15 @@ elif source["sourceStage"] == "loaded-track-settle-task-load-survival-v3-failed"
         != "loaded_track_settle_task_load_survival"
     ):
         raise SystemExit("deployment-evaluation source is not frozen failed evidence")
+elif source["sourceStage"] == "loaded-track-settle-task-load-deployment-eval-v4-failed":
+    if (
+        report["qualityAssessment"]["status"] != "failed"
+        or report["formalTrainingGate"] != "failed"
+        or report["policyStatus"] != "non_publishable"
+        or report["training"]["profileStage"]
+        != "loaded_track_settle_task_load_deployment_eval"
+    ):
+        raise SystemExit("horizon-calibration source is not frozen failed evidence")
 else:
     raise SystemExit("unsupported warm-start source stage")
 if report["researchCheckpoint"]["digest"] != checkpoint_digest:
@@ -294,6 +303,7 @@ if stage in {
     "loaded_track_settle_task_load_retention",
     "loaded_track_settle_task_load_survival",
     "loaded_track_settle_task_load_deployment_eval",
+    "loaded_track_settle_task_load_horizon",
     "dual_policy_switch_probe",
     "loaded_track_settle_capture",
     "phase_aware_supervisor_probe",
@@ -320,6 +330,7 @@ if stage in {
                         "loaded_track_settle_task_load_retention",
                         "loaded_track_settle_task_load_survival",
                         "loaded_track_settle_task_load_deployment_eval",
+                        "loaded_track_settle_task_load_horizon",
                     }
                     else profile["retentionTeacher"]
                 )
@@ -383,6 +394,7 @@ if stage in {
     "loaded_track_settle_task_load_retention",
     "loaded_track_settle_task_load_survival",
     "loaded_track_settle_task_load_deployment_eval",
+    "loaded_track_settle_task_load_horizon",
 }:
     settle_filename = sys.argv[20]
     if not settle_filename:
@@ -730,6 +742,7 @@ else:
                 "loaded_track_settle_task_load_retention",
                 "loaded_track_settle_task_load_survival",
                 "loaded_track_settle_task_load_deployment_eval",
+                "loaded_track_settle_task_load_horizon",
             }
             else None
         ),
@@ -740,6 +753,7 @@ else:
                 "loaded_track_settle_task_load_retention",
                 "loaded_track_settle_task_load_survival",
                 "loaded_track_settle_task_load_deployment_eval",
+                "loaded_track_settle_task_load_horizon",
             }
             else None
         ),
