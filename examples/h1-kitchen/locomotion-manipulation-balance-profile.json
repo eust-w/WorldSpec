@@ -1,5 +1,5 @@
 {
-  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/process-isolated-checkpoint-portfolio-v10",
+  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/suite-isolated-checkpoint-portfolio-v11",
   "profileVersion": "0.1.0",
   "status": "research",
   "stage": "loaded_track_settle_manipulation_balance",
@@ -85,7 +85,7 @@
     "mode": "formal_gate_then_pass_count_then_episode_length",
     "evaluateAllSavedCheckpoints": true,
     "expectedCandidateCount": 7,
-    "memoryIsolation": "training_and_evaluation_process_boundary_v3"
+    "memoryIsolation": "training_and_suite_evaluation_process_boundary_v4"
   },
   "trainingOverrides": {
     "numTimesteps": 16777216,

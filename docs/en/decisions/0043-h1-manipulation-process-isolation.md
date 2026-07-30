@@ -80,3 +80,21 @@ binding. Job `worldspec-h1-midterm-xpqpv` correctly failed closed before
 training. The locked replacement image is built from `0b7cd20`; only the
 Profile OCI Digest changes. This configuration failure has no policy-quality
 meaning.
+
+## v10 outcome and v11 suite isolation
+
+Locked v10 job `worldspec-h1-midterm-v99rh` completed real A800 training, saved
+seven Checkpoints, and entered a fresh evaluator using the independent derived
+model directory. After the first candidate completed `post_walk_capture`,
+switching to the `from_rest` environment still accumulated JAX/XLA/Warp device
+state in the same evaluation process until even a 48-byte device allocation
+failed. The formal gate was not evaluated, so this remains a runtime failure,
+not a policy-quality result.
+
+v11 gives every candidate and every suite an independent CUDA lifetime. The
+seven candidates each run `post_walk_capture` and `from_rest`, producing
+exactly 14 read-only results bound to the Portfolio State Digest, Step, and
+Suite. A final CPU-only aggregator rejects missing, extra, or lineage-drifted
+results before applying the unchanged candidate ordering and formal quality
+gate. Training inputs, Checkpoints, state bank, seed, evaluation traces, and
+every gate remain unchanged.

@@ -195,7 +195,7 @@
         "mode": "formal_gate_then_pass_count_then_episode_length",
         "evaluateAllSavedCheckpoints": true,
         "expectedCandidateCount": 7,
-        "memoryIsolation": "training_and_evaluation_process_boundary_v3"
+        "memoryIsolation": "training_and_suite_evaluation_process_boundary_v4"
       }
     },
     "trainingOverrides": {

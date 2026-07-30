@@ -1,0 +1,33 @@
+{
+  "id": "evidence-summary://worldspec/h1/manipulation-suite-isolation/v99rh",
+  "status": "runtime_failed",
+  "job": "worldspec-h1-midterm-v99rh",
+  "probeRevision": "8aec1ff9252525491dcad4b88dfcef5524d4761b",
+  "image": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:3553d7000b5abfa4fc0c0313301ecea180a7127afba512f954a509ab9ee83a83",
+  "log": {
+    "digest": "sha256:6a6acd6b5cf8aaf91991198febeb703c2c34c0c2b22d83d7320c97deba712aca",
+    "sizeBytes": 27592
+  },
+  "jobManifest": {
+    "digest": "sha256:9e8550d0238581b34320522e634bd09803a7d4d7a54d78f9747ed2508b617599",
+    "sizeBytes": 5898
+  },
+  "podManifest": {
+    "digest": "sha256:96032809f9570b7165f81bd3fcb8df13fd305247138d7cdc2323a102fcb68dac",
+    "sizeBytes": 8015
+  },
+  "execution": {
+    "device": "NVIDIA A800-SXM4-80GB",
+    "savedCheckpointCount": 7,
+    "formalManipulationBalanceGate": "not_evaluated",
+    "failure": "gpu_oom_during_isolated_candidate_suite_evaluation",
+    "failedAllocationBytes": 48
+  },
+  "decision": {
+    "fullKitchenSingleAllowed": false,
+    "fiveOfFiveAllowed": false,
+    "nextStep": "candidate_and_suite_process_isolation",
+    "qualityGatesChanged": false
+  },
+  "generatedAt": "2026-07-30T19:40:06Z"
+}

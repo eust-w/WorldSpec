@@ -174,16 +174,20 @@ def test_post_walk_evaluation_disables_rest_mixture() -> None:
         / "manipulation_balance.py"
     ).read_text(encoding="utf-8")
 
-    assert "snapshot_eval_profile" in source
+    assert 'if suite == "post_walk_capture"' in source
+    assert "evaluation_profile" in source
     assert '"fromRestProbability"' in source
     assert "] = 0.0" in source
+    assert "evaluate_manipulation_balance_suite(" in source
+    assert "effective,\n        suite," in source
     assert "if int(item[\"step\"]) == step" in source
     assert "MANIPULATION_CANDIDATE_PROGRESS_MISSING" in source
-    assert "training_and_evaluation_process_boundary_v3" in source
+    assert "training_and_suite_evaluation_process_boundary_v4" in source
     assert "train_manipulation_balance_portfolio" in source
     assert "MANIPULATION_PORTFOLIO_STATE_MISSING" in source
     assert "from brax.training.acme import running_statistics" in source
-    assert "jax.clear_caches()" in source
+    assert "run_manipulation_balance_candidate_suite" in source
+    assert "MANIPULATION_EVALUATION_RESULT_SET_MISMATCH" in source
 
 
 def test_portfolio_evaluation_uses_an_independent_model_directory() -> None:
@@ -192,7 +196,11 @@ def test_portfolio_evaluation_uses_an_independent_model_directory() -> None:
     ).read_text(encoding="utf-8")
 
     assert 'run_model_dir="${MODEL_DIR}"' in entrypoint
-    assert 'run_model_dir="${MODEL_DIR}-evaluation"' in entrypoint
+    assert 'MODEL_DIR="${MODEL_DIR}-evaluation-${candidate_step}-${evaluation_suite}"' in (
+        entrypoint
+    )
+    assert "for evaluation_suite in post_walk_capture from_rest" in entrypoint
+    assert "manipulation_portfolio_aggregation" in entrypoint
     assert 'MODEL_DIR="${run_model_dir}"' in entrypoint
 
 

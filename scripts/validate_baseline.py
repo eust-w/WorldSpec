@@ -358,6 +358,7 @@ def check_examples(schemas: dict[str, Any], registry: Registry) -> int:
         "h1-kitchen/manipulation-process-isolated-checkpoint-portfolio-v10-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/manipulation-process-isolated-checkpoint-portfolio-v10-locked-training-image-build.a800.passed.json": "h1-image-build-report.schema.json",
         "h1-kitchen/locomotion-manipulation-v10-bootstrap.a800.configuration-failed-summary.json": "h1-locomotion-manipulation-bootstrap-configuration-failure-summary.schema.json",
+        "h1-kitchen/locomotion-manipulation-suite-isolation.a800.runtime-failed-summary.json": "h1-locomotion-manipulation-suite-isolation-runtime-failure-summary.schema.json",
         "../third_party/h1-training.lock.json": "h1-training-source-lock.schema.json",
     }
     for relative, schema_name in positive.items():

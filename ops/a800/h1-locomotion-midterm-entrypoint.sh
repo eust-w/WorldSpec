@@ -801,11 +801,70 @@ print(
     + ",".join(str(step) for step in state["checkpointSteps"])
 )
 PY
-  stage manipulation_portfolio_evaluation
-  # The model materializer is intentionally fail-closed and will not overwrite
-  # the training process' derived bundle.  Evaluation is a fresh process with
-  # its own immutable derived-model directory.
-  run_model_dir="${MODEL_DIR}-evaluation"
+  mapfile -t manipulation_candidate_steps < <(
+    python - "${ARTIFACT_DIR}/manipulation-portfolio-state.json" <<'PY'
+from pathlib import Path
+import json
+import sys
+
+state = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+for step in state["checkpointSteps"]:
+    print(step)
+PY
+  )
+  for candidate_step in "${manipulation_candidate_steps[@]}"; do
+    for evaluation_suite in post_walk_capture from_rest; do
+      stage "manipulation_portfolio_evaluation_${candidate_step}_${evaluation_suite}"
+      env \
+        SOURCE_DIR="${SOURCE_DIR}" \
+        BUNDLE_DIR="${BUNDLE_DIR}" \
+        MODEL_DIR="${MODEL_DIR}-evaluation-${candidate_step}-${evaluation_suite}" \
+        INPUT_DIR="${INPUT_DIR}" \
+        ARTIFACT_DIR="${ARTIFACT_DIR}" \
+        CANDIDATE_STEP="${candidate_step}" \
+        EVALUATION_SUITE="${evaluation_suite}" \
+        python - <<'PY'
+from pathlib import Path
+import os
+
+from worldspec_h1_training.contract import read_json
+from worldspec_h1_training.manipulation_balance import (
+    run_manipulation_balance_candidate_suite,
+)
+
+source_dir = Path(os.environ["SOURCE_DIR"])
+result = run_manipulation_balance_candidate_suite(
+    read_json(
+        source_dir / "examples" / "h1-kitchen" / "locomotion-training-profile.json"
+    ),
+    read_json(
+        source_dir
+        / "examples"
+        / "h1-kitchen"
+        / os.environ["WORLD_SPEC_MIDTERM_PROFILE_FILENAME"]
+    ),
+    Path(os.environ["BUNDLE_DIR"]),
+    Path(os.environ["MODEL_DIR"]),
+    Path(os.environ["ARTIFACT_DIR"]),
+    Path(os.environ["INPUT_DIR"]) / "stand-checkpoint.zip",
+    Path(os.environ["INPUT_DIR"]) / "stand-teacher-checkpoint.zip",
+    int(os.environ["CANDIDATE_STEP"]),
+    os.environ["EVALUATION_SUITE"],
+)
+print(
+    "WORLDSPEC_A800_MANIPULATION_CANDIDATE_SUITE="
+    + str(result["step"])
+    + ":"
+    + result["suite"]
+    + ":"
+    + result["resultDigest"]
+)
+PY
+    done
+  done
+  stage manipulation_portfolio_aggregation
+  # Aggregation is CPU-only and reads the exact 14 isolated suite results.
+  run_model_dir="${MODEL_DIR}-aggregation"
 fi
 env \
   SOURCE_DIR="${SOURCE_DIR}" \

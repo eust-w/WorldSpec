@@ -68,3 +68,17 @@ v10 只为评估进程使用独立的
 `runtimeFailure`，而源归档已包含新绑定。作业
 `worldspec-h1-midterm-xpqpv` 在训练前正确 fail closed。新的锁定镜像从
 `0b7cd20` 构建，仅 Profile OCI Digest 随之更新；该配置失败不产生策略结论。
+
+## v10 运行结果与 v11 套件隔离
+
+锁定 v10 作业 `worldspec-h1-midterm-v99rh` 已在真实 A800 上完成训练并保存
+七个 Checkpoint，也成功使用独立派生模型目录进入全新评估进程。第一个候选
+完成 `post_walk_capture` 后切换到 `from_rest` 环境时，JAX/XLA/Warp 设备
+状态仍在同一个评估进程中累积，最终连 48 字节设备分配也失败。正式门仍未
+执行，因此该结果仍是运行时失败，不是策略质量失败。
+
+v11 将每个候选和每个套件作为独立 CUDA 生命周期：七个候选分别运行
+`post_walk_capture` 与 `from_rest`，共生成精确 14 份绑定
+`portfolioStateDigest`、Step 和 Suite 的只读结果。最后一个 CPU-only 聚合
+进程拒绝缺失、额外或血缘漂移的结果，再执行原有候选排序和正式质量门。
+训练输入、Checkpoints、状态库、随机种子、评测轨迹和全部门槛保持不变。
