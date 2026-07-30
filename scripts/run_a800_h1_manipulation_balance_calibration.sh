@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROFILE="${ROOT_DIR}/examples/h1-kitchen/locomotion-manipulation-balance-profile.json"
-IMAGE_BUILD_REPORT="${ROOT_DIR}/examples/h1-kitchen/manipulation-suite-isolated-checkpoint-portfolio-v11-training-image-build.a800.passed.json"
+IMAGE_BUILD_REPORT="${ROOT_DIR}/examples/h1-kitchen/manipulation-unbounded-recovery-checkpoint-portfolio-v12-training-image-build.a800.passed.json"
 
 for required in "${PROFILE}" "${IMAGE_BUILD_REPORT}"; do
   if [[ ! -r "${required}" ]]; then

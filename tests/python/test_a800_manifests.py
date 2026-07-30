@@ -660,7 +660,7 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
     assert profile["environment"]["reward"]["settleLinearErrorCost"] == 2.0
     assert 'report["checkpoint"]' in entrypoint
     assert (
-        "manipulation-suite-isolated-checkpoint-portfolio-v11-training-image-build.a800.passed.json"
+        "manipulation-unbounded-recovery-checkpoint-portfolio-v12-training-image-build.a800.passed.json"
         in wrapper
     )
     assert (
@@ -675,7 +675,7 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
             ROOT
             / "examples"
             / "h1-kitchen"
-                / "manipulation-suite-isolated-checkpoint-portfolio-v11-training-image-build.a800.passed.json"
+            / "manipulation-unbounded-recovery-checkpoint-portfolio-v12-training-image-build.a800.passed.json"
         ).read_text(encoding="utf-8")
     )
     assert profile["runtime"]["containerImage"] == build["image"]
