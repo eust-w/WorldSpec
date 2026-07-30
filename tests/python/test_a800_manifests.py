@@ -640,15 +640,24 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
 
     assert (
         profile["warmStart"]["sourceStage"]
-        == "loaded-track-settle-manipulation-suite-isolated-v11-failed"
+        == "loaded-track-settle-manipulation-frozen-bank-v13-failed"
     )
     assert profile["warmStart"]["checkpointDigest"] == (
-        "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e"
+        "sha256:fe985a1bdfa6c5d12a34a0bac6d4b5807ba1fdb69f1b5829b0fd5c2390921edb"
     )
     assert profile["environment"]["snapshotCurriculum"]["fromRestProbability"] == 0.5
     assert (
+        profile["environment"]["snapshotCurriculum"]["criticalSnapshotProbability"]
+        == 0.25
+    )
+    assert (
+        profile["environment"]["snapshotCurriculum"]["uniformSnapshotProbability"]
+        == 0.25
+    )
+    assert profile["environment"]["snapshotCurriculum"]["criticalSnapshotIndices"] == [565]
+    assert (
         profile["environment"]["snapshotCurriculum"]["mode"]
-        == "continued_on_policy_capture_and_rest_mixture"
+        == "hard_negative_replay_and_rest_mixture_v1"
     )
     assert profile["checkpointSelection"] == {
         "mode": "formal_gate_then_pass_count_then_episode_length",
@@ -657,14 +666,15 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
         "memoryIsolation": "training_and_suite_evaluation_process_boundary_v4",
     }
     assert profile["previousAttempt"]["job"] == "worldspec-h1-midterm-hftjt"
-    assert profile["previousQualityFailure"]["job"] == "worldspec-h1-midterm-hnhb6"
+    assert profile["previousQualityFailure"]["job"] == "worldspec-h1-midterm-vgtfz"
     assert profile["previousQualityFailure"]["selectedStep"] == 4915200
+    assert profile["previousQualityFailure"]["criticalSnapshotIndex"] == 565
     assert profile["frozenSnapshotBank"]["sourceJob"] == "worldspec-h1-midterm-hnhb6"
     assert profile["frozenSnapshotBank"]["terminatedSnapshotCount"] == 0
     assert profile["environment"]["reward"]["baseAnchorErrorCost"] == 25.0
     assert profile["environment"]["reward"]["settleLinearErrorCost"] == 2.0
     assert (
-        '== "loaded-track-settle-manipulation-suite-isolated-v11-failed"'
+        '== "loaded-track-settle-manipulation-frozen-bank-v13-failed"'
         in entrypoint
     )
     assert '"isolatedSuiteResultCount"] != 14' in entrypoint
@@ -675,10 +685,10 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
         in wrapper
     )
     assert (
-        "locomotion-manipulation-suite-isolated.a800.quality-failed-summary.json"
+        "locomotion-manipulation-frozen-bank.a800.quality-failed-summary.json"
         in wrapper
     )
-    assert "worldspec-h1-midterm-hnhb6/midterm-checkpoint.zip" in wrapper
+    assert "worldspec-h1-midterm-vgtfz/midterm-checkpoint.zip" in wrapper
     assert "worldspec-h1-midterm-hnhb6/manipulation-state-bank.npz" in wrapper
     assert "WORLD_SPEC_MANIPULATION_SNAPSHOT_BANK" in launcher
     assert "/scratch/inputs/manipulation-state-bank.npz" in launcher

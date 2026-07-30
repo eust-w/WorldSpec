@@ -27,29 +27,31 @@ from .trainer import _deterministic_zip, _flat_observation_size, _host_float
 from .warm_start import materialize_warm_start, validate_network_compatibility
 
 CAPTURE_WARM_START = {
-    "sourceStage": "loaded-track-settle-manipulation-suite-isolated-v11-failed",
-    "sourceReportDigest": "sha256:68185f1a8c32f3d6ad4053618faf3684b82b346fcd1f6af77218d719eaf5eacd",
-    "checkpointDigest": "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e",
-    "checkpointSizeBytes": 1_264_042,
+    "sourceStage": "loaded-track-settle-manipulation-frozen-bank-v13-failed",
+    "sourceReportDigest": "sha256:d90ce8ecd8c62dbecd7f9730ee589e7a1541f0b7c76b7b45bf77c9a3639119ff",
+    "checkpointDigest": "sha256:fe985a1bdfa6c5d12a34a0bac6d4b5807ba1fdb69f1b5829b0fd5c2390921edb",
+    "checkpointSizeBytes": 1_264_664,
     "distribution": "internal_only",
     "restore": {"normalizer": True, "policy": True, "value": True},
     "optimizerState": "reset",
 }
 
 PREVIOUS_QUALITY_FAILURE = {
-    "job": "worldspec-h1-midterm-hnhb6",
-    "probeRevision": "765fdf930aaad9b9d9cd78f6aa48d6303a194e5d",
-    "reportDigest": "sha256:1230c13509a66677f4d91f534f5e19a6a6e5b936abdf5196ce0d2c85e41d32b3",
-    "reportSizeBytes": 34_691,
-    "checkpointDigest": "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e",
-    "checkpointSizeBytes": 1_264_042,
-    "traceDigest": "sha256:11863642d9fc04e146a08696c0d021914b1ab17dd598292bf18a4bdb32555e8d",
-    "traceSizeBytes": 434_095,
+    "job": "worldspec-h1-midterm-vgtfz",
+    "probeRevision": "6cd115b1bb843390dfa62c269bddccac079de87c",
+    "reportDigest": "sha256:e88b1714c3690c5b0744a032fbed880c688b56be121cd77c6a41317e99642adf",
+    "reportSizeBytes": 36_224,
+    "checkpointDigest": "sha256:fe985a1bdfa6c5d12a34a0bac6d4b5807ba1fdb69f1b5829b0fd5c2390921edb",
+    "checkpointSizeBytes": 1_264_664,
+    "traceDigest": "sha256:4cd69fd66a88db74059528324adbbbde24f5ca4db8063375a18e2b703743d59d",
+    "traceSizeBytes": 435_183,
     "snapshotBankDigest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
     "formalGate": "failed",
     "selectedStep": 4_915_200,
     "postWalkTestsPassed": 4,
     "fromRestTestsPassed": 5,
+    "criticalSnapshotIndex": 565,
+    "criticalSnapshotEvaluationSeed": 2,
     "qualityGatesChanged": False,
 }
 
@@ -181,9 +183,22 @@ ZERO_COMMAND = {
 }
 
 SNAPSHOT_CURRICULUM = {
-    "mode": "continued_on_policy_capture_and_rest_mixture",
+    "mode": "hard_negative_replay_and_rest_mixture_v1",
     "snapshotCount": 4096,
     "fromRestProbability": 0.5,
+    "criticalSnapshotProbability": 0.25,
+    "uniformSnapshotProbability": 0.25,
+    "criticalSnapshotIndices": [565],
+    "criticalSnapshotEvidence": {
+        "sourceJob": PREVIOUS_QUALITY_FAILURE["job"],
+        "sourceReportDigest": PREVIOUS_QUALITY_FAILURE["reportDigest"],
+        "sourceTraceDigest": PREVIOUS_QUALITY_FAILURE["traceDigest"],
+        "suite": "post_walk_capture",
+        "run": 2,
+        "evaluationSeed": 2,
+        "selectionMethod": "jax_prngkey_uniform_bank_index_v1",
+        "qualityGatesChanged": False,
+    },
     "motionSteps": 150,
     "captureStepRange": [35, 50],
     "motionCommandDistribution": {
@@ -1165,9 +1180,10 @@ def run_manipulation_balance_candidate_suite(
         bank = {key: archive[key] for key in archive.files}
     evaluation_profile = copy.deepcopy(effective)
     if suite == "post_walk_capture":
-        evaluation_profile["trainingEnvironment"]["snapshotCurriculum"][
-            "fromRestProbability"
-        ] = 0.0
+        evaluation_snapshot = evaluation_profile["trainingEnvironment"]["snapshotCurriculum"]
+        evaluation_snapshot["fromRestProbability"] = 0.0
+        evaluation_snapshot["criticalSnapshotProbability"] = 0.0
+        evaluation_snapshot["uniformSnapshotProbability"] = 1.0
         env = make_environment(
             evaluation_profile,
             training_model,
@@ -1385,6 +1401,7 @@ def run_manipulation_balance_calibration(
                 copy.deepcopy(item["assessment"]) for item in candidate_details
             ],
         },
+        "snapshotCurriculum": copy.deepcopy(SNAPSHOT_CURRICULUM),
         "snapshotBank": portfolio_state["snapshotBank"],
         "runtimeCapacity": {
             **base_profile["runtime"]["mjxCapacity"],

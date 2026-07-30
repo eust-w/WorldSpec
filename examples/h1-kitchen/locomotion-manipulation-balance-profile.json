@@ -1,5 +1,5 @@
 {
-  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/unbounded-recovery-frozen-bank-checkpoint-portfolio-v13",
+  "id": "manipulationbalanceprofile://worldspec/h1-menagerie-right-robotiq/hard-negative-replay-frozen-bank-checkpoint-portfolio-v14",
   "profileVersion": "0.1.0",
   "status": "research",
   "stage": "loaded_track_settle_manipulation_balance",
@@ -11,10 +11,10 @@
     "ccdIterations": 50
   },
   "warmStart": {
-    "sourceStage": "loaded-track-settle-manipulation-suite-isolated-v11-failed",
-    "sourceReportDigest": "sha256:68185f1a8c32f3d6ad4053618faf3684b82b346fcd1f6af77218d719eaf5eacd",
-    "checkpointDigest": "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e",
-    "checkpointSizeBytes": 1264042,
+    "sourceStage": "loaded-track-settle-manipulation-frozen-bank-v13-failed",
+    "sourceReportDigest": "sha256:d90ce8ecd8c62dbecd7f9730ee589e7a1541f0b7c76b7b45bf77c9a3639119ff",
+    "checkpointDigest": "sha256:fe985a1bdfa6c5d12a34a0bac6d4b5807ba1fdb69f1b5829b0fd5c2390921edb",
+    "checkpointSizeBytes": 1264664,
     "distribution": "internal_only",
     "restore": {
       "normalizer": true,
@@ -82,19 +82,21 @@
     "qualityGatesChanged": false
   },
   "previousQualityFailure": {
-    "job": "worldspec-h1-midterm-hnhb6",
-    "probeRevision": "765fdf930aaad9b9d9cd78f6aa48d6303a194e5d",
-    "reportDigest": "sha256:1230c13509a66677f4d91f534f5e19a6a6e5b936abdf5196ce0d2c85e41d32b3",
-    "reportSizeBytes": 34691,
-    "checkpointDigest": "sha256:7408db801cdc237c82ec87fb4f799fea36bba030cffe013ccdcd2a88278a118e",
-    "checkpointSizeBytes": 1264042,
-    "traceDigest": "sha256:11863642d9fc04e146a08696c0d021914b1ab17dd598292bf18a4bdb32555e8d",
-    "traceSizeBytes": 434095,
+    "job": "worldspec-h1-midterm-vgtfz",
+    "probeRevision": "6cd115b1bb843390dfa62c269bddccac079de87c",
+    "reportDigest": "sha256:e88b1714c3690c5b0744a032fbed880c688b56be121cd77c6a41317e99642adf",
+    "reportSizeBytes": 36224,
+    "checkpointDigest": "sha256:fe985a1bdfa6c5d12a34a0bac6d4b5807ba1fdb69f1b5829b0fd5c2390921edb",
+    "checkpointSizeBytes": 1264664,
+    "traceDigest": "sha256:4cd69fd66a88db74059528324adbbbde24f5ca4db8063375a18e2b703743d59d",
+    "traceSizeBytes": 435183,
     "snapshotBankDigest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
     "formalGate": "failed",
     "selectedStep": 4915200,
     "postWalkTestsPassed": 4,
     "fromRestTestsPassed": 5,
+    "criticalSnapshotIndex": 565,
+    "criticalSnapshotEvaluationSeed": 2,
     "qualityGatesChanged": false
   },
   "frozenSnapshotBank": {
@@ -147,9 +149,22 @@
       "zeroCommandProbability": 1.0
     },
     "snapshotCurriculum": {
-      "mode": "continued_on_policy_capture_and_rest_mixture",
+      "mode": "hard_negative_replay_and_rest_mixture_v1",
       "snapshotCount": 4096,
       "fromRestProbability": 0.5,
+      "criticalSnapshotProbability": 0.25,
+      "uniformSnapshotProbability": 0.25,
+      "criticalSnapshotIndices": [565],
+      "criticalSnapshotEvidence": {
+        "sourceJob": "worldspec-h1-midterm-vgtfz",
+        "sourceReportDigest": "sha256:e88b1714c3690c5b0744a032fbed880c688b56be121cd77c6a41317e99642adf",
+        "sourceTraceDigest": "sha256:4cd69fd66a88db74059528324adbbbde24f5ca4db8063375a18e2b703743d59d",
+        "suite": "post_walk_capture",
+        "run": 2,
+        "evaluationSeed": 2,
+        "selectionMethod": "jax_prngkey_uniform_bank_index_v1",
+        "qualityGatesChanged": false
+      },
       "motionSteps": 150,
       "captureStepRange": [35, 50],
       "motionCommandDistribution": {

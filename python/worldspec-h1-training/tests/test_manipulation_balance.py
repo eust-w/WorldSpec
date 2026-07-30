@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from worldspec_h1_training.contract import digest_json
+from worldspec_h1_training.environment import validate_snapshot_reset_distribution
 from worldspec_h1_training.errors import TrainingError
 from worldspec_h1_training.manipulation_balance import (
     A6K1_CAPTURE_FAILURE,
@@ -81,6 +82,9 @@ def test_manipulation_balance_contract_is_evidence_bound() -> None:
     )
     assert effective["trainingEnvironment"]["snapshotCurriculum"] == SNAPSHOT_CURRICULUM
     assert SNAPSHOT_CURRICULUM["fromRestProbability"] == 0.5
+    assert SNAPSHOT_CURRICULUM["criticalSnapshotProbability"] == 0.25
+    assert SNAPSHOT_CURRICULUM["uniformSnapshotProbability"] == 0.25
+    assert SNAPSHOT_CURRICULUM["criticalSnapshotIndices"] == [565]
     assert effective["trainingEnvironment"]["dynamicArmCurriculum"] == DYNAMIC_ARM_CURRICULUM
     assert (
         effective["trainingEnvironment"]["dynamicArmCurriculum"]["anchorRecovery"]
@@ -127,6 +131,38 @@ def test_manipulation_balance_rejects_reset_mixture_drift() -> None:
 
     with pytest.raises(TrainingError, match="environment"):
         validate_manipulation_balance_profile(base, profile)
+
+
+def test_manipulation_balance_rejects_hard_negative_index_drift() -> None:
+    base, profile = _profiles()
+    profile["environment"]["snapshotCurriculum"]["criticalSnapshotIndices"] = [564]
+
+    with pytest.raises(TrainingError, match="environment"):
+        validate_manipulation_balance_profile(base, profile)
+
+
+def test_snapshot_reset_distribution_rejects_probability_drift() -> None:
+    with pytest.raises(
+        TrainingError,
+        match="Snapshot reset probabilities must be in",
+    ):
+        validate_snapshot_reset_distribution(
+            {
+                "fromRestProbability": 0.5,
+                "criticalSnapshotProbability": 0.25,
+                "uniformSnapshotProbability": 0.3,
+                "criticalSnapshotIndices": [565],
+            },
+            bank_size=4096,
+        )
+
+
+def test_snapshot_reset_distribution_rejects_out_of_range_hard_state() -> None:
+    with pytest.raises(TrainingError, match="outside the frozen state bank"):
+        validate_snapshot_reset_distribution(
+            SNAPSHOT_CURRICULUM | {"criticalSnapshotIndices": [4096]},
+            bank_size=4096,
+        )
 
 
 def test_manipulation_balance_rejects_previous_attempt_drift() -> None:
@@ -223,7 +259,7 @@ def test_manipulation_balance_profile_does_not_mutate_base() -> None:
     assert base == original
 
 
-def test_environment_applies_mixed_capture_and_rest_reset() -> None:
+def test_environment_applies_hard_negative_capture_and_rest_reset() -> None:
     source = (
         ROOT
         / "python"
@@ -234,12 +270,18 @@ def test_environment_applies_mixed_capture_and_rest_reset() -> None:
     ).read_text(encoding="utf-8")
 
     assert 'snapshot.get("fromRestProbability", 0.0)' in source
-    assert "from_rest = jax.random.bernoulli(" in source
+    assert 'snapshot.get("criticalSnapshotProbability", 0.0)' in source
+    assert '"uniformSnapshotProbability"' in source
+    assert '"criticalSnapshotIndices"' in source
+    assert "critical_snapshot_reset = (" in source
+    assert "selected_bank_index = jp.where(" in source
+    assert '"critical_snapshot_reset": critical_snapshot_reset' in source
+    assert '"snapshot_bank_index": selected_bank_index' in source
     assert "qpos = jp.where(from_rest, self._initial_qpos, bank_qpos)" in source
     assert "jp.where(from_rest, jp.zeros(self.mjx_model.nv), bank_qvel)" in source
 
 
-def test_post_walk_evaluation_disables_rest_mixture() -> None:
+def test_post_walk_evaluation_restores_uniform_frozen_bank_distribution() -> None:
     source = (
         ROOT
         / "python"
@@ -252,7 +294,9 @@ def test_post_walk_evaluation_disables_rest_mixture() -> None:
     assert 'if suite == "post_walk_capture"' in source
     assert "evaluation_profile" in source
     assert '"fromRestProbability"' in source
-    assert "] = 0.0" in source
+    assert 'evaluation_snapshot["fromRestProbability"] = 0.0' in source
+    assert 'evaluation_snapshot["criticalSnapshotProbability"] = 0.0' in source
+    assert 'evaluation_snapshot["uniformSnapshotProbability"] = 1.0' in source
     assert "evaluate_manipulation_balance_suite(" in source
     assert "effective,\n        suite," in source
     assert "if int(item[\"step\"]) == step" in source

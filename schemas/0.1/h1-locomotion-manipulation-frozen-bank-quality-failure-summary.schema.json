@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-frozen-bank-quality-failure-summary.schema.json",
+  "title": "WorldSpec H1 Frozen-Bank Manipulation Quality Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "imageSourceRevision",
+    "image",
+    "artifacts",
+    "execution",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "quality_failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-vgtfz"
+    },
+    "probeRevision": {
+      "const": "6cd115b1bb843390dfa62c269bddccac079de87c"
+    },
+    "imageSourceRevision": {
+      "const": "91c7022d816216c1c9ce95c5c0c28fda90c81e05"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:3123f82e67d7a06f97e67b108c596ebbfdb3f1e2be4a6cb248c1260e6ce7c80e"
+    },
+    "artifacts": {
+      "const": {
+        "report": {
+          "digest": "sha256:e88b1714c3690c5b0744a032fbed880c688b56be121cd77c6a41317e99642adf",
+          "sizeBytes": 36224
+        },
+        "checkpoint": {
+          "digest": "sha256:fe985a1bdfa6c5d12a34a0bac6d4b5807ba1fdb69f1b5829b0fd5c2390921edb",
+          "sizeBytes": 1264664
+        },
+        "trace": {
+          "digest": "sha256:4cd69fd66a88db74059528324adbbbde24f5ca4db8063375a18e2b703743d59d",
+          "sizeBytes": 435183
+        },
+        "snapshotBank": {
+          "digest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0",
+          "sizeBytes": 1192118
+        },
+        "log": {
+          "digest": "sha256:52e84b18aafe486a38d9a57a587c77a12ca01d5543864cf255eca68f7585480f",
+          "sizeBytes": 101334
+        },
+        "jobManifest": {
+          "digest": "sha256:962fd034e554bfdd51ec29646b3bc15bd3d23418935c64c06fc11fe5a78dca73",
+          "sizeBytes": 5952
+        },
+        "podManifest": {
+          "digest": "sha256:6828ca55f7283a04df4bce4823b4c07558fedab0165c953ae64940b1d4fe18fa",
+          "sizeBytes": 8064
+        },
+        "podDescription": {
+          "digest": "sha256:ee86c988dae99e8c8c0d77e0bde94cedb1dd7c40a266070106d4370e9ff47955",
+          "sizeBytes": 5770
+        }
+      }
+    },
+    "execution": {
+      "const": {
+        "device": "NVIDIA A800-SXM4-80GB",
+        "savedCheckpointCount": 7,
+        "isolatedSuiteResultCount": 14,
+        "formalManipulationBalanceGate": "failed",
+        "selectedStep": 4915200,
+        "selectedMeanEpisodeLength": 97.875,
+        "selectedPostWalkTestsPassed": 4,
+        "selectedFromRestTestsPassed": 5,
+        "candidatePostWalkPassCounts": [4, 4, 4, 4, 4, 4, 4],
+        "candidateFromRestPassCounts": [5, 5, 5, 5, 5, 5, 5],
+        "failedTest": {
+          "suite": "post_walk_capture",
+          "run": 2,
+          "completedSteps": 100,
+          "requiredSteps": 100,
+          "terminalReason": null,
+          "minimumBaseHeight": 0.5517250299453735,
+          "minimumUprightCosine": 0.5828574299812317,
+          "maximumBaseTranslation": 1.000681292964883,
+          "maximumBaseLateralDrift": 0.6846347600221634,
+          "maximumTerminalLinearSpeed": 3.5619534899249357,
+          "maximumTerminalAngularSpeed": 2.5698421544931622
+        },
+        "criticalSnapshot": {
+          "index": 565,
+          "evaluationRunIndex": 1,
+          "evaluationSeed": 2,
+          "derivation": "jax_prngkey_uniform_bank_index_v1",
+          "bankDigest": "sha256:d4090fe9b437084dcc6610da3028d46500151437d7bf22a3cb7431b8ef38cec0"
+        }
+      }
+    },
+    "decision": {
+      "const": {
+        "policyStatus": "non_publishable",
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "hundredMillionTrainingAllowed": false,
+        "nextStep": "hard_negative_replay_v14",
+        "qualityGatesChanged": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}

@@ -13,6 +13,49 @@ from .errors import TrainingError
 from .transition import transition_phase_masks
 
 
+def validate_snapshot_reset_distribution(
+    snapshot: dict[str, Any],
+    *,
+    bank_size: int | None,
+) -> tuple[float, float, float, tuple[int, ...]]:
+    """Validate and normalize a capture-bank reset mixture."""
+
+    from_rest_probability = float(snapshot.get("fromRestProbability", 0.0))
+    critical_probability = float(snapshot.get("criticalSnapshotProbability", 0.0))
+    uniform_probability = float(
+        snapshot.get(
+            "uniformSnapshotProbability",
+            1.0 - from_rest_probability - critical_probability,
+        )
+    )
+    probabilities = (
+        from_rest_probability,
+        critical_probability,
+        uniform_probability,
+    )
+    if any(value < 0.0 or value > 1.0 for value in probabilities) or abs(
+        sum(probabilities) - 1.0
+    ) > 1e-9:
+        raise TrainingError(
+            "SNAPSHOT_CURRICULUM_PROBABILITY_INVALID",
+            "Snapshot reset probabilities must be in [0, 1] and sum to one.",
+        )
+    critical_indices = tuple(int(value) for value in snapshot.get("criticalSnapshotIndices", []))
+    if critical_probability > 0.0 and not critical_indices:
+        raise TrainingError(
+            "SNAPSHOT_CURRICULUM_CRITICAL_INDEX_MISSING",
+            "Hard-negative replay requires at least one critical snapshot index.",
+        )
+    if bank_size is not None and any(
+        value < 0 or value >= bank_size for value in critical_indices
+    ):
+        raise TrainingError(
+            "SNAPSHOT_CURRICULUM_CRITICAL_INDEX_INVALID",
+            "Critical snapshot index is outside the frozen state bank.",
+        )
+    return (*probabilities, critical_indices)
+
+
 def _preserving_update(
     current: dict[str, Any],
     updates: dict[str, Any],
@@ -167,6 +210,12 @@ def make_environment(
             self._anchor_recovery = None
             self._capture_state_bank = None
             self._capture_state_bank_from_rest_probability = 0.0
+            self._capture_state_bank_critical_snapshot_probability = 0.0
+            self._capture_state_bank_uniform_snapshot_probability = 1.0
+            self._capture_state_bank_critical_snapshot_indices = jp.asarray(
+                [0],
+                dtype=jp.int32,
+            )
             self._stand_teacher_policy = stand_teacher_policy
             self._settle_teacher_policy = settle_teacher_policy
             self._stand_replay_probability = 0.0
@@ -292,8 +341,27 @@ def make_environment(
                         self._anchor_recovery = anchor_recovery
                 snapshot = training_environment.get("snapshotCurriculum")
                 if isinstance(snapshot, dict):
-                    self._capture_state_bank_from_rest_probability = float(
-                        snapshot.get("fromRestProbability", 0.0)
+                    (
+                        from_rest_probability,
+                        critical_probability,
+                        uniform_probability,
+                        critical_indices,
+                    ) = validate_snapshot_reset_distribution(
+                        snapshot,
+                        bank_size=(
+                            int(self._capture_state_bank["qpos"].shape[0])
+                            if self._capture_state_bank is not None
+                            else None
+                        ),
+                    )
+                    self._capture_state_bank_from_rest_probability = from_rest_probability
+                    self._capture_state_bank_critical_snapshot_probability = (
+                        critical_probability
+                    )
+                    self._capture_state_bank_uniform_snapshot_probability = uniform_probability
+                    self._capture_state_bank_critical_snapshot_indices = jp.asarray(
+                        critical_indices or (0,),
+                        dtype=jp.int32,
                     )
             else:
                 self._minimum_height = float(validation["minimumBaseHeight"])
@@ -444,13 +512,35 @@ def make_environment(
             if self._capture_state_bank is not None:
                 bank_size = self._capture_state_bank["qpos"].shape[0]
                 bank_index = jax.random.randint(bank_rng, (), 0, bank_size)
-                bank_qpos = self._capture_state_bank["qpos"][bank_index]
-                bank_qvel = self._capture_state_bank["qvel"][bank_index]
-                bank_last_action = self._capture_state_bank["last_action"][bank_index]
-                from_rest = jax.random.bernoulli(
-                    mixture_rng,
-                    self._capture_state_bank_from_rest_probability,
+                selector_rng, critical_rng = jax.random.split(mixture_rng)
+                selector = jax.random.uniform(selector_rng)
+                from_rest = selector < self._capture_state_bank_from_rest_probability
+                critical_snapshot_reset = (
+                    selector >= self._capture_state_bank_from_rest_probability
+                ) & (
+                    selector
+                    < self._capture_state_bank_from_rest_probability
+                    + self._capture_state_bank_critical_snapshot_probability
                 )
+                critical_offset = jax.random.randint(
+                    critical_rng,
+                    (),
+                    0,
+                    self._capture_state_bank_critical_snapshot_indices.shape[0],
+                )
+                critical_bank_index = self._capture_state_bank_critical_snapshot_indices[
+                    critical_offset
+                ]
+                selected_bank_index = jp.where(
+                    critical_snapshot_reset,
+                    critical_bank_index,
+                    bank_index,
+                )
+                bank_qpos = self._capture_state_bank["qpos"][selected_bank_index]
+                bank_qvel = self._capture_state_bank["qvel"][selected_bank_index]
+                bank_last_action = self._capture_state_bank["last_action"][
+                    selected_bank_index
+                ]
                 qpos = jp.where(from_rest, self._initial_qpos, bank_qpos)
                 qvel = jp.where(from_rest, jp.zeros(self.mjx_model.nv), bank_qvel)
                 last_action = jp.where(
@@ -464,6 +554,8 @@ def make_environment(
                 capture_active = jp.asarray(True)
             else:
                 from_rest = jp.asarray(False)
+                critical_snapshot_reset = jp.asarray(False)
+                selected_bank_index = jp.asarray(-1, dtype=jp.int32)
                 qpos = self._initial_qpos
                 qvel = jp.zeros(self.mjx_model.nv)
                 last_action = jp.zeros(self.action_size)
@@ -528,6 +620,8 @@ def make_environment(
                 "stand_replay_active": stand_replay_active,
                 "capture_active": capture_active,
                 "from_rest_reset": from_rest,
+                "critical_snapshot_reset": critical_snapshot_reset,
+                "snapshot_bank_index": selected_bank_index,
                 "last_action": last_action,
                 "step": jp.zeros((), dtype=jp.int32),
                 "termination": {
@@ -571,6 +665,8 @@ def make_environment(
                 "state/stand_replay": jp.zeros(()),
                 "state/capture": jp.zeros(()),
                 "state/from_rest_reset": from_rest.astype(jp.float32),
+                "state/critical_snapshot_reset": critical_snapshot_reset.astype(jp.float32),
+                "state/snapshot_bank_index": selected_bank_index.astype(jp.float32),
                 "state/task_load_scale": task_load_scale,
                 "reward/base_anchor": jp.zeros(()),
                 "state/base_anchor_error": jp.zeros(()),
