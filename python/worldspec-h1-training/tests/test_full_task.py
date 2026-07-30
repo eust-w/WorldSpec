@@ -103,6 +103,21 @@ def test_locked_full_task_single_profile_is_semantically_valid() -> None:
     assert profile["qualityGates"]["probeRuns"] == 1
 
 
+def test_full_task_trace_contract_keeps_policy_command_and_base_state() -> None:
+    source = (
+        ROOT
+        / "python"
+        / "worldspec-h1-training"
+        / "src"
+        / "worldspec_h1_training"
+        / "full_task.py"
+    ).read_text(encoding="utf-8")
+
+    assert '"command": [_trace_number(value) for value in np.asarray(policy_command)]' in source
+    assert '"policyCommand": [_trace_number(value) for value in np.asarray(policy_command)]' in source
+    assert '"baseState": {' in source
+
+
 def test_full_task_single_effective_profile_preserves_task_load() -> None:
     base, supervisor, profile = _profiles()
 
