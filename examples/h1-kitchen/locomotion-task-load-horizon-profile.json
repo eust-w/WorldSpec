@@ -26,8 +26,8 @@
     "distribution": "internal_only"
   },
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:62f2bd2127e1af42890d1af8b1234d7cbf36566221f1f109d864e1c7e7fd8724",
-    "containerDigest": "sha256:62f2bd2127e1af42890d1af8b1234d7cbf36566221f1f109d864e1c7e7fd8724",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:c5b801f45d9cfa6de2a210cb25a38ddf242639ed3aa63acb6490a274467dbf69",
+    "containerDigest": "sha256:c5b801f45d9cfa6de2a210cb25a38ddf242639ed3aa63acb6490a274467dbf69",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50
   },
