@@ -1,0 +1,245 @@
+{
+  "id": "taskprofile://worldspec/h1-kitchen/task-load-full-loop-single-v1",
+  "profileVersion": "0.1.0",
+  "status": "research",
+  "stage": "task_load_fixed_kitchen_single_probe",
+  "seed": 41,
+  "baseTrainingProfileDigest": "sha256:6c2002f7fedaae1739416c96e7698b389d8ddc7bedc7386921e141964128eec6",
+  "supervisorProfileDigest": "sha256:731c1812787a3c63230d49220f5e08a48b7d04f7e7967bf476d0d066d083eec4",
+  "supervisorEvidence": {
+    "job": "worldspec-h1-midterm-69xm4",
+    "profileDigest": "sha256:731c1812787a3c63230d49220f5e08a48b7d04f7e7967bf476d0d066d083eec4",
+    "reportDigest": "sha256:1ebb614d7315442a98937e09b58b888796922547b1ecc962e3a8aa49ae3325c0",
+    "reportSizeBytes": 23042,
+    "controllerDigest": "sha256:62c7c3127797998b147260c65a125f632011f6cba4796f9ed555e563e2f4631d",
+    "traceDigest": "sha256:6fcd89018a3152c4ece0d8261b143a898ec7d3c4e858289202d1d5f7e8cc1b4f",
+    "formalTaskLoadSupervisorGate": "passed",
+    "deterministicTestsPassed": 10
+  },
+  "motionPolicy": {
+    "sourceStage": "loaded-track-settle-task-load-formal-v1-failed",
+    "sourceReportDigest": "sha256:31e4991a33721928df2b2887f00dccd339dfe261dfbf1aaec4597579c6c784d9",
+    "checkpointDigest": "sha256:61ebfa89d0fa5e7d7fc6488c524cf21c742c6a25efb5854a2bd689a61c895016",
+    "checkpointSizeBytes": 1260210,
+    "distribution": "internal_only",
+    "selectedRole": "motion"
+  },
+  "capturePolicy": {
+    "sourceStage": "loaded-track-settle-capture-v1-passed",
+    "sourceReportDigest": "sha256:8261f863d71cb66de46facb37b3c5ed121811e80fdabac057629ed366a52666f",
+    "checkpointDigest": "sha256:7f8c45e7c0bf1d485706ca694c44e74bfd351ab4f753bfacff947e9f7e75cfbe",
+    "checkpointSizeBytes": 6280278,
+    "distribution": "internal_only",
+    "selectedRole": "motion_state_capture"
+  },
+  "standPolicy": {
+    "sourceStage": "stand-v2.1",
+    "sourceReportDigest": "sha256:8a92a910ca52540fff50bab37e20e7e28d4ea06ae0acd20d0079e8b45e65f660",
+    "checkpointDigest": "sha256:fc91edb936de7391b7e075596e5aaa944acc656664cdb820dbb21c149cf7921c",
+    "checkpointSizeBytes": 6280684,
+    "distribution": "internal_only",
+    "selectedRole": "zero_velocity_and_stand"
+  },
+  "controlLineage": {
+    "profileDigest": "sha256:23fcf6908136c57880871ac0a1f9e1f13339b5d8f562eb0af8d710362f75efa8",
+    "sourceJob": "worldspec-h1-midterm-5nn2q",
+    "sourceTraceDigest": "sha256:175427d1d3d74da7fe5c422f3290f07ae6dfa6c21179626dd4d4558915012bd9",
+    "formalControlGate": "failed",
+    "terminalReason": "fall_height",
+    "reuseBoundary": "controller_contract_only"
+  },
+  "scene": {
+    "sceneId": "scene://worldspec/h1-kitchen/primitive-drawer-cup-v3-ergonomic",
+    "evidenceStatus": "generated",
+    "distribution": "internal_only",
+    "drawer": {
+      "closedCenter": [2.03, -0.21, 1.085],
+      "slideAxis": [-1.0, 0.0, 0.0],
+      "range": [0.0, 0.24],
+      "openThreshold": 0.18,
+      "closedThreshold": 0.03
+    },
+    "cup": {
+      "initialCenter": [1.85, -0.21, 1.26],
+      "proxy": "short_cylinder",
+      "massKg": 0.18
+    },
+    "support": {
+      "type": "fixed_box",
+      "center": [1.85, -0.21, 1.22],
+      "halfSize": [0.1, 0.09, 0.015]
+    },
+    "graspModel": "physical_contact_only",
+    "hiddenAttachment": false
+  },
+  "wholeBodyController": {
+    "mode": "hierarchical_box_qp_with_inverse_dynamics_feedforward",
+    "decisionVariables": [
+      "base_velocity_x",
+      "base_velocity_y",
+      "base_yaw_rate",
+      "torso_velocity",
+      "right_shoulder_pitch_velocity",
+      "right_shoulder_roll_velocity",
+      "right_shoulder_yaw_velocity",
+      "right_elbow_velocity"
+    ],
+    "controlledJoints": [
+      "torso",
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "qpIterations": 48,
+    "cartesianGain": 4.0,
+    "maximumCartesianSpeed": 0.35,
+    "velocityLowerBounds": [-0.08, -0.06, -0.15, -0.5, -0.8, -0.8, -0.8, -0.8],
+    "velocityUpperBounds": [0.08, 0.06, 0.15, 0.5, 0.8, 0.8, 0.8, 0.8],
+    "regularization": [2.0, 2.0, 3.0, 0.35, 0.15, 0.15, 0.15, 0.15],
+    "targetHorizonSeconds": 0.4,
+    "maximumJointTargetStep": 0.3,
+    "jointLimitMarginRadians": 0.05,
+    "feedforwardScale": 1.0,
+    "feedforwardControlReserve": 0.2
+  },
+  "taskPolicyHandoff": {
+    "mode": "hysteretic_motion_capture_blend_stand",
+    "initialPolicy": "stand",
+    "motionEntryThreshold": 0.05,
+    "motionExitThreshold": 0.02,
+    "captureGate": {
+      "minimumSteps": 20,
+      "maximumSteps": 40,
+      "maximumLinearSpeed": 0.12,
+      "maximumAngularSpeed": 0.2,
+      "requiredConsecutiveStableSteps": 5
+    },
+    "blendSteps": 5,
+    "policyObservationCommandDuringHandoff": [0.0, 0.0, 0.0],
+    "motionReentry": "allowed_above_entry_threshold"
+  },
+  "dynamicArmTracking": {
+    "mode": "fixed_base_four_joint_qp_with_bias_feedforward",
+    "controlledJoints": [
+      "right_shoulder_pitch",
+      "right_shoulder_roll",
+      "right_shoulder_yaw",
+      "right_elbow"
+    ],
+    "baseCommand": "locked_zero",
+    "torsoTargetRadians": 0.0,
+    "uncontrolledHeldTargets": "profile_defaults",
+    "legPolicy": "stand",
+    "feedforward": "mujoco_qfrc_bias"
+  },
+  "taskGeometryCalibration": {
+    "mode": "measured_stable_workspace_alignment",
+    "sourceJob": "worldspec-h1-midterm-9zmdg",
+    "sourceTraceDigest": "sha256:8cc84091b367ece380b8f500a9481d9d6567a937ae4199241ef90f19cc507b08",
+    "sourceStableTcpPosition": [1.835095491188453, -0.18911960748591475, 1.1411498880156772],
+    "sceneTranslation": [-0.03, 0.0, 0.065],
+    "calibratedHandleTarget": [1.84, -0.21, 1.14],
+    "qualityGatesChanged": false
+  },
+  "baseAnchorRecovery": {
+    "mode": "task_origin_forward_only_pd_motion_policy",
+    "positionGain": 2.0,
+    "velocityGain": 0.8,
+    "maximumForwardCommand": 0.5,
+    "maximumBackwardCommand": 0.0,
+    "maximumLateralCommand": 0.1,
+    "yawCommand": 0.0,
+    "activationThreshold": 0.05,
+    "releaseThreshold": 0.02,
+    "armDuringRecovery": "freeze_last_stable_targets",
+    "qualityGatesChanged": false,
+    "longitudinalCommandDomain": "forward_only"
+  },
+  "phaseController": {
+    "phases": [
+      "stand_ready",
+      "reach_handle",
+      "close_handle",
+      "pull_drawer",
+      "release_handle",
+      "reach_cup",
+      "close_cup",
+      "lift_cup",
+      "insert_cup",
+      "release_cup",
+      "retract",
+      "push_drawer",
+      "final_hold"
+    ],
+    "positionToleranceMeters": 0.035,
+    "openGripperCommand": 0.0,
+    "closedGripperCommand": 255.0,
+    "phaseMinimumSteps": {
+      "stand_ready": 25,
+      "reach_handle": 5,
+      "close_handle": 30,
+      "pull_drawer": 5,
+      "release_handle": 20,
+      "reach_cup": 5,
+      "close_cup": 40,
+      "lift_cup": 5,
+      "insert_cup": 5,
+      "release_cup": 30,
+      "retract": 5,
+      "push_drawer": 5,
+      "final_hold": 25
+    },
+    "phaseMaximumSteps": {
+      "stand_ready": 25,
+      "reach_handle": 100,
+      "close_handle": 30,
+      "pull_drawer": 120,
+      "release_handle": 20,
+      "reach_cup": 120,
+      "close_cup": 40,
+      "lift_cup": 120,
+      "insert_cup": 140,
+      "release_cup": 30,
+      "retract": 100,
+      "push_drawer": 140,
+      "final_hold": 25
+    }
+  },
+  "qualityGates": {
+    "probeRuns": 1,
+    "minimumForwardDisplacement": 1.0,
+    "maximumForwardDisplacement": 2.2,
+    "minimumBaseHeight": 0.8,
+    "minimumUprightCosine": 0.8,
+    "drawerOpenThreshold": 0.18,
+    "drawerClosedThreshold": 0.03,
+    "cupInsideMargin": 0.015,
+    "maximumCupLinearSpeed": 0.08,
+    "maximumCupAngularSpeed": 0.2,
+    "minimumStableSteps": 20,
+    "maximumTaskBaseTranslation": 0.2,
+    "maximumTaskBaseLateralDrift": 0.12,
+    "maximumProjectedGradient": 0.00001,
+    "maximumNonFiniteSamples": 0
+  },
+  "runtime": {
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:6d7ed878e1707526fbc87be8d5abe2df4eac91b7869e03a5869bfa69a40ff05e",
+    "containerDigest": "sha256:6d7ed878e1707526fbc87be8d5abe2df4eac91b7869e03a5869bfa69a40ff05e",
+    "imageSourceRevision": "28303183d1563dbb51d6e769aa91d4e4a4c5aded",
+    "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
+    "ccdIterations": 50,
+    "evaluationEnvironments": 1,
+    "mjxCapacity": {
+      "activeContactsPerEnvironment": 32,
+      "ccdContactsPerEnvironment": 16,
+      "njmax": 128
+    }
+  },
+  "artifactPolicy": {
+    "controller": "research_only",
+    "distribution": "internal_only",
+    "fiveRunClaim": "forbidden",
+    "l3Claim": "forbidden"
+  }
+}

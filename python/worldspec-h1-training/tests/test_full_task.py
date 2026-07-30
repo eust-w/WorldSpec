@@ -30,6 +30,9 @@ BASE_PATH = ROOT / "examples" / "h1-kitchen" / "locomotion-training-profile.json
 SUPERVISOR_PATH = (
     ROOT / "examples" / "h1-kitchen" / "locomotion-task-load-supervisor-profile.json"
 )
+LOCKED_PROFILE_PATH = (
+    ROOT / "examples" / "h1-kitchen" / "task-load-full-kitchen-single-profile.json"
+)
 
 
 def _profiles() -> tuple[dict, dict, dict]:
@@ -87,6 +90,17 @@ def test_full_task_single_profile_binds_a6_and_a5ck_without_claiming_five_runs()
     assert profile["qualityGates"]["probeRuns"] == 1
     assert profile["artifactPolicy"]["fiveRunClaim"] == "forbidden"
     assert profile["artifactPolicy"]["l3Claim"] == "forbidden"
+
+
+def test_locked_full_task_single_profile_is_semantically_valid() -> None:
+    base = json.loads(BASE_PATH.read_text(encoding="utf-8"))
+    supervisor = json.loads(SUPERVISOR_PATH.read_text(encoding="utf-8"))
+    profile = json.loads(LOCKED_PROFILE_PATH.read_text(encoding="utf-8"))
+
+    validate_full_task_single_profile(base, supervisor, profile)
+
+    assert profile["runtime"]["imageSourceRevision"] == "28303183d1563dbb51d6e769aa91d4e4a4c5aded"
+    assert profile["qualityGates"]["probeRuns"] == 1
 
 
 def test_full_task_single_effective_profile_preserves_task_load() -> None:
