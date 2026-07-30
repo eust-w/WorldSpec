@@ -63,3 +63,8 @@ v9 作业 `worldspec-h1-midterm-lj499` 再次完成七个 Checkpoint 的真实 A
 v10 只为评估进程使用独立的
 `/scratch/h1-training-model-evaluation` 目录；训练、候选、输入、随机种子、
 排序和全部质量门保持不变。
+
+首张 v10 镜像来自 Profile 锁定前的 `cb578b8`，因此运行时代码仍绑定旧
+`runtimeFailure`，而源归档已包含新绑定。作业
+`worldspec-h1-midterm-xpqpv` 在训练前正确 fail closed。新的锁定镜像从
+`0b7cd20` 构建，仅 Profile OCI Digest 随之更新；该配置失败不产生策略结论。

@@ -74,5 +74,6 @@ last-verified: 2026-07-30
 | D-062 | memory-isolated-v7 完成 17,203,200 步和七个 Checkpoint 后仍因同进程 JAX/XLA/Warp 生命周期在正式门前 OOM；选择训练进程正常退出后用全新进程只读评估，全部训练语义和质量门不变 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
 | D-063 | process-isolated-v8 已证明训练/评估进程边界生效，但评估在候选测试前因 Brax `running_statistics` 导入路径错误终止；v9 只修正为现有代码已使用的 `brax.training.acme` 路径，其他语义不变 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
 | D-064 | process-isolated-v9 已进入全新评估进程，但 fail-closed 模型物化器拒绝覆盖训练进程留下的派生目录；v10 为评估使用独立派生模型目录，不改变训练、候选、种子或质量门 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
+| D-065 | v10 首张镜像来自 Profile 锁定前提交，运行时常量与源 Profile 血缘不一致并在训练前 fail closed；从锁定提交重建镜像，仅更新 Profile 的 OCI Digest 后重放 | Accepted Design | [ADR-0043](decisions/0043-h1-manipulation-process-isolation.md) |
 
 新增或改变 Accepted 决策必须通过 ADR，不允许只改实施文档。

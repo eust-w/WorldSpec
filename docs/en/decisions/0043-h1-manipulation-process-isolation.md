@@ -73,3 +73,10 @@ process. This error still provides no policy-quality result.
 v10 changes only the evaluation process to use the independent
 `/scratch/h1-training-model-evaluation` directory. Training, candidates,
 inputs, seed, ranking, and every quality gate remain unchanged.
+
+The first v10 image came from the pre-lock `cb578b8` commit, so runtime code
+still bound the old `runtimeFailure` while the source archive contained the new
+binding. Job `worldspec-h1-midterm-xpqpv` correctly failed closed before
+training. The locked replacement image is built from `0b7cd20`; only the
+Profile OCI Digest changes. This configuration failure has no policy-quality
+meaning.

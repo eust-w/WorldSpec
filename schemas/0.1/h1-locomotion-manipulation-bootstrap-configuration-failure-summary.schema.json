@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-bootstrap-configuration-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation Bootstrap Configuration Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "image",
+    "log",
+    "jobManifest",
+    "podManifest",
+    "execution",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "configuration_failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-xpqpv"
+    },
+    "probeRevision": {
+      "const": "0b7cd200c866aaffa3fd663651a09067ea63759f"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:c4e36ae53d64f2450b2a896458c890e245a5742becd27044e86c76cc59d13f65"
+    },
+    "log": {
+      "const": {
+        "digest": "sha256:27ca7d9b420c4210827780bbb7a101fdc34f4d0e6224498b44ef45052f5f83e8",
+        "sizeBytes": 16467
+      }
+    },
+    "jobManifest": {
+      "const": {
+        "digest": "sha256:7a277c30aae36a82bdd42de822399661f136e7da704a4d40ba2fb8a5ab6f61ce",
+        "sizeBytes": 5898
+      }
+    },
+    "podManifest": {
+      "const": {
+        "digest": "sha256:55de4e69aa8ed8492ca2fa48a473430012997875d164aa2a2078a5ab6f61ce",
+        "sizeBytes": 8013
+      }
+    },
+    "execution": {
+      "const": {
+        "trainingStarted": false,
+        "formalManipulationBalanceGate": "not_evaluated",
+        "failure": "runtime_failure_binding_mismatch"
+      }
+    },
+    "decision": {
+      "const": {
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "nextStep": "rebuild_from_locked_profile_commit",
+        "qualityGatesChanged": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}
