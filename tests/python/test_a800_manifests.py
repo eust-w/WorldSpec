@@ -658,6 +658,12 @@ def test_manipulation_recovery_continues_from_v11_candidate() -> None:
     assert profile["previousQualityFailure"]["selectedStep"] == 4915200
     assert profile["environment"]["reward"]["baseAnchorErrorCost"] == 25.0
     assert profile["environment"]["reward"]["settleLinearErrorCost"] == 2.0
+    assert (
+        '== "loaded-track-settle-manipulation-suite-isolated-v11-failed"'
+        in entrypoint
+    )
+    assert '"isolatedSuiteResultCount"] != 14' in entrypoint
+    assert '"selectedStep"] != 4_915_200' in entrypoint
     assert 'report["checkpoint"]' in entrypoint
     assert (
         "manipulation-unbounded-recovery-checkpoint-portfolio-v12-training-image-build.a800.passed.json"

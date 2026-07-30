@@ -399,11 +399,32 @@ elif source["sourceStage"] == "loaded-track-settle-manipulation-mixed-reset-v3-f
         raise SystemExit(
             "manipulation continuation source is not frozen mixed-reset failure evidence"
         )
+elif (
+    source["sourceStage"]
+    == "loaded-track-settle-manipulation-suite-isolated-v11-failed"
+):
+    if (
+        report["status"] != "quality_failed"
+        or report["execution"]["formalManipulationBalanceGate"] != "failed"
+        or report["execution"]["isolatedSuiteResultCount"] != 14
+        or report["execution"]["selectedStep"] != 4_915_200
+        or report["execution"]["selectedFromRestTestsPassed"] != 5
+        or report["decision"]["policyStatus"] != "non_publishable"
+        or report["decision"]["fullKitchenSingleAllowed"] is not False
+        or report["decision"]["qualityGatesChanged"] is not False
+    ):
+        raise SystemExit(
+            "unbounded recovery source is not frozen suite-isolated failure evidence"
+        )
 else:
     raise SystemExit("unsupported warm-start source stage")
 reported_checkpoint = (
     report["artifacts"]["checkpoint"]
-    if source["sourceStage"] == "loaded-track-settle-task-load-formal-v1-failed"
+    if source["sourceStage"]
+    in {
+        "loaded-track-settle-task-load-formal-v1-failed",
+        "loaded-track-settle-manipulation-suite-isolated-v11-failed",
+    }
     else (
         report["checkpoint"]
         if source["sourceStage"]

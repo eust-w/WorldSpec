@@ -59,3 +59,15 @@ Accepted Design。
 - 只对固定失败种子对应的 Capture 状态过采样；
 - 修改恢复命令范围或任务几何并把结果归因于同一策略；
 - 跳过操作平衡门直接启动完整厨房或 `5/5`。
+
+## 首次启动证据
+
+首个 v12 Job `worldspec-h1-midterm-pnwr5` 在 `input_verification` 阶段
+fail closed。四个输入文件均完成分块上传和 Digest 校验，但入口校验器尚未
+登记新的 `loaded-track-settle-manipulation-suite-isolated-v11-failed`
+来源阶段，因而报告 `unsupported warm-start source stage`。GPU 训练未开始，
+策略结果为 `not_evaluated`。
+
+修复只新增冻结 v11 摘要的字段校验和 Checkpoint 路径选择，不改变 v12
+Profile、训练环境、奖励、种子、控制范围或质量门。由于这是训练前的配置缺陷，
+修复并通过回归测试后允许用新 Probe Revision 重新启动一次。

@@ -71,3 +71,18 @@ training signal, not the task definition or acceptance threshold.
   result to the same policy.
 - Skipping the manipulation-balance gate and starting the full kitchen run or
   `5/5`.
+
+## First-launch evidence
+
+The first v12 Job, `worldspec-h1-midterm-pnwr5`, failed closed during
+`input_verification`. All four input files completed chunked upload and Digest
+verification, but the entrypoint had not registered the new
+`loaded-track-settle-manipulation-suite-isolated-v11-failed` source stage and
+reported `unsupported warm-start source stage`. GPU training never started, so
+the strategy result is `not_evaluated`.
+
+The correction only adds frozen-v11-summary field checks and Checkpoint path
+selection. It changes no v12 Profile, training environment, reward, seed,
+control range, or quality gate. Because this was a pre-training configuration
+defect, one relaunch under a new Probe Revision is allowed after regression
+tests pass.

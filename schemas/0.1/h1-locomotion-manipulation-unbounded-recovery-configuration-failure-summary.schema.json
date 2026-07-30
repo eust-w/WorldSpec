@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://worldspec.dev/schemas/0.1/h1-locomotion-manipulation-unbounded-recovery-configuration-failure-summary.schema.json",
+  "title": "WorldSpec H1 Manipulation Unbounded-Recovery Configuration Failure Summary 0.1",
+  "type": "object",
+  "required": [
+    "id",
+    "status",
+    "job",
+    "probeRevision",
+    "imageSourceRevision",
+    "image",
+    "stage",
+    "failure",
+    "trainingStarted",
+    "uploadedInputsVerified",
+    "artifacts",
+    "decision",
+    "generatedAt"
+  ],
+  "properties": {
+    "id": {
+      "$ref": "common.schema.json#/$defs/id"
+    },
+    "status": {
+      "const": "configuration_failed"
+    },
+    "job": {
+      "const": "worldspec-h1-midterm-pnwr5"
+    },
+    "probeRevision": {
+      "const": "aea6b8e9e7a59cc91fc9e7a320d35c67393c5135"
+    },
+    "imageSourceRevision": {
+      "const": "12e54c7cdf043ad1c43d789154ace8b432ec917a"
+    },
+    "image": {
+      "const": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:36d68af0f4585713e1ad7cf89d79a410edc2cea219cdf3388482e99bf50537cf"
+    },
+    "stage": {
+      "const": "input_verification"
+    },
+    "failure": {
+      "const": "unsupported_warm_start_source_stage"
+    },
+    "trainingStarted": {
+      "const": false
+    },
+    "uploadedInputsVerified": {
+      "const": true
+    },
+    "artifacts": {
+      "const": {
+        "jobLog": {
+          "digest": "sha256:4d5d793cc4f1af6f1c181e3451b904c41dd540fba8e5190c0b417964e569b619",
+          "sizeBytes": 285
+        },
+        "jobManifest": {
+          "digest": "sha256:5aca70923ae5456dbe737361a7b1a0f88b8a55380b2febd8f3fac5f75c5f7afd",
+          "sizeBytes": 5909
+        },
+        "podManifest": {
+          "digest": "sha256:48c953af1a5d25b524bdbfa1e7751e2faf18a753270305f1358d9a4cd8812335",
+          "sizeBytes": 8026
+        },
+        "podDescription": {
+          "digest": "sha256:f87c62966c80b38a94ecb443926730de5e69dbcf377ce40f8265d117a08b620f",
+          "sizeBytes": 5763
+        }
+      }
+    },
+    "decision": {
+      "const": {
+        "strategyResult": "not_evaluated",
+        "retryAllowedAfterCodeFix": true,
+        "qualityGatesChanged": false,
+        "fullKitchenSingleAllowed": false,
+        "fiveOfFiveAllowed": false,
+        "hundredMillionTrainingAllowed": false
+      }
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}
