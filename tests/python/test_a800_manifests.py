@@ -798,6 +798,17 @@ def test_manipulation_viability_is_constructive_and_diagnostic_only() -> None:
     assert "loaded_track_settle_manipulation_viability" in entrypoint
     assert "run_manipulation_viability_diagnostic" in entrypoint
     assert "WORLDSPEC_A800_MANIPULATION_VIABILITY_RESULT=" in entrypoint
+    build = json.loads(
+        (
+            ROOT
+            / "examples"
+            / "h1-kitchen"
+            / "manipulation-viability-training-image-build.a800.passed.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert profile["runtime"]["containerImage"] == build["image"]
+    assert profile["runtime"]["containerDigest"] == build["image"].rsplit("@", 1)[1]
+    assert build["sourceCommit"] == "fb6919927bb4b1baadd846f52717bb90ee7e4794"
 
 
 def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
