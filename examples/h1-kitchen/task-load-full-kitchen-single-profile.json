@@ -143,18 +143,13 @@
     "qualityGatesChanged": false
   },
   "baseAnchorRecovery": {
-    "mode": "task_origin_forward_only_pd_motion_policy",
-    "positionGain": 2.0,
-    "velocityGain": 0.8,
-    "maximumForwardCommand": 0.5,
-    "maximumBackwardCommand": 0.0,
-    "maximumLateralCommand": 0.1,
-    "yawCommand": 0.0,
-    "activationThreshold": 0.05,
-    "releaseThreshold": 0.02,
-    "armDuringRecovery": "track_current_task_space_solution",
-    "qualityGatesChanged": false,
-    "longitudinalCommandDomain": "forward_only"
+    "mode": "disabled_locked_stand_policy",
+    "enabled": false,
+    "policy": "standPolicy",
+    "command": [0.0, 0.0, 0.0],
+    "armDuringManipulation": "track_current_task_space_solution",
+    "motionPolicyReentry": "forbidden",
+    "qualityGatesChanged": false
   },
   "taskSceneLocomotionHandoff": {
     "mode": "phase_aware_velocity_stability_gate",
@@ -201,6 +196,22 @@
     "completedPhase": "reach_handle",
     "baseAnchorRecoverySteps": 100,
     "finalTargetErrorMeters": 0.07562772505351109,
+    "qualityGatesChanged": false
+  },
+  "taskSceneBaseLockEvidence": {
+    "job": "worldspec-h1-midterm-gz47f",
+    "reportDigest": "sha256:1feb9ff6050d774fba20e521574cb61095a9a3084f373b64d7c7bf093d6705c3",
+    "reportSizeBytes": 18329,
+    "traceDigest": "sha256:bcaa26d8537fce06b154f9031b296b35e198d802684cd7d4a433338d8db74224",
+    "traceSizeBytes": 2299733,
+    "diagnosticStatus": "passed",
+    "failedReason": "robot_termination:fall_height,fall_upright",
+    "completedPhase": "reach_handle",
+    "baseAnchorRecoverySteps": 87,
+    "minimumBaseHeight": 0.46340638399124146,
+    "minimumUprightCosine": 0.2332257628440857,
+    "taskBaseLateralDrift": 0.8904498987831175,
+    "maximumBaseAnchorCommand": 0.1,
     "qualityGatesChanged": false
   },
   "phaseController": {

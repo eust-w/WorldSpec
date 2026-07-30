@@ -13,6 +13,7 @@ from worldspec_h1_training.full_task import (
     A6_SUPERVISOR_EVIDENCE,
     FULL_TASK_ARM_RECOVERY_EVIDENCE,
     FULL_TASK_BASE_ANCHOR_RECOVERY,
+    FULL_TASK_BASE_LOCK_EVIDENCE,
     FULL_TASK_HANDOFF_EVIDENCE,
     FULL_TASK_LOCOMOTION_HANDOFF,
     FULL_TASK_PHASE_CONTROLLER,
@@ -64,6 +65,7 @@ def _profiles() -> tuple[dict, dict, dict]:
         "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
+        "taskSceneBaseLockEvidence": copy.deepcopy(FULL_TASK_BASE_LOCK_EVIDENCE),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "qualityGates": copy.deepcopy(FULL_TASK_SINGLE_GATES),
         "runtime": {
@@ -94,6 +96,8 @@ def test_full_task_single_profile_binds_a6_and_a5ck_without_claiming_five_runs()
     assert profile["supervisorEvidence"]["formalTaskLoadSupervisorGate"] == "passed"
     assert profile["controlLineage"]["reuseBoundary"] == "controller_contract_only"
     assert profile["qualityGates"]["probeRuns"] == 1
+    assert profile["baseAnchorRecovery"]["enabled"] is False
+    assert profile["baseAnchorRecovery"]["policy"] == "standPolicy"
     assert profile["artifactPolicy"]["fiveRunClaim"] == "forbidden"
     assert profile["artifactPolicy"]["l3Claim"] == "forbidden"
 
@@ -122,6 +126,10 @@ def test_full_task_trace_contract_keeps_policy_command_and_base_state() -> None:
     assert '"command": [_trace_number(value) for value in np.asarray(policy_command)]' in source
     assert '"policyCommand": [_trace_number(value) for value in np.asarray(policy_command)]' in source
     assert '"baseState": {' in source
+    assert 'recovery_active = False' in source
+    assert 'task_handoff_phase = task_policy.prepare(anchor_norm)' in source
+    assert 'policy_command = command' in source
+    assert "base_anchor_recovery_command(" not in source
 
 
 def test_full_task_single_effective_profile_preserves_task_load() -> None:
@@ -162,6 +170,16 @@ def test_full_task_single_effective_profile_preserves_task_load() -> None:
                 {"maximumSteps": 51}
             ),
             "taskSceneLocomotionHandoff contract changed",
+        ),
+        (
+            lambda profile: profile["baseAnchorRecovery"].update({"enabled": True}),
+            "baseAnchorRecovery contract changed",
+        ),
+        (
+            lambda profile: profile["taskSceneBaseLockEvidence"].update(
+                {"failedReason": "reach_handle_timeout"}
+            ),
+            "taskSceneBaseLockEvidence contract changed",
         ),
         (
             lambda profile: profile["artifactPolicy"].update(

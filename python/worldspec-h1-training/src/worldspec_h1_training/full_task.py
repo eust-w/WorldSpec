@@ -37,7 +37,6 @@ from .trainer import _flat_observation_size
 from .warm_start import materialize_warm_start, validate_network_compatibility
 from .whole_body import (
     DYNAMIC_ARM_TRACKING,
-    FORWARD_ONLY_BASE_ANCHOR_RECOVERY,
     TASK_GEOMETRY_CALIBRATION,
     TASK_POLICY_HANDOFF,
     WHOLE_BODY_CONTROLLER,
@@ -46,7 +45,6 @@ from .whole_body import (
     _diagnostic_trace_errors,
     _trace_number,
     assess_diagnostic_trace,
-    base_anchor_recovery_command,
 )
 
 A6_SUPERVISOR_EVIDENCE = {
@@ -127,8 +125,15 @@ FULL_TASK_HANDOFF_EVIDENCE = {
     "firstStableStep": 188,
     "qualityGatesChanged": False,
 }
-FULL_TASK_BASE_ANCHOR_RECOVERY = copy.deepcopy(FORWARD_ONLY_BASE_ANCHOR_RECOVERY)
-FULL_TASK_BASE_ANCHOR_RECOVERY["armDuringRecovery"] = "track_current_task_space_solution"
+FULL_TASK_BASE_ANCHOR_RECOVERY = {
+    "mode": "disabled_locked_stand_policy",
+    "enabled": False,
+    "policy": "standPolicy",
+    "command": [0.0, 0.0, 0.0],
+    "armDuringManipulation": "track_current_task_space_solution",
+    "motionPolicyReentry": "forbidden",
+    "qualityGatesChanged": False,
+}
 FULL_TASK_ARM_RECOVERY_EVIDENCE = {
     "job": "worldspec-h1-midterm-z8fbf",
     "reportDigest": (
@@ -144,6 +149,26 @@ FULL_TASK_ARM_RECOVERY_EVIDENCE = {
     "completedPhase": "reach_handle",
     "baseAnchorRecoverySteps": 100,
     "finalTargetErrorMeters": 0.07562772505351109,
+    "qualityGatesChanged": False,
+}
+FULL_TASK_BASE_LOCK_EVIDENCE = {
+    "job": "worldspec-h1-midterm-gz47f",
+    "reportDigest": (
+        "sha256:1feb9ff6050d774fba20e521574cb61095a9a3084f373b64d7c7bf093d6705c3"
+    ),
+    "reportSizeBytes": 18_329,
+    "traceDigest": (
+        "sha256:bcaa26d8537fce06b154f9031b296b35e198d802684cd7d4a433338d8db74224"
+    ),
+    "traceSizeBytes": 2_299_733,
+    "diagnosticStatus": "passed",
+    "failedReason": "robot_termination:fall_height,fall_upright",
+    "completedPhase": "reach_handle",
+    "baseAnchorRecoverySteps": 87,
+    "minimumBaseHeight": 0.46340638399124146,
+    "minimumUprightCosine": 0.2332257628440857,
+    "taskBaseLateralDrift": 0.8904498987831175,
+    "maximumBaseAnchorCommand": 0.1,
     "qualityGatesChanged": False,
 }
 
@@ -199,6 +224,7 @@ def validate_full_task_single_profile(
         ("taskSceneLocomotionHandoff", FULL_TASK_LOCOMOTION_HANDOFF),
         ("taskSceneHandoffEvidence", FULL_TASK_HANDOFF_EVIDENCE),
         ("taskSceneArmRecoveryEvidence", FULL_TASK_ARM_RECOVERY_EVIDENCE),
+        ("taskSceneBaseLockEvidence", FULL_TASK_BASE_LOCK_EVIDENCE),
         ("phaseController", FULL_TASK_PHASE_CONTROLLER),
         ("qualityGates", FULL_TASK_SINGLE_GATES),
     )
@@ -355,39 +381,24 @@ def evaluate_full_task_single(
                 target,
                 allow_base=False,
             )
-            anchor_command = base_anchor_recovery_command(
-                initial_task_base,
-                np.asarray(state.data.qpos[:3], dtype=float),
-                np.asarray(env.local_velocity(state.data), dtype=float),
-                FULL_TASK_BASE_ANCHOR_RECOVERY,
+            anchor_command = np.asarray(
+                FULL_TASK_BASE_ANCHOR_RECOVERY["command"],
+                dtype=float,
             )
-            anchor_norm = float(np.linalg.norm(np.asarray(anchor_command)))
+            anchor_norm = 0.0
             maximum_base_anchor_command = max(maximum_base_anchor_command, anchor_norm)
-            recovery_active = (
-                anchor_norm >= FULL_TASK_BASE_ANCHOR_RECOVERY["activationThreshold"]
-                or task_policy.phase != "stand"
-            )
-            if recovery_active:
-                control = candidate
-                base_anchor_recovery_steps += 1
-            else:
-                control = candidate
+            recovery_active = False
+            control = candidate
             control["baseAnchorCommand"] = [float(value) for value in anchor_command]
             control["baseAnchorRecoveryActive"] = recovery_active
-            control["appliedArmTargetSource"] = (
-                "current_task_space_solution"
-            )
+            control["appliedArmTargetSource"] = "current_task_space_solution"
             maximum_projected_gradient = max(
                 maximum_projected_gradient,
                 float(control["qpProjectedGradient"]),
             )
             command = jp.asarray(anchor_command)
             task_handoff_phase = task_policy.prepare(anchor_norm)
-            policy_command = (
-                command
-                if task_handoff_phase == "motion"
-                else jp.asarray(TASK_POLICY_HANDOFF["policyObservationCommandDuringHandoff"])
-            )
+            policy_command = command
             held_targets = control["heldTargets"]
             feedforward = control["feedforwardTorque"]
             gripper = _gripper_for_phase(phase)
@@ -699,6 +710,7 @@ def run_task_load_full_kitchen_single_probe(
         "taskSceneLocomotionHandoff": copy.deepcopy(FULL_TASK_LOCOMOTION_HANDOFF),
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
+        "taskSceneBaseLockEvidence": copy.deepcopy(FULL_TASK_BASE_LOCK_EVIDENCE),
         "phaseController": copy.deepcopy(FULL_TASK_PHASE_CONTROLLER),
         "scene": copy.deepcopy(ERGONOMIC_TASK_SCENE),
         "policies": {
@@ -723,6 +735,7 @@ def run_task_load_full_kitchen_single_probe(
         "controlLineage": copy.deepcopy(A5CK_CONTROL_LINEAGE),
         "taskSceneHandoffEvidence": copy.deepcopy(FULL_TASK_HANDOFF_EVIDENCE),
         "taskSceneArmRecoveryEvidence": copy.deepcopy(FULL_TASK_ARM_RECOVERY_EVIDENCE),
+        "taskSceneBaseLockEvidence": copy.deepcopy(FULL_TASK_BASE_LOCK_EVIDENCE),
         "policies": loaded,
         "staticPreflight": static,
         "runtimePreflight": runtime,
