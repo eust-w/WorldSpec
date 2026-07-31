@@ -316,8 +316,17 @@ def run_manipulation_viability_diagnostic(
             {"actualIndex": actual_index},
         )
     bank_index = profile["snapshotBank"]["criticalSnapshotIndex"]
+    actual_qpos = np.asarray(initial_state.data.qpos)
+    bank_qpos = bank["qpos"][bank_index]
+    non_held_qpos = np.ones((actual_qpos.shape[0],), dtype=bool)
+    non_held_qpos[np.asarray(env._held_qpos, dtype=int)] = False
+    held_targets = np.asarray(initial_state.info["held_targets"])
     if (
-        not np.array_equal(np.asarray(initial_state.data.qpos), bank["qpos"][bank_index])
+        not np.array_equal(actual_qpos[non_held_qpos], bank_qpos[non_held_qpos])
+        or not np.array_equal(
+            actual_qpos[np.asarray(env._held_qpos, dtype=int)],
+            held_targets,
+        )
         or not np.array_equal(np.asarray(initial_state.data.qvel), bank["qvel"][bank_index])
         or not np.array_equal(
             np.asarray(initial_state.info["last_action"]),
@@ -326,7 +335,8 @@ def run_manipulation_viability_diagnostic(
     ):
         raise TrainingError(
             "MANIPULATION_VIABILITY_INITIAL_STATE_MISMATCH",
-            "The materialized initial state differs from state-bank index 565.",
+            "The materialized evaluation state differs from state-bank index 565 "
+            "plus the frozen dynamic-arm start target.",
         )
 
     search = profile["search"]
