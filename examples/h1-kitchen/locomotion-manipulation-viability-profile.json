@@ -79,8 +79,8 @@
     "maximumNonFiniteSamples": 0
   },
   "runtime": {
-    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:4de0e04d3f572cc56a0cc270cd9576256291201b2922510336073e46a977c143",
-    "containerDigest": "sha256:4de0e04d3f572cc56a0cc270cd9576256291201b2922510336073e46a977c143",
+    "containerImage": "ccr-29eug8s3-pub.cnc.bj.baidubce.com/dataflow-poc/worldspec-h1-training@sha256:6dc77680b3f343fb8148b283a0d62fd046c427252bc20b04c68cf35f57678aae",
+    "containerDigest": "sha256:6dc77680b3f343fb8148b283a0d62fd046c427252bc20b04c68cf35f57678aae",
     "packageLockDigest": "sha256:7cc88f20b2c608d6fe673f3b994b879db69d75361206bf25f949d7acc5ed3a41",
     "ccdIterations": 50
   },
