@@ -111,3 +111,5 @@ def test_viability_search_uses_constructive_witness_semantics() -> None:
     assert '_flat_observation_size(env.observation_size["state"])' in source
     assert "non_held_qpos" in source
     assert 'initial_state.info["held_targets"]' in source
+    assert '["initialBaseVelocityX"]' in source
+    assert "expected_qvel[0]" in source

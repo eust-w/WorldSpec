@@ -321,13 +321,30 @@ def run_manipulation_viability_diagnostic(
     non_held_qpos = np.ones((actual_qpos.shape[0],), dtype=bool)
     non_held_qpos[np.asarray(env._held_qpos, dtype=int)] = False
     held_targets = np.asarray(initial_state.info["held_targets"])
+    task_load_velocity_range = evaluation_profile["trainingEnvironment"][
+        "taskLoadCurriculum"
+    ]["initialBaseVelocityX"]
+    if (
+        len(task_load_velocity_range) != 2
+        or task_load_velocity_range[0] != task_load_velocity_range[1]
+    ):
+        raise TrainingError(
+            "MANIPULATION_VIABILITY_INITIAL_STATE_MISMATCH",
+            "The frozen v14 evaluation requires a deterministic task-load "
+            "initial base velocity.",
+        )
+    expected_qvel = np.array(bank["qvel"][bank_index], copy=True)
+    # Environment.reset applies the frozen task-load base velocity after loading
+    # the snapshot.  This overwrite was also active in the archived v14
+    # evaluation and is therefore part of the materialized hard state.
+    expected_qvel[0] = float(task_load_velocity_range[0])
     if (
         not np.array_equal(actual_qpos[non_held_qpos], bank_qpos[non_held_qpos])
         or not np.array_equal(
             actual_qpos[np.asarray(env._held_qpos, dtype=int)],
             held_targets,
         )
-        or not np.array_equal(np.asarray(initial_state.data.qvel), bank["qvel"][bank_index])
+        or not np.array_equal(np.asarray(initial_state.data.qvel), expected_qvel)
         or not np.array_equal(
             np.asarray(initial_state.info["last_action"]),
             bank["last_action"][bank_index],
