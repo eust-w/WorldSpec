@@ -113,3 +113,4 @@ def test_viability_search_uses_constructive_witness_semantics() -> None:
     assert 'initial_state.info["held_targets"]' in source
     assert '["initialBaseVelocityX"]' in source
     assert "expected_qvel[0]" in source
+    assert "WORLDSPEC_H1_VIABILITY_BASELINE_MISMATCH=" in source

@@ -646,10 +646,27 @@ def run_manipulation_viability_diagnostic(
         float(profile["baselineReproduction"]["absoluteTolerance"]),
     )
     if not baseline_matches:
+        mismatch_evidence = {
+            "actual": baseline_assessment["metrics"],
+            "expected": profile["baselineReproduction"]["metrics"],
+            "deltas": baseline_deltas,
+        }
+        print(
+            "WORLDSPEC_H1_VIABILITY_BASELINE_MISMATCH="
+            + json.dumps(
+                mismatch_evidence,
+                allow_nan=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ),
+            flush=True,
+        )
         raise TrainingError(
             "MANIPULATION_VIABILITY_BASELINE_MISMATCH",
-            "The diagnostic did not reproduce the archived v14 failed trajectory.",
-            {"deltas": baseline_deltas},
+            "The diagnostic did not reproduce the archived v14 failed trajectory; "
+            "the complete actual, expected, and delta payload was emitted to the "
+            "job log.",
+            mismatch_evidence,
         )
 
     mean = jp.zeros((knot_count, action_size))
