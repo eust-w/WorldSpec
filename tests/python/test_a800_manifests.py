@@ -808,7 +808,7 @@ def test_manipulation_viability_is_constructive_and_diagnostic_only() -> None:
     )
     assert profile["runtime"]["containerImage"] == build["image"]
     assert profile["runtime"]["containerDigest"] == build["image"].rsplit("@", 1)[1]
-    assert build["sourceCommit"] == "879bf45c1221f295e4245c02e58b4ca6fbfb12e0"
+    assert build["sourceCommit"] == "faa403addf8dca05542d7156c73ce5359366ad55"
 
 
 def test_a5ci_diagnostic_replay_is_single_attempt_evidence_first() -> None:
